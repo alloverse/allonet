@@ -13,7 +13,7 @@ typedef struct {
     // set this to get a callback when state changes. data in 'state'
     // is valid only during duration of callback.
     void (*state_callback)(allo_state *state);
-
+    void (*interaction_callback)(const char *sender_entity_id, const char *receiver_entity_id, const char *cmd);
 
     // internal
     void (*send)(allo_sendmode mode, const char *buf, int len);

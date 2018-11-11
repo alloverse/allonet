@@ -13,6 +13,7 @@ typedef struct alloserver_client {
 
     // private
     void *_internal;
+    void *_backref;
     LIST_ENTRY(alloserver_client) pointers;
 } alloserver_client;
 

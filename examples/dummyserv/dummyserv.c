@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 double gettime()
 {
@@ -10,22 +11,45 @@ double gettime()
     return ts.tv_sec + ts.tv_nsec/(double)1e9;
 }
 
-allo_state dummystate;
+typedef struct dummy_clientstate
+{
+    allo_entity *entity;
+} dummy_clientstate;
+
+static dummy_clientstate *_clientstate(alloserver_client *client)
+{
+    dummy_clientstate *state = (dummy_clientstate*)client->_backref;
+    if(!state) {
+        client->_backref = state = (dummy_clientstate *)calloc(1, sizeof(dummy_clientstate));
+    }
+    return state;
+}
 
 static void move_stuff_around(alloserver *serv, double delta)
 {
     alloserver_client *client = NULL;
-    LIST_FOREACH(client, &serv->clients, pointers) {
+    LIST_FOREACH(client, &serv->clients, pointers)
+    {
+        allo_entity *entity = _clientstate(client)->entity;
+        if(!entity) {
+            char entity_id[32];
+            snprintf(entity_id, 32, "%p", client);
+            entity = entity_create(entity_id);
+            LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
+        }
         
-        // fetch entity, or create if it doesn't have one
-        // move it based on its intent
+        entity->position.x += client->intent.xmovement*delta;
+        entity->position.z += client->intent.zmovement*delta;
+        entity->rotation.x = client->intent.pitch;
+        entity->rotation.y = client->intent.yaw;
     }
+    // todo: add callback for client disconnect to clean up backref + delete zombie avatar
 }
 
 int main(int argc, char **argv) {
     printf("hello world\n");
     alloserver *serv = allo_listen();
-    dummystate.entities = (allo_entity*)calloc(128, sizeof(allo_entity));
+    LIST_INIT(&serv->state.entities);
 
     double time_per_frame = 1/20.0;
 

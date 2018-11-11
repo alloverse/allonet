@@ -14,7 +14,7 @@ typedef struct {
 } allo_vector;
 
 typedef struct allo_entity {
-    const char *id;
+    char *id;
     allo_vector position;
     allo_vector rotation; // radians
 
@@ -22,7 +22,7 @@ typedef struct allo_entity {
 } allo_entity;
 
 allo_entity *entity_create(const char *id);
-void entity_destroy(allo_entity);
+void entity_destroy(allo_entity *entity);
 
 typedef struct {
     long long revision;

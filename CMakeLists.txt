@@ -7,7 +7,7 @@ add_subdirectory (lib/enet)
 
 # shared library
 
-add_library(allonet SHARED src/server.c)
+add_library(allonet SHARED src/server.c src/state.c)
 target_link_libraries (allonet enet)
 
 # server example

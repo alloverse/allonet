@@ -1,3 +1,6 @@
 [submodule "lib/enet"]
 	path = lib/enet
 	url = https://github.com/lsalzman/enet.git
+[submodule "lib/svc"]
+	path = lib/svc
+	url = https://github.com/andoma/libsvc.git

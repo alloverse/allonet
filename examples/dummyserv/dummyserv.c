@@ -14,8 +14,9 @@ allo_state dummystate;
 
 static void move_stuff_around(alloserver *serv, double delta)
 {
-    for(int i = 0; i < serv->client_count; i++) {
-        alloserver_client *client = serv->clients[i];
+    alloserver_client *client = NULL;
+    LIST_FOREACH(client, &serv->clients, pointers) {
+        
         // fetch entity, or create if it doesn't have one
         // move it based on its intent
     }

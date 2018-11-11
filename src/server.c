@@ -54,9 +54,9 @@ static void allo_poll(alloserver *serv, int timeout)
         alloserver_client *new_client = _client_create();
         _clientinternal(new_client)->peer = event.peer;
         _clientinternal(new_client)->peer->data = (void*)new_client;
-        serv->clients[serv->client_count++] = new_client;
+        LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
         if(serv->clients_callback) {
-            serv->clients_callback(serv, serv->clients, serv->client_count);
+            serv->clients_callback(serv);
         }
         break; }
     
@@ -72,20 +72,12 @@ static void allo_poll(alloserver *serv, int timeout)
         break; }
     
     case ENET_EVENT_TYPE_DISCONNECT: {
-        printf ("%s disconnected.\n", event.peer -> data);
-        for(int i = 0; i < allo_client_count_max; i++) {
-            if(serv->clients[i] == event.peer->data) {
-                alloserv_client_free(serv->clients[i]);
-                for(int j = i; j < allo_client_count_max-1; j++) {
-                    serv->clients[j] = serv->clients[j+1];
-                }
-                serv->clients[allo_client_count_max-1] = NULL;
-                break;
-            }
-        }
+        alloserver_client *client = (alloserver_client*)event.peer->data;
+        printf("%p disconnected.\n", client);
+        LIST_REMOVE(client, pointers);
         event.peer->data = NULL;
         if(serv->clients_callback) {
-            serv->clients_callback(serv, serv->clients, serv->client_count);
+            serv->clients_callback(serv);
         }
         break; }
     case ENET_EVENT_TYPE_NONE:break;
@@ -132,6 +124,7 @@ alloserver *allo_listen(void)
 
     serv->interbeat = allo_poll;
     serv->beat = allo_sendstates;
+    LIST_INIT(&serv->clients);
     
     return serv;
 }

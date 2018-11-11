@@ -16,6 +16,7 @@ The API is in C, and bridged into C# and Erlang.
 
 So far, extremely rudimentary. Todo in order of priority:
 
+- [ ] Switch out manual arrays for libsvc
 - [ ] Server implementation on enet
 - [ ] Client implementation on enet
 - [ ] Erlang bridge and make sure server API fits mm pattern

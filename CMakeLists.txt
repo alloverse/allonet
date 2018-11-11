@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.0.0)
 project(allonet VERSION 0.1.0)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories(SYSTEM "${PROJECT_SOURCE_DIR}/lib/enet/include")
 add_subdirectory (lib/enet) 
 
 # shared library
 
 add_library(allonet SHARED src/server.c)
+target_link_libraries (allonet enet)
 
 # server example
 add_executable (allodummyserv examples/dummyserv/dummyserv.c)

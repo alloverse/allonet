@@ -1,6 +1,8 @@
 #include <allonet/server.h>
 #include <enet/enet.h>
 #include <stdio.h>
+#include <svc/ntv.h>
+#include <string.h>
 
 typedef struct {
     ENetHost *enet;
@@ -86,7 +88,35 @@ static void allo_poll(alloserver *serv, int timeout)
 
 static void allo_sendstates(alloserver *serv)
 {
+    ntv_t *entities = ntv_create_list();
+    allo_entity *entity = NULL;
+    LIST_FOREACH(entity, &serv->state.entities, pointers) {
+        ntv_t *entity_rep = ntv_map(
+            "id", ntv_str(entity->id),
+            "position", ntv_list(ntv_double(entity->position.x), ntv_double(entity->position.y), ntv_double(entity->position.z), NULL),
+            "rotation", ntv_list(ntv_double(entity->rotation.x), ntv_double(entity->rotation.y), ntv_double(entity->rotation.z), NULL),
+            NULL
+        );
+        TAILQ_INSERT_TAIL(&entities->ntv_children, entity_rep, ntv_link);
+    }
+    ntv_t *map = ntv_map(
+        "entities", entities, 
+        "revision", ntv_int(serv->state.revision),
+        NULL
+    );
+    const char *json = ntv_json_serialize_to_str(map, 0);
+    printf("STATE: %s\n", json);
+    ntv_release(map);
 
+    int jsonlength = strlen(json);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
+    memcpy(packet->data, json, jsonlength);
+    ((char*)packet->data)[jsonlength+1] = '\n';
+    alloserver_client *client;
+    LIST_FOREACH(client, &serv->clients, pointers) {
+        alloserv_client_internal *internal = _clientinternal(client);
+        enet_peer_send(internal->peer, 0, packet);
+    }
 }
 
 alloserver *allo_listen(void)

@@ -5,8 +5,8 @@
 typedef struct {
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
-    double yaw; // rotation around x
-    double pitch; // rotation around y
+    double yaw; // rotation around x in radians
+    double pitch; // rotation around y in radians
 } allo_client_intent;
 
 typedef struct {
@@ -16,7 +16,7 @@ typedef struct {
 typedef struct allo_entity {
     const char *id;
     allo_vector position;
-    allo_vector rotation;
+    allo_vector rotation; // radians
 
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;

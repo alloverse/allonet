@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>
 
 double gettime()
 {
@@ -38,8 +39,8 @@ static void move_stuff_around(alloserver *serv, double delta)
             LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
         }
         
-        entity->position.x += client->intent.xmovement*delta;
-        entity->position.z += client->intent.zmovement*delta;
+        entity->position.x += cos(client->intent.pitch)*client->intent.xmovement*delta + sin(client->intent.pitch)*client->intent.zmovement*delta;
+        entity->position.z += sin(client->intent.pitch)*client->intent.xmovement*delta + cos(client->intent.pitch)*client->intent.zmovement*delta;
         entity->rotation.x = client->intent.pitch;
         entity->rotation.y = client->intent.yaw;
     }

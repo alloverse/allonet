@@ -88,7 +88,7 @@ static void allo_poll(alloserver *serv, int timeout)
 
 static void allo_sendstates(alloserver *serv)
 {
-    ntv_t *entities = ntv_create_list();
+    ntv_t *entities_rep = ntv_create_list();
     allo_entity *entity = NULL;
     LIST_FOREACH(entity, &serv->state.entities, pointers) {
         ntv_t *entity_rep = ntv_map(
@@ -97,11 +97,11 @@ static void allo_sendstates(alloserver *serv)
             "rotation", ntv_list(ntv_double(entity->rotation.x), ntv_double(entity->rotation.y), ntv_double(entity->rotation.z), NULL),
             NULL
         );
-        entity_rep->ntv_parent = entities;
-        TAILQ_INSERT_TAIL(&entities->ntv_children, entity_rep, ntv_link);
+        entity_rep->ntv_parent = entities_rep;
+        TAILQ_INSERT_TAIL(&entities_rep->ntv_children, entity_rep, ntv_link);
     }
     ntv_t *map = ntv_map(
-        "entities", entities, 
+        "entities", entities_rep, 
         "revision", ntv_int(serv->state.revision++),
         NULL
     );

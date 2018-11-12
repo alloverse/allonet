@@ -37,6 +37,7 @@ static void move_stuff_around(alloserver *serv, double delta)
             snprintf(entity_id, 32, "%p", client);
             entity = entity_create(entity_id);
             LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
+            _clientstate(client)->entity = entity;
         }
         
         entity->position.x += cos(client->intent.pitch)*client->intent.xmovement*delta + sin(client->intent.pitch)*client->intent.zmovement*delta;

@@ -97,6 +97,7 @@ static void allo_sendstates(alloserver *serv)
             "rotation", ntv_list(ntv_double(entity->rotation.x), ntv_double(entity->rotation.y), ntv_double(entity->rotation.z), NULL),
             NULL
         );
+        entity_rep->ntv_parent = entities;
         TAILQ_INSERT_TAIL(&entities->ntv_children, entity_rep, ntv_link);
     }
     ntv_t *map = ntv_map(

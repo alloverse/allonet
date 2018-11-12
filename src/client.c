@@ -119,6 +119,7 @@ alloclient *allo_connect(const char *url)
 
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->poll = client_poll;
+    client->set_intent = client_sendintent;
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;
     _internal(client)->peer = peer;

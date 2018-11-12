@@ -16,11 +16,11 @@ The API is in C, and bridged into C# and Erlang.
 
 So far, extremely rudimentary. Todo in order of priority:
 
-- [ ] Switch out manual arrays for libsvc
-- [ ] Server implementation on enet
-- [ ] Client implementation on enet
-- [ ] Erlang bridge and make sure server API fits mm pattern
+- [x] Switch out manual arrays for libsvc
+- [x] Basic Server implementation on enet
+- [x] Basic Client implementation on enet
 - [ ] C# bridge and integrate with Unity visor
+- [ ] Erlang bridge and make sure server API fits mm pattern
 - [ ] Move to component based entities
 - [ ] Flesh out intents (head and hands, pointing, clicking)
 - [ ] Assets (geometry, textures, animations)

@@ -6,4 +6,11 @@ typedef enum {
     allo_reliable = 2,
 } allo_sendmode;
 
+typedef enum allochannel {
+    CHANNEL_STATEDIFFS = 0,
+    CHANNEL_COMMANDS,
+
+    CHANNEL_COUNT
+} allochannel;
+
 #endif

@@ -116,8 +116,9 @@ static void allo_sendstates(alloserver *serv)
     alloserver_client *client;
     LIST_FOREACH(client, &serv->clients, pointers) {
         alloserv_client_internal *internal = _clientinternal(client);
-        enet_peer_send(internal->peer, 0, packet);
+        enet_peer_send(internal->peer, CHANNEL_STATEDIFFS, packet);
     }
+    enet_packet_destroy(packet);
 }
 
 alloserver *allo_listen(void)
@@ -139,8 +140,8 @@ alloserver *allo_listen(void)
     _servinternal(serv)->enet = enet_host_create(
         &address,
         allo_client_count_max,
-        2,  // 2 channels
-        0,  // no ingress bandwidth limit      /* assume any amount of incoming bandwidth */,
+        CHANNEL_COUNT,
+        0,  // no ingress bandwidth limit
         0   // no egress bandwidth limit
     );
     if (_servinternal(serv)->enet == NULL)

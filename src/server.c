@@ -57,6 +57,9 @@ static void allo_poll(alloserver *serv, int timeout)
         _clientinternal(new_client)->peer = event.peer;
         _clientinternal(new_client)->peer->data = (void*)new_client;
         LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
+
+        // very hard timeout limits; change once clients actually send SYN
+        enet_peer_timeout(event.peer, 0, 5000, 5000);
         if(serv->clients_callback) {
             serv->clients_callback(serv, new_client, NULL);
         }

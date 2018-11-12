@@ -92,6 +92,7 @@ static void allo_poll(alloserver *serv, int timeout)
         if(serv->clients_callback) {
             serv->clients_callback(serv);
         }
+        alloserv_client_free(client);
         break; }
     case ENET_EVENT_TYPE_NONE:break;
     }
@@ -124,6 +125,7 @@ static void allo_sendstates(alloserver *serv)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_UNSEQUENCED);
     memcpy(packet->data, json, jsonlength);
     ((char*)packet->data)[jsonlength+1] = '\n';
+    free((void*)json);
     alloserver_client *client;
     LIST_FOREACH(client, &serv->clients, pointers) {
         alloserv_client_internal *internal = _clientinternal(client);

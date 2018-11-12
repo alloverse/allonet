@@ -63,12 +63,23 @@ static void allo_poll(alloserver *serv, int timeout)
         break; }
     
     case ENET_EVENT_TYPE_RECEIVE: {
-        printf ("A packet of length %zu containing %s was received from %s on channel %u.\n",
-                event.packet -> dataLength,
-                event.packet -> data,
-                event.peer -> data,
-                event.channelID);
-        /* Clean up the packet now that we're done using it. */
+        alloserver_client *client = (alloserver_client*)event.peer->data;
+        
+        event.packet->data[event.packet->dataLength-1] = 0;
+        ntv_t *cmd = ntv_json_deserialize((char*)(event.packet->data), NULL, 0);
+        const char *cmdname = ntv_get_str(cmd, "cmd");
+        printf("Client %p sent command %s\n", client, cmdname);
+        if(strcmp(cmdname, "intent") == 0) {
+            const ntv_t *ntvintent = ntv_get_map(cmd, "intent");
+            allo_client_intent intent = {
+                .zmovement = ntv_get_double(ntvintent, "zmovement", 0),
+                .xmovement = ntv_get_double(ntvintent, "xmovement", 0),
+                .yaw = ntv_get_double(ntvintent, "yaw", 0),
+                .pitch = ntv_get_double(ntvintent, "pitch", 0),
+            };
+            client->intent = intent;
+        }
+
         enet_packet_destroy (event.packet);
         
         break; }

@@ -118,7 +118,6 @@ static void allo_sendstates(alloserver *serv)
         alloserv_client_internal *internal = _clientinternal(client);
         enet_peer_send(internal->peer, CHANNEL_STATEDIFFS, packet);
     }
-    enet_packet_destroy(packet);
 }
 
 alloserver *allo_listen(void)

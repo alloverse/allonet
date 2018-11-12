@@ -70,7 +70,6 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
     memcpy(packet->data, json, jsonlength);
     ((char*)packet->data)[jsonlength+1] = '\n';
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
-    enet_packet_destroy(packet);
 }
 
 alloclient *allo_connect(const char *url)

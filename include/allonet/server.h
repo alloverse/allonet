@@ -39,8 +39,9 @@ struct alloserver {
     // set this to get a callback when intent changes for a client. data in 'client'
     // is valid only during duration of callback.
     void (*intent_callback)(alloserver *serv, alloserver_client *client);
-    // list of clients changed
-    void (*clients_callback)(alloserver *serv);
+    
+    // list of clients changed; either `added` or `removed` is set.
+    void (*clients_callback)(alloserver *serv, alloserver_client *added, alloserver_client *removed);
     // interaction request from a client
     void (*interaction_callback)(alloserver *serv, alloserver_client *client, const char *entity_id, const char *cmd);
 

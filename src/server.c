@@ -58,7 +58,7 @@ static void allo_poll(alloserver *serv, int timeout)
         _clientinternal(new_client)->peer->data = (void*)new_client;
         LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
         if(serv->clients_callback) {
-            serv->clients_callback(serv);
+            serv->clients_callback(serv, new_client, NULL);
         }
         break; }
     
@@ -90,7 +90,7 @@ static void allo_poll(alloserver *serv, int timeout)
         LIST_REMOVE(client, pointers);
         event.peer->data = NULL;
         if(serv->clients_callback) {
-            serv->clients_callback(serv);
+            serv->clients_callback(serv, NULL, client);
         }
         alloserv_client_free(client);
         break; }

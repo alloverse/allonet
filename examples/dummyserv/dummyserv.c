@@ -32,25 +32,35 @@ static void move_stuff_around(alloserver *serv, double delta)
     LIST_FOREACH(client, &serv->clients, pointers)
     {
         allo_entity *entity = _clientstate(client)->entity;
-        if(!entity) {
-            char entity_id[32];
-            snprintf(entity_id, 32, "%p", client);
-            entity = entity_create(entity_id);
-            LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
-            _clientstate(client)->entity = entity;
-        }
-        
         entity->position.x += cos(client->intent.pitch)*client->intent.xmovement*delta + sin(client->intent.pitch)*client->intent.zmovement*delta;
         entity->position.z += sin(client->intent.pitch)*client->intent.xmovement*delta + cos(client->intent.pitch)*client->intent.zmovement*delta;
         entity->rotation.x = client->intent.pitch;
         entity->rotation.y = client->intent.yaw;
     }
-    // todo: add callback for client disconnect to clean up backref + delete zombie avatar
+}
+
+static void clients_changed(alloserver *serv, alloserver_client *added, alloserver_client *removed)
+{
+    if(added)
+    {
+        char entity_id[32];
+        snprintf(entity_id, 32, "%p", added);
+        allo_entity *entity = entity_create(entity_id);
+        LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
+        _clientstate(added)->entity = entity;
+    } 
+    else if(removed)
+    {
+        allo_entity *entity = _clientstate(removed)->entity;
+        LIST_REMOVE(entity, pointers);
+        free(_clientstate(removed));
+    }
 }
 
 int main(int argc, char **argv) {
     printf("hello world\n");
     alloserver *serv = allo_listen();
+    serv->clients_callback = clients_changed;
     LIST_INIT(&serv->state.entities);
 
     double time_per_frame = 1/20.0;

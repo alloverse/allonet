@@ -110,7 +110,7 @@ static void allo_sendstates(alloserver *serv)
     ntv_release(map);
 
     int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_UNSEQUENCED);
     memcpy(packet->data, json, jsonlength);
     ((char*)packet->data)[jsonlength+1] = '\n';
     alloserver_client *client;

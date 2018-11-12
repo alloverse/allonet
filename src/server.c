@@ -102,7 +102,7 @@ static void allo_sendstates(alloserver *serv)
     }
     ntv_t *map = ntv_map(
         "entities", entities, 
-        "revision", ntv_int(serv->state.revision),
+        "revision", ntv_int(serv->state.revision++),
         NULL
     );
     const char *json = ntv_json_serialize_to_str(map, 0);

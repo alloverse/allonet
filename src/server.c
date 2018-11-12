@@ -172,6 +172,7 @@ alloserver *allo_listen(void)
     serv->interbeat = allo_poll;
     serv->beat = allo_sendstates;
     LIST_INIT(&serv->clients);
+    LIST_INIT(&serv->state.entities);
     
     return serv;
 }

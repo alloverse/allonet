@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <svc/ntv.h>
 #include <string.h>
-
+#include <svc/strvec.h>
 
 typedef struct {
     ENetHost *host;
@@ -15,6 +15,71 @@ static alloclient_internal *_internal(alloclient *client)
     return (alloclient_internal*)client->_internal;
 }
 
+static allo_entity *get_entity(alloclient *client, const char *entity_id)
+{
+    allo_entity *entity = NULL;
+    LIST_FOREACH(entity, &client->state.entities, pointers)
+    {
+        if(strcmp(entity_id, entity->id) == 0) 
+        {
+            return entity;
+        }
+    }
+    return NULL;
+}
+
+static void parse_statediff(alloclient *client, ENetPacket *packet)
+{
+    packet->data[packet->dataLength-1] = 0;
+    ntv_t *cmd = ntv_json_deserialize((char*)(packet->data), NULL, 0);
+    int64_t rev = ntv_get_int64(cmd, "revision", 0);
+    const ntv_t *entities = ntv_get_map(cmd, "entities");
+    client->state.revision = rev;
+    
+    // keep track of entities that aren't mentioned in the incoming list
+    scoped_strvec(deletes);
+    allo_entity *entity = NULL;
+    LIST_FOREACH(entity, &client->state.entities, pointers)
+    {
+        strvec_push(&deletes, entity->id);
+    }
+    
+    // update or create entities
+    NTV_FOREACH(edesc, entities) {
+        const char *entity_id = ntv_get_str(edesc, "id");
+        strvec_delete_value(&deletes, entity_id);
+        const ntv_t *position = ntv_get_list(edesc, "position");
+        const ntv_t *rotation = ntv_get_list(edesc, "rotation");
+        allo_entity *entity = get_entity(client, entity_id);
+        if(!entity) {
+            entity = entity_create(entity_id);
+            printf("Creating entity %s\n", entity->id);
+            LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
+        }
+        entity->position = (allo_vector){position->ntv_double, position->ntv_link.tqe_next->ntv_double, position->ntv_link.tqe_next->ntv_link.tqe_next->ntv_double};
+        entity->rotation = (allo_vector){rotation->ntv_double, rotation->ntv_link.tqe_next->ntv_double, rotation->ntv_link.tqe_next->ntv_link.tqe_next->ntv_double};
+    }
+
+    // now, delete old entities
+    LIST_FOREACH(entity, &client->state.entities, pointers)
+    {
+        if(strvec_find(&deletes, entity->id) != -1) {
+            printf("Deleting entity %s\n", entity->id);
+            LIST_REMOVE(entity, pointers);
+            entity_destroy(entity);
+        }
+    }
+}
+
+static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
+{
+    switch(channel) {
+    case CHANNEL_STATEDIFFS:
+        parse_statediff(client, packet);
+    default: break;
+    }
+}
+
 static void client_poll(alloclient *client)
 {
     ENetEvent event;
@@ -22,28 +87,14 @@ static void client_poll(alloclient *client)
     {
         switch (event.type)
         {
-        case ENET_EVENT_TYPE_CONNECT:
-            printf ("A new client connected from %x:%u.\n", 
-                    event.peer -> address.host,
-                    event.peer -> address.port);
-            /* Store any relevant client information here. */
-            event.peer -> data = "Client information";
-            break;
         case ENET_EVENT_TYPE_RECEIVE:
-            printf ("A packet of length %u containing %s was received from %s on channel %u.\n",
-                    event.packet -> dataLength,
-                    event.packet -> data,
-                    event.peer -> data,
-                    event.channelID);
-            /* Clean up the packet now that we're done using it. */
+            parse_packet_from_channel(client, event.packet, (allochannel)event.channelID);
             enet_packet_destroy (event.packet);
-            
             break;
         
         case ENET_EVENT_TYPE_DISCONNECT:
-            printf ("%s disconnected.\n", event.peer -> data);
-            /* Reset the peer's client information. */
-            event.peer -> data = NULL;
+            printf ("Disconnected.\n");
+        default: break;
         }
     }
 }
@@ -124,7 +175,11 @@ alloclient *allo_connect(const char *url)
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;
     _internal(client)->peer = peer;
-    //enet_host_destroy(client);
+    LIST_INIT(&client->state.entities);
+    
 
     return client;
 }
+
+// todo: disconnect & teardown
+//enet_host_destroy(client);

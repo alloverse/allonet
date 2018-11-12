@@ -12,7 +12,7 @@ add_subdirectory (lib/enet)
 
 add_library(allonet SHARED 
     src/server.c src/client.c src/state.c 
-    lib/svc/ntv.c lib/svc/ntv_json.c lib/svc/mbuf.c lib/svc/trace.c lib/svc/json.c lib/svc/misc.c lib/svc/utf8.c lib/svc/talloc.c lib/svc/dbl.c)
+    lib/svc/ntv.c lib/svc/ntv_json.c lib/svc/mbuf.c lib/svc/trace.c lib/svc/json.c lib/svc/misc.c lib/svc/utf8.c lib/svc/talloc.c lib/svc/dbl.c lib/svc/strvec.c)
 target_link_libraries (allonet enet)
 
 # server example

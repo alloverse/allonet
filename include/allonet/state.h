@@ -1,6 +1,7 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
 #include <sys/queue.h>
+#include <stdint.h>
 
 typedef struct {
     double zmovement; // 1 = maximum speed forwards
@@ -25,7 +26,7 @@ allo_entity *entity_create(const char *id);
 void entity_destroy(allo_entity *entity);
 
 typedef struct {
-    long long revision;
+    uint64_t revision;
     LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
 

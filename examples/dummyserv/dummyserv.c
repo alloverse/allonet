@@ -59,6 +59,11 @@ static void clients_changed(alloserver *serv, alloserver_client *added, alloserv
 
 int main(int argc, char **argv) {
     printf("hello world\n");
+    if(!allo_initialize(false)) {
+        fprintf(stderr, "Unable to initialize allonet");
+        return -1;
+    }
+
     alloserver *serv = allo_listen();
     serv->clients_callback = clients_changed;
     LIST_INIT(&serv->state.entities);

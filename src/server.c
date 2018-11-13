@@ -138,14 +138,6 @@ static void allo_sendstates(alloserver *serv)
 
 alloserver *allo_listen(void)
 {
-    // move me to a proper static initializer
-    if (enet_initialize () != 0)
-    {
-        fprintf (stderr, "An error occurred while initializing ENet.\n");
-        return NULL;
-    }
-    atexit (enet_deinitialize);
-
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     

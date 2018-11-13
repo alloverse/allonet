@@ -136,14 +136,6 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
 
 alloclient *allo_connect(const char *url)
 {
-    //move me
-    if (enet_initialize () != 0)
-    {
-        fprintf (stderr, "An error occurred while initializing ENet.\n");
-        return NULL;
-    }
-    atexit (enet_deinitialize);
-
     printf("Connecting to localhost\n");
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,

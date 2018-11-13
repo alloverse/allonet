@@ -50,6 +50,11 @@ int getch()
 
 int main(int argc, char **argv)
 {
+    if(!allo_initialize(false)) {
+        fprintf(stderr, "Unable to initialize allonet");
+        return -1;
+    }
+
     set_conio_terminal_mode();
 
     printf("hello microverse\n");

@@ -2,6 +2,7 @@
 #define ALLONET_STATE_H
 #include <sys/queue.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
     double zmovement; // 1 = maximum speed forwards
@@ -29,5 +30,7 @@ typedef struct {
     uint64_t revision;
     LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
+
+extern bool allo_initialize(bool redirect_stdout);
 
 #endif

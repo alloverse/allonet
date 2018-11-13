@@ -71,7 +71,6 @@ static void allo_poll(alloserver *serv, int timeout)
         event.packet->data[event.packet->dataLength-1] = 0;
         ntv_t *cmd = ntv_json_deserialize((char*)(event.packet->data), NULL, 0);
         const char *cmdname = ntv_get_str(cmd, "cmd");
-        printf("Client %p sent command %s\n", client, cmdname);
         if(strcmp(cmdname, "intent") == 0) {
             const ntv_t *ntvintent = ntv_get_map(cmd, "intent");
             allo_client_intent intent = {
@@ -81,6 +80,8 @@ static void allo_poll(alloserver *serv, int timeout)
                 .pitch = ntv_get_double(ntvintent, "pitch", 0),
             };
             client->intent = intent;
+        } else {
+            printf("Client %p sent unknown command %s\n", client, cmdname);
         }
 
         enet_packet_destroy (event.packet);

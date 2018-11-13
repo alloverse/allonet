@@ -124,7 +124,6 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
         NULL
     );
     const char *json = ntv_json_serialize_to_str(cmdrep, 0);
-    printf("CMD: %s\n", json);
     ntv_release(cmdrep);
 
     int jsonlength = strlen(json);

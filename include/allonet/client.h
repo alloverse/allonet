@@ -9,7 +9,7 @@ typedef struct alloclient {
     void (*set_intent)(alloclient *client, allo_client_intent intent);
     // rpc on another entity
     void (*interact)(alloclient *client, const char *entity_id, const char *cmd);
-    void (*disconnect)(alloclient *client);
+    void (*disconnect)(alloclient *client, int reason);
 
     void (*poll)(alloclient *client);
     

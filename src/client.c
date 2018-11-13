@@ -2,6 +2,7 @@
 #include <enet/enet.h>
 #include <stdio.h>
 #include <svc/ntv.h>
+#include <svc/misc.h>
 #include <string.h>
 #include <svc/strvec.h>
 
@@ -134,6 +135,29 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
     free((void*)json);
 }
 
+static void client_disconnect(alloclient *client, int reason)
+{
+    enet_peer_disconnect(_internal(client)->peer, reason);
+    int now = get_ts_mono();
+    int started_at = now;
+    int end_at = started_at + 1000;
+    ENetEvent event = {};
+    while(now < end_at) {
+        enet_host_service(_internal(client)->host, & event, end_at-now);
+        if(event.type == ENET_EVENT_TYPE_DISCONNECT) {
+            puts("Successfully disconnected");
+            break;
+        }
+        now = get_ts_mono();
+    }
+    if(event.type != ENET_EVENT_TYPE_DISCONNECT) {
+        puts("Disconnection timed out");
+    }
+    enet_host_destroy(_internal(client)->host);
+    free(_internal(client));
+    free(client);
+}
+
 alloclient *allo_connect(const char *url)
 {
     printf("Connecting to localhost\n");
@@ -183,6 +207,7 @@ alloclient *allo_connect(const char *url)
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->poll = client_poll;
     client->set_intent = client_sendintent;
+    client->disconnect = client_disconnect;
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;
     _internal(client)->peer = peer;
@@ -192,5 +217,3 @@ alloclient *allo_connect(const char *url)
     return client;
 }
 
-// todo: disconnect & teardown
-//enet_host_destroy(client);

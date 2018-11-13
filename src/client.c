@@ -136,6 +136,15 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
 
 alloclient *allo_connect(const char *url)
 {
+    //move me
+    if (enet_initialize () != 0)
+    {
+        fprintf (stderr, "An error occurred while initializing ENet.\n");
+        return NULL;
+    }
+    atexit (enet_deinitialize);
+
+    printf("Connecting to localhost\n");
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
             1 /* only allow 1 outgoing connection */,
@@ -146,7 +155,7 @@ alloclient *allo_connect(const char *url)
     {
         fprintf (stderr, 
                 "An error occurred while trying to create an ENet client host.\n");
-        exit (EXIT_FAILURE);
+        return NULL;
     }
 
     ENetAddress address;
@@ -167,7 +176,7 @@ alloclient *allo_connect(const char *url)
     if (enet_host_service(host, & event, 5000) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT)
     {
-        puts ("Connection to some.server.net:1234 succeeded.");
+        puts ("Connection succeeded.");
     }
     else
     {

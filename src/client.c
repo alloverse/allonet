@@ -48,7 +48,7 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     allo_entity *entity = NULL;
     LIST_FOREACH(entity, &client->state.entities, pointers)
     {
-        strvec_push(&deletes, entity->id);
+        strvec_insert_sorted(&deletes, entity->id);
     }
     
     // update or create entities
@@ -68,12 +68,15 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     }
 
     // now, delete old entities
-    LIST_FOREACH(entity, &client->state.entities, pointers)
+    entity = client->state.entities.lh_first;
+    while(entity)
     {
-        if(strvec_find(&deletes, entity->id) != -1) {
-            printf("Deleting entity %s\n", entity->id);
-            LIST_REMOVE(entity, pointers);
-            entity_destroy(entity);
+        allo_entity *to_delete = entity;
+        entity = entity->pointers.le_next;
+        if(strvec_find(&deletes, to_delete->id) == 0) {
+            printf("Deleting entity %s\n", to_delete->id);
+            LIST_REMOVE(to_delete, pointers);
+            entity_destroy(to_delete);
         }
     }
 }

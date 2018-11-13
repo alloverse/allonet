@@ -127,7 +127,7 @@ static void allo_sendstates(alloserver *serv)
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_UNSEQUENCED);
     memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength+1] = '\n';
+    ((char*)packet->data)[jsonlength] = '\n';
     free((void*)json);
     alloserver_client *client;
     LIST_FOREACH(client, &serv->clients, pointers) {

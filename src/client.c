@@ -28,12 +28,19 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
     return NULL;
 }
 
+static allo_vector ntv2vec(const ntv_t *x)
+{
+    const ntv_t *y = x->ntv_children.tqh_first;
+    const ntv_t *z = y->ntv_link.tqe_next;
+    return (allo_vector){x->ntv_double, y->ntv_double, z->ntv_double};
+}
+
 static void parse_statediff(alloclient *client, ENetPacket *packet)
 {
     packet->data[packet->dataLength-1] = 0;
     ntv_t *cmd = ntv_json_deserialize((char*)(packet->data), NULL, 0);
     int64_t rev = ntv_get_int64(cmd, "revision", 0);
-    const ntv_t *entities = ntv_get_map(cmd, "entities");
+    const ntv_t *entities = ntv_get_list(cmd, "entities");
     client->state.revision = rev;
     
     // keep track of entities that aren't mentioned in the incoming list
@@ -56,8 +63,8 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
             printf("Creating entity %s\n", entity->id);
             LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
         }
-        entity->position = (allo_vector){position->ntv_double, position->ntv_link.tqe_next->ntv_double, position->ntv_link.tqe_next->ntv_link.tqe_next->ntv_double};
-        entity->rotation = (allo_vector){rotation->ntv_double, rotation->ntv_link.tqe_next->ntv_double, rotation->ntv_link.tqe_next->ntv_link.tqe_next->ntv_double};
+        entity->position = ntv2vec(position);
+        entity->rotation = ntv2vec(rotation);
     }
 
     // now, delete old entities

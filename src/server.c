@@ -137,6 +137,29 @@ static void allo_sendstates(alloserver *serv)
     }
 }
 
+void server_interact(alloserver *serv, alloserver_client *client, const char *from_entity, const char *to_entity, const char *cmd)
+{
+    ntv_t *cmdrep = ntv_map(
+        "cmd", ntv_str("interact"),
+        "interact", ntv_map(
+            "from_entity", ntv_str(from_entity ?: ""),
+            "to_entity", ntv_str(to_entity ?: ""),
+            "cmd", ntv_str(cmd),
+            NULL
+        ),
+        NULL
+    );
+    const char *json = ntv_json_serialize_to_str(cmdrep, 0);
+    ntv_release(cmdrep);
+
+    int jsonlength = strlen(json);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
+    memcpy(packet->data, json, jsonlength);
+    ((char*)packet->data)[jsonlength+1] = '\n';
+    enet_peer_send(_clientinternal(client)->peer, CHANNEL_COMMANDS, packet);
+    free((void*)json);
+}
+
 alloserver *allo_listen(void)
 {
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
@@ -166,6 +189,7 @@ alloserver *allo_listen(void)
 
     serv->interbeat = allo_poll;
     serv->beat = allo_sendstates;
+    serv->interact = server_interact;
     LIST_INIT(&serv->clients);
     LIST_INIT(&serv->state.entities);
     

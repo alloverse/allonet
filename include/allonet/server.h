@@ -23,7 +23,7 @@ struct alloserver {
     void (*set_state)(alloserver *serv, allo_state state);
     
     // send interaction request to entity owned by client; sent immediately
-    void (*interact)(alloserver *serv, alloserver_client *client, const char *entity_id, const char *cmd);
+    void (*interact)(alloserver *serv, alloserver_client *client, const char *from_entity, const char *to_entity, const char *cmd);
     
     // disconnect a client
     void (*disconnect)(alloserver *serv, alloserver_client *client);
@@ -43,7 +43,7 @@ struct alloserver {
     // list of clients changed; either `added` or `removed` is set.
     void (*clients_callback)(alloserver *serv, alloserver_client *added, alloserver_client *removed);
     // interaction request from a client
-    void (*interaction_callback)(alloserver *serv, alloserver_client *client, const char *entity_id, const char *cmd);
+    void (*interaction_callback)(alloserver *serv, alloserver_client *client, const char *from_entity, const char *to_entity, const char *cmd);
 
     // internal
     void (*send)(alloserver *serv, alloserver_client *client, allo_sendmode mode, const char *buf, int len);

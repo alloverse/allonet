@@ -90,6 +90,24 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
             entity_destroy(to_delete);
         }
     }
+    ntv_release(cmd);
+}
+
+static void parse_interaction(client, ntv_t *cmdrep)
+{
+    //todo
+}
+
+static void parse_command(alloclient *client, ntv_t *cmdrep)
+{
+    const char *cmdname = ntv_get_str(cmdrep, "cmd");
+    if(strcmp(cmdname, "interact") == 0) {
+        parse_interaction(client, cmdrep);
+    } else {
+        const char *dbg = ntv_json_serialize_to_str(cmdrep, 1);
+        printf("Unknown command: %s\n", packet->data);
+        free(dbg);
+    }
 }
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
@@ -97,6 +115,12 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     switch(channel) {
     case CHANNEL_STATEDIFFS:
         parse_statediff(client, packet);
+        break;
+    case CHANNEL_COMMANDS: {
+        ntv_t *cmdrep = ntv_json_deserialize((char*)(packet->data), NULL, 0);
+        parse_command(client, cmdrep);
+        ntv_release(cmdrep);
+        break; }
     default: break;
     }
 }

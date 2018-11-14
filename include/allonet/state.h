@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#pragma pack(push)
+#pragma pack(1)
+
 typedef struct {
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
@@ -33,4 +36,5 @@ typedef struct {
 
 extern bool allo_initialize(bool redirect_stdout);
 
+#pragma pack(pop)
 #endif

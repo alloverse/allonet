@@ -29,11 +29,21 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
     return NULL;
 }
 
-static allo_vector ntv2vec(const ntv_t *x)
+static double ntv2double(const ntv_t *number)
 {
-    const ntv_t *y = x->ntv_children.tqh_first;
+    if(number->ntv_type == NTV_INT)
+        return number->ntv_s64;
+    else if(number->ntv_type == NTV_DOUBLE)
+        return number->ntv_double;
+    return 0;
+}
+
+static allo_vector ntv2vec(const ntv_t *veclist)
+{
+    const ntv_t *x = veclist->ntv_children.tqh_first;
+    const ntv_t *y = x->ntv_link.tqe_next;
     const ntv_t *z = y->ntv_link.tqe_next;
-    return (allo_vector){x->ntv_double, y->ntv_double, z->ntv_double};
+    return (allo_vector){ntv2double(x), ntv2double(y), ntv2double(z)};
 }
 
 static void parse_statediff(alloclient *client, ENetPacket *packet)

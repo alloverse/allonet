@@ -93,9 +93,15 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     ntv_release(cmd);
 }
 
-static void parse_interaction(client, ntv_t *cmdrep)
+static void parse_interaction(alloclient *client, ntv_t *cmdrep)
 {
-    //todo
+    const ntv_t *interaction = ntv_get_map(cmdrep, "interact");
+    const char *from = ntv_get_str(interaction, "from_entity");
+    const char *to = ntv_get_str(interaction, "to_entity");
+    const char *cmd = ntv_get_str(interaction, "cmd");
+    if(client->interaction_callback) {
+        client->interaction_callback(client, from, to, cmd);
+    }
 }
 
 static void parse_command(alloclient *client, ntv_t *cmdrep)
@@ -105,8 +111,8 @@ static void parse_command(alloclient *client, ntv_t *cmdrep)
         parse_interaction(client, cmdrep);
     } else {
         const char *dbg = ntv_json_serialize_to_str(cmdrep, 1);
-        printf("Unknown command: %s\n", packet->data);
-        free(dbg);
+        printf("Unknown command: %s\n", dbg);
+        free((void*)dbg);
     }
 }
 

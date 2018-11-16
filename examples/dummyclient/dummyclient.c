@@ -48,6 +48,12 @@ int getch()
     }
 }
 
+static void interaction(alloclient *client, const char *sender_entity_id, const char *receiver_entity_id, const char *cmd)
+{
+    printf("INTERACTION cmd: %s\n", cmd);
+}
+
+
 int main(int argc, char **argv)
 {
     if(!allo_initialize(false)) {
@@ -59,6 +65,7 @@ int main(int argc, char **argv)
 
     printf("hello microverse\n");
     alloclient *client = allo_connect("alloplace://localhost");
+    client->interaction_callback = interaction;
     for(;;)
     {
         if(kbhit()) {

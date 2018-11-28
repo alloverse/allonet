@@ -61,10 +61,18 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    set_conio_terminal_mode();
+    if(argc != 2) {
+        fprintf(stderr, "Usage: allodummyclient alloplace://hostname:port\n");
+        return -2;
+    }
 
     printf("hello microverse\n");
-    alloclient *client = allo_connect("alloplace://localhost");
+    alloclient *client = allo_connect(argv[1]);
+    if(!client) {
+        return -3;
+    }
+    
+    set_conio_terminal_mode();
     client->interaction_callback = interaction;
     for(;;)
     {

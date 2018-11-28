@@ -199,7 +199,6 @@ static void client_disconnect(alloclient *client, int reason)
 
 alloclient *allo_connect(const char *url)
 {
-    printf("Connecting to localhost\n");
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
             1 /* only allow 1 outgoing connection */,
@@ -213,9 +212,24 @@ alloclient *allo_connect(const char *url)
         return NULL;
     }
 
+    // parse the url in the form of alloplace://hostname{:port}{/}
+    if (strstr(url, "alloplace://") == 0) {
+        fprintf(stderr, "Not an alloplace URL\n");
+        return NULL;
+    }
+    const char *hostandport = strstr(url, "://")+3;
+    const char *port = strstr(hostandport, ":"); if(port) port+=1;
+    const char *slash = strstr(hostandport, "/");
+    char *justhost = strndup(hostandport, port ? port-hostandport-1 : slash ? slash-hostandport : strlen(hostandport));
+    char *justport = (port && slash) ? strndup(port, slash-port) : port ? strdup(port) : NULL;
+    
     ENetAddress address;
-    enet_address_set_host (& address, "localhost");
-    address.port = 21337;
+    enet_address_set_host (& address, justhost);
+    address.port = justport ? atoi(justport) : 21337;
+
+    printf("Connecting to %s:%d\n", justhost, address.port);
+    free(justhost);
+    free(justport);
 
     ENetPeer *peer;
     peer = enet_host_connect (host, & address, 2, 0);    

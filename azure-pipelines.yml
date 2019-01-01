@@ -13,12 +13,15 @@ jobs:
       workingDirectory: 'build' # Optional
       cmakeArgs: ".."
   - script: cd build && make
+    displayName: "Make"
   - task: CopyFiles@2
+    displayName: "Stage artifacts"
     inputs:
       sourceFolder: 'build'
       contents: '(allodummy*|*.so)'
       targetFolder: $(Build.ArtifactStagingDirectory)
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: LinuxBuild
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish artifacts"
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: LinuxBuild

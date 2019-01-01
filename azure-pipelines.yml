@@ -35,7 +35,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: 'build' # Optional
-      cmakeArgs: "-G \"Unix Makefiles\" .."
+      cmakeArgs: ".."
   - script: make
     workingDirectory: build
     displayName: "Make"

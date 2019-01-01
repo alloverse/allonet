@@ -18,10 +18,10 @@ jobs:
   - task: CopyFiles@2
     displayName: "Stage artifacts"
     inputs:
-      sourceFolder: '$(Build.SourcesDirectory)/build'
       contents: |
-        allodummy*
-        *.so
+        include
+        build/allodummy*
+        build/*.so
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"

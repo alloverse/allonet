@@ -52,3 +52,15 @@ jobs:
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: MacBuild
+- job: Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build' # Optional
+      cmakeArgs: "-G \"Unix Makefiles\" .."
+  - task: VSBuild@1
+    displayName: "Visual Studio build"
+    inputs:
+      msbuildArchitecture: 'x64'

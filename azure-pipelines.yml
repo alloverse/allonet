@@ -12,7 +12,7 @@ jobs:
     inputs:
       workingDirectory: 'build' # Optional
       cmakeArgs: ".."
-  - script: cd build && make
+  - script: cd build && make && ls -laR
   - task: PublishPipelineArtifact@0
     inputs:
       artifactName: 'allodummyserv'

@@ -35,7 +35,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: 'build' # Optional
-      cmakeArgs: ".."
+      cmakeArgs: "-G \"Unix Makefiles\" .."
   - script: make
     workingDirectory: build
     displayName: "Make"
@@ -59,7 +59,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: 'build' # Optional
-      cmakeArgs: "-G \"Unix Makefiles\" .."
+      cmakeArgs: ".."
   - task: VSBuild@1
     displayName: "Visual Studio build"
     inputs:

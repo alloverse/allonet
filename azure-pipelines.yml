@@ -13,3 +13,16 @@ jobs:
       workingDirectory: 'build' # Optional
       cmakeArgs: ".."
   - script: cd build && make
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'allodummyserv'
+      targetPath: 'build/allodummyserv'
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'allodummyclient'
+      targetPath: 'build/allodummyclient'
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'liballonet.so'
+      targetPath: 'build/liballonet.so'
+

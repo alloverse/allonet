@@ -19,30 +19,6 @@ jobs:
     displayName: "Stage artifacts"
     inputs:
       contents: |
-        include/*.h
-        build/allodummy*
-        build/*.so
-      targetFolder: $(Build.ArtifactStagingDirectory)
-  - task: PublishBuildArtifacts@1
-    displayName: "Publish artifacts"
-    inputs:
-      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: LinuxBuild
-- job: Mac
-  pool:
-    vmImage: 'ubuntu-16.04'
-  steps:
-  - task: CMake@1
-    inputs:
-      workingDirectory: 'build' # Optional
-      cmakeArgs: ".."
-  - script: make
-    workingDirectory: build
-    displayName: "Make"
-  - task: CopyFiles@2
-    displayName: "Stage artifacts"
-    inputs:
-      contents: |
         include/**/*.h
         build/allodummy*
         build/*.so

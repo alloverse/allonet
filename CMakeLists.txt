@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(allonet VERSION 0.1.0)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(SYSTEM
@@ -52,7 +53,7 @@ add_library(allonet SHARED
     ${SOURCE_FILES}
     ${SVC_FILES}
 )
-target_link_libraries(allonet enet)
+target_link_libraries(allonet enet pthread m)
 
 # server example
 add_executable (allodummyserv examples/dummyserv/dummyserv.c)

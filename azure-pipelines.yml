@@ -19,7 +19,7 @@ jobs:
     displayName: "Stage artifacts"
     inputs:
       contents: |
-        include
+        include/*.h
         build/allodummy*
         build/*.so
       targetFolder: $(Build.ArtifactStagingDirectory)

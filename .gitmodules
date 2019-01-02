@@ -1,3 +1,6 @@
 [submodule "lib/enet"]
 	path = lib/enet
 	url = https://github.com/lsalzman/enet.git
+[submodule "lib/cJSON"]
+	path = lib/cJSON
+	url = https://github.com/DaveGamble/cJSON.git

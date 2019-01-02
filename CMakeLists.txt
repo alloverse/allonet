@@ -7,7 +7,10 @@ include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
     "${PROJECT_SOURCE_DIR}/lib"
 )
-add_subdirectory (lib/enet) 
+add_subdirectory (lib/enet)
+
+SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
+add_subdirectory (lib/cJSON)
 
 # shared library
 
@@ -36,7 +39,7 @@ add_library(allonet SHARED
     ${SOURCE_FILES}
     ${SVC_FILES}
 )
-target_link_libraries(allonet enet pthread m)
+target_link_libraries(allonet enet cjson-static pthread m)
 
 # server example
 add_executable (allodummyserv examples/dummyserv/dummyserv.c)

@@ -24,6 +24,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/client.c
     ${SOURCE_FILES_PREFIX}/server.c
     ${SOURCE_FILES_PREFIX}/state.c
+    ${SOURCE_FILES_PREFIX}/util.c
+    ${SOURCE_FILES_PREFIX}/util.h
 )
 
 source_group(include FILES ${INCLUDE_FILES})

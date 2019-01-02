@@ -1,6 +1,6 @@
 #ifndef ALLONET_SERVER_H
 #define ALLONET_SERVER_H
-#include <sys/queue.h>
+#include "inlinesys/queue.h"
 #include "state.h"
 #include "net.h"
 

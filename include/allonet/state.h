@@ -1,6 +1,6 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
-#include <sys/queue.h>
+#include "inlinesys/queue.h"
 #include <stdint.h>
 #include <stdbool.h>
 

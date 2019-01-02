@@ -5,7 +5,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
-    "${PROJECT_SOURCE_DIR}/lib" # for svc
+    "${PROJECT_SOURCE_DIR}/lib"
 )
 add_subdirectory (lib/enet) 
 
@@ -26,27 +26,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/state.c
 )
 
-set(SVC_PREFIX lib/svc)
-set(SVC_FILES
-    ${SVC_PREFIX}/ntv.h
-    ${SVC_PREFIX}/ntv.c
-    ${SVC_PREFIX}/ntv_json.c
-    ${SVC_PREFIX}/mbuf.h
-    ${SVC_PREFIX}/mbuf.c
-    ${SVC_PREFIX}/trace.c
-    ${SVC_PREFIX}/json.c
-    ${SVC_PREFIX}/misc.h
-    ${SVC_PREFIX}/misc.c
-    ${SVC_PREFIX}/utf8.c
-    ${SVC_PREFIX}/talloc.c
-    ${SVC_PREFIX}/dbl.c
-    ${SVC_PREFIX}/strvec.h
-    ${SVC_PREFIX}/strvec.c
-)
-
 source_group(include FILES ${INCLUDE_FILES})
 source_group(source FILES ${SOURCE_FILES})
-source_group(svc FILES ${SVC_FILES})
 
 add_library(allonet SHARED 
     ${INCLUDE_FILES}

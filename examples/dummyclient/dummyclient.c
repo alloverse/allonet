@@ -4,10 +4,11 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#include <unistd.h>
 #include <sys/select.h>
-#include <termios.h>
 
+#ifndef _WIN32
+#include <termios.h>
+#include <unistd.h>
 struct termios orig_termios;
 
 void reset_terminal_mode()
@@ -48,6 +49,8 @@ int getch()
     }
 }
 
+#endif //ndef _WIN32
+
 static void interaction(alloclient *client, const char *sender_entity_id, const char *receiver_entity_id, const char *cmd)
 {
     printf("INTERACTION cmd: %s\n", cmd);
@@ -71,11 +74,14 @@ int main(int argc, char **argv)
     if(!client) {
         return -3;
     }
-    
+
+#ifndef _WIN32
     set_conio_terminal_mode();
+#endif
     client->interaction_callback = interaction;
     for(;;)
     {
+#ifndef _WIN32
         if(kbhit()) {
             int ch = getch();
             allo_client_intent intent = {
@@ -84,6 +90,7 @@ int main(int argc, char **argv)
             };
             client->set_intent(client, intent);
         }
+#endif
         client->poll(client);
     }
     return 0;

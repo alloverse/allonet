@@ -44,8 +44,8 @@ static void clients_changed(alloserver *serv, alloserver_client *added, alloserv
         allo_entity *entity = entity_create(entity_id);
         LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
         _clientstate(added)->entity = entity;
-        char *cmd = NULL;
-        asprintf(&cmd, "[\"your_avatar\", \"%s\"]", entity_id);
+        char *cmd = malloc(strlen(entity_id)+100);
+        sprintf(cmd, "[\"your_avatar\", \"%s\"]", entity_id);
         serv->interact(serv, added, NULL, NULL, cmd);
         free(cmd);
     } 

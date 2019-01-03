@@ -69,10 +69,9 @@ jobs:
     inputs:
       contents: |
         include/**/*.h
-        build/allodummy*
-        build/**/*.exe
-        build/**/*.dll
-        build/**/*.lib
+        build/**/allo*.exe
+        build/**/allo*.dll
+        build/**/allo*.lib
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"

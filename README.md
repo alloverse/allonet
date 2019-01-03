@@ -1,5 +1,7 @@
 # allonet
 
+[![Build Status](https://dev.azure.com/alloverse/allonet/_apis/build/status/alloverse.allonet?branchName=master)](https://dev.azure.com/alloverse/allonet/_build/latest?definitionId=1?branchName=master)
+
 Alloverse's network API. It can be used as:
 
 * **a 3D UI API**, when by appliances to present its UI to a place's

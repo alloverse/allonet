@@ -8,8 +8,18 @@
 #ifndef util_h
 #define util_h
 #include <stdint.h>
+#include <cjson/cJSON.h>
+#include <allonet/state.h>
 
 int64_t
 get_ts_mono(void);
+
+allo_vector cjson2vec(const cJSON *veclist);
+
+int cjson_find_in_array(cJSON *array, const char *value);
+void cjson_delete_from_array(cJSON *array, const char *value);
+cJSON *cjson_create_object(const char *key, cJSON *value, ...);
+cJSON *cjson_create_list(cJSON *value, ...);
+
 
 #endif /* util_h */

@@ -3,7 +3,6 @@
 #include <cjson/cJSON.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include "util.h"
 
 typedef struct {
@@ -28,54 +27,6 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
     }
     return NULL;
 }
-
-#pragma mark - Utilities
-static allo_vector cjson2vec(const cJSON *veclist)
-{
-    const cJSON *x = cJSON_GetArrayItem(veclist, 0);
-    const cJSON *y = cJSON_GetArrayItem(veclist, 1);
-    const cJSON *z = cJSON_GetArrayItem(veclist, 2);
-    return (allo_vector){x->valuedouble, y->valuedouble, z->valuedouble};
-}
-
-static int cjson_find_in_array(cJSON *array, const char *value)
-{
-    int i = 0;
-    const cJSON *child = NULL;
-    cJSON_ArrayForEach(child, array) {
-        if(strcmp(child->valuestring, value) == 0) {
-            return i;
-        }
-        i++;
-    }
-    return -1;
-}
-static void cjson_delete_from_array(cJSON *array, const char *value)
-{
-    int index = cjson_find_in_array(array, value);
-    if(index != -1) {
-        cJSON_DeleteItemFromArray(array, index);
-    }
-}
-
-static cJSON *cjson_create_object(const char *key, cJSON *value, ...)
-{
-    cJSON *parent = cJSON_CreateObject();
-    va_list args;
-    va_start(args, value);
-    while(key != NULL && value != NULL) {
-        cJSON_AddItemToObject(parent, key, value);
-        
-        key = va_arg(args, const char *);
-        if(key) {
-            value = va_arg(args, cJSON *);
-        }
-    }
-    va_end(args);
-    return parent;
-}
-
-#pragma mark - Business logic
 
 static void parse_statediff(alloclient *client, ENetPacket *packet)
 {

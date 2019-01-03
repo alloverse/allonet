@@ -39,7 +39,7 @@ add_library(allonet SHARED
     ${SOURCE_FILES}
     ${SVC_FILES}
 )
-target_link_libraries(allonet enet cjson-static m)
+target_link_libraries(allonet enet cjson-static)
 
 # server example
 add_executable (allodummyserv examples/dummyserv/dummyserv.c)

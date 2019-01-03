@@ -39,7 +39,14 @@ add_library(allonet SHARED
     ${SOURCE_FILES}
     ${SVC_FILES}
 )
-target_link_libraries(allonet enet cjson-static)
+
+IF(WIN32)
+  SET(PLATFORM_LIBS ws2_32 winmm)
+ELSE()
+  SET(PLATFORM_LIBS "")
+ENDIF(WIN32)
+
+target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS})
 
 # server example
 add_executable (allodummyserv examples/dummyserv/dummyserv.c)

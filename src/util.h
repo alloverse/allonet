@@ -8,7 +8,7 @@
 #ifndef util_h
 #define util_h
 #include <stdint.h>
-#include <cjson/cJSON.h>
+#include <cJSON/cJSON.h>
 #include <allonet/state.h>
 
 int64_t

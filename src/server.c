@@ -2,7 +2,7 @@
 #include <enet/enet.h>
 #include <stdio.h>
 #include <string.h>
-#include <cjson/cJSON.h>
+#include <cJSON/cJSON.h>
 #include "util.h"
 
 typedef struct {

@@ -1,6 +1,6 @@
 #include <allonet/client.h>
 #include <enet/enet.h>
-#include <cjson/cJSON.h>
+#include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
 #include "util.h"

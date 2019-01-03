@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(SYSTEM

@@ -1,10 +1,10 @@
 #include <allonet/client.h>
 #include <enet/enet.h>
+#include <cjson/cJSON.h>
 #include <stdio.h>
-#include <svc/ntv.h>
-#include <svc/misc.h>
 #include <string.h>
-#include <svc/strvec.h>
+#include <stdarg.h>
+#include "util.h"
 
 typedef struct {
     ENetHost *host;
@@ -29,53 +29,85 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
     return NULL;
 }
 
-static double ntv2double(const ntv_t *number)
+#pragma mark - Utilities
+static allo_vector cjson2vec(const cJSON *veclist)
 {
-    if(number->ntv_type == NTV_INT)
-        return number->ntv_s64;
-    else if(number->ntv_type == NTV_DOUBLE)
-        return number->ntv_double;
-    return 0;
+    const cJSON *x = cJSON_GetArrayItem(veclist, 0);
+    const cJSON *y = cJSON_GetArrayItem(veclist, 1);
+    const cJSON *z = cJSON_GetArrayItem(veclist, 2);
+    return (allo_vector){x->valuedouble, y->valuedouble, z->valuedouble};
 }
 
-static allo_vector ntv2vec(const ntv_t *veclist)
+static int cjson_find_in_array(cJSON *array, const char *value)
 {
-    const ntv_t *x = veclist->ntv_children.tqh_first;
-    const ntv_t *y = x->ntv_link.tqe_next;
-    const ntv_t *z = y->ntv_link.tqe_next;
-    return (allo_vector){ntv2double(x), ntv2double(y), ntv2double(z)};
+    int i = 0;
+    const cJSON *child = NULL;
+    cJSON_ArrayForEach(child, array) {
+        if(strcmp(child->valuestring, value) == 0) {
+            return i;
+        }
+        i++;
+    }
+    return -1;
 }
+static void cjson_delete_from_array(cJSON *array, const char *value)
+{
+    int index = cjson_find_in_array(array, value);
+    if(index != -1) {
+        cJSON_DeleteItemFromArray(array, index);
+    }
+}
+
+static cJSON *cjson_create_object(const char *key, cJSON *value, ...)
+{
+    cJSON *parent = cJSON_CreateObject();
+    va_list args;
+    va_start(args, value);
+    while(key != NULL && value != NULL) {
+        cJSON_AddItemToObject(parent, key, value);
+        
+        key = va_arg(args, const char *);
+        if(key) {
+            value = va_arg(args, cJSON *);
+        }
+    }
+    va_end(args);
+    return parent;
+}
+
+#pragma mark - Business logic
 
 static void parse_statediff(alloclient *client, ENetPacket *packet)
 {
     packet->data[packet->dataLength-1] = 0;
-    ntv_t *cmd = ntv_json_deserialize((char*)(packet->data), NULL, 0);
-    int64_t rev = ntv_get_int64(cmd, "revision", 0);
-    const ntv_t *entities = ntv_get_list(cmd, "entities");
+    cJSON *cmd = cJSON_Parse((const char*)(packet->data));
+    int64_t rev = cJSON_GetObjectItem(cmd, "revision")->valueint;
+    const cJSON *entities = cJSON_GetObjectItem(cmd, "entities");
     client->state.revision = rev;
     
     // keep track of entities that aren't mentioned in the incoming list
-    scoped_strvec(deletes);
+    cJSON *deletes = cJSON_CreateArray();
     allo_entity *entity = NULL;
     LIST_FOREACH(entity, &client->state.entities, pointers)
     {
-        strvec_insert_sorted(&deletes, entity->id);
+        cJSON_AddItemToArray(deletes, cJSON_CreateString(entity->id));
     }
     
     // update or create entities
-    NTV_FOREACH(edesc, entities) {
-        const char *entity_id = ntv_get_str(edesc, "id");
-        strvec_delete_value(&deletes, entity_id);
-        const ntv_t *position = ntv_get_list(edesc, "position");
-        const ntv_t *rotation = ntv_get_list(edesc, "rotation");
+    const cJSON *edesc = NULL;
+    cJSON_ArrayForEach(edesc, entities) {
+        const char *entity_id = cJSON_GetObjectItem(edesc, "id")->valuestring;
+        cjson_delete_from_array(deletes, entity_id);
+        const cJSON *position = cJSON_GetObjectItem(edesc, "position");
+        const cJSON *rotation = cJSON_GetObjectItem(edesc, "rotation");
         allo_entity *entity = get_entity(client, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
             printf("Creating entity %s\n", entity->id);
             LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
         }
-        entity->position = ntv2vec(position);
-        entity->rotation = ntv2vec(rotation);
+        entity->position = cjson2vec(position);
+        entity->rotation = cjson2vec(rotation);
     }
 
     // now, delete old entities
@@ -84,35 +116,34 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     {
         allo_entity *to_delete = entity;
         entity = entity->pointers.le_next;
-        if(strvec_find(&deletes, to_delete->id) == 0) {
+        if(cjson_find_in_array(deletes, to_delete->id) != -1) {
             printf("Deleting entity %s\n", to_delete->id);
             LIST_REMOVE(to_delete, pointers);
             entity_destroy(to_delete);
         }
     }
-    ntv_release(cmd);
+    cJSON_free(cmd);
+    cJSON_free(deletes);
 }
 
-static void parse_interaction(alloclient *client, ntv_t *cmdrep)
+static void parse_interaction(alloclient *client, cJSON *cmdrep)
 {
-    const ntv_t *interaction = ntv_get_map(cmdrep, "interact");
-    const char *from = ntv_get_str(interaction, "from_entity");
-    const char *to = ntv_get_str(interaction, "to_entity");
-    const char *cmd = ntv_get_str(interaction, "cmd");
+    const cJSON *interaction = cJSON_GetObjectItem(cmdrep, "interact");
+    const char *from = cJSON_GetObjectItem(interaction, "from_entity")->valuestring;
+    const char *to = cJSON_GetObjectItem(interaction, "to_entity")->valuestring;
+    const char *cmd = cJSON_GetObjectItem(interaction, "cmd")->valuestring;
     if(client->interaction_callback) {
         client->interaction_callback(client, from, to, cmd);
     }
 }
 
-static void parse_command(alloclient *client, ntv_t *cmdrep)
+static void parse_command(alloclient *client, cJSON *cmdrep)
 {
-    const char *cmdname = ntv_get_str(cmdrep, "cmd");
+    const char *cmdname = cJSON_GetObjectItem(cmdrep, "cmd")->valuestring;
     if(strcmp(cmdname, "interact") == 0) {
         parse_interaction(client, cmdrep);
     } else {
-        const char *dbg = ntv_json_serialize_to_str(cmdrep, 1);
-        printf("Unknown command: %s\n", dbg);
-        free((void*)dbg);
+        printf("Unknown command: %s\n", cmdrep->string);
     }
 }
 
@@ -123,9 +154,9 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         parse_statediff(client, packet);
         break;
     case CHANNEL_COMMANDS: {
-        ntv_t *cmdrep = ntv_json_deserialize((char*)(packet->data), NULL, 0);
+        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         parse_command(client, cmdrep);
-        ntv_release(cmdrep);
+        cJSON_free(cmdrep);
         break; }
     default: break;
     }
@@ -152,19 +183,19 @@ static void client_poll(alloclient *client)
 
 static void client_sendintent(alloclient *client, allo_client_intent intent)
 {
-    ntv_t *cmdrep = ntv_map(
-        "cmd", ntv_str("intent"),
-        "intent", ntv_map(
-            "zmovement", ntv_double(intent.zmovement),
-            "xmovement", ntv_double(intent.xmovement),
-            "yaw", ntv_double(intent.yaw),
-            "pitch", ntv_double(intent.pitch),
+    cJSON *cmdrep = cjson_create_object(
+        "cmd", cJSON_CreateString("intent"),
+        "intent", cjson_create_object(
+            "zmovement", cJSON_CreateNumber(intent.zmovement),
+            "xmovement", cJSON_CreateNumber(intent.xmovement),
+            "yaw", cJSON_CreateNumber(intent.yaw),
+            "pitch", cJSON_CreateNumber(intent.pitch),
             NULL
         ),
         NULL
     );
-    const char *json = ntv_json_serialize_to_str(cmdrep, 0);
-    ntv_release(cmdrep);
+    const char *json = cJSON_Print(cmdrep);
+    cJSON_free(cmdrep);
 
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);

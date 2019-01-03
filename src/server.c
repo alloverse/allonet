@@ -143,8 +143,8 @@ void server_interact(alloserver *serv, alloserver_client *client, const char *fr
     cJSON *cmdrep = cjson_create_object(
         "cmd", cJSON_CreateString("interact"),
         "interact", cjson_create_object(
-            "from_entity", cJSON_CreateString(from_entity ?: ""),
-            "to_entity", cJSON_CreateString(to_entity ?: ""),
+            "from_entity", cJSON_CreateString(from_entity ? from_entity : ""),
+            "to_entity", cJSON_CreateString(to_entity ? to_entity : ""),
             "cmd", cJSON_CreateString(cmd),
             NULL
         ),

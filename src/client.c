@@ -162,7 +162,8 @@ static void client_disconnect(alloclient *client, int reason)
     int now = get_ts_mono();
     int started_at = now;
     int end_at = started_at + 1000;
-    ENetEvent event = {};
+    ENetEvent event;
+    bzero(&event, sizeof(event));
     while(now < end_at) {
         enet_host_service(_internal(client)->host, & event, end_at-now);
         if(event.type == ENET_EVENT_TYPE_DISCONNECT) {

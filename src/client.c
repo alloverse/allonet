@@ -163,7 +163,7 @@ static void client_disconnect(alloclient *client, int reason)
     int started_at = now;
     int end_at = started_at + 1000;
     ENetEvent event;
-    bzero(&event, sizeof(event));
+    memset(&event, 0, sizeof(event));
     while(now < end_at) {
         enet_host_service(_internal(client)->host, & event, end_at-now);
         if(event.type == ENET_EVENT_TYPE_DISCONNECT) {
@@ -203,14 +203,14 @@ alloclient *allo_connect(const char *url)
     const char *hostandport = strstr(url, "://")+3;
     const char *port = strstr(hostandport, ":"); if(port) port+=1;
     const char *slash = strstr(hostandport, "/");
-    char *justhost = strndup(hostandport,
+    char *justhost = allo_strndup(hostandport,
         port ? // if host part contains port descriptor...
             (int)(port-hostandport-1) : // dup up until and excluding the colon
             slash ? // otherwise, if there's a slash...
                 (int)(slash-hostandport) : // dup up until and excluding the slash
                 strlen(hostandport) // otherwise, dup the whole string
     );
-    char *justport = (port && slash) ? strndup(port, slash-port) : port ? strdup(port) : NULL;
+    char *justport = (port && slash) ? allo_strndup(port, slash-port) : port ? strdup(port) : NULL;
     
     ENetAddress address;
     enet_address_set_host (& address, justhost);

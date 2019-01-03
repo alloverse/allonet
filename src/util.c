@@ -7,6 +7,7 @@
 
 #include "util.h"
 #include <time.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #ifdef _WIN32
@@ -81,4 +82,13 @@ cJSON *cjson_create_list(cJSON *value, ...)
     }
     va_end(args);
     return parent;
+}
+
+char *allo_strndup(const char *src, size_t n)
+{
+    char *dest = calloc(1, n+1);
+    for(size_t i = 0; i < n; i++) {
+        dest[i] = src[i];
+    }
+    return dest;
 }

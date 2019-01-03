@@ -43,7 +43,7 @@ add_library(allonet SHARED
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)
 ELSE()
-  SET(PLATFORM_LIBS "")
+  SET(PLATFORM_LIBS m)
 ENDIF(WIN32)
 
 target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS})

@@ -27,7 +27,7 @@ jobs:
     displayName: "Publish artifacts"
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: LinuxBuild
+      artifactName: Allonet-Linux-x64
 - job: Mac
   pool:
     vmImage: 'macOS-10.13'
@@ -51,7 +51,7 @@ jobs:
     displayName: "Publish artifacts"
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: MacBuild
+      artifactName: Allonet-Mac-x64
 - job: Windows
   pool:
     vmImage: 'vs2017-win2016'
@@ -64,3 +64,18 @@ jobs:
     displayName: "Visual Studio build"
     inputs:
       msbuildArchitecture: 'x64'
+  - task: CopyFiles@2
+    displayName: "Stage artifacts"
+    inputs:
+      contents: |
+        include/**/*.h
+        build/allodummy*
+        build/**/*.exe
+        build/**/*.dll
+        build/**/*.lib
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish artifacts"
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: Allonet-Windows-x64

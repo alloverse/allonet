@@ -1,8 +1,9 @@
 #include <allonet/server.h>
 #include <enet/enet.h>
 #include <stdio.h>
-#include <svc/ntv.h>
 #include <string.h>
+#include <cjson/cJSON.h>
+#include "util.h"
 
 typedef struct {
     ENetHost *enet;
@@ -69,15 +70,15 @@ static void allo_poll(alloserver *serv, int timeout)
         alloserver_client *client = (alloserver_client*)event.peer->data;
         
         event.packet->data[event.packet->dataLength-1] = 0;
-        ntv_t *cmd = ntv_json_deserialize((char*)(event.packet->data), NULL, 0);
-        const char *cmdname = ntv_get_str(cmd, "cmd");
+        cJSON *cmd = cJSON_Parse((char*)(event.packet->data));
+        const char *cmdname = cJSON_GetObjectItem(cmd, "cmd")->valuestring;
         if(strcmp(cmdname, "intent") == 0) {
-            const ntv_t *ntvintent = ntv_get_map(cmd, "intent");
+            const cJSON *ntvintent = cJSON_GetObjectItem(cmd, "intent");
             allo_client_intent intent = {
-                .zmovement = ntv_get_double(ntvintent, "zmovement", 0),
-                .xmovement = ntv_get_double(ntvintent, "xmovement", 0),
-                .yaw = ntv_get_double(ntvintent, "yaw", 0),
-                .pitch = ntv_get_double(ntvintent, "pitch", 0),
+                .zmovement = cJSON_GetObjectItem(ntvintent, "zmovement")->valuedouble,
+                .xmovement = cJSON_GetObjectItem(ntvintent, "xmovement")->valuedouble,
+                .yaw = cJSON_GetObjectItem(ntvintent, "yaw")->valuedouble,
+                .pitch = cJSON_GetObjectItem(ntvintent, "pitch")->valuedouble,
             };
             client->intent = intent;
         } else {
@@ -85,6 +86,7 @@ static void allo_poll(alloserver *serv, int timeout)
         }
 
         enet_packet_destroy (event.packet);
+        cJSON_free(cmd);
         
         break; }
     
@@ -104,26 +106,25 @@ static void allo_poll(alloserver *serv, int timeout)
 
 static void allo_sendstates(alloserver *serv)
 {
-    ntv_t *entities_rep = ntv_create_list();
+    cJSON *entities_rep = cJSON_CreateArray();
     allo_entity *entity = NULL;
     LIST_FOREACH(entity, &serv->state.entities, pointers) {
-        ntv_t *entity_rep = ntv_map(
-            "id", ntv_str(entity->id),
-            "position", ntv_list(ntv_double(entity->position.x), ntv_double(entity->position.y), ntv_double(entity->position.z), NULL),
-            "rotation", ntv_list(ntv_double(entity->rotation.x), ntv_double(entity->rotation.y), ntv_double(entity->rotation.z), NULL),
+        cJSON *entity_rep = cjson_create_object(
+            "id", cJSON_CreateString(entity->id),
+            "position", cjson_create_list(cJSON_CreateNumber(entity->position.x), cJSON_CreateNumber(entity->position.y), cJSON_CreateNumber(entity->position.z), NULL),
+            "rotation", cjson_create_list(cJSON_CreateNumber(entity->rotation.x), cJSON_CreateNumber(entity->rotation.y), cJSON_CreateNumber(entity->rotation.z), NULL),
             NULL
         );
-        entity_rep->ntv_parent = entities_rep;
-        TAILQ_INSERT_TAIL(&entities_rep->ntv_children, entity_rep, ntv_link);
+        cJSON_AddItemToArray(entities_rep, entity_rep);
     }
-    ntv_t *map = ntv_map(
+    cJSON *map = cjson_create_object(
         "entities", entities_rep, 
-        "revision", ntv_int(serv->state.revision++),
+        "revision", cJSON_CreateNumber(serv->state.revision++),
         NULL
     );
-    const char *json = ntv_json_serialize_to_str(map, 0);
+    const char *json = cJSON_Print(map);
     printf("STATE: %s\n", json);
-    ntv_release(map);
+    cJSON_free(map);
 
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_UNSEQUENCED);
@@ -139,18 +140,18 @@ static void allo_sendstates(alloserver *serv)
 
 void server_interact(alloserver *serv, alloserver_client *client, const char *from_entity, const char *to_entity, const char *cmd)
 {
-    ntv_t *cmdrep = ntv_map(
-        "cmd", ntv_str("interact"),
-        "interact", ntv_map(
-            "from_entity", ntv_str(from_entity ?: ""),
-            "to_entity", ntv_str(to_entity ?: ""),
-            "cmd", ntv_str(cmd),
+    cJSON *cmdrep = cjson_create_object(
+        "cmd", cJSON_CreateString("interact"),
+        "interact", cjson_create_object(
+            "from_entity", cJSON_CreateString(from_entity ?: ""),
+            "to_entity", cJSON_CreateString(to_entity ?: ""),
+            "cmd", cJSON_CreateString(cmd),
             NULL
         ),
         NULL
     );
-    const char *json = ntv_json_serialize_to_str(cmdrep, 0);
-    ntv_release(cmdrep);
+    const char *json = cJSON_Print(cmdrep);
+    cJSON_free(cmdrep);
 
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);

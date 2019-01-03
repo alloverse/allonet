@@ -11,8 +11,7 @@
 #include <cJSON/cJSON.h>
 #include <allonet/state.h>
 
-int64_t
-get_ts_mono(void);
+int64_t get_ts_mono(void);
 
 allo_vector cjson2vec(const cJSON *veclist);
 

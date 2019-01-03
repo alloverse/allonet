@@ -9,13 +9,20 @@
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 int64_t
 get_ts_mono(void)
 {
+#ifdef _WIN32
+  return GetTickCount64();
+#else
   struct timespec tv;
   clock_gettime(CLOCK_MONOTONIC, &tv);
   return (int64_t)tv.tv_sec * 1000000LL + (tv.tv_nsec / 1000);
+#endif
 }
 
 allo_vector cjson2vec(const cJSON *veclist)

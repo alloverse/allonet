@@ -5,13 +5,6 @@
 #include <string.h>
 #include <math.h>
 
-double gettime()
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec + ts.tv_nsec/(double)1e9;
-}
-
 typedef struct dummy_clientstate
 {
     allo_entity *entity;
@@ -25,6 +18,9 @@ static dummy_clientstate *_clientstate(alloserver_client *client)
     }
     return state;
 }
+
+// from private util :P
+extern int64_t get_ts_mono(void);
 
 static void move_stuff_around(alloserver *serv, double delta)
 {
@@ -75,9 +71,9 @@ int main(int argc, char **argv) {
     double time_per_frame = 1/20.0;
 
     for(;;) {
-        double frame_start = gettime();
+        double frame_start = get_ts_mono();
         for(;;) {
-            double elapsed = gettime() - frame_start;
+            double elapsed = get_ts_mono() - frame_start;
             double remaining = time_per_frame - elapsed;
             if(elapsed > time_per_frame) break;
             serv->interbeat(serv, remaining*1000);

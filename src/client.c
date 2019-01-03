@@ -203,7 +203,13 @@ alloclient *allo_connect(const char *url)
     const char *hostandport = strstr(url, "://")+3;
     const char *port = strstr(hostandport, ":"); if(port) port+=1;
     const char *slash = strstr(hostandport, "/");
-    char *justhost = strndup(hostandport, port ? port-hostandport-1 : slash ? slash-hostandport : strlen(hostandport));
+    char *justhost = strndup(hostandport,
+        port ? // if host part contains port descriptor...
+            (int)(port-hostandport-1) : // dup up until and excluding the colon
+            slash ? // otherwise, if there's a slash...
+                (int)(slash-hostandport) : // dup up until and excluding the slash
+                strlen(hostandport) // otherwise, dup the whole string
+    );
     char *justport = (port && slash) ? strndup(port, slash-port) : port ? strdup(port) : NULL;
     
     ENetAddress address;

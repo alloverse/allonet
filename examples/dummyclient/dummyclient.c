@@ -4,11 +4,11 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#include <sys/select.h>
 
 #ifndef _WIN32
 #include <termios.h>
 #include <unistd.h>
+#include <sys/select.h>
 struct termios orig_termios;
 
 void reset_terminal_mode()

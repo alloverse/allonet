@@ -10,7 +10,7 @@ jobs:
   steps:
   - task: CMake@1
     inputs:
-      workingDirectory: 'build' # Optional
+      workingDirectory: 'build'
       cmakeArgs: ".."
   - script: make
     workingDirectory: build
@@ -28,13 +28,15 @@ jobs:
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: Allonet-Linux-x64
+
+
 - job: Mac
   pool:
     vmImage: 'macOS-10.13'
   steps:
   - task: CMake@1
     inputs:
-      workingDirectory: 'build' # Optional
+      workingDirectory: 'build'
       cmakeArgs: "-G \"Unix Makefiles\" .."
   - script: make
     workingDirectory: build
@@ -52,13 +54,15 @@ jobs:
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: Allonet-Mac-x64
+
+
 - job: Windows
   pool:
     vmImage: 'vs2017-win2016'
   steps:
   - task: CMake@1
     inputs:
-      workingDirectory: 'build' # Optional
+      workingDirectory: 'build'
       cmakeArgs: ".."
   - task: VSBuild@1
     displayName: "Visual Studio build"
@@ -78,3 +82,29 @@ jobs:
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: Allonet-Windows-x64
+
+
+#- job: Android
+#  pool:
+#    vmImage: 'macOS-10.13'
+#  steps:
+#  - task: Gradle@2
+#    inputs:
+#      workingDirectory: ''
+#      gradleWrapperFile: 'gradlew'
+#      gradleOptions: '-Xmx3072m'
+#      publishJUnitResults: false
+#      testResultsFiles: '**/TEST-*.xml'
+#      tasks: 'assembleDebug'
+#  - task: CopyFiles@2
+#    displayName: "Stage artifacts"
+#    inputs:
+#      contents: |
+#        include/**/*.h
+#        build/**/allo*.so
+#      targetFolder: $(Build.ArtifactStagingDirectory)
+#  - task: PublishBuildArtifacts@1
+#    displayName: "Publish artifacts"
+#    inputs:
+#      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#      artifactName: Allonet-Android

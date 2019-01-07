@@ -34,6 +34,16 @@ allo_vector cjson2vec(const cJSON *veclist)
     return (allo_vector){x->valuedouble, y->valuedouble, z->valuedouble};
 }
 
+cJSON *vec2cjson(allo_vector vec)
+{
+    return cjson_create_list(
+        cJSON_CreateNumber(vec.x),
+        cJSON_CreateNumber(vec.y),
+        cJSON_CreateNumber(vec.z),
+        NULL
+    );
+}
+
 int cjson_find_in_array(cJSON *array, const char *value)
 {
     int i = 0;

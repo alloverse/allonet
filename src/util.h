@@ -14,6 +14,7 @@
 int64_t get_ts_mono(void);
 
 allo_vector cjson2vec(const cJSON *veclist);
+cJSON *vec2cjson(allo_vector vec);
 
 int cjson_find_in_array(cJSON *array, const char *value);
 void cjson_delete_from_array(cJSON *array, const char *value);

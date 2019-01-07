@@ -111,10 +111,9 @@ static void allo_sendstates(alloserver *serv)
     LIST_FOREACH(entity, &serv->state.entities, pointers) {
         cJSON *entity_rep = cjson_create_object(
             "id", cJSON_CreateString(entity->id),
-            "position", cjson_create_list(cJSON_CreateNumber(entity->position.x), cJSON_CreateNumber(entity->position.y), cJSON_CreateNumber(entity->position.z), NULL),
-            "rotation", cjson_create_list(cJSON_CreateNumber(entity->rotation.x), cJSON_CreateNumber(entity->rotation.y), cJSON_CreateNumber(entity->rotation.z), NULL),
             NULL
         );
+        cJSON_AddItemReferenceToObject(entity_rep, "components", entity->components);
         cJSON_AddItemToArray(entities_rep, entity_rep);
     }
     cJSON *map = cjson_create_object(

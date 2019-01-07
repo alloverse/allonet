@@ -45,20 +45,19 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     }
     
     // update or create entities
-    const cJSON *edesc = NULL;
+    cJSON *edesc = NULL;
     cJSON_ArrayForEach(edesc, entities) {
         const char *entity_id = cJSON_GetObjectItem(edesc, "id")->valuestring;
         cjson_delete_from_array(deletes, entity_id);
-        const cJSON *position = cJSON_GetObjectItem(edesc, "position");
-        const cJSON *rotation = cJSON_GetObjectItem(edesc, "rotation");
+        cJSON *components = cJSON_DetachItemFromObject(edesc, "components");
         allo_entity *entity = get_entity(client, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
             printf("Creating entity %s\n", entity->id);
             LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
         }
-        entity->position = cjson2vec(position);
-        entity->rotation = cjson2vec(rotation);
+        cJSON_Delete(entity->components);
+        entity->components = components;
     }
 
     // now, delete old entities

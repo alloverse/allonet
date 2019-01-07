@@ -3,6 +3,7 @@
 #include "inlinesys/queue.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <cJSON/cJSON.h>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -20,9 +21,12 @@ typedef struct {
 
 typedef struct allo_entity {
     char *id;
-    allo_vector position;
-    allo_vector rotation; // radians
-
+    
+    // exposing implementation detail json isn't _great_ but best I got atm.
+    // See https://github.com/alloverse/docs/blob/master/specifications/components.md for official
+    // contained values
+    cJSON *components;
+    
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
 

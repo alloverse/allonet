@@ -21,6 +21,9 @@ static dummy_clientstate *_clientstate(alloserver_client *client)
 
 // from private util :P
 extern int64_t get_ts_mono(void);
+allo_vector cjson2vec(const cJSON *veclist);
+cJSON *vec2cjson(allo_vector vec);
+cJSON *cjson_create_object(const char *key, cJSON *value, ...);
 
 static void move_stuff_around(alloserver *serv, double delta)
 {
@@ -28,10 +31,17 @@ static void move_stuff_around(alloserver *serv, double delta)
     LIST_FOREACH(client, &serv->clients, pointers)
     {
         allo_entity *entity = _clientstate(client)->entity;
-        entity->position.x += cos(client->intent.pitch)*client->intent.xmovement*delta + sin(client->intent.pitch)*client->intent.zmovement*delta;
-        entity->position.z += sin(client->intent.pitch)*client->intent.xmovement*delta + cos(client->intent.pitch)*client->intent.zmovement*delta;
-        entity->rotation.x = client->intent.pitch;
-        entity->rotation.y = client->intent.yaw;
+        cJSON *transform = cJSON_GetObjectItem(entity->components, "transform");
+        allo_vector position = cjson2vec(cJSON_GetObjectItem(transform, "position"));
+        allo_vector rotation = cjson2vec(cJSON_GetObjectItem(transform, "rotation"));
+        
+        position.x += cos(client->intent.pitch)*client->intent.xmovement*delta + sin(client->intent.pitch)*client->intent.zmovement*delta;
+        position.z += sin(client->intent.pitch)*client->intent.xmovement*delta + cos(client->intent.pitch)*client->intent.zmovement*delta;
+        rotation.x = client->intent.pitch;
+        rotation.y = client->intent.yaw;
+        
+        cJSON_ReplaceItemInObject(transform, "position", vec2cjson(position));
+        cJSON_ReplaceItemInObject(transform, "rotation", vec2cjson(rotation));
     }
 }
 
@@ -42,6 +52,14 @@ static void clients_changed(alloserver *serv, alloserver_client *added, alloserv
         char entity_id[32];
         snprintf(entity_id, 32, "%p", added);
         allo_entity *entity = entity_create(entity_id);
+        entity->components = cjson_create_object(
+            "transform", cjson_create_object(
+                "position", vec2cjson((allo_vector){}),
+                "rotation", vec2cjson((allo_vector){}),
+                NULL
+            ),
+            NULL
+        );
         LIST_INSERT_HEAD(&serv->state.entities, entity, pointers);
         _clientstate(added)->entity = entity;
         char *cmd = malloc(strlen(entity_id)+100);

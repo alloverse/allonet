@@ -72,8 +72,8 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
             entity_destroy(to_delete);
         }
     }
-    cJSON_free(cmd);
-    cJSON_free(deletes);
+    cJSON_Delete(cmd);
+    cJSON_Delete(deletes);
 }
 
 static void parse_interaction(alloclient *client, cJSON *cmdrep)
@@ -106,7 +106,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     case CHANNEL_COMMANDS: {
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         parse_command(client, cmdrep);
-        cJSON_free(cmdrep);
+        cJSON_Delete(cmdrep);
         break; }
     default: break;
     }
@@ -145,7 +145,7 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
         NULL
     );
     const char *json = cJSON_Print(cmdrep);
-    cJSON_free(cmdrep);
+    cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);

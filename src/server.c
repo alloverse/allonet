@@ -86,7 +86,7 @@ static void allo_poll(alloserver *serv, int timeout)
         }
 
         enet_packet_destroy (event.packet);
-        cJSON_free(cmd);
+        cJSON_Delete(cmd);
         
         break; }
     
@@ -123,7 +123,7 @@ static void allo_sendstates(alloserver *serv)
     );
     const char *json = cJSON_Print(map);
     printf("STATE: %s\n", json);
-    cJSON_free(map);
+    cJSON_Delete(map);
 
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_UNSEQUENCED);
@@ -150,7 +150,7 @@ void server_interact(alloserver *serv, alloserver_client *client, const char *fr
         NULL
     );
     const char *json = cJSON_Print(cmdrep);
-    cJSON_free(cmdrep);
+    cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);

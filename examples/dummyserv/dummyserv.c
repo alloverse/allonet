@@ -52,10 +52,12 @@ static void clients_changed(alloserver *serv, alloserver_client *added, alloserv
         char entity_id[32];
         snprintf(entity_id, 32, "%p", added);
         allo_entity *entity = entity_create(entity_id);
+        allo_vector zero;
+        memset(&zero, 0, sizeof(zero));
         entity->components = cjson_create_object(
             "transform", cjson_create_object(
-                "position", vec2cjson((allo_vector){}),
-                "rotation", vec2cjson((allo_vector){}),
+                "position", vec2cjson(zero),
+                "rotation", vec2cjson(zero),
                 NULL
             ),
             NULL

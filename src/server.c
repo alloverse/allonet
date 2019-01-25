@@ -195,3 +195,8 @@ alloserver *allo_listen(void)
     
     return serv;
 }
+
+int allo_socket_for_select(alloserver *serv)
+{
+    return _servinternal(serv)->enet->socket;
+}

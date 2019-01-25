@@ -56,4 +56,7 @@ struct alloserver {
 
 alloserver *allo_listen(void);
 
+// internal
+int allo_socket_for_select(alloserver *server);
+
 #endif

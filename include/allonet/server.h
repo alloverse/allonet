@@ -31,8 +31,8 @@ struct alloserver {
     // gracefully disconnect all clients and stop listening, and free `serv`. blocks.
     void (*stop)(alloserver *serv, int timeout_ms);
 
-    // handle incoming events for at most duration_ms
-    void (*interbeat)(alloserver *serv, int duration_ms);
+    // handle incoming events for at most duration_ms. returns true if event was handled
+    bool (*interbeat)(alloserver *serv, int duration_ms);
     // send state diff to clients. call with an even cadence (e g 20hz)
     void (*beat)(alloserver *serv);
     

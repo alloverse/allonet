@@ -43,7 +43,7 @@ static void allo_free(alloserver *serv)
     free(serv);
 }
 
-static void allo_poll(alloserver *serv, int timeout)
+static bool allo_poll(alloserver *serv, int timeout)
 {
     ENetEvent event;
     enet_host_service (_servinternal(serv)->enet, &event, timeout);
@@ -100,8 +100,10 @@ static void allo_poll(alloserver *serv, int timeout)
         }
         alloserv_client_free(client);
         break; }
-    case ENET_EVENT_TYPE_NONE:break;
+    case ENET_EVENT_TYPE_NONE:
+        return false;
     }
+    return true;
 }
 
 static void allo_sendstates(alloserver *serv)

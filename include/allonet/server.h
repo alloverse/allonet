@@ -40,6 +40,10 @@ struct alloserver {
     // is valid only during duration of callback.
     void (*intent_callback)(alloserver *serv, alloserver_client *client);
     
+    // like above, except before parsing, and with
+    // raw json as delivered from client
+    void (*raw_intent_callback)(alloserver *serv, const char *intent_json, alloserver_client *client);
+    
     // list of clients changed; either `added` or `removed` is set.
     void (*clients_callback)(alloserver *serv, alloserver_client *added, alloserver_client *removed);
     // interaction request from a client

@@ -70,6 +70,11 @@ static bool allo_poll(alloserver *serv, int timeout)
         alloserver_client *client = (alloserver_client*)event.peer->data;
         
         event.packet->data[event.packet->dataLength-1] = 0;
+        
+        if(serv->raw_indata_callback)
+            serv->raw_indata_callback(serv, client, event.channelID, event.packet->data);
+        
+        // todo: change to ["intent", intentpayload]
         cJSON *cmd = cJSON_Parse((char*)(event.packet->data));
         const char *cmdname = cJSON_GetObjectItem(cmd, "cmd")->valuestring;
         if(strcmp(cmdname, "intent") == 0) {
@@ -81,6 +86,8 @@ static bool allo_poll(alloserver *serv, int timeout)
                 .pitch = cJSON_GetObjectItem(ntvintent, "pitch")->valuedouble,
             };
             client->intent = intent;
+            if(serv->intent_callback)
+                serv->intent_callback(serv, client);
         } else {
             printf("Client %p sent unknown command %s\n", client, cmdname);
         }
@@ -162,6 +169,19 @@ void server_interact(alloserver *serv, alloserver_client *client, const char *fr
     free((void*)json);
 }
 
+void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len)
+{
+    ENetPacket *packet = enet_packet_create(
+        NULL,
+        len,
+        channel==CHANNEL_COMMANDS ?
+            ENET_PACKET_FLAG_RELIABLE :
+            0
+    );
+    memcpy(packet->data, buf, len);
+    enet_peer_send(_clientinternal(client)->peer, CHANNEL_COMMANDS, packet);
+}
+
 alloserver *allo_listen(void)
 {
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
@@ -192,6 +212,7 @@ alloserver *allo_listen(void)
     serv->interbeat = allo_poll;
     serv->beat = allo_sendstates;
     serv->interact = server_interact;
+    serv->send = allo_send;
     LIST_INIT(&serv->clients);
     LIST_INIT(&serv->state.entities);
     

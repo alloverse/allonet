@@ -69,10 +69,11 @@ static bool allo_poll(alloserver *serv, int timeout)
     case ENET_EVENT_TYPE_RECEIVE: {
         alloserver_client *client = (alloserver_client*)event.peer->data;
         
+        // todo: stop newline terminating in protocol...
         event.packet->data[event.packet->dataLength-1] = 0;
         
         if(serv->raw_indata_callback)
-            serv->raw_indata_callback(serv, client, event.channelID, event.packet->data, event.packet->dataLength);
+            serv->raw_indata_callback(serv, client, event.channelID, event.packet->data, event.packet->dataLength-1);
         
         // todo: change to ["intent", intentpayload]
         cJSON *cmd = cJSON_Parse((char*)(event.packet->data));

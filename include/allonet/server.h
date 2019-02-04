@@ -41,7 +41,7 @@ struct alloserver {
     void (*intent_callback)(alloserver *serv, alloserver_client *client);
     
     // raw json as delivered from client (intent or interaction)
-    void (*raw_indata_callback)(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *data);
+    void (*raw_indata_callback)(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *data, size_t data_length);
     
     // list of clients changed; either `added` or `removed` is set.
     void (*clients_callback)(alloserver *serv, alloserver_client *added, alloserver_client *removed);

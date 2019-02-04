@@ -72,7 +72,7 @@ static bool allo_poll(alloserver *serv, int timeout)
         event.packet->data[event.packet->dataLength-1] = 0;
         
         if(serv->raw_indata_callback)
-            serv->raw_indata_callback(serv, client, event.channelID, event.packet->data);
+            serv->raw_indata_callback(serv, client, event.channelID, event.packet->data, event.packet->dataLength);
         
         // todo: change to ["intent", intentpayload]
         cJSON *cmd = cJSON_Parse((char*)(event.packet->data));

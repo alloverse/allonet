@@ -180,7 +180,7 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
             0
     );
     memcpy(packet->data, buf, len);
-    enet_peer_send(_clientinternal(client)->peer, CHANNEL_COMMANDS, packet);
+    enet_peer_send(_clientinternal(client)->peer, channel, packet);
 }
 
 alloserver *allo_listen(void)

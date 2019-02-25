@@ -11,6 +11,7 @@ allo_entity *entity_create(const char *id)
 }
 void entity_destroy(allo_entity *entity)
 {
+    cJSON_Delete(entity->components);
     free(entity->id);
     free(entity);
 }

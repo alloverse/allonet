@@ -3,7 +3,14 @@
 #include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "util.h"
+
+#if !defined(NDEBUG)
+    #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
+#else
+    #define nonnull(x) x
+#endif
 
 typedef struct {
     ENetHost *host;
@@ -31,9 +38,9 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
 static void parse_statediff(alloclient *client, ENetPacket *packet)
 {
     packet->data[packet->dataLength-1] = 0;
-    cJSON *cmd = cJSON_Parse((const char*)(packet->data));
-    int64_t rev = cJSON_GetObjectItem(cmd, "revision")->valueint;
-    const cJSON *entities = cJSON_GetObjectItem(cmd, "entities");
+    cJSON *cmd = nonnull(cJSON_Parse((const char*)(packet->data)));
+    int64_t rev = nonnull(cJSON_GetObjectItem(cmd, "revision"))->valueint;
+    const cJSON *entities = nonnull(cJSON_GetObjectItem(cmd, "entities"));
     client->state.revision = rev;
     
     // keep track of entities that aren't mentioned in the incoming list
@@ -47,15 +54,16 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     // update or create entities
     cJSON *edesc = NULL;
     cJSON_ArrayForEach(edesc, entities) {
-        const char *entity_id = cJSON_GetObjectItem(edesc, "id")->valuestring;
+        const char *entity_id = nonnull(cJSON_GetObjectItem(edesc, "id"))->valuestring;
         cjson_delete_from_array(deletes, entity_id);
-        cJSON *components = cJSON_DetachItemFromObject(edesc, "components");
+        cJSON *components = nonnull(cJSON_DetachItemFromObject(edesc, "components"));
         allo_entity *entity = get_entity(client, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
             printf("Creating entity %s\n", entity->id);
             LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
         }
+        
         cJSON_Delete(entity->components);
         entity->components = components;
     }
@@ -78,10 +86,10 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
 
 static void parse_interaction(alloclient *client, cJSON *cmdrep)
 {
-    const cJSON *interaction = cJSON_GetObjectItem(cmdrep, "interact");
-    const char *from = cJSON_GetObjectItem(interaction, "from_entity")->valuestring;
-    const char *to = cJSON_GetObjectItem(interaction, "to_entity")->valuestring;
-    const char *cmd = cJSON_GetObjectItem(interaction, "cmd")->valuestring;
+    const cJSON *interaction = nonnull(cJSON_GetObjectItem(cmdrep, "interact"));
+    const char *from = nonnull(cJSON_GetObjectItem(interaction, "from_entity"))->valuestring;
+    const char *to = nonnull(cJSON_GetObjectItem(interaction, "to_entity"))->valuestring;
+    const char *cmd = nonnull(cJSON_GetObjectItem(interaction, "cmd"))->valuestring;
     if(client->interaction_callback) {
         client->interaction_callback(client, from, to, cmd);
     }
@@ -89,7 +97,7 @@ static void parse_interaction(alloclient *client, cJSON *cmdrep)
 
 static void parse_command(alloclient *client, cJSON *cmdrep)
 {
-    const char *cmdname = cJSON_GetObjectItem(cmdrep, "cmd")->valuestring;
+    const char *cmdname = nonnull(cJSON_GetObjectItem(cmdrep, "cmd"))->valuestring;
     if(strcmp(cmdname, "interact") == 0) {
         parse_interaction(client, cmdrep);
     } else {

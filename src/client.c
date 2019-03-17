@@ -6,7 +6,7 @@
 #include <assert.h>
 #include "util.h"
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
     #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
 #else
     #define nonnull(x) x

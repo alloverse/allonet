@@ -63,7 +63,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
-      cmakeArgs: ".."
+      cmakeArgs: "-A x64 .."
   - task: VSBuild@1
     displayName: "Visual Studio build"
     inputs:

@@ -76,6 +76,7 @@ jobs:
         build/**/allo*.exe
         build/**/allo*.dll
         build/**/allo*.lib
+        build/**/allo*.pdb
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"

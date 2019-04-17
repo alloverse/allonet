@@ -158,7 +158,7 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength+1] = '\n';
+    ((char*)packet->data)[jsonlength] = '\n';
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
     free((void*)json);
 }

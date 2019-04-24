@@ -33,8 +33,6 @@ struct alloserver {
 
     // handle incoming events for at most duration_ms. returns true if event was handled
     bool (*interbeat)(alloserver *serv, int duration_ms);
-    // send state diff to clients. call with an even cadence (e g 20hz)
-    void (*beat)(alloserver *serv);
     
     // raw json as delivered from client (intent or interaction)
     void (*raw_indata_callback)(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *data, size_t data_length);

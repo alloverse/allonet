@@ -104,39 +104,6 @@ static bool allo_poll(alloserver *serv, int timeout)
     return true;
 }
 
-static void allo_sendstates(alloserver *serv)
-{
-    cJSON *entities_rep = cJSON_CreateArray();
-    allo_entity *entity = NULL;
-    LIST_FOREACH(entity, &serv->state.entities, pointers) {
-        cJSON *entity_rep = cjson_create_object(
-            "id", cJSON_CreateString(entity->id),
-            NULL
-        );
-        cJSON_AddItemReferenceToObject(entity_rep, "components", entity->components);
-        cJSON_AddItemToArray(entities_rep, entity_rep);
-    }
-    cJSON *map = cjson_create_object(
-        "entities", entities_rep, 
-        "revision", cJSON_CreateNumber(serv->state.revision++),
-        NULL
-    );
-    const char *json = cJSON_Print(map);
-    printf("STATE: %s\n", json);
-    cJSON_Delete(map);
-
-    int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_UNSEQUENCED);
-    memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength] = '\n';
-    free((void*)json);
-    alloserver_client *client;
-    LIST_FOREACH(client, &serv->clients, pointers) {
-        alloserv_client_internal *internal = _clientinternal(client);
-        enet_peer_send(internal->peer, CHANNEL_STATEDIFFS, packet);
-    }
-}
-
 
 void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len)
 {
@@ -179,7 +146,6 @@ alloserver *allo_listen(void)
     }
 
     serv->interbeat = allo_poll;
-    serv->beat = allo_sendstates;
     serv->send = allo_send;
     LIST_INIT(&serv->clients);
     LIST_INIT(&serv->state.entities);

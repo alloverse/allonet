@@ -56,3 +56,7 @@ target_link_libraries (allodummyserv allonet)
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)
 target_link_libraries (allodummyclient allonet)
+
+# cubeappliance
+add_executable (allocubeappliance examples/cubeappliance/cubeappliance.c)
+target_link_libraries (allocubeappliance allonet)

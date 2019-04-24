@@ -147,28 +147,6 @@ static void allo_sendstates(alloserver *serv)
     }
 }
 
-void server_interact(alloserver *serv, alloserver_client *client, const char *from_entity, const char *to_entity, const char *cmd)
-{
-    cJSON *cmdrep = cjson_create_object(
-        "cmd", cJSON_CreateString("interact"),
-        "interact", cjson_create_object(
-            "from_entity", cJSON_CreateString(from_entity ? from_entity : ""),
-            "to_entity", cJSON_CreateString(to_entity ? to_entity : ""),
-            "cmd", cJSON_CreateString(cmd),
-            NULL
-        ),
-        NULL
-    );
-    const char *json = cJSON_Print(cmdrep);
-    cJSON_Delete(cmdrep);
-
-    int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
-    memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength] = '\n';
-    enet_peer_send(_clientinternal(client)->peer, CHANNEL_COMMANDS, packet);
-    free((void*)json);
-}
 
 void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len)
 {
@@ -212,7 +190,6 @@ alloserver *allo_listen(void)
 
     serv->interbeat = allo_poll;
     serv->beat = allo_sendstates;
-    serv->interact = server_interact;
     serv->send = allo_send;
     LIST_INIT(&serv->clients);
     LIST_INIT(&serv->state.entities);

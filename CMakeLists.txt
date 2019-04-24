@@ -49,10 +49,6 @@ ENDIF(WIN32)
 
 target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS})
 
-# server example
-add_executable (allodummyserv examples/dummyserv/dummyserv.c)
-target_link_libraries (allodummyserv allonet)
-
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)
 target_link_libraries (allodummyclient allonet)

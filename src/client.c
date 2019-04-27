@@ -156,10 +156,10 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
     cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, 0);
     memcpy(packet->data, json, jsonlength);
     ((char*)packet->data)[jsonlength] = '\n';
-    enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
+    enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
     free((void*)json);
 }
 

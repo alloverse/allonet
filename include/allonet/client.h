@@ -16,7 +16,25 @@ typedef struct alloclient {
     // set this to get a callback when state changes. data in 'state'
     // is valid only during duration of callback.
     void (*state_callback)(alloclient *client, allo_state *state);
-    void (*interaction_callback)(alloclient *client, const char *sender_entity_id, const char *receiver_entity_id, const char *cmd);
+
+    /** Set this to get a callback when another entity is trying to 
+      * interact with one of your entities.
+      * 
+      * @param type: oneway, request, response or publication
+      * @param sender_entity_id: the entity trying to interact with yours
+      * @param receiver_entity_id: your entity being interacted with
+      * @param request_id: The ID of this request or response
+      * @param body: JSON list of interaction message
+      * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
+      */
+    void (*interaction_callback)(
+        alloclient *client, 
+        const char *type,
+        const char *sender_entity_id,
+        const char *receiver_entity_id,
+        const char *request_id,
+        const char *body
+    );
 
     // internal
     allo_state state;

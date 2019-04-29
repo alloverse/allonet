@@ -84,21 +84,24 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
     cJSON_Delete(deletes);
 }
 
-static void parse_interaction(alloclient *client, cJSON *cmdrep)
+static void parse_interaction(alloclient *client, cJSON *interaction)
 {
-    const cJSON *interaction = nonnull(cJSON_GetObjectItem(cmdrep, "interact"));
-    const char *from = nonnull(cJSON_GetObjectItem(interaction, "from_entity"))->valuestring;
-    const char *to = nonnull(cJSON_GetObjectItem(interaction, "to_entity"))->valuestring;
-    const char *cmd = nonnull(cJSON_GetObjectItem(interaction, "cmd"))->valuestring;
+    const char *type = nonnull(cJSON_GetArrayItem(interaction, 1))->valuestring;
+    const char *from = nonnull(cJSON_GetArrayItem(interaction, 2))->valuestring;
+    const char *to = nonnull(cJSON_GetArrayItem(interaction, 3))->valuestring;
+    const char *request_id = nonnull(cJSON_GetArrayItem(interaction, 4))->valuestring;
+    cJSON *body = nonnull(cJSON_GetArrayItem(interaction, 5));
+    const char *bodystr = cJSON_Print(body);
     if(client->interaction_callback) {
-        client->interaction_callback(client, from, to, cmd);
+        client->interaction_callback(client, type, from, to, request_id, bodystr);
     }
+    free((void*)bodystr);
 }
 
 static void parse_command(alloclient *client, cJSON *cmdrep)
 {
-    const char *cmdname = nonnull(cJSON_GetObjectItem(cmdrep, "cmd"))->valuestring;
-    if(strcmp(cmdname, "interact") == 0) {
+    const char *cmdname = nonnull(cJSON_GetArrayItem(cmdrep, 0))->valuestring;
+    if(strcmp(cmdname, "interaction") == 0) {
         parse_interaction(client, cmdrep);
     } else {
         printf("Unknown command: %s\n", cmdrep->string);

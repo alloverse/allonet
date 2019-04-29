@@ -51,9 +51,19 @@ int getch()
 
 #endif //ndef _WIN32
 
-static void interaction(alloclient *client, const char *sender_entity_id, const char *receiver_entity_id, const char *cmd)
+static void interaction(
+    alloclient *client, 
+    const char *type,
+    const char *sender_entity_id,
+    const char *receiver_entity_id,
+    const char *request_id,
+    const char *body    
+)
 {
-    printf("INTERACTION cmd: %s\n", cmd);
+    printf(
+        "INTERACTION\n\tType: %s\n\tSender: %s\n\tReceiver: %s\n\tID: %s\n\tBody: %s\n", 
+        type, sender_entity_id, receiver_entity_id, request_id, body
+    );
 }
 
 

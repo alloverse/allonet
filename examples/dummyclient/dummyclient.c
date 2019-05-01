@@ -4,6 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <cJSON/cJSON.h>
 
 #ifndef _WIN32
 #include <termios.h>
@@ -51,19 +52,31 @@ int getch()
 
 #endif //ndef _WIN32
 
+static const char *me;
+
 static void interaction(
     alloclient *client, 
     const char *type,
     const char *sender_entity_id,
     const char *receiver_entity_id,
     const char *request_id,
-    const char *body    
+    const char *bodystr
 )
 {
+    cJSON *body = cJSON_Parse(bodystr);
+    const char *interaction_name = cJSON_GetArrayItem(body, 0)->valuestring;
+
     printf(
         "INTERACTION\n\tType: %s\n\tSender: %s\n\tReceiver: %s\n\tID: %s\n\tBody: %s\n", 
-        type, sender_entity_id, receiver_entity_id, request_id, body
+        type, sender_entity_id, receiver_entity_id, request_id, bodystr
     );
+    if(strcmp(interaction_name, "your_avatar") == 0) {
+        me = strdup(cJSON_GetArrayItem(body, 1)->valuestring);
+
+        client->interact(client, "request", me, "place", "[\"lol\", 1, 2, 3]");
+    }
+
+    cJSON_Delete(body);
 }
 
 
@@ -89,6 +102,7 @@ int main(int argc, char **argv)
     set_conio_terminal_mode();
 #endif
     client->interaction_callback = interaction;
+
     for(;;)
     {
 #ifndef _WIN32

@@ -7,8 +7,25 @@ typedef struct alloclient alloclient;
 typedef struct alloclient {
     // call this to change this client's movement/action intent
     void (*set_intent)(alloclient *client, allo_client_intent intent);
-    // rpc on another entity
-    void (*interact)(alloclient *client, const char *entity_id, const char *cmd);
+
+    /** Call this to have one of your entites interact with another entity.
+      * Use this same method to send back a response when you get a request. 
+      * 
+      * @param type: oneway, request, response or publication
+      * @param sender_entity_id: ID of your entity, e g your avatar.
+      * @param receiver_entity_id: the entity your sender wants to interact with
+      * @param request_id: The ID of this request or response
+      * @param body: JSON list of interaction message
+      * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
+      */
+    void (*interact)(
+        alloclient *client,
+        const char *interaction_type,
+        const char *sender_entity_id,
+        const char *receiver_entity_id,
+        const char *body
+    );
+    
     void (*disconnect)(alloclient *client, int reason);
 
     void (*poll)(alloclient *client);

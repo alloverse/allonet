@@ -166,6 +166,33 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
     free((void*)json);
 }
 
+static void client_send_interaction(
+    alloclient *client,
+    const char *interaction_type,
+    const char *sender_entity_id,
+    const char *receiver_entity_id,
+    const char *body
+)
+{
+    cJSON *cmdrep = cjson_create_list(
+        nonnull(cJSON_CreateString("interaction")),
+        nonnull(cJSON_CreateString(interaction_type)),
+        nonnull(cJSON_CreateString(sender_entity_id)),
+        nonnull(cJSON_CreateString(receiver_entity_id)),
+        nonnull(cJSON_Parse(body)),
+        NULL
+    );
+    const char *json = cJSON_Print(cmdrep);
+    cJSON_Delete(cmdrep);
+
+    int jsonlength = strlen(json);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
+    memcpy(packet->data, json, jsonlength);
+    ((char*)packet->data)[jsonlength] = '\n';
+    enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
+    free((void*)json);
+}
+
 static void client_disconnect(alloclient *client, int reason)
 {
     enet_peer_disconnect(_internal(client)->peer, reason);
@@ -259,6 +286,7 @@ alloclient *allo_connect(const char *url)
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->poll = client_poll;
     client->set_intent = client_sendintent;
+    client->interact = client_send_interaction;
     client->disconnect = client_disconnect;
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;

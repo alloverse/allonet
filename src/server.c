@@ -73,30 +73,20 @@ static bool allo_poll(alloserver *serv, int timeout)
         event.packet->data[event.packet->dataLength-1] = 0;
         
         if(serv->raw_indata_callback)
-            serv->raw_indata_callback(serv, client, event.channelID, event.packet->data, event.packet->dataLength-1);
-        
-        // todo: change to ["intent", intentpayload]
-        cJSON *cmd = cJSON_Parse((char*)(event.packet->data));
-        const char *cmdname = cJSON_GetObjectItem(cmd, "cmd")->valuestring;
-        if(strcmp(cmdname, "intent") == 0) {
-            const cJSON *ntvintent = cJSON_GetObjectItem(cmd, "intent");
-            allo_client_intent intent = {
-                .zmovement = cJSON_GetObjectItem(ntvintent, "zmovement")->valuedouble,
-                .xmovement = cJSON_GetObjectItem(ntvintent, "xmovement")->valuedouble,
-                .yaw = cJSON_GetObjectItem(ntvintent, "yaw")->valuedouble,
-                .pitch = cJSON_GetObjectItem(ntvintent, "pitch")->valuedouble,
-            };
-            client->intent = intent;
-            if(serv->intent_callback)
-                serv->intent_callback(serv, client);
-        } else {
-            printf("Client %p sent unknown command %s\n", client, cmdname);
+        {
+            serv->raw_indata_callback(
+                serv, 
+                client, 
+                event.channelID, 
+                event.packet->data,
+                event.packet->dataLength-1
+            );
         }
-
-        enet_packet_destroy (event.packet);
-        cJSON_Delete(cmd);
         
-        break; }
+        enet_packet_destroy (event.packet);
+        
+        break;
+    }
     
     case ENET_EVENT_TYPE_DISCONNECT: {
         alloserver_client *client = (alloserver_client*)event.peer->data;

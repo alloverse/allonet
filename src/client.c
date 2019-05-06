@@ -171,6 +171,7 @@ static void client_send_interaction(
     const char *interaction_type,
     const char *sender_entity_id,
     const char *receiver_entity_id,
+    const char *request_id,
     const char *body
 )
 {
@@ -179,6 +180,7 @@ static void client_send_interaction(
         nonnull(cJSON_CreateString(interaction_type)),
         nonnull(cJSON_CreateString(sender_entity_id)),
         nonnull(cJSON_CreateString(receiver_entity_id)),
+        nonnull(cJSON_CreateString(request_id)),
         nonnull(cJSON_Parse(body)),
         NULL
     );

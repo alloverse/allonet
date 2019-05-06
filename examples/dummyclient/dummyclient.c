@@ -73,7 +73,7 @@ static void interaction(
     if(strcmp(interaction_name, "your_avatar") == 0) {
         me = strdup(cJSON_GetArrayItem(body, 1)->valuestring);
 
-        client->interact(client, "request", me, "place", "[\"lol\", 1, 2, 3]");
+        client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
     }
 
     cJSON_Delete(body);

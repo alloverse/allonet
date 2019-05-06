@@ -23,6 +23,7 @@ typedef struct alloclient {
         const char *interaction_type,
         const char *sender_entity_id,
         const char *receiver_entity_id,
+        const char *request_id,
         const char *body
     );
     

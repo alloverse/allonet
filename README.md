@@ -14,6 +14,29 @@ Alloverse's network API. It can be used as:
 
 The API is in C, and bridged into C# and Erlang.
 
+## Developing allonet
+
+Allonet uses Cmake to generate its build files. To build using Make on a Unix/Mac machine,
+do:
+
+1. `mkdir build; cd build`
+2. `cmake ..`
+3. `make`
+
+This will build allonet binaries. You could try out `./allodummyclient alloplace://nevyn.places.alloverse.com`
+to make sure it works.
+
+To develop using e g Xcode, you can just supply `-G` to Cmake.
+
+1. `mkdir xcbuild; cd xcbuild`
+2. `cmake -G Xcode ..`
+3. `open *.xcodeproj`
+
+The same applies to Visual Studio, etc...
+
+Visual Studio Code has great Cmake plugins, so you can just automate the above process
+and just click "build" in the UI.
+
 ## Progress
 
 So far, extremely rudimentary. Todo in order of priority:

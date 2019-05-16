@@ -5,9 +5,9 @@
 #include <string.h>
 #include <math.h>
 
-static void interaction(alloclient *client, const char *sender_entity_id, const char *receiver_entity_id, const char *cmd)
+static void interaction(alloclient *client, const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body)
 {
-    printf("INTERACTION cmd: %s\n", cmd);
+    printf("INTERACTION cmd: %s\n", body);
 }
 
 int main(int argc, char **argv)
@@ -23,7 +23,8 @@ int main(int argc, char **argv)
     }
 
     printf("hello microverse\n");
-    alloclient *client = allo_connect(argv[1]);
+    // TODO: fill in identity and avatar
+    alloclient *client = allo_connect(argv[1], NULL, NULL);
     if(!client) {
         return -3;
     }

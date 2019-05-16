@@ -59,6 +59,11 @@ typedef struct alloclient {
     void *_internal;
 } alloclient;
 
-alloclient *allo_connect(const char *url);
+/** Connect to an alloplace.
+ * @param url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
+ * @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
+ * @param avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
+ */
+alloclient *allo_connect(const char *url, const char *identity, const char *avatar_desc);
 
 #endif

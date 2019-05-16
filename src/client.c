@@ -219,7 +219,38 @@ static void client_disconnect(alloclient *client, int reason)
     free(client);
 }
 
-alloclient *allo_connect(const char *url)
+bool announce(alloclient *client, const char *identity, const char *avatar_desc)
+{
+    cJSON *bodyobj = cjson_create_list(
+        cJSON_CreateString("announce"),
+        cJSON_CreateString("version"),
+        cJSON_CreateNumber(1),
+        cJSON_CreateString("identity"),
+        cJSON_Parse(identity),
+        cJSON_CreateString("spawn_avatar"),
+        cJSON_Parse(avatar_desc),
+        NULL
+    );
+    if(cJSON_GetArraySize(bodyobj) != 7)
+    {
+        fprintf(stderr, "Invalid identity or avatar_desc (must be json), disconnecting.\n");
+        return false;
+    }
+    const char *body = cJSON_Print(bodyobj);
+    client_send_interaction(
+        client,
+        "request",
+        "",
+        "place",
+        "ANN0",
+        body
+    );
+    cJSON_Delete(bodyobj);
+    free((void*)body);
+    return true;
+}
+
+alloclient *allo_connect(const char *url, const char *identity, const char *avatar_desc)
 {
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
@@ -294,6 +325,12 @@ alloclient *allo_connect(const char *url)
     _internal(client)->host = host;
     _internal(client)->peer = peer;
     LIST_INIT(&client->state.entities);
+
+    if(!announce(client, identity, avatar_desc))
+    {
+        client->disconnect(client, 1);
+        return NULL;
+    }
     
 
     return client;

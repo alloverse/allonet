@@ -5,6 +5,9 @@
 #include <string.h>
 #include <math.h>
 #include <cJSON/cJSON.h>
+#include "../../src/util.h"
+
+#define _WIN32
 
 #ifndef _WIN32
 #include <termios.h>
@@ -87,13 +90,37 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if(argc != 2) {
-        fprintf(stderr, "Usage: allodummyclient alloplace://hostname:port\n");
+    if(argc != 3) {
+        fprintf(stderr, "Usage: allodummyclient username alloplace://hostname:port\n");
         return -2;
     }
 
     printf("hello microverse\n");
-    alloclient *client = allo_connect(argv[1]);
+
+    cJSON *avatardesco = cjson_create_object(
+        "geometry", cjson_create_object(
+            "type", cJSON_CreateString("tristrip"),
+            "tris", cjson_create_list(
+                cJSON_CreateNumber(0.0), cJSON_CreateNumber(1.0), cJSON_CreateNumber(0.0),
+                cJSON_CreateNumber(1.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(0.0),
+                cJSON_CreateNumber(-1.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(0.0),
+                NULL
+            ),
+            "color", cjson_create_list(
+                cJSON_CreateNumber(1.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(1.0), NULL
+            ),
+            NULL
+        ),
+        NULL
+    );
+    const char *avatardesc = cJSON_Print(avatardesco);
+
+    char *identity = (char*)calloc(1, 255);
+    snprintf(identity, 255, "{\"displayName\": \"%s\"}", argv[1]);
+    alloclient *client = allo_connect(argv[2], identity, avatardesc);
+    cJSON_Delete(avatardesco);
+    free((void*)avatardesc);
+
     if(!client) {
         return -3;
     }
@@ -115,6 +142,11 @@ int main(int argc, char **argv)
             client->set_intent(client, intent);
         }
 #endif
+        allo_client_intent intent = {
+            .zmovement = 1,
+            .xmovement = 0,
+        };
+        client->set_intent(client, intent);
         client->poll(client);
     }
     return 0;

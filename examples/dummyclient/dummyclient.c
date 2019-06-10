@@ -73,7 +73,7 @@ static void interaction(
         "INTERACTION\n\tType: %s\n\tSender: %s\n\tReceiver: %s\n\tID: %s\n\tBody: %s\n", 
         type, sender_entity_id, receiver_entity_id, request_id, bodystr
     );
-    if(strcmp(interaction_name, "your_avatar") == 0) {
+    if(strcmp(interaction_name, "announce") == 0) {
         me = strdup(cJSON_GetArrayItem(body, 1)->valuestring);
 
         client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     const char *avatardesc = cJSON_Print(avatardesco);
 
     char *identity = (char*)calloc(1, 255);
-    snprintf(identity, 255, "{\"displayName\": \"%s\"}", argv[1]);
+    snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
     alloclient *client = allo_connect(argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);

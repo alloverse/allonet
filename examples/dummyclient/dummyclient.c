@@ -111,11 +111,6 @@ int main(int argc, char **argv)
             ),
             NULL
         ),
-        "transform", cjson_create_object(
-            "position", cjson_create_object("x", cJSON_CreateNumber(0), "y", cJSON_CreateNumber(0), "z", cJSON_CreateNumber(0), NULL),
-            "rotation", cjson_create_object("x", cJSON_CreateNumber(0), "y", cJSON_CreateNumber(0), "z", cJSON_CreateNumber(0), NULL),
-            NULL
-        ),
         NULL
     );
     const char *avatardesc = cJSON_Print(avatardesco);

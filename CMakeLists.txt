@@ -43,6 +43,8 @@ add_library(allonet SHARED
 
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)
+ELSEIF(ANDROID)
+  SET(PLATFORM_LIBS "")
 ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)

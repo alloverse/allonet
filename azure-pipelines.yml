@@ -88,7 +88,7 @@ jobs:
 - job: Android
   pool:
     vmImage: 'macOS-10.13'
- steps:
+  steps:
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -96,15 +96,15 @@ jobs:
   - script: make allonet
     workingDirectory: build
     displayName: "Make"
- - task: CopyFiles@2
-   displayName: "Stage artifacts"
-   inputs:
-     contents: |
-       include/**/*.h
-       build/**/allo*.so
-     targetFolder: $(Build.ArtifactStagingDirectory)
- - task: PublishBuildArtifacts@1
-   displayName: "Publish artifacts"
-   inputs:
-     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-     artifactName: Allonet-Android
+  - task: CopyFiles@2
+    displayName: "Stage artifacts"
+    inputs:
+      contents: |
+        include/**/*.h
+        build/*.so
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish artifacts"
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: Allonet-Android

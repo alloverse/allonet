@@ -85,27 +85,26 @@ jobs:
       artifactName: Allonet-Windows-x64
 
 
-#- job: Android
-#  pool:
-#    vmImage: 'macOS-10.13'
-#  steps:
-#  - task: Gradle@2
-#    inputs:
-#      workingDirectory: ''
-#      gradleWrapperFile: 'gradlew'
-#      gradleOptions: '-Xmx3072m'
-#      publishJUnitResults: false
-#      testResultsFiles: '**/TEST-*.xml'
-#      tasks: 'assembleDebug'
-#  - task: CopyFiles@2
-#    displayName: "Stage artifacts"
-#    inputs:
-#      contents: |
-#        include/**/*.h
-#        build/**/allo*.so
-#      targetFolder: $(Build.ArtifactStagingDirectory)
-#  - task: PublishBuildArtifacts@1
-#    displayName: "Publish artifacts"
-#    inputs:
-#      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-#      artifactName: Allonet-Android
+- job: Android
+ pool:
+   vmImage: 'macOS-10.13'
+ steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: "cmake -DCMAKE_TOOLCHAIN_FILE=~/Library/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a .."
+  - script: make allonet
+    workingDirectory: build
+    displayName: "Make"
+ - task: CopyFiles@2
+   displayName: "Stage artifacts"
+   inputs:
+     contents: |
+       include/**/*.h
+       build/**/allo*.so
+     targetFolder: $(Build.ArtifactStagingDirectory)
+ - task: PublishBuildArtifacts@1
+   displayName: "Publish artifacts"
+   inputs:
+     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+     artifactName: Allonet-Android

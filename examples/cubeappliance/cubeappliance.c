@@ -13,7 +13,7 @@
 #define sleep(x) Sleep(1000 * (x))
 #endif
 
-allo_client_intent intent = {};
+allo_client_intent intent;
 char *me;
 
 static void interaction(alloclient *client, const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body)

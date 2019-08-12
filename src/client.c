@@ -35,9 +35,8 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
     return NULL;
 }
 
-static void parse_statediff(alloclient *client, ENetPacket *packet)
+static void parse_statediff(alloclient *client, cJSON *cmd)
 {
-    cJSON *cmd = nonnull(cJSON_Parse((const char*)(packet->data)));
     int64_t rev = nonnull(cJSON_GetObjectItem(cmd, "revision"))->valueint;
     const cJSON *entities = nonnull(cJSON_GetObjectItem(cmd, "entities"));
     client->state.revision = rev;
@@ -79,7 +78,6 @@ static void parse_statediff(alloclient *client, ENetPacket *packet)
             entity_destroy(to_delete);
         }
     }
-    cJSON_Delete(cmd);
     cJSON_Delete(deletes);
 }
 
@@ -113,18 +111,19 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     // null terminates for us. Payload is always JSON so far. Let's always manually replace the
     // newline with a null and be done with it.
     packet->data[packet->dataLength-1] = 0;
+    cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
     
     switch(channel) {
     case CHANNEL_STATEDIFFS:
-        parse_statediff(client, packet);
+        parse_statediff(client, cmdrep);
         break;
     case CHANNEL_COMMANDS: {
-        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         parse_command(client, cmdrep);
-        cJSON_Delete(cmdrep);
         break; }
     default: break;
     }
+    
+    cJSON_Delete(cmdrep);
 }
 
 static void client_poll(alloclient *client)

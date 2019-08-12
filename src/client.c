@@ -37,7 +37,6 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
 
 static void parse_statediff(alloclient *client, ENetPacket *packet)
 {
-    packet->data[packet->dataLength-1] = 0;
     cJSON *cmd = nonnull(cJSON_Parse((const char*)(packet->data)));
     int64_t rev = nonnull(cJSON_GetObjectItem(cmd, "revision"))->valueint;
     const cJSON *entities = nonnull(cJSON_GetObjectItem(cmd, "entities"));
@@ -110,6 +109,11 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
+    // Stupid: protocol says "end with newline". Either way we can't guarantee that remote side
+    // null terminates for us. Payload is always JSON so far. Let's always manually replace the
+    // newline with a null and be done with it.
+    packet->data[packet->dataLength-1] = 0;
+    
     switch(channel) {
     case CHANNEL_STATEDIFFS:
         parse_statediff(client, packet);

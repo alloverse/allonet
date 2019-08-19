@@ -57,6 +57,11 @@ int getch()
 
 static const char *me;
 
+allo_client_intent intent = {
+    .zmovement = 1,
+    .xmovement = 0,
+};
+
 static void interaction(
     alloclient *client, 
     const char *type,
@@ -68,6 +73,10 @@ static void interaction(
 {
     cJSON *body = cJSON_Parse(bodystr);
     const char *interaction_name = cJSON_GetArrayItem(body, 0)->valuestring;
+    
+    if(strcmp(interaction_name, "point") == 0 ) {
+        return;
+    }
 
     printf(
         "INTERACTION\n\tType: %s\n\tSender: %s\n\tReceiver: %s\n\tID: %s\n\tBody: %s\n", 
@@ -78,8 +87,27 @@ static void interaction(
 
         client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
     }
+    
+    if(strcmp(interaction_name, "poke") == 0 ) {
+        bool mousedown = cJSON_IsTrue(cJSON_GetArrayItem(body, 1));
+        if(mousedown) {
+            intent.zmovement = !intent.zmovement;
+            client->set_intent(client, intent);
+            client->interact(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
+        }
+    }
 
     cJSON_Delete(body);
+}
+
+cJSON *vec2(float u, float v)
+{
+  return cjson_create_list(cJSON_CreateNumber(u), cJSON_CreateNumber(v), NULL);
+}
+
+cJSON *vec3(float x, float y, float z)
+{
+  return cjson_create_list(cJSON_CreateNumber(x), cJSON_CreateNumber(y), cJSON_CreateNumber(z), NULL);
 }
 
 
@@ -99,15 +127,17 @@ int main(int argc, char **argv)
 
     cJSON *avatardesco = cjson_create_object(
         "geometry", cjson_create_object(
-            "type", cJSON_CreateString("tristrip"),
-            "tris", cjson_create_list(
-                cJSON_CreateNumber(0.0), cJSON_CreateNumber(1.0), cJSON_CreateNumber(0.0),
-                cJSON_CreateNumber(1.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(0.0),
-                cJSON_CreateNumber(-1.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(0.0),
+            "type", cJSON_CreateString("inline"),
+            "vertices", cjson_create_list(
+                vec3(1, 1, 1),
+                vec3(2, 2, 2),
+                vec3(3, 3, 3),
+                vec3(4, 4, 4),
                 NULL
             ),
-            "color", cjson_create_list(
-                cJSON_CreateNumber(1.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(0.0), cJSON_CreateNumber(1.0), NULL
+            "triangles", cjson_create_list(
+                vec3(0, 1, 2), vec3(1, 2, 3),
+                NULL
             ),
             NULL
         ),
@@ -129,7 +159,10 @@ int main(int argc, char **argv)
     set_conio_terminal_mode();
 #endif
     client->interaction_callback = interaction;
-
+    
+    int i = 0;
+    
+    
     for(;;)
     {
 #ifndef _WIN32
@@ -142,12 +175,14 @@ int main(int argc, char **argv)
             client->set_intent(client, intent);
         }
 #endif
-        allo_client_intent intent = {
-            .zmovement = 1,
-            .xmovement = 0,
-        };
+        
         client->set_intent(client, intent);
         client->poll(client);
+        
+        if( i++ % 100)
+        {
+            //client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
+        }
     }
     return 0;
 }

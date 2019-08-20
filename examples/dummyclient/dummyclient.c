@@ -129,14 +129,31 @@ int main(int argc, char **argv)
         "geometry", cjson_create_object(
             "type", cJSON_CreateString("inline"),
             "vertices", cjson_create_list(
+                vec3(0, 0, 0),
+                vec3(1, 0, 0),
+                vec3(1, 1, 0),
+                vec3(0, 1, 0),
                 vec3(1, 1, 1),
-                vec3(2, 2, 2),
-                vec3(3, 3, 3),
-                vec3(4, 4, 4),
+                NULL
+            ),
+            /*"normals", cjson_create_list(
+                vec3(0,0,0),
+                vec3(0,0,0),
+                vec3(0,0,0),
+                vec3(0,0,0),
+                vec3(0,0,0),
+                NULL
+            ),*/
+            "uvs", cjson_create_list(
+                vec2(0, 0),
+                vec2(1, 0),
+                vec2(1, 1),
+                vec2(0, 1),
+                vec2(1, 1),
                 NULL
             ),
             "triangles", cjson_create_list(
-                vec3(0, 1, 2), vec3(1, 2, 3),
+                vec3(0, 1, 2), vec3(0, 2, 3), vec3(4, 0, 1), vec3(4, 2, 1),
                 NULL
             ),
             NULL

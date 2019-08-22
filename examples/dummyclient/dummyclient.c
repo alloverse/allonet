@@ -60,6 +60,7 @@ static const char *me;
 allo_client_intent intent = {
     .zmovement = 1,
     .xmovement = 0,
+    .yaw = 0,
 };
 
 static void interaction(
@@ -193,7 +194,10 @@ int main(int argc, char **argv)
             client->set_intent(client, intent);
         }
 #endif
-        
+        if(intent.zmovement)
+        {
+            intent.yaw += 0.01;
+        }
         client->set_intent(client, intent);
         client->poll(client);
         

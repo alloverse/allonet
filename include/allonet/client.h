@@ -60,6 +60,11 @@ typedef struct alloclient {
     void *_backref; // use this as a backref for callbacks  
 } alloclient;
 
+/** You can also poll for interactions instead of setting a callback.
+ *  If no callback is set, they'll queue up so do pop them after every poll().
+ */
+allo_interaction *alloclient_pop_interaction();
+
 /** Connect to an alloplace.
  * @param url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
  * @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity

@@ -38,3 +38,23 @@ extern bool allo_initialize(bool redirect_stdout)
 
     return true;
 }
+
+allo_interaction *allo_interaction_create(const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body)
+{
+        allo_interaction *interaction = (allo_interaction*)malloc(sizeof(allo_interaction));
+        interaction->type = strdup(type);
+        interaction->sender_entity_id = strdup(sender_entity_id);
+        interaction->receiver_entity_id  = strdup(receiver_entity_id);
+        interaction->request_id = strdup(request_id);
+        interaction->body = strdup(body);
+        return interaction;
+}
+void allo_interaction_free(allo_interaction *interaction)
+{
+    free((void*)interaction->type);
+    free((void*)interaction->sender_entity_id);
+    free((void*)interaction->receiver_entity_id);
+    free((void*)interaction->request_id);
+    free((void*)interaction->body);
+    free(interaction);
+}

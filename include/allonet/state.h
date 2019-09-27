@@ -38,6 +38,17 @@ typedef struct {
     LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
 
+typedef struct allo_interaction {
+    const char *type;
+    const char *sender_entity_id;
+    const char *receiver_entity_id;
+    const char *request_id;
+    const char *body;
+} allo_interaction;
+
+allo_interaction *allo_interaction_create(const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body);
+void allo_interaction_free(allo_interaction *interaction);
+
 extern bool allo_initialize(bool redirect_stdout);
 
 #pragma pack(pop)

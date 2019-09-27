@@ -13,8 +13,14 @@
 #endif
 
 typedef struct {
+    allo_interaction *interaction;
+    LIST_ENTRY(interaction_queue) pointers;
+} interaction_queue;
+
+typedef struct {
     ENetHost *host;
     ENetPeer *peer;
+    LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
 } alloclient_internal;
 
 static alloclient_internal *_internal(alloclient *client)
@@ -91,6 +97,11 @@ static void parse_interaction(alloclient *client, cJSON *interaction)
     const char *bodystr = cJSON_Print(body);
     if(client->interaction_callback) {
         client->interaction_callback(client, type, from, to, request_id, bodystr);
+    } else {
+        allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
+        interaction_queue *entry = (interaction_queue*)calloc(1, sizeof(interaction_queue));
+        entry->interaction = interaction;
+        LIST_INSERT_HEAD(&_internal(client)->interactions, entry, pointers);
     }
     free((void*)bodystr);
 }
@@ -339,3 +350,8 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     return client;
 }
 
+allo_interaction *alloclient_pop_interaction(alloclient *client)
+{
+
+    wip
+}

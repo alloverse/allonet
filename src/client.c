@@ -137,7 +137,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     cJSON_Delete(cmdrep);
 }
 
-static void client_poll(alloclient *client)
+void alloclient_poll(alloclient *client)
 {
     ENetEvent event;
     while (enet_host_service(_internal(client)->host, & event, 10) > 0)
@@ -156,7 +156,7 @@ static void client_poll(alloclient *client)
     }
 }
 
-static void client_sendintent(alloclient *client, allo_client_intent intent)
+void alloclient_set_intent(alloclient *client, allo_client_intent intent)
 {
     cJSON *cmdrep = cjson_create_object(
         "cmd", cJSON_CreateString("intent"),
@@ -180,7 +180,7 @@ static void client_sendintent(alloclient *client, allo_client_intent intent)
     free((void*)json);
 }
 
-static void client_send_interaction(
+void alloclient_send_interaction(
     alloclient *client,
     const char *interaction_type,
     const char *sender_entity_id,
@@ -209,7 +209,7 @@ static void client_send_interaction(
     free((void*)json);
 }
 
-static void client_disconnect(alloclient *client, int reason)
+void alloclient_disconnect(alloclient *client, int reason)
 {
     enet_peer_disconnect(_internal(client)->peer, reason);
     int now = get_ts_mono();
@@ -251,7 +251,7 @@ bool announce(alloclient *client, const char *identity, const char *avatar_desc)
         return false;
     }
     const char *body = cJSON_Print(bodyobj);
-    client_send_interaction(
+    alloclient_send_interaction(
         client,
         "request",
         "",
@@ -331,10 +331,10 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     }
 
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
-    client->poll = client_poll;
-    client->set_intent = client_sendintent;
-    client->interact = client_send_interaction;
-    client->disconnect = client_disconnect;
+    client->poll = alloclient_poll;
+    client->set_intent = alloclient_set_intent;
+    client->interact = alloclient_send_interaction;
+    client->disconnect = alloclient_disconnect;
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;
     _internal(client)->peer = peer;

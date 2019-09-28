@@ -5,19 +5,8 @@
 
 typedef struct alloclient alloclient;
 typedef struct alloclient {
-    // call this to change this client's movement/action intent
+    // deprecated, use alloclient_* instead
     void (*set_intent)(alloclient *client, allo_client_intent intent);
-
-    /** Call this to have one of your entites interact with another entity.
-      * Use this same method to send back a response when you get a request. 
-      * 
-      * @param type: oneway, request, response or publication
-      * @param sender_entity_id: ID of your entity, e g your avatar.
-      * @param receiver_entity_id: the entity your sender wants to interact with
-      * @param request_id: The ID of this request or response
-      * @param body: JSON list of interaction message
-      * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
-      */
     void (*interact)(
         alloclient *client,
         const char *interaction_type,
@@ -26,9 +15,7 @@ typedef struct alloclient {
         const char *request_id,
         const char *body
     );
-    
     void (*disconnect)(alloclient *client, int reason);
-
     void (*poll)(alloclient *client);
     
     // set this to get a callback when state changes. data in 'state'
@@ -60,16 +47,50 @@ typedef struct alloclient {
     void *_backref; // use this as a backref for callbacks  
 } alloclient;
 
-/** You can also poll for interactions instead of setting a callback.
- *  If no callback is set, they'll queue up so do pop them after every poll().
- */
-allo_interaction *alloclient_pop_interaction(alloclient *client);
-
 /** Connect to an alloplace.
  * @param url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
  * @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
  * @param avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
  */
 alloclient *allo_connect(const char *url, const char *identity, const char *avatar_desc);
+
+/** Disconnect from an alloplace. `client` is free()d by this call.
+ */
+void alloclient_disconnect(alloclient *client, int reason);
+
+/** Call regularly at 20hz to process incoming and outgoing network traffic.
+ */
+void alloclient_poll(alloclient *client);
+
+/** Have one of your entites interact with another entity.
+  * Use this same method to send back a response when you get a request. 
+  * 
+  * @param type: oneway, request, response or publication
+  * @param sender_entity_id: ID of your entity, e g your avatar.
+  * @param receiver_entity_id: the entity your sender wants to interact with
+  * @param request_id: The ID of this request or response
+  * @param body: JSON list of interaction message
+  * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
+  */
+void alloclient_send_interaction(
+    alloclient *client,
+    const char *interaction_type,
+    const char *sender_entity_id,
+    const char *receiver_entity_id,
+    const char *request_id,
+    const char *body
+);
+
+/** Change this client's movement/action intent.
+ */
+void alloclient_set_intent(alloclient *client, allo_client_intent intent);
+
+
+/** You can also poll for interactions instead of setting a callback.
+ *  If no callback is set, they'll queue up so do pop them after every poll().
+ */
+allo_interaction *alloclient_pop_interaction(alloclient *client);
+
+
 
 #endif

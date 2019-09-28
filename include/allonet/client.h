@@ -63,7 +63,7 @@ typedef struct alloclient {
 /** You can also poll for interactions instead of setting a callback.
  *  If no callback is set, they'll queue up so do pop them after every poll().
  */
-allo_interaction *alloclient_pop_interaction();
+allo_interaction *alloclient_pop_interaction(alloclient *client);
 
 /** Connect to an alloplace.
  * @param url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com

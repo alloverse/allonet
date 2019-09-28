@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 #ifndef _WIN32
     set_conio_terminal_mode();
 #endif
-    client->interaction_callback = interaction;
+    //client->interaction_callback = interaction;
     
     int i = 0;
     
@@ -200,7 +200,12 @@ int main(int argc, char **argv)
         }
         client->set_intent(client, intent);
         client->poll(client);
-        
+
+        allo_interaction *inter = NULL;
+        while(inter = alloclient_pop_interaction(client)) {
+            interaction(client, inter->type, inter->sender_entity_id, inter->receiver_entity_id, inter->request_id, inter->body);
+        }
+
         if( i++ % 100)
         {
             //client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");

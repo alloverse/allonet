@@ -12,7 +12,7 @@
     #define nonnull(x) x
 #endif
 
-typedef struct {
+typedef struct interaction_queue {
     allo_interaction *interaction;
     LIST_ENTRY(interaction_queue) pointers;
 } interaction_queue;
@@ -352,6 +352,12 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
 
 allo_interaction *alloclient_pop_interaction(alloclient *client)
 {
-
-    wip
+    allo_interaction *interaction = NULL;
+    interaction_queue *first = _internal(client)->interactions.lh_first;
+    if(first) {
+        interaction = first->interaction;
+        LIST_REMOVE(first, pointers);
+        free(first);
+    }
+    return interaction;
 }

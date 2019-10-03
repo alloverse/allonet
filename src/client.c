@@ -331,10 +331,6 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     }
 
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
-    client->poll = alloclient_poll;
-    client->set_intent = alloclient_set_intent;
-    client->interact = alloclient_send_interaction;
-    client->disconnect = alloclient_disconnect;
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;
     _internal(client)->peer = peer;
@@ -342,7 +338,7 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
 
     if(!announce(client, identity, avatar_desc))
     {
-        client->disconnect(client, 1);
+        alloclient_disconnect(client, 1);
         return NULL;
     }
     

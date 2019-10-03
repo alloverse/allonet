@@ -5,21 +5,9 @@
 
 typedef struct alloclient alloclient;
 typedef struct alloclient {
-    // deprecated, use alloclient_* instead
-    void (*set_intent)(alloclient *client, allo_client_intent intent);
-    void (*interact)(
-        alloclient *client,
-        const char *interaction_type,
-        const char *sender_entity_id,
-        const char *receiver_entity_id,
-        const char *request_id,
-        const char *body
-    );
-    void (*disconnect)(alloclient *client, int reason);
-    void (*poll)(alloclient *client);
-    
-    // set this to get a callback when state changes. data in 'state'
-    // is valid only during duration of callback.
+    /** set this to get a callback when state changes. data in 'state'
+      * is valid only during duration of callback.
+      */
     void (*state_callback)(alloclient *client, allo_state *state);
 
     /** Set this to get a callback when another entity is trying to 
@@ -54,7 +42,9 @@ typedef struct alloclient {
  */
 alloclient *allo_connect(const char *url, const char *identity, const char *avatar_desc);
 
-/** Disconnect from an alloplace. `client` is free()d by this call.
+/** Disconnect from an alloplace and free all internal state.
+ *  `client` is free()d by this call. Call this to deallocate
+ *  even if you're already disconnected remotely.
  */
 void alloclient_disconnect(alloclient *client, int reason);
 

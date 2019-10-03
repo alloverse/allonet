@@ -150,7 +150,7 @@ void alloclient_poll(alloclient *client)
             break;
         
         case ENET_EVENT_TYPE_DISCONNECT:
-            printf ("alloclient disconnected.\n");
+            fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
             if (client->disconnected_callback) {
                 client->disconnected_callback(client);
             }
@@ -337,6 +337,8 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
         puts ("Connection to server failed.");
         return NULL;
     }
+
+    enet_peer_timeout(peer, 3, 2000, 6000);
 
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));

@@ -111,6 +111,12 @@ cJSON *vec3(float x, float y, float z)
   return cjson_create_list(cJSON_CreateNumber(x), cJSON_CreateNumber(y), cJSON_CreateNumber(z), NULL);
 }
 
+static void disconnected(alloclient *client)
+{
+    alloclient_disconnect(client, 0);
+    exit(1);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -178,6 +184,7 @@ int main(int argc, char **argv)
     set_conio_terminal_mode();
 #endif
     //client->interaction_callback = interaction;
+    client->disconnected_callback = disconnected;
     
     int i = 0;
     

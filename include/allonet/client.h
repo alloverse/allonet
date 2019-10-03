@@ -29,6 +29,16 @@ typedef struct alloclient {
         const char *body
     );
 
+    /** You were disconnected from the server. This is
+     *  never called in response to a local alloclient_disconnect;
+     *  
+     *  To free up resources, you must call alloclient_disconnect() after
+     *  receiving this callback.
+     */
+    void  (*disconnected_callback)(
+        alloclient *client
+    );
+
     // internal
     allo_state state;
     void *_internal;

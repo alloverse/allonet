@@ -4,3 +4,6 @@
 [submodule "lib/cJSON"]
 	path = lib/cJSON
 	url = https://github.com/DaveGamble/cJSON.git
+[submodule "lib/lua"]
+	path = lib/lua
+	url = https://github.com/LuaDist/lua.git

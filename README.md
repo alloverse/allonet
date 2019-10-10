@@ -12,7 +12,22 @@ Alloverse's network API. It can be used as:
 * **a game engine server API**, when used by placeserv to manage clients and
   the place's environment and inhabitants.
 
-The API is in C, and bridged into C# and Erlang.
+## Using from different languages
+
+Since allonet is written in C, its native API is C headers located in `include/allonet`.
+
+### Lua
+
+The dylib/so/dll file is loadable by Lua. To simplify loading it, you can just 
+`require('allonet/lang/lua/allonet.lua')` and it will load the binary for you.
+
+### C#
+
+The C# bridge is in the `allovisor` repo.
+
+### Erlang
+
+The Erlang bridge is in the `alloplace` repo.
 
 ## Developing allonet
 

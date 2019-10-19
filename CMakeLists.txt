@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.13.0)
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -16,14 +16,6 @@ add_subdirectory (lib/enet)
 add_subdirectory (lib/lua)
 set(LUA_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/lib/lua/src)
 include_directories("${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/lib/lua")
-
-IF(APPLE)
-  SET(LUA_LINKER_FLAGS "LINKER:-bundle;LINKER:-undefined dynamic_lookup")
-ELSEIF(UNIX)
-  SET(LUA_LINKER_FLAGS "LINKER:-bundle;LINKER:-flat_namespace;LINKER:-undefined suppress")
-ELSEIF(WIN32)
-  SET(LUA_LINKER_FLAGS "")
-ENDIF()
 
 SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 add_subdirectory (lib/cJSON)
@@ -65,7 +57,6 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
-add_link_options(${LUA_LINKER_FLAGS})
 target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS})
 
 # client example

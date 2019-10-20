@@ -52,6 +52,8 @@ The same applies to Visual Studio, etc...
 Visual Studio Code has great Cmake plugins, so you can just automate the above process
 and just click "build" in the UI.
 
+Note that `lib/lua` must exactly match the Lua version used by the Lovr visor.
+
 ## Progress
 
 So far, extremely rudimentary. Todo in order of priority:

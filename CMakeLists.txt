@@ -16,6 +16,13 @@ add_subdirectory (lib/enet)
 add_subdirectory (lib/lua)
 set(LUA_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/lib/lua/src)
 include_directories("${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/lib/lua")
+IF(APPLE)
+  SET(LUA_LINKER_FLAGS "LINKER:-flat_namespace;LINKER:-undefined;LINKER:dynamic_lookup")
+ELSEIF(UNIX)
+  SET(LUA_LINKER_FLAGS "LINKER:-undefined;LINKER:dynamic_lookup")
+ELSEIF(WIN32)
+  SET(LUA_LINKER_FLAGS "")
+ENDIF()
 
 SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 add_subdirectory (lib/cJSON)
@@ -57,6 +64,7 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
+target_link_options(allonet PUBLIC ${LUA_LINKER_FLAGS})
 target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS})
 
 # client example

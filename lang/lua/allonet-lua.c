@@ -5,18 +5,10 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-// Todo: figure out how to do this in Windows without requiring lua symbols in the running host
+// Todo: figure out how reference lua symbols weakly in Windows (see LUA_LINKER_FLAGS for mac/linux)
+// so that this library can contain a Lua API without requiring linking with Lua (e g when used from
+// C or Python or whatev)
 #ifndef _WIN32
-
-#define WEAK_ATTR __attribute__((weak))
-
-// Weak link Lua so that we can expose a Lua API without requiring to link lua
-// in all h ost processes.
-extern lua_Number lua_tonumber (lua_State *L, int index) WEAK_ATTR;
-extern void lua_pushnumber (lua_State *L, double n) WEAK_ATTR;
-void luaL_register (lua_State *L,
-                    const char *libname,
-                    const luaL_Reg *l) WEAK_ATTR;
 
 int l_sin (lua_State *L) {
     double d = lua_tonumber(L, 1);  /* get argument */
@@ -29,7 +21,7 @@ static const struct luaL_reg allonet [] = {
       {NULL, NULL}  /* sentinel */
     };
 
-int luaopen_allonet (lua_State *L) {
+int luaopen_liballonet (lua_State *L) {
     luaL_register (L, "allonet", allonet);
     return 1;
 }

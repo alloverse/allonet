@@ -7,9 +7,10 @@
 #include <cJSON/cJSON.h>
 #include "../../src/util.h"
 
-#define _WIN32
 
-#ifndef _WIN32
+#define MODIFY_TERMINAL 0
+
+#if MODIFY_TERMINAL == 1
 #include <termios.h>
 #include <unistd.h>
 #include <sys/select.h>
@@ -53,7 +54,7 @@ int getch()
     }
 }
 
-#endif //ndef _WIN32
+#endif
 
 static const char *me;
 
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
         return -3;
     }
 
-#ifndef _WIN32
+#if MODIFY_TERMINAL == 1
     set_conio_terminal_mode();
 #endif
     //client->interaction_callback = interaction;
@@ -184,7 +185,7 @@ int main(int argc, char **argv)
     
     for(;;)
     {
-#ifndef _WIN32
+#if MODIFY_TERMINAL == 1
         if(kbhit()) {
             int ch = getch();
             allo_client_intent intent = {

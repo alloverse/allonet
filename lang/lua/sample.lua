@@ -23,11 +23,22 @@ local client = allonet.connect(
         }
     })
 )
+local me = ""
+
+client:set_disconnected_callback(function()
+    print("Lost connection :(")
+    exit()
+end)
+
+client:set_interaction_callback(function(inter)
+    print("Got interaction: " .. dump(inter))
+    local body = json.decode(inter.body)
+    if body[1] == "announce" then
+        me = body[2]
+        print("Hey look, it's me! " .. me)
+    end
+end)
 
 while true do
     client:poll()
-    local inter = client:pop_interaction()
-    if inter ~= nil then
-        print(dump(inter))
-    end
 end

@@ -92,6 +92,12 @@ static void push_interaction_table(lua_State *L, allo_interaction *inter)
     set_table_string(L, "body", inter->body);
 }
 
+static void push_state_table(lua_State *L, allo_state *state)
+{
+    lua_newtable(L);
+}
+
+
 //// alloclient structure
 typedef struct l_alloclient
 {
@@ -241,8 +247,11 @@ static int l_alloclient_set_disconnected_callback (lua_State *L)
     return 0;
 }
 
-static int l_alloclient_get_state (lua_State *L) {
-    return 0;
+static int l_alloclient_get_state (lua_State *L)
+{
+    l_alloclient_t *lclient = check_alloclient(L, 1);
+    push_state_table(L, lclient->client->state);
+    return 1;
 }
 
 ////// Callbacks from allonet
@@ -251,8 +260,8 @@ static void state_callback(alloclient *client, allo_state *state)
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->state_callback_index))
     {
-        // todo: put state on stack
-        lua_pcall(lclient->L, 0, 0, 0);
+        push_state_table(L, lclient->client->state);
+        lua_pcall(lclient->L, 1, 0, 0);
     }
 }
 

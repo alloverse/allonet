@@ -39,8 +39,8 @@ static void interaction(alloclient *client, const char *type, const char *sender
             printf("Phew! They stopped poking me, stopping.\n");
         }
         
-        client->set_intent(client, intent);
-        client->interact(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
+        alloclient_set_intent(client, intent);
+        alloclient_send_interaction(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
     }
 }
 
@@ -88,15 +88,15 @@ int main(int argc, char **argv)
 
     // step out of the way
     intent.zmovement = 1;
-    client->set_intent(client, intent);
-    client->poll(client);
+    alloclient_set_intent(client, intent);
+    alloclient_poll(client);
     sleep(1);
     intent.zmovement = 0;
-    client->set_intent(client, intent);
+    alloclient_set_intent(client, intent);
     
     for(;;)
     {
-        client->poll(client);
+        alloclient_poll(client);
     }
     return 0;
 }

@@ -87,15 +87,15 @@ static void interaction(
     if(strcmp(interaction_name, "announce") == 0) {
         me = strdup(cJSON_GetArrayItem(body, 1)->valuestring);
 
-        client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
+        alloclient_send_interaction(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {
         bool mousedown = cJSON_IsTrue(cJSON_GetArrayItem(body, 1));
         if(mousedown) {
             intent.zmovement = !intent.zmovement;
-            client->set_intent(client, intent);
-            client->interact(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
+            alloclient_set_intent(client, intent);
+            alloclient_send_interaction(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
         }
     }
 
@@ -110,6 +110,12 @@ cJSON *vec2(float u, float v)
 cJSON *vec3(float x, float y, float z)
 {
   return cjson_create_list(cJSON_CreateNumber(x), cJSON_CreateNumber(y), cJSON_CreateNumber(z), NULL);
+}
+
+static void disconnected(alloclient *client)
+{
+    alloclient_disconnect(client, 0);
+    exit(1);
 }
 
 
@@ -179,6 +185,7 @@ int main(int argc, char **argv)
     set_conio_terminal_mode();
 #endif
     //client->interaction_callback = interaction;
+    client->disconnected_callback = disconnected;
     
     int i = 0;
     
@@ -192,24 +199,24 @@ int main(int argc, char **argv)
                 .zmovement = ch=='w' ? 1 : ch == 's' ? -1 : 0,
                 .xmovement = ch=='d' ? 1 : ch == 'a' ? -1 : 0,
             };
-            client->set_intent(client, intent);
+            alloclient_set_intent(client, intent);
         }
 #endif
         if(intent.zmovement)
         {
             intent.yaw += 0.01;
         }
-        client->set_intent(client, intent);
-        client->poll(client);
+        alloclient_set_intent(client, intent);
+        alloclient_poll(client);
 
         allo_interaction *inter = NULL;
-        while(inter = alloclient_pop_interaction(client)) {
+        while((inter = alloclient_pop_interaction(client))) {
             interaction(client, inter->type, inter->sender_entity_id, inter->receiver_entity_id, inter->request_id, inter->body);
         }
 
         if( i++ % 100)
         {
-            //client->interact(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
+            //alloclient_send_interaction(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
         }
     }
     return 0;

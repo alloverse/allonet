@@ -13,20 +13,13 @@ typedef struct alloclient {
     /** Set this to get a callback when another entity is trying to 
       * interact with one of your entities.
       * 
-      * @param type: oneway, request, response or publication
-      * @param sender_entity_id: the entity trying to interact with yours
-      * @param receiver_entity_id: your entity being interacted with
-      * @param request_id: The ID of this request or response
-      * @param body: JSON list of interaction message
+      * @param interaction: interaction received. Freed after callback;
+      *                     copy it if you need to keep it.
       * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
       */
     void (*interaction_callback)(
         alloclient *client, 
-        const char *type,
-        const char *sender_entity_id,
-        const char *receiver_entity_id,
-        const char *request_id,
-        const char *body
+        allo_interaction *interaction
     );
 
     /** You were disconnected from the server. This is
@@ -65,20 +58,13 @@ void alloclient_poll(alloclient *client);
 /** Have one of your entites interact with another entity.
   * Use this same method to send back a response when you get a request. 
   * 
-  * @param type: oneway, request, response or publication
-  * @param sender_entity_id: ID of your entity, e g your avatar.
-  * @param receiver_entity_id: the entity your sender wants to interact with
-  * @param request_id: The ID of this request or response
-  * @param body: JSON list of interaction message
+  * @param interaction: interaction to send. Will not be held, will not be
+  *                     freed.
   * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
   */
 void alloclient_send_interaction(
     alloclient *client,
-    const char *interaction_type,
-    const char *sender_entity_id,
-    const char *receiver_entity_id,
-    const char *request_id,
-    const char *body
+    allo_interaction *interaction
 );
 
 /** Change this client's movement/action intent.

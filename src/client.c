@@ -87,18 +87,19 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
     cJSON_Delete(deletes);
 }
 
-static void parse_interaction(alloclient *client, cJSON *interaction)
+static void parse_interaction(alloclient *client, cJSON *inter_json)
 {
-    const char *type = nonnull(cJSON_GetArrayItem(interaction, 1))->valuestring;
-    const char *from = nonnull(cJSON_GetArrayItem(interaction, 2))->valuestring;
-    const char *to = nonnull(cJSON_GetArrayItem(interaction, 3))->valuestring;
-    const char *request_id = nonnull(cJSON_GetArrayItem(interaction, 4))->valuestring;
-    cJSON *body = nonnull(cJSON_GetArrayItem(interaction, 5));
+    const char *type = nonnull(cJSON_GetArrayItem(inter_json, 1))->valuestring;
+    const char *from = nonnull(cJSON_GetArrayItem(inter_json, 2))->valuestring;
+    const char *to = nonnull(cJSON_GetArrayItem(inter_json, 3))->valuestring;
+    const char *request_id = nonnull(cJSON_GetArrayItem(inter_json, 4))->valuestring;
+    cJSON *body = nonnull(cJSON_GetArrayItem(inter_json, 5));
     const char *bodystr = cJSON_Print(body);
+    allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
     if(client->interaction_callback) {
-        client->interaction_callback(client, type, from, to, request_id, bodystr);
+        client->interaction_callback(client, interaction);
+        allo_interaction_free(interaction);
     } else {
-        allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
         interaction_queue *entry = (interaction_queue*)calloc(1, sizeof(interaction_queue));
         entry->interaction = interaction;
         LIST_INSERT_HEAD(&_internal(client)->interactions, entry, pointers);
@@ -185,20 +186,16 @@ void alloclient_set_intent(alloclient *client, allo_client_intent intent)
 
 void alloclient_send_interaction(
     alloclient *client,
-    const char *interaction_type,
-    const char *sender_entity_id,
-    const char *receiver_entity_id,
-    const char *request_id,
-    const char *body
+    allo_interaction *interaction
 )
 {
     cJSON *cmdrep = cjson_create_list(
         nonnull(cJSON_CreateString("interaction")),
-        nonnull(cJSON_CreateString(interaction_type)),
-        nonnull(cJSON_CreateString(sender_entity_id)),
-        nonnull(cJSON_CreateString(receiver_entity_id)),
-        nonnull(cJSON_CreateString(request_id)),
-        nonnull(cJSON_Parse(body)),
+        nonnull(cJSON_CreateString(interaction->type)),
+        nonnull(cJSON_CreateString(interaction->sender_entity_id)),
+        nonnull(cJSON_CreateString(interaction->receiver_entity_id)),
+        nonnull(cJSON_CreateString(interaction->request_id)),
+        nonnull(cJSON_Parse(interaction->body)),
         NULL
     );
     const char *json = cJSON_Print(cmdrep);
@@ -259,14 +256,15 @@ bool announce(alloclient *client, const char *identity, const char *avatar_desc)
         return false;
     }
     const char *body = cJSON_Print(bodyobj);
-    alloclient_send_interaction(
-        client,
+    allo_interaction *announce = allo_interaction_create(
         "request",
         "",
         "place",
         "ANN0",
         body
     );
+    alloclient_send_interaction(client, announce);
+    allo_interaction_free(announce);
     cJSON_Delete(bodyobj);
     free((void*)body);
     return true;

@@ -45,6 +45,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/util.c
     ${SOURCE_FILES_PREFIX}/util.h
     lang/lua/allonet-lua.c
+    lang/lua/lua-utils.c
 )
 
 source_group(include FILES ${INCLUDE_FILES})

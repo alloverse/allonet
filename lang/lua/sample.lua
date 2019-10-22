@@ -1,15 +1,17 @@
 require("liballonet")
 local json = require("json")
-function dump(o)
+function dump(o, l, ll)
+    l = l or 0
+    ll = ll or l
     if type(o) == 'table' then
-       local s = '{ '
+       local s = string.rep("\t",ll) .. '{ \n'
        for k,v in pairs(o) do
           if type(k) ~= 'number' then k = '"'..k..'"' end
-          s = s .. '['..k..'] = ' .. dump(v) .. ','
+          s = s .. string.rep("\t",l+1) .. ''..k..' = ' .. dump(v, l+1, 0) .. '\n'
        end
-       return s .. '} '
+       return s .. string.rep("\t",l) .. '} \n'
     else
-       return tostring(o)
+       return string.rep("\t",ll) .. tostring(o)
     end
  end
 
@@ -39,6 +41,11 @@ client:set_interaction_callback(function(inter)
     end
 end)
 
+client:set_state_callback(function(state)
+    print("State: " .. dump(state))
+end)
+
 while true do
     client:poll()
+    print("State: " .. dump(client:get_state()))
 end

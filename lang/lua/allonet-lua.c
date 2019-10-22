@@ -1,102 +1,12 @@
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-#include "../../include/allonet/client.h"
-
 // Todo: figure out how reference lua symbols weakly in Windows (see LUA_LINKER_FLAGS for mac/linux)
 // so that this library can contain a Lua API without requiring linking with Lua (e g when used from
 // C or Python or whatev)
 #ifndef _WIN32
 
-////// convenience functions
-/* assume that table is on the stack top */
-static const char *get_table_string(lua_State *L, const char *key)
-{
-    lua_pushstring(L, key);
-    lua_gettable(L, -2);
-    if (!lua_isstring(L, -1))
-    {
-        luaL_error(L, "Unexpected non-string value for key %s", key);
-        return NULL;
-    }
-    const char *result = luaL_checkstring(L, -1);
-    lua_pop(L, 1);
-    return result;
-}
-static void set_table_string(lua_State *L, const char *key, const char *value)
-{
-    lua_pushstring(L, key);
-    lua_pushstring(L, value);
-    lua_settable(L, -3);
-}
-static double get_table_number(lua_State *L, const char *key)
-{
-    lua_pushstring(L, key);
-    lua_gettable(L, -2);
-    if (!lua_isnumber(L, -1))
-    {
-        luaL_error(L, "Unexpected non-number value for key %s", key);
-        return 0.0;
-    }
-    double result = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-    return result;
-}
-static bool store_function(lua_State *L, int *storage)
-{
-    if(*storage) {
-        luaL_unref(L, LUA_REGISTRYINDEX, *storage);
-    }
-
-    if(lua_type(L, -1) == LUA_TFUNCTION)
-    {
-        *storage = luaL_ref(L, LUA_REGISTRYINDEX);
-        return true;
-    }
-    else if(lua_type(L, -1) == LUA_TNIL)
-    {
-        *storage = 0;
-        return false;
-    }
-    else
-    {
-        luaL_error(L, "Invalid function");
-        return false;
-    }
-}
-static bool get_function(lua_State *L, int storage)
-{
-    if(storage == 0)
-    {
-        return false;
-    }
-    lua_rawgeti(L, LUA_REGISTRYINDEX, storage);
-    if(lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-        return false;
-    }
-    return true;
-}
-
-static void push_interaction_table(lua_State *L, allo_interaction *inter)
-{
-    lua_newtable(L);
-    set_table_string(L, "type", inter->type);
-    set_table_string(L, "sender_entity_id", inter->sender_entity_id);
-    set_table_string(L, "receiver_entity_id", inter->receiver_entity_id);
-    set_table_string(L, "request_id", inter->request_id);
-    set_table_string(L, "body", inter->body);
-}
-
-static void push_state_table(lua_State *L, allo_state *state)
-{
-    lua_newtable(L);
-}
-
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "lua-utils.h"
 
 //// alloclient structure
 typedef struct l_alloclient
@@ -250,7 +160,7 @@ static int l_alloclient_set_disconnected_callback (lua_State *L)
 static int l_alloclient_get_state (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    push_state_table(L, lclient->client->state);
+    push_state_table(L, &lclient->client->state);
     return 1;
 }
 
@@ -260,7 +170,7 @@ static void state_callback(alloclient *client, allo_state *state)
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->state_callback_index))
     {
-        push_state_table(L, lclient->client->state);
+        push_state_table(lclient->L, &lclient->client->state);
         lua_pcall(lclient->L, 1, 0, 0);
     }
 }

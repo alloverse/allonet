@@ -16,18 +16,11 @@ Alloverse's network API. It can be used as:
 
 Since allonet is written in C, its native API is C headers located in `include/allonet`.
 
-### Lua
+For information about specific language bridges, see the README files in the `lang`
+folder (both source and binary distributions).
 
-The dylib/so/dll file is loadable by Lua. To simplify loading it, you can just 
-`require('allonet/lang/lua/allonet.lua')` and it will load the binary for you.
-
-### C#
-
-The C# bridge is in the `allovisor` repo.
-
-### Erlang
-
-The Erlang bridge is in the `alloplace` repo.
+For C#, the bridge is in the old `allovisor` repo for now. The Erlang bridge is
+in the `alloplace` repo. Both will be moved to this repo.
 
 ## Developing allonet
 

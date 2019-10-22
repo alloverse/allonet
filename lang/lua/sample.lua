@@ -1,21 +1,8 @@
 require("liballonet")
 local json = require("json")
-function dump(o, l, ll)
-    l = l or 0
-    ll = ll or l
-    if type(o) == 'table' then
-       local s = string.rep("\t",ll) .. '{ \n'
-       for k,v in pairs(o) do
-          if type(k) ~= 'number' then k = '"'..k..'"' end
-          s = s .. string.rep("\t",l+1) .. ''..k..' = ' .. dump(v, l+1, 0) .. '\n'
-       end
-       return s .. string.rep("\t",l) .. '} \n'
-    else
-       return string.rep("\t",ll) .. tostring(o)
-    end
- end
 
-
+-- Connect is synchronous, and returns a client
+-- if connected or raises an error on failure to connect.
 local client = allonet.connect(
     "alloplace://nevyn.places.alloverse.com",
     json.encode({display_name = "lua-sample"}),
@@ -27,13 +14,16 @@ local client = allonet.connect(
 )
 local me = ""
 
+-- This callback is important to set to notice when there's
+-- no active connection. Do reconnection logic, or maybe quit your app.
 client:set_disconnected_callback(function()
     print("Lost connection :(")
     exit()
 end)
 
+-- Some other entity is trying to interact with you.
 client:set_interaction_callback(function(inter)
-    print("Got interaction: " .. dump(inter))
+    print("Got interaction: " .. json.encode(inter))
     local body = json.decode(inter.body)
     if body[1] == "announce" then
         me = body[2]
@@ -41,11 +31,13 @@ client:set_interaction_callback(function(inter)
     end
 end)
 
+-- The world has changed somehow.
 client:set_state_callback(function(state)
-    print("State: " .. dump(state))
+    print("State: " .. json.encode(state))
 end)
 
+-- In an ideal app, poll() at 20hz, not as fast as you can :)
+-- But you have to poll regularly, or nothing works.
 while true do
     client:poll()
-    print("State: " .. dump(client:get_state()))
 end

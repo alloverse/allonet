@@ -21,3 +21,93 @@ get you started:
         client:poll()
         sleep(1.0/20.0) -- poll at 20hz
     end
+
+## Full API
+
+### `allonet.connect(url: string, identity: json-string, avatar: json-string)
+
+ * url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
+ * identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
+ * avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
+
+### `client:disconnect(reason: integer)`
+
+Disconnect from an alloplace and free all internal state.
+`client` is free()d by this call. Call this to deallocate
+even if you're already disconnected remotely (and you
+notice from the disconnect callback)
+
+### `client:send_interaction(interaction: interaction)`
+
+Have one of your entites interact with another entity.
+Use this same method to send back a response when you get a request.
+
+`interaction` is a table with these keys:
+
+* type
+* sender_entity_id
+* receiver_entity_id
+* request_id
+* body
+
+All are strings according to the `interactions` specification, found here:
+https://github.com/alloverse/docs/blob/master/specifications/interactions.md
+
+### `client:set_intent(intent: intent)
+
+Change this client's movement/action intent.
+
+`intent` is a table with these keys:
+
+* zmovement
+* xmovement
+* yaw
+* pitch
+
+See https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
+for description of the fields.
+
+### `state = client:get_state()`
+
+Get the current state of the place, i e a list of all entities
+and their components. Returns a table with:
+
+* `revision`: current revision of world, as number
+* `entities`: table of unsorted entities
+
+Each entity has:
+
+* `id` as string, uniquely identifying it. Use this to e g send interactions to it.
+* `components`, table of components as per components specification.
+
+See more at https://github.com/alloverse/docs/blob/master/specifications/README.md#entity .
+
+### `interaction = client:pop_interaction()`
+
+If you don't like callbacks and haven't `set_interaction_callback`, you can also
+call this method until it returns null after each time you call `client:poll` to
+fetch interactions. See `send_interaction` for description of the interaction
+table.
+
+### `client:set_state_callback(callback: state_callback_fn)`
+
+Set this to get a callback when state changes. Callback function receives
+the new state as a parameter.
+
+### `client:set_interaction_callback(callback: interaction_callback_fn)`
+
+Set this to get a callback whenever another entity sends you an interaction.
+The callback function receives an `interaction` table immediately upon
+interaction.
+
+If you set this, `pop_interaction` will stop working. Choose either method
+to receive interactions.
+
+### `client:set_disconnected_callback(callback: disconnected_callback_fn)`
+
+Set this to get a callback when your client is disconnected from the place.
+
+You MUST call `client:disconnect()` in this callback to deallocate all
+relevant resources.
+
+This would be a good time to trigger reconnection logic, or to quit your app.

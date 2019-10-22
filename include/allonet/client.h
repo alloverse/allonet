@@ -47,7 +47,8 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
 
 /** Disconnect from an alloplace and free all internal state.
  *  `client` is free()d by this call. Call this to deallocate
- *  even if you're already disconnected remotely.
+ *  even if you're already disconnected remotely (and you
+ *  notice from the disconnect callback).
  */
 void alloclient_disconnect(alloclient *client, int reason);
 
@@ -68,6 +69,7 @@ void alloclient_send_interaction(
 );
 
 /** Change this client's movement/action intent.
+ *  @see https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
  */
 void alloclient_set_intent(alloclient *client, allo_client_intent intent);
 

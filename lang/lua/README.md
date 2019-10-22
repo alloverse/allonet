@@ -24,7 +24,7 @@ get you started:
 
 ## Full API
 
-### `allonet.connect(url: string, identity: json-string, avatar: json-string)
+### `allonet.connect(url: string, identity: json-string, avatar: json-string)`
 
  * url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
  * identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
@@ -53,7 +53,7 @@ Use this same method to send back a response when you get a request.
 All are strings according to the `interactions` specification, found here:
 https://github.com/alloverse/docs/blob/master/specifications/interactions.md
 
-### `client:set_intent(intent: intent)
+### `client:set_intent(intent: intent)`
 
 Change this client's movement/action intent.
 

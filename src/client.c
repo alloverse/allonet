@@ -85,6 +85,11 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         }
     }
     cJSON_Delete(deletes);
+
+    if(client->state_callback)
+    {
+        client->state_callback(client, &client->state);
+    }
 }
 
 static void parse_interaction(alloclient *client, cJSON *inter_json)

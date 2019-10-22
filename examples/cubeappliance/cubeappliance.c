@@ -16,9 +16,9 @@
 allo_client_intent intent;
 char *me;
 
-static void interaction(alloclient *client, const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body)
+static void interaction(alloclient *client, allo_interaction *inter)
 {
-    cJSON *cmd = cJSON_Parse(body);
+    cJSON *cmd = cJSON_Parse(inter->body);
     const char *iname = cJSON_GetStringValue(cJSON_GetArrayItem(cmd, 0));
 
     if (strcmp(iname, "announce") == 0)
@@ -40,7 +40,9 @@ static void interaction(alloclient *client, const char *type, const char *sender
         }
         
         alloclient_set_intent(client, intent);
-        alloclient_send_interaction(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
+        allo_interaction *response = allo_interaction_create("response", me, inter->sender_entity_id, inter->request_id, "[\"poke\", \"ok\"]");
+        alloclient_send_interaction(client, response);
+        allo_interaction_free(response);
     }
 }
 

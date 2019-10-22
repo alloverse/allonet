@@ -38,6 +38,14 @@ typedef struct {
     LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
 
+/**
+ * Describes an interaction to be sent or as received.
+ * @field type: oneway, request, response or publication
+ * @field sender_entity_id: the entity trying to interact with yours
+ * @field receiver_entity_id: your entity being interacted with
+ * @field request_id: The ID of this request or response
+ * @field body: JSON list of interaction message
+ */
 typedef struct allo_interaction {
     const char *type;
     const char *sender_entity_id;

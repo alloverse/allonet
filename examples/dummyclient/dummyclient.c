@@ -7,9 +7,10 @@
 #include <cJSON/cJSON.h>
 #include "../../src/util.h"
 
-#define _WIN32
 
-#ifndef _WIN32
+#define MODIFY_TERMINAL 0
+
+#if MODIFY_TERMINAL == 1
 #include <termios.h>
 #include <unistd.h>
 #include <sys/select.h>
@@ -53,7 +54,7 @@ int getch()
     }
 }
 
-#endif //ndef _WIN32
+#endif
 
 static const char *me;
 
@@ -65,14 +66,10 @@ allo_client_intent intent = {
 
 static void interaction(
     alloclient *client, 
-    const char *type,
-    const char *sender_entity_id,
-    const char *receiver_entity_id,
-    const char *request_id,
-    const char *bodystr
+    allo_interaction *inter
 )
 {
-    cJSON *body = cJSON_Parse(bodystr);
+    cJSON *body = cJSON_Parse(inter->body);
     const char *interaction_name = cJSON_GetArrayItem(body, 0)->valuestring;
     
     if(strcmp(interaction_name, "point") == 0 ) {
@@ -81,12 +78,13 @@ static void interaction(
 
     printf(
         "INTERACTION\n\tType: %s\n\tSender: %s\n\tReceiver: %s\n\tID: %s\n\tBody: %s\n", 
-        type, sender_entity_id, receiver_entity_id, request_id, bodystr
+        inter->type, inter->sender_entity_id, inter->receiver_entity_id, inter->request_id, inter->body
     );
     if(strcmp(interaction_name, "announce") == 0) {
         me = strdup(cJSON_GetArrayItem(body, 1)->valuestring);
-
-        alloclient_send_interaction(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
+        allo_interaction *request = allo_interaction_create("request", me, "place", "123", "[\"lol\", 1, 2, 3]");
+        alloclient_send_interaction(client, request);
+        allo_interaction_free(request);
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {
@@ -94,7 +92,9 @@ static void interaction(
         if(mousedown) {
             intent.zmovement = !intent.zmovement;
             alloclient_set_intent(client, intent);
-            alloclient_send_interaction(client, "response", me, sender_entity_id, request_id, "[\"poke\", \"ok\"]");
+            allo_interaction *response = allo_interaction_create("response", me, inter->sender_entity_id, inter->request_id, "[\"poke\", \"ok\"]");
+            alloclient_send_interaction(client, response);
+            allo_interaction_free(response);
         }
     }
 
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
         return -3;
     }
 
-#ifndef _WIN32
+#if MODIFY_TERMINAL == 1
     set_conio_terminal_mode();
 #endif
     //client->interaction_callback = interaction;
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     
     for(;;)
     {
-#ifndef _WIN32
+#if MODIFY_TERMINAL == 1
         if(kbhit()) {
             int ch = getch();
             allo_client_intent intent = {
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 
         allo_interaction *inter = NULL;
         while((inter = alloclient_pop_interaction(client))) {
-            interaction(client, inter->type, inter->sender_entity_id, inter->receiver_entity_id, inter->request_id, inter->body);
+            interaction(client, inter);
         }
 
         if( i++ % 100)

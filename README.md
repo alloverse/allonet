@@ -12,7 +12,15 @@ Alloverse's network API. It can be used as:
 * **a game engine server API**, when used by placeserv to manage clients and
   the place's environment and inhabitants.
 
-The API is in C, and bridged into C# and Erlang.
+## Using from different languages
+
+Since allonet is written in C, its native API is C headers located in `include/allonet`.
+
+For information about specific language bridges, see the README files in the `lang`
+folder (both source and binary distributions).
+
+For C#, the bridge is in the old `allovisor` repo for now. The Erlang bridge is
+in the `alloplace` repo. Both will be moved to this repo.
 
 ## Developing allonet
 
@@ -36,6 +44,8 @@ The same applies to Visual Studio, etc...
 
 Visual Studio Code has great Cmake plugins, so you can just automate the above process
 and just click "build" in the UI.
+
+Note that `lib/lua` must exactly match the Lua version used by the Lovr visor.
 
 ## Progress
 

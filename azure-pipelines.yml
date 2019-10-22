@@ -24,6 +24,8 @@ jobs:
         include/**/*.h
         build/allodummy*
         build/*.so
+        lang/**/*.lua
+        lang/**/README.md
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
@@ -50,6 +52,8 @@ jobs:
         include/**/*.h
         build/allodummy*
         build/*.dylib
+        lang/**/*.lua
+        lang/**/README.md
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
@@ -79,6 +83,8 @@ jobs:
         build/**/allo*.dll
         build/**/allo*.lib
         build/**/allo*.pdb
+        lang/**/*.lua
+        lang/**/README.md
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
@@ -104,6 +110,8 @@ jobs:
       contents: |
         include/**/*.h
         build/*.so
+        lang/**/*.lua
+        lang/**/README.md
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"

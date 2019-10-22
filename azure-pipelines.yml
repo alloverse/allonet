@@ -8,6 +8,8 @@ jobs:
   pool:
     vmImage: 'ubuntu-18.04'
   steps:
+  - script: sudo sh install-cmake.sh
+    displayName: 'Install CMake'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'

@@ -19,6 +19,6 @@ else
     mkdir -p $prefix
 fi
 
-wget -O cmake-linux.sh https://cmake.org/files/v3.13/cmake-${version}-Linux-x86_64.sh
+wget -O cmake-linux.sh https://cmake.org/files/v3.15/cmake-${version}-Linux-x86_64.sh
 sh cmake-linux.sh -- --skip-license --prefix=$prefix
 $prefix/bin/cmake --version

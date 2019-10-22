@@ -215,7 +215,7 @@ int luaopen_liballonet (lua_State *L) {
     lua_pushstring(L, "__index");
     lua_pushvalue(L, -2);  /* pushes the metatable */
     lua_settable(L, -3);  /* metatable.__index = metatable */
-    luaL_openlib(L, NULL, alloclient_m, 0);
+    luaL_register(L, NULL, alloclient_m);
     
     luaL_register (L, "allonet", allonet);
     return 1;

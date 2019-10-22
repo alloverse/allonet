@@ -19,7 +19,7 @@ include_directories("${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/lib/lua")
 IF(APPLE)
   SET(LUA_LINKER_FLAGS "LINKER:-flat_namespace;LINKER:-undefined;LINKER:dynamic_lookup")
 ELSEIF(UNIX)
-  SET(LUA_LINKER_FLAGS "LINKER:-undefined;LINKER:ignore-all")
+  SET(LUA_LINKER_FLAGS "LINKER:-undefined;LINKER:dynamic_lookup")
 ELSEIF(WIN32)
   SET(LUA_LINKER_FLAGS "")
 ENDIF()
@@ -65,7 +65,7 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
-target_link_options(allonet PUBLIC ${LUA_LINKER_FLAGS})
+target_link_options(allonet PRIVATE ${LUA_LINKER_FLAGS})
 target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS})
 
 # client example

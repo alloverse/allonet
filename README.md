@@ -22,6 +22,14 @@ folder (both source and binary distributions).
 For C#, the bridge is in the old `allovisor` repo for now. The Erlang bridge is
 in the `alloplace` repo. Both will be moved to this repo.
 
+## Download allonet
+
+If you don't want to build allonet from source (as per "Developing allonet" below),
+you can [download a binary distribution from Azure 
+Pipelines](https://dev.azure.com/alloverse/allonet/_build?definitionId=1). Select
+the latest pinned build, click the "artifacts" button, and download for the platform
+you want to use. All language bindings are available in each platform download.
+
 ## Developing allonet
 
 Allonet uses Cmake to generate its build files. To build using Make on a Unix/Mac machine,
@@ -58,6 +66,7 @@ So far, extremely rudimentary. Todo in order of priority:
 - [x] Erlang bridge and make sure server API fits mm pattern
 - [x] Move to component based entities
 - [x] Flesh out intents (head and hands, pointing, clicking)
+- [x] Lua bridge and integrate with Lovr visor
 - [ ] Assets (geometry, textures, animations)
 - [ ] Static geometry (i e the place's environment)
 - [ ] Manipulation intents (grabbing, throwing, menuing, ...)

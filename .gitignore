@@ -1,6 +1,7 @@
 build
 xcbuild
 vsbuild
+android-build
 local.properties
 .gradle
 .vscode

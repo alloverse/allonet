@@ -39,7 +39,7 @@ do:
 2. `cmake ..`
 3. `make`
 
-This will build allonet binaries. You could try out `./allodummyclient alloplace://nevyn.places.alloverse.com`
+This will build allonet binaries. You could try out `build/allodummyclient alloplace://nevyn.places.alloverse.com`
 to make sure it works.
 
 To develop using e g Xcode, you can just supply `-G` to Cmake.
@@ -53,7 +53,18 @@ The same applies to Visual Studio, etc...
 Visual Studio Code has great Cmake plugins, so you can just automate the above process
 and just click "build" in the UI.
 
-Note that `lib/lua` must exactly match the Lua version used by the Lovr visor.
+### Developing for Android
+
+1. Install Android Studio, ?? SDK, ?? NDK.
+2. `mkdir build; cd build`
+3. `cmake -DCMAKE_TOOLCHAIN_FILE=~/Library/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..`.
+   Path to android toolchain file may be different on your system (e g if you're running Linux or Windows).
+4. `make allonet`
+
+
+### Notes for specific languages
+
+Lua: `lib/lua` must be point at 5.1 to be luajit compatible. (Alloverse Visor uses LÖVR which uses luajit).
 
 ## Progress
 

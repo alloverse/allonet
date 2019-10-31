@@ -3,6 +3,8 @@ project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
@@ -51,7 +53,13 @@ set(SOURCE_FILES
 source_group(include FILES ${INCLUDE_FILES})
 source_group(source FILES ${SOURCE_FILES})
 
-add_library(allonet SHARED 
+if(ALLONET_BUILD_STATIC)
+  SET(ALLONET_BUILDTYPE STATIC)
+else()
+  SET(ALLONET_BUILDTYPE SHARED)
+endif()
+
+add_library(allonet ${ALLONET_BUILDTYPE} 
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
     ${SVC_FILES}

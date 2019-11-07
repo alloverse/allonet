@@ -1,4 +1,3 @@
-#ifndef _WIN32
 #include "lua-utils.h"
 
 ////// convenience functions
@@ -198,4 +197,3 @@ void push_state_table(lua_State *L, allo_state *state)
     }
     lua_settable(L, -3);
 }
-#endif

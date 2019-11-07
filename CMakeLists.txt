@@ -4,6 +4,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
+option(ALLONET_USE_LUA "Whether to include the Lua bridge. On Windows only, this makes allonet depend on lua.dll." OFF)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(SYSTEM
@@ -17,13 +18,17 @@ add_subdirectory (lib/enet)
 #find_package(Lua REQUIRED)
 add_subdirectory (lib/lua)
 set(LUA_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/lib/lua/src)
-include_directories("${LUA_INCLUDE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/lib/lua")
-IF(APPLE)
-  SET(LUA_LINKER_FLAGS "-Wl,-flat_namespace -Wl,-undefined,dynamic_lookup")
-ELSEIF(UNIX)
-  SET(LUA_LINKER_FLAGS "-Wl,-undefined,dynamic_lookup")
-ELSEIF(WIN32)
-  SET(LUA_LINKER_FLAGS "")
+IF(ALLONET_USE_LUA)
+	include_directories("${LUA_INCLUDE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/lib/lua")
+	IF(APPLE)
+	  SET(LUA_LINKER_FLAGS "-Wl,-flat_namespace -Wl,-undefined,dynamic_lookup")
+	ELSEIF(UNIX)
+	  SET(LUA_LINKER_FLAGS "-Wl,-undefined,dynamic_lookup")
+	ELSEIF(WIN32)
+	  SET(LUA_LINKER_FLAGS liblua)
+	ENDIF()
+ELSE()
+	SET(LUA_LINKER_FLAGS "")
 ENDIF()
 
 SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
@@ -46,9 +51,14 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/state.c
     ${SOURCE_FILES_PREFIX}/util.c
     ${SOURCE_FILES_PREFIX}/util.h
-    lang/lua/allonet-lua.c
-    lang/lua/lua-utils.c
 )
+
+if(ALLONET_USE_LUA)
+	LIST(APPEND SOURCE_FILES
+		lang/lua/allonet-lua.c
+		lang/lua/lua-utils.c
+	)
+endif()
 
 source_group(include FILES ${INCLUDE_FILES})
 source_group(source FILES ${SOURCE_FILES})

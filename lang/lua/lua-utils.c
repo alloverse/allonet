@@ -41,6 +41,52 @@ double get_table_number(lua_State *L, const char *key)
     lua_pop(L, 1);
     return result;
 }
+double get_table_inumber(lua_State *L, int key)
+{
+    lua_pushinteger(L, key);
+    lua_gettable(L, -2);
+    if (!lua_isnumber(L, -1))
+    {
+        luaL_error(L, "Unexpected non-number value for key %d", key);
+        return 0.0;
+    }
+    double result = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    return result; 
+}
+allo_client_poses get_table_poses(lua_State *L, const char *key)
+{
+    allo_client_poses result;
+    lua_pushstring(L, key);
+    lua_gettable(L, -2);
+    result.head = get_table_pose(L, "head");
+    result.left_hand = get_table_pose(L, "hand/left");
+    result.right_hand = get_table_pose(L, "hand/right");
+    lua_pop(L, 1);
+    return result;
+}
+allo_client_pose get_table_pose(lua_State *L, const char *key)
+{
+    allo_client_pose result;
+    lua_pushstring(L, key);
+    lua_gettable(L, -2);
+    result.position = get_table_vector(L, "position");
+    result.rotation = get_table_vector(L, "rotation");
+    lua_pop(L, 1);
+    return result;
+}
+allo_vector get_table_vector(lua_State *L, const char *key)
+{
+    allo_vector result;
+    lua_pushstring(L, key);
+    lua_gettable(L, -2);
+    result.x = get_table_inumber(L, 1);
+    result.y = get_table_inumber(L, 2);
+    result.z = get_table_inumber(L, 3);
+    lua_pop(L, 1);
+    return result;
+}
+
 bool store_function(lua_State *L, int *storage)
 {
     if(*storage) {

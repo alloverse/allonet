@@ -174,6 +174,24 @@ void alloclient_set_intent(alloclient *client, allo_client_intent intent)
             "xmovement", cJSON_CreateNumber(intent.xmovement),
             "yaw", cJSON_CreateNumber(intent.yaw),
             "pitch", cJSON_CreateNumber(intent.pitch),
+            "poses", cjson_create_object(
+                "head", cjson_create_object(
+                    "position", vec2cjson(intent.poses.head.position),
+                    "rotation", vec2cjson(intent.poses.head.rotation),
+                    NULL
+                ),
+                "hand/left", cjson_create_object(
+                    "position", vec2cjson(intent.poses.left_hand.position),
+                    "rotation", vec2cjson(intent.poses.left_hand.rotation),
+                    NULL
+                ),
+                "hand/right", cjson_create_object(
+                    "position", vec2cjson(intent.poses.right_hand.position),
+                    "rotation", vec2cjson(intent.poses.right_hand.rotation),
+                    NULL
+                ),
+                NULL
+            ),
             NULL
         ),
         NULL

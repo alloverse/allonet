@@ -8,32 +8,50 @@
 #pragma pack(push)
 #pragma pack(1)
 
-typedef struct {
-    double zmovement; // 1 = maximum speed forwards
-    double xmovement; // 1 = maximum speed strafe right
-    double yaw; // rotation around x in radians
-    double pitch; // rotation around y in radians
-} allo_client_intent;
-
-typedef struct {
+typedef struct allo_vector
+{
     double x, y, z;
 } allo_vector;
 
-typedef struct allo_entity {
+typedef struct allo_client_pose
+{
+    allo_vector position;
+    allo_vector rotation;
+} allo_client_pose;
+
+typedef struct allo_client_poses
+{
+    allo_client_pose head;
+    allo_client_pose left_hand;
+    allo_client_pose right_hand;
+} allo_client_poses;
+
+typedef struct allo_client_intent
+{
+    double zmovement; // 1 = maximum speed forwards
+    double xmovement; // 1 = maximum speed strafe right
+    double yaw;       // rotation around x in radians
+    double pitch;     // rotation around y in radians
+    allo_client_poses poses;
+} allo_client_intent;
+
+typedef struct allo_entity
+{
     char *id;
-    
+
     // exposing implementation detail json isn't _great_ but best I got atm.
     // See https://github.com/alloverse/docs/blob/master/specifications/components.md for official
     // contained values
     cJSON *components;
-    
+
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
 
 allo_entity *entity_create(const char *id);
 void entity_destroy(allo_entity *entity);
 
-typedef struct {
+typedef struct allo_state
+{
     uint64_t revision;
     LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
@@ -46,7 +64,8 @@ typedef struct {
  * @field request_id: The ID of this request or response
  * @field body: JSON list of interaction message
  */
-typedef struct allo_interaction {
+typedef struct allo_interaction
+{
     const char *type;
     const char *sender_entity_id;
     const char *receiver_entity_id;

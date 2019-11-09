@@ -95,5 +95,5 @@ extern void  (*lua_pushvalue_weak) (lua_State *L, int idx);
 #define lua_pushvalue lua_pushvalue_weak
 extern lua_Number (*luaL_checknumber_weak) (lua_State *L, int numArg);
 #define luaL_checknumber luaL_checknumber_weak
-extern void load_weak_lua_symbols();
 #endif
+extern void load_weak_lua_symbols();

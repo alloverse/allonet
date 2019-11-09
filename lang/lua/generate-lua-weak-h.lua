@@ -76,7 +76,6 @@ for name, signature in pairs(funcs) do
 	source(signature:gsub(name, "(*"..name.."_weak)").." = NULL;")
 end
 
-header("extern void load_weak_lua_symbols();")
 source([[
 #include <Windows.h>
 void load_weak_lua_symbols() 
@@ -105,6 +104,7 @@ source("}")
 
 header("#endif")
 source("#endif")
+header("extern void load_weak_lua_symbols();") -- always available
 
 f = io.open("lua-weak.h", "w+")
 f:write(h)

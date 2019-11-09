@@ -4,7 +4,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
-option(ALLONET_USE_LUA "Whether to include the Lua bridge. On Windows only, this makes allonet depend on lua.dll." OFF)
+option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(SYSTEM
@@ -25,7 +25,7 @@ IF(ALLONET_USE_LUA)
 	ELSEIF(UNIX)
 	  SET(LUA_LINKER_FLAGS "-Wl,-undefined,dynamic_lookup")
 	ELSEIF(WIN32)
-	  SET(LUA_LINKER_FLAGS liblua)
+	  SET(LUA_LINKER_FLAGS )
 	ENDIF()
 ELSE()
 	SET(LUA_LINKER_FLAGS "")
@@ -57,6 +57,7 @@ if(ALLONET_USE_LUA)
 	LIST(APPEND SOURCE_FILES
 		lang/lua/allonet-lua.c
 		lang/lua/lua-utils.c
+		lang/lua/lua-weak.c
 	)
 endif()
 

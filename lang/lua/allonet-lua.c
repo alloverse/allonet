@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 #include "lua-utils.h"
 
 //// alloclient structure
@@ -208,6 +209,9 @@ static const struct luaL_reg alloclient_m [] = {
 };
 
 int luaopen_liballonet (lua_State *L) {
+	load_weak_lua_symbols();
+	assert(luaL_register != NULL);
+
     luaL_newmetatable(L, "allonet.client");
     lua_pushstring(L, "__index");
     lua_pushvalue(L, -2);  /* pushes the metatable */

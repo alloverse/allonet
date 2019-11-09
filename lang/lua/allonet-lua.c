@@ -210,6 +210,7 @@ static const struct luaL_reg alloclient_m [] = {
 
 int luaopen_liballonet (lua_State *L) {
 	load_weak_lua_symbols();
+	allo_initialize(false);
 	assert(luaL_register != NULL);
 
     luaL_newmetatable(L, "allonet.client");

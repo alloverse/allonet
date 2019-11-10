@@ -58,7 +58,7 @@ header("#ifdef __APPLE__")
 header("#endif")
 
 -- Linux: I can't get undefined dynamic lookup to work, so we need explict weak prototypes
-header("#ifdef CLANG")
+header("#if __clang__")
 header("#define WEAK_ATTRIBUTE __attribute__((weak))")
 for name, signature in pairs(funcs) do
 	header(signature.." WEAK_ATTRIBUTE;")
@@ -103,6 +103,8 @@ end
 source("}")
 
 header("#endif")
+source("#else")
+source("void load_weak_lua_symbols() {}") -- always available	
 source("#endif")
 header("extern void load_weak_lua_symbols();") -- always available
 

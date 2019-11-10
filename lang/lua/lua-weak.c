@@ -79,4 +79,6 @@ void load_weak_lua_symbols()
 	lua_pushvalue_weak = (void  (*) (lua_State *L, int idx))GetProcAddress(mod, "lua_pushvalue");
 	luaL_checknumber_weak = (lua_Number (*) (lua_State *L, int numArg))GetProcAddress(mod, "luaL_checknumber");
 }
+#else
+void load_weak_lua_symbols() {}
 #endif

@@ -4,7 +4,7 @@
 #include "lualib.h"
 #ifdef __APPLE__
 #endif
-#ifdef CLANG
+#if __clang__
 #define WEAK_ATTRIBUTE __attribute__((weak))
 void  lua_gettable (lua_State *L, int idx) WEAK_ATTRIBUTE;
 void  lua_pushinteger (lua_State *L, lua_Integer n) WEAK_ATTRIBUTE;

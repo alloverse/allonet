@@ -133,6 +133,17 @@ int main(int argc, char **argv)
     printf("hello microverse\n");
 
     cJSON *avatardesco = cjson_create_object(
+        "children", cjson_create_list(
+            cjson_create_object(
+                "geometry", cjson_create_object(
+                    "type", cJSON_CreateString("hardcoded-model"),
+                    "name", cJSON_CreateString("head"),
+                    NULL
+                ),
+                NULL
+            ),
+            NULL
+        ),
         "geometry", cjson_create_object(
             "type", cJSON_CreateString("inline"),
             "vertices", cjson_create_list(
@@ -205,6 +216,17 @@ int main(int argc, char **argv)
         {
             intent.yaw += 0.01;
         }
+        allo_client_poses poses = {
+            .left_hand = {
+                .position = {1, 2, 3},
+                .rotation = {3, 2, 1}
+            },
+            .head = {
+                .position = {6, 6, 6},
+                .rotation = {9, 9, 9}
+            }
+        };
+        memcpy(&intent.poses, &poses, sizeof(poses));
         alloclient_set_intent(client, intent);
         alloclient_poll(client);
 

@@ -58,7 +58,7 @@ header("#ifdef __APPLE__")
 header("#endif")
 
 -- Linux: I can't get undefined dynamic lookup to work, so we need explict weak prototypes
-header("#if __clang__")
+header("#if __clang__ || defined(__GNUC__)")
 header("#define WEAK_ATTRIBUTE __attribute__((weak))")
 for name, signature in pairs(funcs) do
 	header(signature.." WEAK_ATTRIBUTE;")

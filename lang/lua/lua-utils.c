@@ -79,9 +79,9 @@ allo_vector get_table_vector(lua_State *L, const char *key)
     allo_vector result;
     lua_pushstring(L, key);
     lua_gettable(L, -2);
-    result.x = get_table_inumber(L, 1);
-    result.y = get_table_inumber(L, 2);
-    result.z = get_table_inumber(L, 3);
+    result.x = get_table_number(L, "x");
+    result.y = get_table_number(L, "y");
+    result.z = get_table_number(L, "z");
     lua_pop(L, 1);
     return result;
 }

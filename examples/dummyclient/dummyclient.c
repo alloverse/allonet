@@ -140,6 +140,10 @@ int main(int argc, char **argv)
                     "name", cJSON_CreateString("head"),
                     NULL
                 ),
+                "intent", cjson_create_object(
+                    "actuate_pose", cJSON_CreateString("head"),
+                    NULL
+                ),
                 NULL
             ),
             NULL

@@ -3,6 +3,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+allo_m4x4 allo_m4x4_identity()
+{
+	return (allo_m4x4){
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+}
+
+allo_m4x4 allo_m4x4_translate(double x, double y, double z)
+{
+	return (allo_m4x4) {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		x, y, z, 1
+	};
+}
+allo_m4x4 allo_m4x4_rotate(double rx, double ry, double rz);
+allo_m4x4 allo_m4x4_concat(allo_m4x4 l, allo_m4x4 r);
+
 allo_entity *entity_create(const char *id)
 {
     allo_entity *entity = (allo_entity *)calloc(1, sizeof(allo_entity));

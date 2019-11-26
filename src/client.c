@@ -176,19 +176,16 @@ void alloclient_set_intent(alloclient *client, allo_client_intent intent)
             "pitch", cJSON_CreateNumber(intent.pitch),
             "poses", cjson_create_object(
                 "head", cjson_create_object(
-                    "position", vec2cjson(intent.poses.head.position),
-                    "rotation", vec2cjson(intent.poses.head.rotation),
+                    "matrix", m2cjson(intent.poses.head.matrix),
                     NULL
                 ),
                 "hand/left", cjson_create_object(
-                    "position", vec2cjson(intent.poses.left_hand.position),
-                    "rotation", vec2cjson(intent.poses.left_hand.rotation),
+                    "matrix", m2cjson(intent.poses.left_hand.matrix),
                     NULL
                 ),
                 "hand/right", cjson_create_object(
-                    "position", vec2cjson(intent.poses.right_hand.position),
-                    "rotation", vec2cjson(intent.poses.right_hand.rotation),
-                    NULL
+                    "matrix", m2cjson(intent.poses.right_hand.matrix),
+					NULL
                 ),
                 NULL
             ),

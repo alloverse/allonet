@@ -44,6 +44,17 @@ cJSON *vec2cjson(allo_vector vec)
     );
 }
 
+cJSON* m2cjson(allo_m4x4 mat)
+{
+	return cjson_create_list(
+		cJSON_CreateNumber(mat.m11), cJSON_CreateNumber(mat.m12), cJSON_CreateNumber(mat.m13), cJSON_CreateNumber(mat.m14),
+		cJSON_CreateNumber(mat.m21), cJSON_CreateNumber(mat.m22), cJSON_CreateNumber(mat.m23), cJSON_CreateNumber(mat.m24),
+		cJSON_CreateNumber(mat.m31), cJSON_CreateNumber(mat.m32), cJSON_CreateNumber(mat.m33), cJSON_CreateNumber(mat.m34),
+		cJSON_CreateNumber(mat.m41), cJSON_CreateNumber(mat.m42), cJSON_CreateNumber(mat.m43), cJSON_CreateNumber(mat.m44),
+		NULL
+	);
+}
+
 int cjson_find_in_array(cJSON *array, const char *value)
 {
     int i = 0;

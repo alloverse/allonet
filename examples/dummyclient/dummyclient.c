@@ -222,12 +222,13 @@ int main(int argc, char **argv)
         }
         allo_client_poses poses = {
             .left_hand = {
-                .position = {1, 2, 3},
-                .rotation = {3, 2, 1}
+				.matrix = allo_m4x4_concat(
+					allo_m4x4_rotate(-3.14 / 2, (allo_vector) { 0,0,1 }),
+					allo_m4x4_translate((allo_vector) { -1, 0, 1 })
+				)
             },
             .head = {
-                .position = {6, 6, 6},
-                .rotation = {9, 9, 9}
+				.matrix = allo_m4x4_translate((allo_vector) { 0, 0, 2 })
             }
         };
         memcpy(&intent.poses, &poses, sizeof(poses));

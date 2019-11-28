@@ -14,17 +14,20 @@ typedef struct allo_vector
 } allo_vector;
 
 // column major transformation matrix
-typedef struct allo_m4x4
+typedef union allo_m4x4
 {
-	double m11, m12, m13, m14, // 1st column
-	       m21, m22, m23, m24, // 2nd column, etc
-	       m31, m32, m33, m34,
-	       m41, m42, m43, m44;
+	struct {
+		double m11, m12, m13, m14, // 1st column
+			m21, m22, m23, m24, // 2nd column, etc
+			m31, m32, m33, m34,
+			m41, m42, m43, m44;
+	};
+	double v[16];
 } allo_m4x4;
 
 allo_m4x4 allo_m4x4_identity();
-allo_m4x4 allo_m4x4_translate(double x, double y, double z);
-allo_m4x4 allo_m4x4_rotate(double rx, double ry, double rz);
+allo_m4x4 allo_m4x4_translate(allo_vector translation);
+allo_m4x4 allo_m4x4_rotate(double angle, allo_vector axis);
 allo_m4x4 allo_m4x4_concat(allo_m4x4 l, allo_m4x4 r);
 
 typedef struct allo_client_pose

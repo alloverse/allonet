@@ -69,8 +69,7 @@ allo_client_pose get_table_pose(lua_State *L, const char *key)
     allo_client_pose result;
     lua_pushstring(L, key);
     lua_gettable(L, -2);
-    result.position = get_table_vector(L, "position");
-    result.rotation = get_table_vector(L, "rotation");
+    result.matrix = get_table_matrix(L, "matrix");
     lua_pop(L, 1);
     return result;
 }
@@ -84,6 +83,18 @@ allo_vector get_table_vector(lua_State *L, const char *key)
     result.z = get_table_number(L, "z");
     lua_pop(L, 1);
     return result;
+}
+
+allo_m4x4 get_table_matrix(lua_State* L, const char* key)
+{
+	allo_m4x4 result;
+	lua_pushstring(L, key);
+	lua_gettable(L, -2);
+	for (int i = 0; i < 16; i++) {
+		result.v[i] = get_table_inumber(L, i+1);
+	}
+	lua_pop(L, 1);
+	return result;
 }
 
 bool store_function(lua_State *L, int *storage)

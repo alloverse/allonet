@@ -1,0 +1,804 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		996ECA28237F5835004D30C2 /* client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA25237F5831004D30C2 /* client.swift */; };
+		996ECA8C237F5968004D30C2 /* liballonet.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA57237F587C004D30C2 /* liballonet.dylib */; };
+		996ECA8D237F5972004D30C2 /* libcjson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA5D237F587C004D30C2 /* libcjson.a */; };
+		996ECA8E237F5972004D30C2 /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA63237F587C004D30C2 /* libenet.a */; };
+		996ECA90237F5985004D30C2 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA8F237F5985004D30C2 /* main.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		996ECA52237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = B39D00F0F1804621B88F026B;
+			remoteInfo = allocubeappliance;
+		};
+		996ECA54237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E9234590DC134312863B1E47;
+			remoteInfo = allodummyclient;
+		};
+		996ECA56237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5DE3552F3ADC44389865F0F0;
+			remoteInfo = allonet;
+		};
+		996ECA58237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FED38ACBA8B94FA39143223B;
+			remoteInfo = cJSON_test;
+		};
+		996ECA5A237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3F1A455FABB64F7FB276DC5B;
+			remoteInfo = cjson;
+		};
+		996ECA5C237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A80FE768F6444EB081271D89;
+			remoteInfo = "cjson-static";
+		};
+		996ECA5E237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2E04085984B1417BA6CA6475;
+			remoteInfo = cjson_add;
+		};
+		996ECA60237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 9F9FBD4611DD406F99B55FAE;
+			remoteInfo = compare_tests;
+		};
+		996ECA62237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FEDF3A77683C4C449533C0F5;
+			remoteInfo = enet;
+		};
+		996ECA64237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 9103550905ED45839C562F63;
+			remoteInfo = liblua;
+		};
+		996ECA66237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8F19C47F8A2B4D52B3615FCE;
+			remoteInfo = liblua_static;
+		};
+		996ECA68237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C5E5365BDD804663A5C9927C;
+			remoteInfo = lua;
+		};
+		996ECA6A237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = DDAB6B4FB30B4085A50B4DBE;
+			remoteInfo = luac;
+		};
+		996ECA6C237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E2C5FC7191244EC3A3E02A0F;
+			remoteInfo = misc_tests;
+		};
+		996ECA6E237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0AA894AB8C2142C4884623A1;
+			remoteInfo = parse_array;
+		};
+		996ECA70237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3051EDF4D3C249C5A789B0C5;
+			remoteInfo = parse_examples;
+		};
+		996ECA72237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 34D132FBC4784D77BE00A3FB;
+			remoteInfo = parse_hex4;
+		};
+		996ECA74237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 66C9EE6754304B9C88C4B4C1;
+			remoteInfo = parse_number;
+		};
+		996ECA76237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 34672879F3474B8889FCB088;
+			remoteInfo = parse_object;
+		};
+		996ECA78237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8BAC5E0C41A54C5AB72563FB;
+			remoteInfo = parse_string;
+		};
+		996ECA7A237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F5FDE826C4DA4F8F9F5C1C22;
+			remoteInfo = parse_value;
+		};
+		996ECA7C237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 01A773E9337D434E80BAE321;
+			remoteInfo = parse_with_opts;
+		};
+		996ECA7E237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A9D35362F90A4C92AD5E4B87;
+			remoteInfo = print_array;
+		};
+		996ECA80237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 37862710B36F4956A3ECBE07;
+			remoteInfo = print_number;
+		};
+		996ECA82237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CA8AF3943D444E8FBF18618E;
+			remoteInfo = print_object;
+		};
+		996ECA84237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A07668E6DA58411D9373EC72;
+			remoteInfo = print_string;
+		};
+		996ECA86237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0B4575B315F3401FB7A3C299;
+			remoteInfo = print_value;
+		};
+		996ECA88237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BC340D7C5ABA451E8C32EC33;
+			remoteInfo = readme_examples;
+		};
+		996ECA8A237F587C004D30C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0B3118BC026147588B33B1CD;
+			remoteInfo = unity;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		996EC9F7237F4429004D30C2 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		999EA60D237F2E0900A68797 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		996ECA25237F5831004D30C2 /* client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = client.swift; sourceTree = "<group>"; };
+		996ECA27237F5831004D30C2 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		996ECA29237F587C004D30C2 /* allonet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = allonet.xcodeproj; path = ../../../build/allonet.xcodeproj; sourceTree = "<group>"; };
+		996ECA8F237F5985004D30C2 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		999EA60F237F2E0900A68797 /* Example */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Example; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		999EA60C237F2E0900A68797 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				996ECA8C237F5968004D30C2 /* liballonet.dylib in Frameworks */,
+				996ECA8D237F5972004D30C2 /* libcjson.a in Frameworks */,
+				996ECA8E237F5972004D30C2 /* libenet.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		996EC9F4237F4429004D30C2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		996ECA24237F5831004D30C2 /* Allonet */ = {
+			isa = PBXGroup;
+			children = (
+				996ECA25237F5831004D30C2 /* client.swift */,
+				996ECA26237F5831004D30C2 /* CAllonet */,
+			);
+			name = Allonet;
+			path = ../Allonet;
+			sourceTree = "<group>";
+		};
+		996ECA26237F5831004D30C2 /* CAllonet */ = {
+			isa = PBXGroup;
+			children = (
+				996ECA27237F5831004D30C2 /* module.modulemap */,
+			);
+			path = CAllonet;
+			sourceTree = "<group>";
+		};
+		996ECA2A237F587C004D30C2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				996ECA53237F587C004D30C2 /* allocubeappliance */,
+				996ECA55237F587C004D30C2 /* allodummyclient */,
+				996ECA57237F587C004D30C2 /* liballonet.dylib */,
+				996ECA59237F587C004D30C2 /* cJSON_test */,
+				996ECA5B237F587C004D30C2 /* libcjson.dylib */,
+				996ECA5D237F587C004D30C2 /* libcjson.a */,
+				996ECA5F237F587C004D30C2 /* cjson_add */,
+				996ECA61237F587C004D30C2 /* compare_tests */,
+				996ECA63237F587C004D30C2 /* libenet.a */,
+				996ECA65237F587C004D30C2 /* liblua.dylib */,
+				996ECA67237F587C004D30C2 /* libliblua_static.a */,
+				996ECA69237F587C004D30C2 /* lua */,
+				996ECA6B237F587C004D30C2 /* luac */,
+				996ECA6D237F587C004D30C2 /* misc_tests */,
+				996ECA6F237F587C004D30C2 /* parse_array */,
+				996ECA71237F587C004D30C2 /* parse_examples */,
+				996ECA73237F587C004D30C2 /* parse_hex4 */,
+				996ECA75237F587C004D30C2 /* parse_number */,
+				996ECA77237F587C004D30C2 /* parse_object */,
+				996ECA79237F587C004D30C2 /* parse_string */,
+				996ECA7B237F587C004D30C2 /* parse_value */,
+				996ECA7D237F587C004D30C2 /* parse_with_opts */,
+				996ECA7F237F587C004D30C2 /* print_array */,
+				996ECA81237F587C004D30C2 /* print_number */,
+				996ECA83237F587C004D30C2 /* print_object */,
+				996ECA85237F587C004D30C2 /* print_string */,
+				996ECA87237F587C004D30C2 /* print_value */,
+				996ECA89237F587C004D30C2 /* readme_examples */,
+				996ECA8B237F587C004D30C2 /* libunity.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		999EA606237F2E0900A68797 = {
+			isa = PBXGroup;
+			children = (
+				996ECA8F237F5985004D30C2 /* main.swift */,
+				996ECA24237F5831004D30C2 /* Allonet */,
+				996ECA29237F587C004D30C2 /* allonet.xcodeproj */,
+				999EA610237F2E0900A68797 /* Products */,
+				996EC9F4237F4429004D30C2 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		999EA610237F2E0900A68797 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				999EA60F237F2E0900A68797 /* Example */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		999EA60E237F2E0900A68797 /* Example */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 999EA616237F2E0900A68797 /* Build configuration list for PBXNativeTarget "Example" */;
+			buildPhases = (
+				999EA60B237F2E0900A68797 /* Sources */,
+				999EA60C237F2E0900A68797 /* Frameworks */,
+				999EA60D237F2E0900A68797 /* CopyFiles */,
+				996EC9F7237F4429004D30C2 /* Embed Libraries */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Example;
+			productName = allonet_swift;
+			productReference = 999EA60F237F2E0900A68797 /* Example */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		999EA607237F2E0900A68797 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1110;
+				LastUpgradeCheck = 1110;
+				ORGANIZATIONNAME = voxar;
+				TargetAttributes = {
+					999EA60E237F2E0900A68797 = {
+						CreatedOnToolsVersion = 11.1;
+						LastSwiftMigration = 1110;
+					};
+				};
+			};
+			buildConfigurationList = 999EA60A237F2E0900A68797 /* Build configuration list for PBXProject "Allonet Example" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 999EA606237F2E0900A68797;
+			productRefGroup = 999EA610237F2E0900A68797 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 996ECA2A237F587C004D30C2 /* Products */;
+					ProjectRef = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				999EA60E237F2E0900A68797 /* Example */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		996ECA53237F587C004D30C2 /* allocubeappliance */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allocubeappliance;
+			remoteRef = 996ECA52237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA55237F587C004D30C2 /* allodummyclient */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allodummyclient;
+			remoteRef = 996ECA54237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA57237F587C004D30C2 /* liballonet.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = liballonet.dylib;
+			remoteRef = 996ECA56237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA59237F587C004D30C2 /* cJSON_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = cJSON_test;
+			remoteRef = 996ECA58237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA5B237F587C004D30C2 /* libcjson.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			name = libcjson.dylib;
+			path = libcjson.1.7.10.dylib;
+			remoteRef = 996ECA5A237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA5D237F587C004D30C2 /* libcjson.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libcjson.a;
+			remoteRef = 996ECA5C237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA5F237F587C004D30C2 /* cjson_add */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = cjson_add;
+			remoteRef = 996ECA5E237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA61237F587C004D30C2 /* compare_tests */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = compare_tests;
+			remoteRef = 996ECA60237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA63237F587C004D30C2 /* libenet.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libenet.a;
+			remoteRef = 996ECA62237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA65237F587C004D30C2 /* liblua.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = liblua.dylib;
+			remoteRef = 996ECA64237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA67237F587C004D30C2 /* libliblua_static.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libliblua_static.a;
+			remoteRef = 996ECA66237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA69237F587C004D30C2 /* lua */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = lua;
+			remoteRef = 996ECA68237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA6B237F587C004D30C2 /* luac */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = luac;
+			remoteRef = 996ECA6A237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA6D237F587C004D30C2 /* misc_tests */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = misc_tests;
+			remoteRef = 996ECA6C237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA6F237F587C004D30C2 /* parse_array */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_array;
+			remoteRef = 996ECA6E237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA71237F587C004D30C2 /* parse_examples */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_examples;
+			remoteRef = 996ECA70237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA73237F587C004D30C2 /* parse_hex4 */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_hex4;
+			remoteRef = 996ECA72237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA75237F587C004D30C2 /* parse_number */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_number;
+			remoteRef = 996ECA74237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA77237F587C004D30C2 /* parse_object */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_object;
+			remoteRef = 996ECA76237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA79237F587C004D30C2 /* parse_string */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_string;
+			remoteRef = 996ECA78237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA7B237F587C004D30C2 /* parse_value */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_value;
+			remoteRef = 996ECA7A237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA7D237F587C004D30C2 /* parse_with_opts */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = parse_with_opts;
+			remoteRef = 996ECA7C237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA7F237F587C004D30C2 /* print_array */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = print_array;
+			remoteRef = 996ECA7E237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA81237F587C004D30C2 /* print_number */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = print_number;
+			remoteRef = 996ECA80237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA83237F587C004D30C2 /* print_object */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = print_object;
+			remoteRef = 996ECA82237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA85237F587C004D30C2 /* print_string */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = print_string;
+			remoteRef = 996ECA84237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA87237F587C004D30C2 /* print_value */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = print_value;
+			remoteRef = 996ECA86237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA89237F587C004D30C2 /* readme_examples */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = readme_examples;
+			remoteRef = 996ECA88237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		996ECA8B237F587C004D30C2 /* libunity.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libunity.a;
+			remoteRef = 996ECA8A237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		999EA60B237F2E0900A68797 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				996ECA90237F5985004D30C2 /* main.swift in Sources */,
+				996ECA28237F5835004D30C2 /* client.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		999EA614237F2E0900A68797 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ../../../lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_INCLUDE_PATHS = ../Allonet/CAllonet;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		999EA615237F2E0900A68797 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ../../../lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_INCLUDE_PATHS = ../Allonet/CAllonet;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		999EA617237F2E0900A68797 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = R7WMBH9LHX;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		999EA618237F2E0900A68797 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = R7WMBH9LHX;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		999EA60A237F2E0900A68797 /* Build configuration list for PBXProject "Allonet Example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				999EA614237F2E0900A68797 /* Debug */,
+				999EA615237F2E0900A68797 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		999EA616237F2E0900A68797 /* Build configuration list for PBXNativeTarget "Example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				999EA617237F2E0900A68797 /* Debug */,
+				999EA618237F2E0900A68797 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 999EA607237F2E0900A68797 /* Project object */;
+}

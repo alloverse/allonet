@@ -169,7 +169,7 @@ static void state_callback(alloclient *client, allo_state *state)
     if(get_function(lclient->L, lclient->state_callback_index))
     {
         push_state_table(lclient->L, &lclient->client->state);
-        lua_pcall(lclient->L, 1, 0, 0);
+        lua_call(lclient->L, 1, 0);
     }
 }
 
@@ -179,7 +179,7 @@ static void interaction_callback(alloclient *client, allo_interaction *inter)
     if(get_function(lclient->L, lclient->interaction_callback_index))
     {
         push_interaction_table(lclient->L, inter);
-        lua_pcall(lclient->L, 1, 0, 0);
+        lua_call(lclient->L, 1, 0);
     }
 }
 
@@ -188,7 +188,7 @@ static void disconnected_callback(alloclient *client)
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->disconnected_callback_index))
     {
-        lua_pcall(lclient->L, 0, 0, 0);
+        lua_call(lclient->L, 0, 0);
     }
 }
 

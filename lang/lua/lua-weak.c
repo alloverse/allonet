@@ -1,5 +1,6 @@
 #include "lua-weak.h"
 #ifdef WIN32
+int   (*lua_call_weak) (lua_State *L, int nargs, int nresults) = NULL;
 void  (*lua_gettable_weak) (lua_State *L, int idx) = NULL;
 void  (*lua_pushinteger_weak) (lua_State *L, lua_Integer n) = NULL;
 void *(*luaL_checkudata_weak) (lua_State *L, int ud, const char *tname) = NULL;
@@ -49,6 +50,7 @@ void load_weak_lua_symbols()
 		return;
 	}
 	
+	lua_call_weak = (int   (*) (lua_State *L, int nargs, int nresults))GetProcAddress(mod, "lua_call");
 	lua_gettable_weak = (void  (*) (lua_State *L, int idx))GetProcAddress(mod, "lua_gettable");
 	lua_pushinteger_weak = (void  (*) (lua_State *L, lua_Integer n))GetProcAddress(mod, "lua_pushinteger");
 	luaL_checkudata_weak = (void *(*) (lua_State *L, int ud, const char *tname))GetProcAddress(mod, "luaL_checkudata");

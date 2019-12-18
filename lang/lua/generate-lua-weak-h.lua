@@ -24,6 +24,7 @@ local funcs = {
 	luaL_checkinteger = "lua_Integer luaL_checkinteger (lua_State *L, int narg)",
 	lua_settop = "void  lua_settop (lua_State *L, int idx)",
 	luaL_argerror = "int luaL_argerror (lua_State *L, int numarg, const char *extramsg)",
+	lua_call = "int   lua_call (lua_State *L, int nargs, int nresults)",
 	lua_pcall = "int   lua_pcall (lua_State *L, int nargs, int nresults, int errfunc)",
 	luaL_ref = "int luaL_ref (lua_State *L, int t)",
 	lua_createtable = "void  lua_createtable (lua_State *L, int narr, int nrec)",

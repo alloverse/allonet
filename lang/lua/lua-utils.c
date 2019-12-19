@@ -192,11 +192,10 @@ void push_state_table(lua_State *L, allo_state *state)
 
     lua_pushstring(L, "entities");
     lua_newtable(L);
-    int i = 1;
     allo_entity *entity = NULL;
     LIST_FOREACH(entity, &state->entities, pointers)
     {
-        lua_pushinteger(L, i++);
+        lua_pushstring(L, entity->id);
         lua_newtable(L); // entity description
             set_table_string(L, "id", entity->id);
 

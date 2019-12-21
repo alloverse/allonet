@@ -256,6 +256,7 @@ void alloclient_disconnect(alloclient *client, int reason)
         fprintf(stderr, "alloclient: Already disconnected; just deallocating");
     }
     enet_host_destroy(_internal(client)->host);
+    opus_encoder_destroy(_internal(client)->opus_encoder);
     free(_internal(client));
     free(client);
 }

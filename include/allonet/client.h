@@ -79,6 +79,12 @@ void alloclient_set_intent(alloclient *client, allo_client_intent intent);
  */
 allo_interaction *alloclient_pop_interaction(alloclient *client);
 
-
+/** Transmit audio from your avatar, e g microphone audio for
+  * voice communication.
+  * Everyone nearby you avatar will hear the audio.
+  * @param pcm must be 480 samples of 48000 Hz mono PCM audio data (10ms, 960 bytes)
+  *   
+  */
+void alloclient_send_audio(alloclient *client, const int16_t *pcm);
 
 #endif

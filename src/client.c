@@ -1,5 +1,6 @@
 #include <allonet/client.h>
 #include <enet/enet.h>
+#include <opus.h>
 #include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +21,7 @@ typedef struct interaction_queue {
 typedef struct {
     ENetHost *host;
     ENetPeer *peer;
+    OpusEncoder *opus_encoder;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
 } alloclient_internal;
 
@@ -364,6 +366,15 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     _internal(client)->peer = peer;
     LIST_INIT(&client->state.entities);
 
+    int error;
+    _internal(client)->opus_encoder = opus_encoder_create(48000, 1, OPUS_APPLICATION_VOIP, &error);
+    if(_internal(client)->opus_encoder == NULL)
+    {
+        alloclient_disconnect(client, 1);
+        fprintf(stderr, "Encoder creation failed: %d.", error);
+        return NULL;
+    }
+
     if(!announce(client, identity, avatar_desc))
     {
         alloclient_disconnect(client, 1);
@@ -384,4 +395,28 @@ allo_interaction *alloclient_pop_interaction(alloclient *client)
         free(first);
     }
     return interaction;
+}
+
+void alloclient_send_audio(alloclient *client, const int16_t *pcm)
+{
+    const int frameCount = 480;
+    const int outlen = frameCount*2; // theoretical max
+    ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);
+    
+    int len = opus_encode (
+        _internal(client)->opus_encoder, 
+        pcm, frameCount,
+        packet->data, outlen
+    );
+
+    if (len < 3) {  // error or DTX ("do not transmit")
+        enet_packet_destroy(packet);
+        if (len < 0) {
+            fprintf(stderr, "Error encoding audio to send: %d", len);
+        }
+        return;
+    }
+    packet->dataLength = len;
+
+    enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
 }

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <cJSON/cJSON.h>
 #include "../../src/util.h"
+#include <enet/enet.h>
 
 
 #define MODIFY_TERMINAL 0
@@ -115,6 +116,28 @@ static void disconnected(alloclient *client)
 {
     alloclient_disconnect(client, 0);
     exit(1);
+}
+
+// generate 10ms of audio every 10ms at most
+static enet_uint32 last = 0;
+static void send_audio(alloclient *client)
+{
+    enet_uint32 now = enet_time_get();
+    if (now-last < 10)
+    {
+        return;
+    }
+    last = now;
+    
+    int16_t pcm[480];
+    double fnow = now/1000.0;
+    double time_per_sample = 1/48000.0;
+    for(int i = 0; i++; i < 480)
+    {
+        pcm[i] = sin(fnow*440) * INT16_MAX*0.5;
+        fnow += time_per_sample;
+    }
+    alloclient_send_audio(client, pcm);
 }
 
 
@@ -244,6 +267,8 @@ int main(int argc, char **argv)
         {
             //alloclient_send_interaction(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
         }
+
+        send_audio(client);
     }
     return 0;
 }

@@ -14,6 +14,8 @@ include_directories(SYSTEM
 )
 add_subdirectory (lib/enet)
 
+add_subdirectory(lib/opus)
+
 # Don't want to require lua installed on dev machine, so include sources instead.
 #find_package(Lua REQUIRED)
 add_subdirectory (lib/lua)
@@ -84,7 +86,7 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
-target_link_libraries(allonet enet cjson-static ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
+target_link_libraries(allonet enet cjson-static opus ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
 
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)

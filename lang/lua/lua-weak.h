@@ -6,7 +6,7 @@
 #endif
 #if __clang__ || defined(__GNUC__)
 #define WEAK_ATTRIBUTE __attribute__((weak))
-int   lua_call (lua_State *L, int nargs, int nresults) WEAK_ATTRIBUTE;
+void   lua_call (lua_State *L, int nargs, int nresults) WEAK_ATTRIBUTE;
 void  lua_gettable (lua_State *L, int idx) WEAK_ATTRIBUTE;
 void  lua_pushinteger (lua_State *L, lua_Integer n) WEAK_ATTRIBUTE;
 void *luaL_checkudata (lua_State *L, int ud, const char *tname) WEAK_ATTRIBUTE;
@@ -38,7 +38,7 @@ void  lua_pushvalue (lua_State *L, int idx) WEAK_ATTRIBUTE;
 lua_Number luaL_checknumber (lua_State *L, int numArg) WEAK_ATTRIBUTE;
 #endif
 #ifdef WIN32
-extern int   (*lua_call_weak) (lua_State *L, int nargs, int nresults);
+extern void   (*lua_call_weak) (lua_State *L, int nargs, int nresults);
 #define lua_call lua_call_weak
 extern void  (*lua_gettable_weak) (lua_State *L, int idx);
 #define lua_gettable lua_gettable_weak

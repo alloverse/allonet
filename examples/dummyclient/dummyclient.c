@@ -171,6 +171,13 @@ int main(int argc, char **argv)
             ),
             NULL
         ),
+        "live_media", cjson_create_object(
+            "track_id", cJSON_CreateNumber(0),
+            "sample_rate", cJSON_CreateNumber(48000),
+            "channel_count", cJSON_CreateNumber(1),
+            "format", cJSON_CreateString("opus"),
+            NULL
+        ),
         "geometry", cjson_create_object(
             "type", cJSON_CreateString("inline"),
             "vertices", cjson_create_list(
@@ -267,7 +274,7 @@ int main(int argc, char **argv)
         {
             //alloclient_send_interaction(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
         }
-
+        
         send_audio(client);
     }
     return 0;

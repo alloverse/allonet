@@ -297,10 +297,11 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
 {
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
-            1 /* only allow 1 outgoing connection */,
-            2 /* allow up 2 channels to be used, 0 and 1 */,
-            0 /* assume any amount of incoming bandwidth */,
-            0 /* assume any amount of incoming bandwidth */);
+        1 /* only allow 1 outgoing connection */,
+        CHANNEL_COUNT /* allow up CHANNEL_COUNT channels to be used */,
+        0 /* assume any amount of incoming bandwidth */,
+        0 /* assume any amount of incoming bandwidth */
+    );
     if (host == NULL)
     {
         fprintf (stderr, 
@@ -334,7 +335,7 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     free(justport);
 
     ENetPeer *peer;
-    peer = enet_host_connect (host, & address, 2, 0);    
+    peer = enet_host_connect (host, &address, CHANNEL_COUNT, 0);    
     if (peer == NULL)
     {
         fprintf (stderr, 
@@ -403,7 +404,8 @@ void alloclient_send_audio(alloclient *client, const int16_t *pcm)
     const int frameCount = 480;
     const int outlen = frameCount*2; // theoretical max
     ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);
-    
+    assert(packet != NULL);
+
     int len = opus_encode (
         _internal(client)->opus_encoder, 
         pcm, frameCount,
@@ -417,7 +419,10 @@ void alloclient_send_audio(alloclient *client, const int16_t *pcm)
         }
         return;
     }
-    packet->dataLength = len;
+    // +1 because stupid server code assumes all packets end with a newline... FIX THE DAMN PROTOCOL
+    int ok = enet_packet_resize(packet, len+1);
+    assert(ok == 0);
 
-    enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
+    ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
+    assert(ok == 0);
 }

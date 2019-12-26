@@ -110,7 +110,7 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
     ENetPacket *packet = enet_packet_create(
         NULL,
         len,
-        channel==CHANNEL_COMMANDS ?
+        (channel==CHANNEL_COMMANDS || channel==CHANNEL_ASSETS) ?
             ENET_PACKET_FLAG_RELIABLE :
             0
     );

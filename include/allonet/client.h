@@ -22,6 +22,19 @@ typedef struct alloclient {
         allo_interaction *interaction
     );
 
+    /** Set this to get a callback when there is audio data available
+     *  in an incoming audio stream track. Match it to a live_media component
+     *  to figure out which entity is transmitting it, and thus at what
+     *  location in 3d space to play it at. 
+     * 
+     *  @param pcm: 480 samples of 48000 Hz mono PCM audio data (10ms, 960 bytes)
+     */
+    void (*audio_callback)(
+        alloclient *client,
+        int16_t pcm[480]
+    );
+
+
     /** You were disconnected from the server. This is
      *  never called in response to a local alloclient_disconnect;
      *  

@@ -18,10 +18,17 @@ typedef struct interaction_queue {
     LIST_ENTRY(interaction_queue) pointers;
 } interaction_queue;
 
+typedef struct decoder_track {
+    OpusDecoder *decoder;
+    uint32_t track_id;
+    LIST_ENTRY(decoder_track) pointers;
+} decoder_track;
+
 typedef struct {
     ENetHost *host;
     ENetPeer *peer;
     OpusEncoder *opus_encoder;
+    LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
 } alloclient_internal;
 
@@ -124,25 +131,70 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
     }
 }
 
+static decoder_track *decoder_for_track(alloclient *client, uint32_t track_id)
+{
+    decoder_track *dec = NULL;
+    LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
+    {
+        if(dec->track_id == track_id)
+        {
+            return dec;
+        }
+    }
+    dec = (decoder_track*)calloc(1, sizeof(decoder_track));
+    dec->track_id = track_id;
+    int err;
+    dec->decoder = opus_decoder_create(48000, 1, &err);
+    assert(dec->decoder);
+    LIST_INSERT_HEAD(&_internal(client)->decoder_tracks, dec, pointers);
+
+    // todo: free decoder when corresponding entity is removed
+
+    return dec;
+}
+
+static void parse_media(alloclient *client, char *data, int length)
+{
+    uint32_t track_id;
+    memcpy(&track_id, data, sizeof(track_id));
+    track_id = ntohl(track_id);
+    data += sizeof(track_id);
+
+    // todo: decode on another tread
+    decoder_track *dec = decoder_for_track(client, track_id);
+    const int frameCount = 480;
+    int16_t pcm[frameCount];
+    int bytes_decoded = opus_decode(dec->decoder, data, length, pcm, frameCount*2, 1);
+    assert(bytes_decoded >= 0);
+
+    if(client->audio_callback) {
+        client->audio_callback(client, pcm);
+    }
+    printf("%d frames of audio decoded\n", bytes_decoded);
+}
+
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
     // Stupid: protocol says "end with newline". Either way we can't guarantee that remote side
     // null terminates for us. Payload is always JSON so far. Let's always manually replace the
     // newline with a null and be done with it.
     packet->data[packet->dataLength-1] = 0;
-    cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
     
     switch(channel) {
-    case CHANNEL_STATEDIFFS:
+    case CHANNEL_STATEDIFFS: { 
+        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         parse_statediff(client, cmdrep);
-        break;
-    case CHANNEL_COMMANDS: {
-        parse_command(client, cmdrep);
+        cJSON_Delete(cmdrep);
         break; }
-    default: break;
+    case CHANNEL_COMMANDS: {
+        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
+        parse_command(client, cmdrep);
+        cJSON_Delete(cmdrep);
+        break; }
+    case CHANNEL_MEDIA: {
+        parse_media(client, packet->data, packet->dataLength);
     }
-    
-    cJSON_Delete(cmdrep);
+    }
 }
 
 void alloclient_poll(alloclient *client)

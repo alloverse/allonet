@@ -159,18 +159,18 @@ static void parse_media(alloclient *client, char *data, int length)
     memcpy(&track_id, data, sizeof(track_id));
     track_id = ntohl(track_id);
     data += sizeof(track_id);
+    length -= sizeof(track_id);
 
     // todo: decode on another tread
     decoder_track *dec = decoder_for_track(client, track_id);
-    const int frameCount = 480;
-    int16_t pcm[frameCount];
-    int bytes_decoded = opus_decode(dec->decoder, data, length, pcm, frameCount*2, 1);
+    const int maximumFrameCount = 5760; // 120ms as per documentation
+    int16_t pcm[maximumFrameCount];
+    int bytes_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 1);
     assert(bytes_decoded >= 0);
 
     if(client->audio_callback) {
-        client->audio_callback(client, pcm);
+        client->audio_callback(client, pcm, bytes_decoded);
     }
-    printf("%d frames of audio decoded\n", bytes_decoded);
 }
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)

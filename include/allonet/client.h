@@ -27,11 +27,13 @@ typedef struct alloclient {
      *  to figure out which entity is transmitting it, and thus at what
      *  location in 3d space to play it at. 
      * 
-     *  @param pcm: 480 samples of 48000 Hz mono PCM audio data (10ms, 960 bytes)
+     *  @param pcm: n samples of 48000 Hz mono PCM audio data (most often 480 samples, 10ms, 960 bytes)
+     *  @param bytes_decoded: 'n': how many samples in pcm
      */
     void (*audio_callback)(
         alloclient *client,
-        int16_t pcm[480]
+        int16_t pcm[],
+        int32_t bytes_decoded
     );
 
 

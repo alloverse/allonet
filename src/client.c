@@ -169,7 +169,7 @@ static void parse_media(alloclient *client, char *data, int length)
     assert(bytes_decoded >= 0);
 
     if(client->audio_callback) {
-        client->audio_callback(client, pcm, bytes_decoded);
+        client->audio_callback(client, track_id, pcm, bytes_decoded);
     }
 }
 

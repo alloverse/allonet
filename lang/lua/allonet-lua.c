@@ -122,7 +122,7 @@ static int l_alloclient_pop_interaction (lua_State *L)
 static void state_callback(alloclient *client, allo_state *state);
 static void interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client);
-static void audio_callback(alloclient* client, int16_t pcm[], int32_t bytes_decoded);
+static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
 
 static int l_alloclient_set_state_callback (lua_State *L)
 {
@@ -206,13 +206,14 @@ static void disconnected_callback(alloclient *client)
     }
 }
 
-static void audio_callback(alloclient* client, int16_t pcm[], int32_t bytes_decoded)
+static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded)
 {
     l_alloclient_t* lclient = (l_alloclient_t*)client->_backref;
     if (get_function(lclient->L, lclient->audio_callback_index))
     {
+        lua_pushnumber(lclient->L, track_id);
         lua_pushlstring(lclient->L, pcm, bytes_decoded);
-        lua_call(lclient->L, 1, 0);
+        lua_call(lclient->L, 2, 0);
     }
 }
 

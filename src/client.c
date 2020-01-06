@@ -164,7 +164,7 @@ static void parse_media(alloclient *client, char *data, int length)
     // todo: decode on another tread
     decoder_track *dec = decoder_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
-    int16_t pcm[maximumFrameCount];
+    int16_t pcm[5760];
     int bytes_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 1);
     assert(bytes_decoded >= 0);
 

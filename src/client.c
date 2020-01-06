@@ -1,5 +1,6 @@
 #include <allonet/client.h>
 #include <enet/enet.h>
+#include <opus.h>
 #include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,9 +18,17 @@ typedef struct interaction_queue {
     LIST_ENTRY(interaction_queue) pointers;
 } interaction_queue;
 
+typedef struct decoder_track {
+    OpusDecoder *decoder;
+    uint32_t track_id;
+    LIST_ENTRY(decoder_track) pointers;
+} decoder_track;
+
 typedef struct {
     ENetHost *host;
     ENetPeer *peer;
+    OpusEncoder *opus_encoder;
+    LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
 } alloclient_internal;
 
@@ -122,25 +131,70 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
     }
 }
 
+static decoder_track *decoder_for_track(alloclient *client, uint32_t track_id)
+{
+    decoder_track *dec = NULL;
+    LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
+    {
+        if(dec->track_id == track_id)
+        {
+            return dec;
+        }
+    }
+    dec = (decoder_track*)calloc(1, sizeof(decoder_track));
+    dec->track_id = track_id;
+    int err;
+    dec->decoder = opus_decoder_create(48000, 1, &err);
+    assert(dec->decoder);
+    LIST_INSERT_HEAD(&_internal(client)->decoder_tracks, dec, pointers);
+
+    // todo: free decoder when corresponding entity is removed
+
+    return dec;
+}
+
+static void parse_media(alloclient *client, char *data, int length)
+{
+    uint32_t track_id;
+    memcpy(&track_id, data, sizeof(track_id));
+    track_id = ntohl(track_id);
+    data += sizeof(track_id);
+    length -= sizeof(track_id);
+
+    // todo: decode on another tread
+    decoder_track *dec = decoder_for_track(client, track_id);
+    const int maximumFrameCount = 5760; // 120ms as per documentation
+    int16_t pcm[5760];
+    int bytes_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 1);
+    assert(bytes_decoded >= 0);
+
+    if(client->audio_callback) {
+        client->audio_callback(client, pcm, bytes_decoded);
+    }
+}
+
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
     // Stupid: protocol says "end with newline". Either way we can't guarantee that remote side
     // null terminates for us. Payload is always JSON so far. Let's always manually replace the
     // newline with a null and be done with it.
     packet->data[packet->dataLength-1] = 0;
-    cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
     
     switch(channel) {
-    case CHANNEL_STATEDIFFS:
+    case CHANNEL_STATEDIFFS: { 
+        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         parse_statediff(client, cmdrep);
-        break;
-    case CHANNEL_COMMANDS: {
-        parse_command(client, cmdrep);
+        cJSON_Delete(cmdrep);
         break; }
-    default: break;
+    case CHANNEL_COMMANDS: {
+        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
+        parse_command(client, cmdrep);
+        cJSON_Delete(cmdrep);
+        break; }
+    case CHANNEL_MEDIA: {
+        parse_media(client, packet->data, packet->dataLength);
     }
-    
-    cJSON_Delete(cmdrep);
+    }
 }
 
 void alloclient_poll(alloclient *client)
@@ -254,6 +308,7 @@ void alloclient_disconnect(alloclient *client, int reason)
         fprintf(stderr, "alloclient: Already disconnected; just deallocating");
     }
     enet_host_destroy(_internal(client)->host);
+    opus_encoder_destroy(_internal(client)->opus_encoder);
     free(_internal(client));
     free(client);
 }
@@ -294,10 +349,11 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
 {
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
-            1 /* only allow 1 outgoing connection */,
-            2 /* allow up 2 channels to be used, 0 and 1 */,
-            0 /* assume any amount of incoming bandwidth */,
-            0 /* assume any amount of incoming bandwidth */);
+        1 /* only allow 1 outgoing connection */,
+        CHANNEL_COUNT /* allow up CHANNEL_COUNT channels to be used */,
+        0 /* assume any amount of incoming bandwidth */,
+        0 /* assume any amount of incoming bandwidth */
+    );
     if (host == NULL)
     {
         fprintf (stderr, 
@@ -331,7 +387,7 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     free(justport);
 
     ENetPeer *peer;
-    peer = enet_host_connect (host, & address, 2, 0);    
+    peer = enet_host_connect (host, &address, CHANNEL_COUNT, 0);    
     if (peer == NULL)
     {
         fprintf (stderr, 
@@ -364,6 +420,15 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     _internal(client)->peer = peer;
     LIST_INIT(&client->state.entities);
 
+    int error;
+    _internal(client)->opus_encoder = opus_encoder_create(48000, 1, OPUS_APPLICATION_VOIP, &error);
+    if(_internal(client)->opus_encoder == NULL)
+    {
+        alloclient_disconnect(client, 1);
+        fprintf(stderr, "Encoder creation failed: %d.", error);
+        return NULL;
+    }
+
     if(!announce(client, identity, avatar_desc))
     {
         alloclient_disconnect(client, 1);
@@ -384,4 +449,32 @@ allo_interaction *alloclient_pop_interaction(alloclient *client)
         free(first);
     }
     return interaction;
+}
+
+void alloclient_send_audio(alloclient *client, const int16_t *pcm)
+{
+    const int frameCount = 480;
+    const int outlen = frameCount*2; // theoretical max
+    ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);
+    assert(packet != NULL);
+
+    int len = opus_encode (
+        _internal(client)->opus_encoder, 
+        pcm, frameCount,
+        packet->data, outlen
+    );
+
+    if (len < 3) {  // error or DTX ("do not transmit")
+        enet_packet_destroy(packet);
+        if (len < 0) {
+            fprintf(stderr, "Error encoding audio to send: %d", len);
+        }
+        return;
+    }
+    // +1 because stupid server code assumes all packets end with a newline... FIX THE DAMN PROTOCOL
+    int ok = enet_packet_resize(packet, len+1);
+    assert(ok == 0);
+
+    ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
+    assert(ok == 0);
 }

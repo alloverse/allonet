@@ -12,6 +12,7 @@ typedef struct l_alloclient
     int state_callback_index;
     int interaction_callback_index;
     int disconnected_callback_index;
+    int audio_callback_index;
 } l_alloclient_t;
 
 static int l_alloclient_connect (lua_State *L)
@@ -121,6 +122,7 @@ static int l_alloclient_pop_interaction (lua_State *L)
 static void state_callback(alloclient *client, allo_state *state);
 static void interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client);
+static void audio_callback(alloclient* client, int16_t pcm[], int32_t bytes_decoded);
 
 static int l_alloclient_set_state_callback (lua_State *L)
 {
@@ -151,6 +153,18 @@ static int l_alloclient_set_disconnected_callback (lua_State *L)
         lclient->client->disconnected_callback = disconnected_callback;
     } else {
         lclient->client->disconnected_callback = NULL;
+    }
+    return 0;
+}
+
+static int l_alloclient_set_audio_callback(lua_State* L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    if (store_function(L, &lclient->audio_callback_index)) {
+        lclient->client->audio_callback = audio_callback;
+    }
+    else {
+        lclient->client->audio_callback = NULL;
     }
     return 0;
 }
@@ -192,6 +206,16 @@ static void disconnected_callback(alloclient *client)
     }
 }
 
+static void audio_callback(alloclient* client, int16_t pcm[], int32_t bytes_decoded)
+{
+    l_alloclient_t* lclient = (l_alloclient_t*)client->_backref;
+    if (get_function(lclient->L, lclient->audio_callback_index))
+    {
+        lua_pushlstring(lclient->L, pcm, bytes_decoded);
+        lua_call(lclient->L, 1, 0);
+    }
+}
+
 
 ////// library initialization
 
@@ -204,6 +228,7 @@ static const struct luaL_reg alloclient_m [] = {
     {"set_state_callback", l_alloclient_set_state_callback},
     {"set_interaction_callback", l_alloclient_set_interaction_callback},
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
+    {"set_audio_callback", l_alloclient_set_audio_callback},
     {"get_state", l_alloclient_get_state},
     {NULL, NULL}
 };

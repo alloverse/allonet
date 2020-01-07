@@ -99,9 +99,10 @@ allo_interaction *alloclient_pop_interaction(alloclient *client);
 /** Transmit audio from your avatar, e g microphone audio for
   * voice communication.
   * Everyone nearby you avatar will hear the audio.
-  * @param pcm must be 480 samples of 48000 Hz mono PCM audio data (10ms, 960 bytes)
+  * @param pcm 48000 Hz mono PCM audio data
+  * @param sample_count Number of samples in `pcm`. Must be 480 or 960 (10ms or 20ms worth of audio)
   *   
   */
-void alloclient_send_audio(alloclient *client, const int16_t *pcm);
+void alloclient_send_audio(alloclient *client, const int16_t *pcm, size_t sample_count);
 
 #endif

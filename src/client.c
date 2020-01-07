@@ -451,9 +451,10 @@ allo_interaction *alloclient_pop_interaction(alloclient *client)
     return interaction;
 }
 
-void alloclient_send_audio(alloclient *client, const int16_t *pcm)
+void alloclient_send_audio(alloclient *client, const int16_t *pcm, size_t frameCount)
 {
-    const int frameCount = 480;
+    assert(frameCount == 480 || frameCount == 960);
+    
     const int outlen = frameCount*2; // theoretical max
     ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);
     assert(packet != NULL);

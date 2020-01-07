@@ -130,15 +130,15 @@ static void send_audio(alloclient *client)
     }
     last = now;
     
-    int16_t pcm[480];
+    int16_t pcm[960];
     
     double time_per_sample = 1/48000.0;
-    for(int i = 0; i < 480; i++)
+    for(int i = 0; i < 960; i++)
     {
         pcm[i] = sin(fnow*2000) * INT16_MAX*0.5;
         fnow += time_per_sample;
     }
-    alloclient_send_audio(client, pcm);
+    alloclient_send_audio(client, pcm, 960);
 }
 
 

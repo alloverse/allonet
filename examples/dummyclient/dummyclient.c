@@ -120,6 +120,7 @@ static void disconnected(alloclient *client)
 
 // generate 10ms of audio every 10ms at most
 static enet_uint32 last = 0;
+static double fnow = 0;
 static void send_audio(alloclient *client)
 {
     enet_uint32 now = enet_time_get();
@@ -130,7 +131,7 @@ static void send_audio(alloclient *client)
     last = now;
     
     int16_t pcm[480];
-    double fnow = now/1000.0;
+    
     double time_per_sample = 1/48000.0;
     for(int i = 0; i < 480; i++)
     {

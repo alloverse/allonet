@@ -29,13 +29,13 @@ typedef struct alloclient {
      * 
      *  @param track_id: which track/entity is transmitting this audio
      *  @param pcm: n samples of 48000 Hz mono PCM audio data (most often 480 samples, 10ms, 960 bytes)
-     *  @param bytes_decoded: 'n': how many samples in pcm
+     *  @param samples_decoded: 'n': how many samples in pcm
      */
     void (*audio_callback)(
         alloclient *client,
         uint32_t track_id,
         int16_t pcm[],
-        int32_t bytes_decoded
+        int32_t samples_decoded
     );
 
 

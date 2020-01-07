@@ -165,11 +165,11 @@ static void parse_media(alloclient *client, char *data, int length)
     decoder_track *dec = decoder_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
     int16_t pcm[5760];
-    int bytes_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 1);
-    assert(bytes_decoded >= 0);
+    int samples_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 0);
+    assert(samples_decoded >= 0);
 
     if(client->audio_callback) {
-        client->audio_callback(client, track_id, pcm, bytes_decoded);
+        client->audio_callback(client, track_id, pcm, samples_decoded);
     }
 }
 

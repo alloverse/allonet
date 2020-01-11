@@ -121,6 +121,10 @@ static void disconnected(alloclient *client)
 // generate 10ms of audio every 10ms at most
 static enet_uint32 last = 0;
 static double fnow = 0;
+static uint16_t* audio;
+static size_t audio_len;
+static size_t audio_cursor;
+static bool play_file = false;
 static void send_audio(alloclient *client)
 {
     enet_uint32 now = enet_time_get();
@@ -129,16 +133,49 @@ static void send_audio(alloclient *client)
         return;
     }
     last = now;
+
+	if (audio == NULL && play_file) {
+		FILE* fp = fopen("bleep-bloop.pcm", "r");
+		if (fp != NULL) {
+			if (fseek(fp, 0L, SEEK_END) == 0) {
+				audio_len = ftell(fp)/sizeof(uint16_t);
+				if (audio_len == -1) { play_file = false;  return; }
+				audio = calloc(audio_len, sizeof(uint16_t));
+				if (fseek(fp, 0L, SEEK_SET) != 0) { play_file = false;  return; }
+				size_t newLen = fread(audio, sizeof(int16_t), audio_len, fp);
+				if (ferror(fp) != 0) {
+					fputs("Error reading file", stderr);
+					play_file = false;
+					return;
+				}
+			}
+			fclose(fp);
+		}
+	}
     
-    int16_t pcm[960];
-    
-    double time_per_sample = 1/48000.0;
-    for(int i = 0; i < 960; i++)
-    {
-        pcm[i] = sin(fnow*2000) * INT16_MAX*0.5;
-        fnow += time_per_sample;
-    }
-    alloclient_send_audio(client, pcm, 960);
+	int16_t pcm[960];
+	if (play_file && audio) {
+		size_t len = 960;
+		int16_t* dest = pcm;
+		while (len > 0) {
+			size_t this_len = min(len, audio_len - audio_cursor);
+			memcpy(dest, audio, this_len * sizeof(int16_t));
+			len -= this_len;
+			audio_cursor += this_len;
+			dest += this_len;
+			if (audio_cursor >= audio_len - 1) {
+				audio_cursor = 0;
+			}
+		}
+	} else {
+		double time_per_sample = 1 / 48000.0;
+		for (int i = 0; i < 960; i++)
+		{
+			pcm[i] = sin(fnow * 2000) * INT16_MAX * 0.5;
+			fnow += time_per_sample;
+		}
+	}
+	alloclient_send_audio(client, pcm, 960);
 }
 
 

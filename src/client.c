@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 #include "util.h"
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
@@ -21,6 +22,7 @@ typedef struct interaction_queue {
 typedef struct decoder_track {
     OpusDecoder *decoder;
     uint32_t track_id;
+    FILE* debug;
     LIST_ENTRY(decoder_track) pointers;
 } decoder_track;
 
@@ -131,6 +133,8 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
     }
 }
 
+#define DEBUG_AUDIO 1
+
 static decoder_track *decoder_for_track(alloclient *client, uint32_t track_id)
 {
     decoder_track *dec = NULL;
@@ -145,9 +149,14 @@ static decoder_track *decoder_for_track(alloclient *client, uint32_t track_id)
     dec->track_id = track_id;
     int err;
     dec->decoder = opus_decoder_create(48000, 1, &err);
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
+        dec->debug = fopen(name, "wb");
+        fprintf(stderr, "Opening decoder for %s\n", name);
+    }
     assert(dec->decoder);
     LIST_INSERT_HEAD(&_internal(client)->decoder_tracks, dec, pointers);
-
+    
     // todo: free decoder when corresponding entity is removed
 
     return dec;
@@ -167,6 +176,10 @@ static void parse_media(alloclient *client, char *data, int length)
     int16_t pcm[5760];
     int samples_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 0);
     assert(samples_decoded >= 0);
+    if (DEBUG_AUDIO && dec->debug) {
+        fwrite(pcm, sizeof(int16_t), samples_decoded, dec->debug);
+        fflush(dec->debug);
+    }
 
     if(client->audio_callback) {
         client->audio_callback(client, track_id, pcm, samples_decoded);

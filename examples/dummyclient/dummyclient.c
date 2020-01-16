@@ -179,7 +179,7 @@ static void send_audio(alloclient *client)
 		double time_per_sample = 1 / 48000.0;
 		for (int i = 0; i < 960; i++)
 		{
-			pcm[i] = sin(fnow * 440 * M_PI*2) * INT16_MAX * 0.5;
+			pcm[i] = sin(fnow * 440 * 3.141592*2) * INT16_MAX * 0.5;
 			fnow += time_per_sample;
 		}
 	}
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
         allo_client_poses poses = {
             .left_hand = {
 				.matrix = allo_m4x4_concat(
-					allo_m4x4_rotate(-3.14 / 2, (allo_vector) { 0,0,1 }),
+					allo_m4x4_rotate(-3.141592 / 2, (allo_vector) { 0,0,1 }),
 					allo_m4x4_translate((allo_vector) { -1, 0, 1 })
 				)
             },

@@ -125,7 +125,7 @@ static double fnow = 0;
 static uint16_t* audio;
 static size_t audio_len;
 static size_t audio_cursor;
-static bool play_file = true;
+static bool play_file = false;
 static void send_audio(alloclient *client)
 {
     enet_uint32 now = enet_time_get();
@@ -158,6 +158,7 @@ static void send_audio(alloclient *client)
             return;
         }
         fclose(fp);
+        fprintf(stderr, "Opened audio file\n");
 	}
     
 	int16_t pcm[960];

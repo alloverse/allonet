@@ -87,6 +87,16 @@ static int l_alloclient_send_interaction (lua_State *L)
     return 0;
 }
 
+static int l_alloclient_send_audio(lua_State* L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    size_t bytelength = 0;
+    const char* data = luaL_checklstring(L, 2, &bytelength);
+    lua_assert(bytelength == 480 || bytelength == 960);
+    alloclient_send_audio(lclient->client, (int16_t*)data, bytelength / 2);
+    return 0;
+}
+
 static int l_alloclient_set_intent (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
@@ -224,6 +234,7 @@ static const struct luaL_reg alloclient_m [] = {
     {"disconnect", l_alloclient_disconnect},
     {"poll", l_alloclient_poll},
     {"send_interaction", l_alloclient_send_interaction},
+    {"send_audio", l_alloclient_send_audio},
     {"set_intent", l_alloclient_set_intent},
     {"pop_interaction", l_alloclient_pop_interaction},
     {"set_state_callback", l_alloclient_set_state_callback},

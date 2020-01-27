@@ -226,6 +226,9 @@ void alloclient_poll(alloclient *client)
             fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
             if (client->disconnected_callback) {
                 client->disconnected_callback(client);
+                // We might now be deallocated (that's the standard thing to do in the disconnected callback(.
+                // Stop processing events.
+                return;
             }
         default: break;
         }

@@ -125,7 +125,7 @@ static double fnow = 0;
 static uint16_t* audio;
 static size_t audio_len;
 static size_t audio_cursor;
-static bool play_file = false;
+static bool play_file = true;
 static void send_audio(alloclient *client)
 {
     enet_uint32 now = enet_time_get();
@@ -224,6 +224,13 @@ int main(int argc, char **argv)
             "format", cJSON_CreateString("opus"),
             NULL
         ),
+	"collider", cjson_create_object(
+		"type", cJSON_CreateString("box"),
+		"width", cJSON_CreateNumber(1),
+		"height", cJSON_CreateNumber(1),
+		"depth", cJSON_CreateNumber(1),
+		NULL
+	),
         "geometry", cjson_create_object(
             "type", cJSON_CreateString("inline"),
             "vertices", cjson_create_list(

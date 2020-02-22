@@ -173,6 +173,7 @@ static void send_audio(alloclient *client)
 			dest += this_len;
 			if (audio_cursor >= audio_len - 1) {
 				audio_cursor = 0;
+                printf("Bleep bloop!\n");
 			}
 		}
 	} else {

@@ -300,23 +300,6 @@ int main(int argc, char **argv)
             alloclient_set_intent(client, intent);
         }
 #endif
-        if(intent.zmovement)
-        {
-            intent.yaw += 0.01;
-        }
-        allo_client_poses poses = {
-            .left_hand = {
-				.matrix = allo_m4x4_concat(
-					allo_m4x4_rotate(-3.141592 / 2, (allo_vector) { 0,0,1 }),
-					allo_m4x4_translate((allo_vector) { -1, 0, 1 })
-				)
-            },
-            .head = {
-				.matrix = allo_m4x4_translate((allo_vector) { 0, 0, 2 })
-            }
-        };
-        memcpy(&intent.poses, &poses, sizeof(poses));
-        alloclient_set_intent(client, intent);
         alloclient_poll(client);
 
         allo_interaction *inter = NULL;
@@ -326,7 +309,23 @@ int main(int argc, char **argv)
 
         if( i++ % 100)
         {
-            //alloclient_send_interaction(client, "request", me, "place", "123", "[\"lol\", 1, 2, 3]");
+            if(intent.zmovement)
+            {
+                intent.yaw += 0.01;
+            }
+            allo_client_poses poses = {
+                .left_hand = {
+                    .matrix = allo_m4x4_concat(
+                        allo_m4x4_rotate(-3.14 / 2, (allo_vector) { 0,0,1 }),
+                        allo_m4x4_translate((allo_vector) { -1, 0, 1 })
+                    )
+                },
+                .head = {
+                    .matrix = allo_m4x4_translate((allo_vector) { 0, 0, 2 })
+                }
+            };
+            memcpy(&intent.poses, &poses, sizeof(poses));
+            alloclient_set_intent(client, intent);
         }
         
         send_audio(client);

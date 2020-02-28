@@ -467,18 +467,21 @@ allo_interaction *alloclient_pop_interaction(alloclient *client)
     return interaction;
 }
 
-void alloclient_send_audio(alloclient *client, const int16_t *pcm, size_t frameCount)
+void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
 {
     assert(frameCount == 480 || frameCount == 960);
     
-    const int outlen = frameCount*2; // theoretical max
+    const int headerlen = sizeof(int32_t); // track id header
+    const int outlen = headerlen + frameCount*2; // theoretical max
     ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);
     assert(packet != NULL);
+    int32_t big_track_id = htonl(track_id);
+    memcpy(packet->data, &big_track_id, headerlen);
 
     int len = opus_encode (
         _internal(client)->opus_encoder, 
         pcm, frameCount,
-        packet->data, outlen
+        packet->data + headerlen, outlen - headerlen
     );
 
     if (len < 3) {  // error or DTX ("do not transmit")

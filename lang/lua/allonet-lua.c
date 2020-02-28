@@ -90,10 +90,11 @@ static int l_alloclient_send_interaction (lua_State *L)
 static int l_alloclient_send_audio(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
+    int32_t track_id = luaL_checkint(L, 2);
     size_t bytelength = 0;
-    const char* data = luaL_checklstring(L, 2, &bytelength);
+    const char* data = luaL_checklstring(L, 3, &bytelength);
     lua_assert(bytelength == 480 || bytelength == 960);
-    alloclient_send_audio(lclient->client, (int16_t*)data, bytelength / 2);
+    alloclient_send_audio(lclient->client, track_id, (int16_t*)data, bytelength / 2);
     return 0;
 }
 

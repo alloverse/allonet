@@ -59,6 +59,7 @@ int getch()
 #endif
 
 static const char *me;
+static int32_t track_id = 0;
 
 allo_client_intent intent = {
     .zmovement = 1,
@@ -87,6 +88,10 @@ static void interaction(
         allo_interaction *request = allo_interaction_create("request", me, "place", "123", "[\"lol\", 1, 2, 3]");
         alloclient_send_interaction(client, request);
         allo_interaction_free(request);
+
+        request = allo_interaction_create("request", me, "place", "124", "[\"allocate_track\", \"audio\", 4800, 1, \"opus\"]");
+        alloclient_send_interaction(client, request);
+        allo_interaction_free(request);
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {
@@ -98,6 +103,10 @@ static void interaction(
             alloclient_send_interaction(client, response);
             allo_interaction_free(response);
         }
+    }
+
+    if(strcmp(interaction_name, "allocate_track") == 0) {
+        track_id = cJSON_GetArrayItem(body, 2)->valueint;
     }
 
     cJSON_Delete(body);
@@ -129,7 +138,7 @@ static bool play_file = true;
 static void send_audio(alloclient *client)
 {
     enet_uint32 now = enet_time_get();
-    if (now-last < 10)
+    if (track_id == 0 || now-last < 10)
     {
         return;
     }
@@ -184,7 +193,7 @@ static void send_audio(alloclient *client)
 			fnow += time_per_sample;
 		}
 	}
-	alloclient_send_audio(client, pcm, 960);
+	alloclient_send_audio(client, track_id, pcm, 960);
 }
 
 

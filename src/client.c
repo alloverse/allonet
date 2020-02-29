@@ -14,6 +14,8 @@
     #define nonnull(x) x
 #endif
 
+#define DEBUG_AUDIO 1
+
 typedef struct interaction_queue {
     allo_interaction *interaction;
     LIST_ENTRY(interaction_queue) pointers;
@@ -50,6 +52,75 @@ static allo_entity *get_entity(alloclient *client, const char *entity_id)
         }
     }
     return NULL;
+}
+
+// TODO: nevyn: teach voxar cmake
+// TODO: voxar: split out decoder.c
+
+/// Find by track_id, else NULL
+static decoder_track *decoder_find_for_track(alloclient *client, uint32_t track_id)
+{
+    decoder_track *dec = NULL;
+    LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
+    {
+        if(dec->track_id == track_id)
+        {
+            return dec;
+        }
+    }
+    return dec;
+}
+
+static decoder_track *decoder_find_or_create_for_track(alloclient *client, uint32_t track_id)
+{
+    decoder_track *dec = decoder_find_for_track(client, track_id);
+    if (dec) { return dec; }
+    
+    dec = (decoder_track*)calloc(1, sizeof(decoder_track));
+    dec->track_id = track_id;
+    int err;
+    dec->decoder = opus_decoder_create(48000, 1, &err);
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
+        dec->debug = fopen(name, "wb");
+        fprintf(stderr, "Opening decoder for %s\n", name);
+    }
+    assert(dec->decoder);
+    LIST_INSERT_HEAD(&_internal(client)->decoder_tracks, dec, pointers);
+
+    return dec;
+}
+
+static void decoder_destroy_for_track(alloclient *client, uint32_t track_id)
+{
+    decoder_track *dec = decoder_find_for_track(client, track_id);
+    if (dec == NULL) {
+        fprintf(stderr, "A decoder for track_id %d was not found\n", track_id);
+        fprintf(stderr, "Active decoder tracks:\n ");
+        dec = NULL;
+        LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
+        {
+            fprintf(stderr, "%d, ", dec->track_id);
+        }
+
+        return;
+    }
+    assert(dec->decoder);
+
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
+        fprintf(stderr, "Closing decoder for %s\n", name);
+        if (dec->debug) {
+            fclose(dec->debug);
+            dec->debug = NULL;
+        }
+    }
+    dec->track_id = -1;
+    opus_decoder_destroy(dec->decoder);
+    dec->decoder = NULL;
+    LIST_REMOVE(dec, pointers);
+
+    free(dec);
 }
 
 static void parse_statediff(alloclient *client, cJSON *cmd)
@@ -92,6 +163,15 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         if(cjson_find_in_array(deletes, to_delete->id) != -1) {
             printf("Deleting entity %s\n", to_delete->id);
             LIST_REMOVE(to_delete, pointers);
+            
+            // if we find a decoder linked to the entity we remove it
+            cJSON *media = cJSON_GetObjectItem(entity->components, "live_media");
+            cJSON *track_id = cJSON_GetObjectItem(media, "track_id");
+            if (media && track_id) {
+                fprintf(stderr, "Destroying a linked decoder\n");
+                decoder_destroy_for_track(client, track_id->valueint);
+            }
+            
             entity_destroy(to_delete);
         }
     }
@@ -102,6 +182,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         client->state_callback(client, &client->state);
     }
 }
+
 
 static void parse_interaction(alloclient *client, cJSON *inter_json)
 {
@@ -133,34 +214,6 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
     }
 }
 
-#define DEBUG_AUDIO 1
-
-static decoder_track *decoder_for_track(alloclient *client, uint32_t track_id)
-{
-    decoder_track *dec = NULL;
-    LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
-    {
-        if(dec->track_id == track_id)
-        {
-            return dec;
-        }
-    }
-    dec = (decoder_track*)calloc(1, sizeof(decoder_track));
-    dec->track_id = track_id;
-    int err;
-    dec->decoder = opus_decoder_create(48000, 1, &err);
-    if (DEBUG_AUDIO) {
-        char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
-        dec->debug = fopen(name, "wb");
-        fprintf(stderr, "Opening decoder for %s\n", name);
-    }
-    assert(dec->decoder);
-    LIST_INSERT_HEAD(&_internal(client)->decoder_tracks, dec, pointers);
-    
-    // todo: free decoder when corresponding entity is removed
-
-    return dec;
-}
 
 static void parse_media(alloclient *client, char *data, int length)
 {
@@ -171,7 +224,7 @@ static void parse_media(alloclient *client, char *data, int length)
     length -= sizeof(track_id);
 
     // todo: decode on another tread
-    decoder_track *dec = decoder_for_track(client, track_id);
+    decoder_track *dec = decoder_find_or_create_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
     int16_t pcm[5760];
     int samples_decoded = opus_decode(dec->decoder, data, length, pcm, maximumFrameCount, 0);

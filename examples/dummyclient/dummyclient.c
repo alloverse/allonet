@@ -227,20 +227,13 @@ int main(int argc, char **argv)
             ),
             NULL
         ),
-        "live_media", cjson_create_object(
-            "track_id", cJSON_CreateNumber(0),
-            "sample_rate", cJSON_CreateNumber(48000),
-            "channel_count", cJSON_CreateNumber(1),
-            "format", cJSON_CreateString("opus"),
+        "collider", cjson_create_object(
+            "type", cJSON_CreateString("box"),
+            "width", cJSON_CreateNumber(1),
+            "height", cJSON_CreateNumber(1),
+            "depth", cJSON_CreateNumber(1),
             NULL
         ),
-	"collider", cjson_create_object(
-		"type", cJSON_CreateString("box"),
-		"width", cJSON_CreateNumber(1),
-		"height", cJSON_CreateNumber(1),
-		"depth", cJSON_CreateNumber(1),
-		NULL
-	),
         "geometry", cjson_create_object(
             "type", cJSON_CreateString("inline"),
             "vertices", cjson_create_list(

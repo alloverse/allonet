@@ -111,3 +111,19 @@ You MUST call `client:disconnect()` in this callback to deallocate all
 relevant resources.
 
 This would be a good time to trigger reconnection logic, or to quit your app.
+
+### `client:send_audio(track_id: int16, pcm: string)`
+
+NOTE: You MUST 
+[allocate a track](https://github.com/alloverse/docs/blob/master/specifications/interactions.md#entity-wishes-to-transmit-live-media)
+before you can send audio on it.
+
+Send audio from one of your entities. The `track_id` should match
+the track in your `live_media` component of that component.
+
+For format of `pcm`, see `client.h`. At the time of writing, it had to be:
+ * 16-bit signed integer samples
+ * at 48khz
+ * mono
+ * 480 or 960 samples (10 or 20ms worth of audio)
+

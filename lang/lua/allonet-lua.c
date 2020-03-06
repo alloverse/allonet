@@ -223,7 +223,7 @@ static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
     if (get_function(lclient->L, lclient->audio_callback_index))
     {
         lua_pushnumber(lclient->L, track_id);
-        lua_pushlstring(lclient->L, pcm, samples_decoded*sizeof(int16_t));
+        lua_pushlstring(lclient->L, (const char*)pcm, samples_decoded*sizeof(int16_t));
         lua_call(lclient->L, 2, 0);
     }
 }

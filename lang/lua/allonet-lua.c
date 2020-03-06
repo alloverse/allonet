@@ -93,8 +93,9 @@ static int l_alloclient_send_audio(lua_State* L)
     int32_t track_id = luaL_checkint(L, 2);
     size_t bytelength = 0;
     const char* data = luaL_checklstring(L, 3, &bytelength);
-    lua_assert(bytelength == 480 || bytelength == 960);
-    alloclient_send_audio(lclient->client, track_id, (int16_t*)data, bytelength / 2);
+    size_t samplelength = bytelength / sizeof(int16_t);
+    lua_assert(samplelength == 480 || samplelength == 960);
+    alloclient_send_audio(lclient->client, track_id, (int16_t*)data, samplelength);
     return 0;
 }
 

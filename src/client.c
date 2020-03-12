@@ -41,19 +41,6 @@ static alloclient_internal *_internal(alloclient *client)
     return (alloclient_internal*)client->_internal;
 }
 
-static allo_entity *get_entity(alloclient *client, const char *entity_id)
-{
-    allo_entity *entity = NULL;
-    LIST_FOREACH(entity, &client->state.entities, pointers)
-    {
-        if(strcmp(entity_id, entity->id) == 0) 
-        {
-            return entity;
-        }
-    }
-    return NULL;
-}
-
 // TODO: nevyn: teach voxar cmake
 // TODO: voxar: split out decoder.c
 
@@ -143,7 +130,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         const char *entity_id = nonnull(cJSON_GetObjectItem(edesc, "id"))->valuestring;
         cjson_delete_from_array(deletes, entity_id);
         cJSON *components = nonnull(cJSON_DetachItemFromObject(edesc, "components"));
-        allo_entity *entity = get_entity(client, entity_id);
+        allo_entity *entity = state_get_entity(&client->state, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
             printf("Creating entity %s\n", entity->id);

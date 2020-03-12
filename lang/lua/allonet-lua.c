@@ -107,6 +107,7 @@ static int l_alloclient_set_intent (lua_State *L)
         return luaL_error(L, "set_intent: Expected table with keys zmovement, xmovement, yaw, pitch, poses");
     }
     allo_client_intent intent = {
+        "", // TODO
         get_table_number(L, "zmovement"),
         get_table_number(L, "xmovement"),
         get_table_number(L, "yaw"),

@@ -1,6 +1,7 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
 #include "inlinesys/queue.h"
+#include "allonet/math.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <cJSON/cJSON.h>
@@ -8,27 +9,6 @@
 #pragma pack(push)
 #pragma pack(1)
 
-typedef struct allo_vector
-{
-    double x, y, z;
-} allo_vector;
-
-// column major transformation matrix
-typedef union allo_m4x4
-{
-	struct {
-		double m11, m12, m13, m14, // 1st column
-			m21, m22, m23, m24, // 2nd column, etc
-			m31, m32, m33, m34,
-			m41, m42, m43, m44;
-	};
-	double v[16];
-} allo_m4x4;
-
-allo_m4x4 allo_m4x4_identity();
-allo_m4x4 allo_m4x4_translate(allo_vector translation);
-allo_m4x4 allo_m4x4_rotate(double angle, allo_vector axis);
-allo_m4x4 allo_m4x4_concat(allo_m4x4 l, allo_m4x4 r);
 
 typedef struct allo_client_pose
 {
@@ -44,12 +24,14 @@ typedef struct allo_client_poses
 
 typedef struct allo_client_intent
 {
+  const char* entity_id; // which entity is this intent for
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
     double yaw;       // rotation around x in radians
     double pitch;     // rotation around y in radians
     allo_client_poses poses;
 } allo_client_intent;
+arr_t(allo_client_intent);
 
 typedef struct allo_entity
 {
@@ -66,11 +48,17 @@ typedef struct allo_entity
 allo_entity *entity_create(const char *id);
 void entity_destroy(allo_entity *entity);
 
+extern allo_m4x4 entity_get_transform(allo_entity* entity);
+extern void entity_set_transform(allo_entity* entity, allo_m4x4 matrix);
+
 typedef struct allo_state
 {
     uint64_t revision;
     LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
+
+extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
+
 
 /**
  * Describes an interaction to be sent or as received.
@@ -92,7 +80,15 @@ typedef struct allo_interaction
 allo_interaction *allo_interaction_create(const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body);
 void allo_interaction_free(allo_interaction *interaction);
 
+/**
+ * Initialize the Allonet library. Must be called before any other Allonet calls.
+ */
 extern bool allo_initialize(bool redirect_stdout);
+
+/**
+ * Run world simulation for a given state and known intents. Modifies state inline.
+ */
+extern void allo_simulate(allo_state* state, double dt, allo_client_intent* intents, int intent_count);
 
 #pragma pack(pop)
 #endif

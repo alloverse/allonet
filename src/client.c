@@ -32,6 +32,7 @@ typedef struct {
     ENetHost *host;
     ENetPeer *peer;
     OpusEncoder *opus_encoder;
+    allo_client_intent latest_intent;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
 } alloclient_internal;
@@ -40,6 +41,8 @@ static alloclient_internal *_internal(alloclient *client)
 {
     return (alloclient_internal*)client->_internal;
 }
+
+static void send_latest_intent(alloclient* client);
 
 // TODO: nevyn: teach voxar cmake
 // TODO: voxar: split out decoder.c
@@ -252,6 +255,8 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
 
 void alloclient_poll(alloclient *client)
 {
+    send_latest_intent(client);
+
     ENetEvent event;
     while (enet_host_service(_internal(client)->host, & event, 10) > 0)
     {
@@ -266,7 +271,7 @@ void alloclient_poll(alloclient *client)
             fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
             if (client->disconnected_callback) {
                 client->disconnected_callback(client);
-                // We might now be deallocated (that's the standard thing to do in the disconnected callback(.
+                // We might now be deallocated (that's the standard thing to do in the disconnected callback).
                 // Stop processing events.
                 return;
             }
@@ -275,8 +280,15 @@ void alloclient_poll(alloclient *client)
     }
 }
 
-void alloclient_set_intent(alloclient *client, allo_client_intent intent)
+void alloclient_set_intent(alloclient* client, allo_client_intent intent)
 {
+    _internal(client)->latest_intent = intent;
+}
+
+static void send_latest_intent(alloclient *client)
+{
+    allo_client_intent intent = _internal(client)->latest_intent;
+
     cJSON *cmdrep = cjson_create_object(
         "cmd", cJSON_CreateString("intent"),
         "intent", cjson_create_object(
@@ -295,7 +307,7 @@ void alloclient_set_intent(alloclient *client, allo_client_intent intent)
                 ),
                 "hand/right", cjson_create_object(
                     "matrix", m2cjson(intent.poses.right_hand.matrix),
-					NULL
+                    NULL
                 ),
                 NULL
             ),
@@ -537,4 +549,13 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
 
     ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
     assert(ok == 0);
+}
+
+void alloclient_simulate(alloclient *client, double dt)
+{
+  allo_simulate(&client->state, dt, &_internal(client)->latest_intent, 1);
+  if (client->state_callback)
+  {
+    client->state_callback(client, &client->state);
+  }
 }

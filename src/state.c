@@ -22,7 +22,8 @@ extern allo_m4x4 entity_get_transform(allo_entity* entity)
 {
   cJSON* transform = cJSON_GetObjectItem(entity->components, "transform");
   cJSON* matrix = cJSON_GetObjectItem(transform, "matrix");
-  if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16) return allo_m4x4_identity();
+  if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16)
+    return allo_m4x4_identity();
 
   allo_m4x4 m;
   for (int i = 0; i < 16; i++) {
@@ -45,7 +46,7 @@ void entity_set_transform(allo_entity* entity, allo_m4x4 m)
   {
     for (int i = 0; i < 16; i++)
     {
-      cJSON_GetArrayItem(matrix, i)->valuedouble = m.v[i];
+      cJSON_SetNumberValue(cJSON_GetArrayItem(matrix, i), m.v[i]);
     }
   }
 }

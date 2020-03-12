@@ -107,7 +107,7 @@ static int l_alloclient_set_intent (lua_State *L)
         return luaL_error(L, "set_intent: Expected table with keys zmovement, xmovement, yaw, pitch, poses");
     }
     allo_client_intent intent = {
-        "", // TODO
+        get_table_string(L, "entity_id"),
         get_table_number(L, "zmovement"),
         get_table_number(L, "xmovement"),
         get_table_number(L, "yaw"),
@@ -189,6 +189,13 @@ static int l_alloclient_get_state (lua_State *L)
     return 1;
 }
 
+static int l_alloclient_simulate(lua_State* L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    double dt = luaL_checknumber(L, 2);
+    alloclient_simulate(lclient->client, dt);
+}
+
 ////// Callbacks from allonet
 static void state_callback(alloclient *client, allo_state *state)
 {
@@ -245,6 +252,7 @@ static const struct luaL_reg alloclient_m [] = {
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
     {"set_audio_callback", l_alloclient_set_audio_callback},
     {"get_state", l_alloclient_get_state},
+    {"simulate", l_alloclient_simulate},
     {NULL, NULL}
 };
 

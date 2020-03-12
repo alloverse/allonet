@@ -13,14 +13,14 @@ extern void allo_simulate(allo_state* state, double dt, allo_client_intent* inte
 static void move_avatar(allo_entity* ent, allo_client_intent intent, double dt)
 {
   double speed = 1.0; // meters per second
-  double distance = speed / dt;
+  double distance = speed * dt;
 
   allo_m4x4 old_transform = entity_get_transform(ent);
 
   // intent movement is always relative to the facing direction of the user, controlled
   // by the yaw intent.
   // Begin by creating a matrix representing that yaw and one for user-relative translation...
-  allo_m4x4 rotation = allo_m4x4_rotate(intent.yaw, (allo_vector) { 0, 0, 1 });
+  allo_m4x4 rotation = allo_m4x4_rotate(intent.yaw, (allo_vector) { 0, 1, 0 });
   allo_m4x4 translation = allo_m4x4_translate((allo_vector) { intent.xmovement* distance, 0, intent.zmovement* distance });
   // then combine rotation and translation to create a movement matrix,
   allo_m4x4 movement = allo_m4x4_concat(rotation, translation);
@@ -40,6 +40,9 @@ static void move_avatars(allo_state* state, double dt, allo_client_intent* inten
   {
     allo_client_intent intent = intents[i];
     allo_entity *ent = state_get_entity(state, intent.entity_id);
+    if (intent.entity_id == NULL || ent == NULL)
+      return;
+    
     move_avatar(ent, intent, dt);
   }
 }

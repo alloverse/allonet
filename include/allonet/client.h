@@ -106,4 +106,10 @@ allo_interaction *alloclient_pop_interaction(alloclient *client);
   */
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
 
+/**
+  * Run allo_simulate() on the internal world state with our latest intent, so that we get local interpolation
+  * of hand movement etc
+  */
+void alloclient_simulate(alloclient* client, double dt);
+
 #endif

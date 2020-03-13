@@ -155,7 +155,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
             LIST_REMOVE(to_delete, pointers);
             
             // if we find a decoder linked to the entity we remove it
-            cJSON *media = cJSON_GetObjectItem(entity->components, "live_media");
+            cJSON *media = cJSON_GetObjectItem(to_delete->components, "live_media");
             cJSON *track_id = cJSON_GetObjectItem(media, "track_id");
             if (media && track_id) {
                 fprintf(stderr, "Destroying a linked decoder\n");

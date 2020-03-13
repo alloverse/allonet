@@ -28,15 +28,15 @@ allo_m4x4 allo_m4x4_rotate(double phi, allo_vector axis)
 	double rcos = cos(phi);
 	double rsin = sin(phi);
 	double u = axis.x, v = axis.y, w = axis.z;
-	m.m11 = rcos + u * u * (1 - rcos);
-	m.m12 = w * rsin + v * u * (1 - rcos);
-	m.m13 = -v * rsin + w * u * (1 - rcos);
-	m.m21 = -w * rsin + u * v * (1 - rcos);
-	m.m22 = rcos + v * v * (1 - rcos);
-	m.m23 = u * rsin + w * v * (1 - rcos);
-	m.m31 = v * rsin + u * w * (1 - rcos);
-	m.m32 = -u * rsin + v * w * (1 - rcos);
-	m.m33 = rcos + w * w * (1 - rcos);
+	m.c1r1 = rcos + u * u * (1 - rcos);
+	m.c1r2 = w * rsin + v * u * (1 - rcos);
+	m.c1r3 = -v * rsin + w * u * (1 - rcos);
+	m.c2r1 = -w * rsin + u * v * (1 - rcos);
+	m.c2r2 = rcos + v * v * (1 - rcos);
+	m.c2r3 = u * rsin + w * v * (1 - rcos);
+	m.c3r1 = v * rsin + u * w * (1 - rcos);
+	m.c3r2 = -u * rsin + v * w * (1 - rcos);
+	m.c3r3 = rcos + w * w * (1 - rcos);
 
 	return m;
 }

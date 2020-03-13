@@ -47,10 +47,10 @@ cJSON *vec2cjson(allo_vector vec)
 cJSON* m2cjson(allo_m4x4 mat)
 {
 	return cjson_create_list(
-		cJSON_CreateNumber(mat.m11), cJSON_CreateNumber(mat.m12), cJSON_CreateNumber(mat.m13), cJSON_CreateNumber(mat.m14),
-		cJSON_CreateNumber(mat.m21), cJSON_CreateNumber(mat.m22), cJSON_CreateNumber(mat.m23), cJSON_CreateNumber(mat.m24),
-		cJSON_CreateNumber(mat.m31), cJSON_CreateNumber(mat.m32), cJSON_CreateNumber(mat.m33), cJSON_CreateNumber(mat.m34),
-		cJSON_CreateNumber(mat.m41), cJSON_CreateNumber(mat.m42), cJSON_CreateNumber(mat.m43), cJSON_CreateNumber(mat.m44),
+		cJSON_CreateNumber(mat.c1r1), cJSON_CreateNumber(mat.c1r2), cJSON_CreateNumber(mat.c1r3), cJSON_CreateNumber(mat.c1r4),
+		cJSON_CreateNumber(mat.c2r1), cJSON_CreateNumber(mat.c2r2), cJSON_CreateNumber(mat.c2r3), cJSON_CreateNumber(mat.c2r4),
+		cJSON_CreateNumber(mat.c3r1), cJSON_CreateNumber(mat.c3r2), cJSON_CreateNumber(mat.c3r3), cJSON_CreateNumber(mat.c3r4),
+		cJSON_CreateNumber(mat.c4r1), cJSON_CreateNumber(mat.c4r2), cJSON_CreateNumber(mat.c4r3), cJSON_CreateNumber(mat.c4r4),
 		NULL
 	);
 }

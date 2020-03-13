@@ -7,10 +7,10 @@ typedef struct allo_vector
 typedef union allo_m4x4
 {
 	struct {
-		double m11, m12, m13, m14, // 1st column
-			m21, m22, m23, m24, // 2nd column, etc
-			m31, m32, m33, m34,
-			m41, m42, m43, m44;
+		double c1r1, c1r2, c1r3, c1r4, // 1st column
+			c2r1, c2r2, c2r3, c2r4, // 2nd column, etc
+			c3r1, c3r2, c3r3, c3r4,
+			c4r1, c4r2, c4r3, c4r4;
 	};
 	double v[16];
 } allo_m4x4;

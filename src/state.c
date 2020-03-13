@@ -25,11 +25,7 @@ extern allo_m4x4 entity_get_transform(allo_entity* entity)
   if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16)
     return allo_m4x4_identity();
 
-  allo_m4x4 m;
-  for (int i = 0; i < 16; i++) {
-    m.v[i] = cJSON_GetArrayItem(matrix, i)->valuedouble;
-  }
-  return m;
+  return cjson2m(matrix);
 }
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)
@@ -53,6 +49,8 @@ void entity_set_transform(allo_entity* entity, allo_m4x4 m)
 
 allo_entity* state_get_entity(allo_state* state, const char* entity_id)
 {
+  if (!state || !entity_id || strlen(entity_id) == 0)
+    return NULL;
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
   {

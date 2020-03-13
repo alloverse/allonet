@@ -55,6 +55,15 @@ cJSON* m2cjson(allo_m4x4 mat)
 	);
 }
 
+allo_m4x4 cjson2m(const cJSON* matlist)
+{
+  allo_m4x4 m;
+  for (int i = 0; i < 16; i++) {
+    m.v[i] = cJSON_GetArrayItem(matlist, i)->valuedouble;
+  }
+  return m;
+}
+
 int cjson_find_in_array(cJSON *array, const char *value)
 {
     int i = 0;

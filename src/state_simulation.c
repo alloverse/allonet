@@ -1,21 +1,29 @@
 #include "allonet/state.h"
 #include <assert.h>
 
-static void move_avatars(allo_state* state, double dt, allo_client_intent* intents, int intent_count);
-static void move_poses(allo_state* state, double dt, allo_client_intent* intents, int intent_count);
+static void move_avatar(allo_entity* ent, allo_client_intent intent, double dt);
+static void move_pose(allo_state* state, allo_entity* ent, allo_client_intent intent, double dt);
 
 extern void allo_simulate(allo_state* state, double dt, allo_client_intent* intents, int intent_count)
 {
-  move_avatars(state, dt, intents, intent_count);
-  move_poses(state, dt, intents, intent_count);
+  for (int i = 0; i < intent_count; i++)
+  {
+    allo_client_intent intent = intents[i];
+    allo_entity* avatar = state_get_entity(state, intent.entity_id);
+    if (intent.entity_id == NULL || avatar == NULL)
+      return;
+
+    move_avatar(avatar, intent, dt);
+    move_pose(state, avatar, intent, dt);
+  }
 }
 
-static void move_avatar(allo_entity* ent, allo_client_intent intent, double dt)
+static void move_avatar(allo_entity* avatar, allo_client_intent intent, double dt)
 {
   double speed = 1.0; // meters per second
   double distance = speed * dt;
 
-  allo_m4x4 old_transform = entity_get_transform(ent);
+  allo_m4x4 old_transform = entity_get_transform(avatar);
 
   // intent movement is always relative to the facing direction of the user, controlled
   // by the yaw intent.
@@ -31,24 +39,30 @@ static void move_avatar(allo_entity* ent, allo_client_intent intent, double dt)
 
   allo_m4x4 new_transform = allo_m4x4_concat(movement, old_positional_transform);
 
-  entity_set_transform(ent, new_transform);
+  entity_set_transform(avatar, new_transform);
 }
 
-static void move_avatars(allo_state* state, double dt, allo_client_intent* intents, int intent_count)
+static void move_pose(allo_state* state, allo_entity* avatar, allo_client_intent intent, double dt)
 {
-  for (int i = 0; i < intent_count; i++) 
+  allo_entity* entity = NULL;
+  LIST_FOREACH(entity, &state->entities, pointers)
   {
-    allo_client_intent intent = intents[i];
-    allo_entity *ent = state_get_entity(state, intent.entity_id);
-    if (intent.entity_id == NULL || ent == NULL)
-      return;
-    
-    move_avatar(ent, intent, dt);
-  }
-}
+    cJSON* rels = cJSON_GetObjectItem(entity->components, "relationships");
+    cJSON* parent = cJSON_GetObjectItem(rels, "parent");
+    cJSON* intents = cJSON_GetObjectItem(entity->components, "intent");
+    cJSON* actuate_pose = cJSON_GetObjectItem(intents, "actuate_pose");
+    if (!parent || !actuate_pose || strcmp(avatar->id, parent->valuestring) != 0)
+      continue;
+    const char* posename = actuate_pose->valuestring;
 
-static void move_poses(allo_state* state, double dt, allo_client_intent* intents, int intent_count)
-{
+    allo_m4x4 new_transform;
+    if (strcmp(posename, "hand/left") == 0) new_transform = intent.poses.left_hand.matrix;
+    else if (strcmp(posename, "hand/right") == 0) new_transform = intent.poses.right_hand.matrix;
+    else if (strcmp(posename, "head") == 0) new_transform = intent.poses.head.matrix;
+    else continue;
+
+    entity_set_transform(entity, new_transform);
+  }
 
 }
 

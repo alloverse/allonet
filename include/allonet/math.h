@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <stdbool.h>
+
 typedef struct allo_vector
 {
 	double x, y, z;
@@ -19,4 +22,4 @@ extern allo_m4x4 allo_m4x4_identity();
 extern allo_m4x4 allo_m4x4_translate(allo_vector translation);
 extern allo_m4x4 allo_m4x4_rotate(double angle, allo_vector axis);
 extern allo_m4x4 allo_m4x4_concat(allo_m4x4 l, allo_m4x4 r);
-extern allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r);
+extern allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional);

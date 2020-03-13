@@ -58,11 +58,11 @@ allo_m4x4 allo_m4x4_concat(allo_m4x4 a, allo_m4x4 b)
 	return m;
 }
 
-allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r)
+allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional)
 {
 	return (allo_vector) {
-		rc(l, 0, 0)* r.x + rc(l, 0, 1) * r.y + rc(l, 0, 2) * r.z + rc(l, 0, 3),
-		rc(l, 1, 0)* r.x + rc(l, 1, 1) * r.y + rc(l, 1, 2) * r.z + rc(l, 1, 3),
-		rc(l, 2, 0)* r.x + rc(l, 2, 1) * r.y + rc(l, 2, 2) * r.z + rc(l, 2, 3)
+		l.c1r1 * r.x + l.c2r1 * r.y + l.c3r1 * r.z + l.c4r1 * positional,
+		l.c1r2 * r.x + l.c2r2 * r.y + l.c3r2 * r.z + l.c4r2 * positional,
+		l.c1r3 * r.x + l.c2r3 * r.y + l.c3r3 * r.z + l.c4r3 * positional
 	};
 }

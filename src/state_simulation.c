@@ -23,13 +23,13 @@ static void move_avatar(allo_entity* ent, allo_client_intent intent, double dt)
   allo_m4x4 rotation = allo_m4x4_rotate(intent.yaw, (allo_vector) { 0, -1, 0 });
   allo_m4x4 translation = allo_m4x4_translate((allo_vector) { intent.xmovement* distance, 0, intent.zmovement* distance });
   // then combine rotation and translation to create a movement matrix,
-  allo_m4x4 movement = allo_m4x4_concat(rotation, translation);
+  allo_m4x4 movement = allo_m4x4_concat(translation, rotation);
 
   // which can then be concat'd into the old transform.
   allo_vector old_position = allo_m4x4_transform(old_transform, (allo_vector) { 0, 0, 0 }, true);
   allo_m4x4 old_positional_transform = allo_m4x4_translate(old_position);
 
-  allo_m4x4 new_transform = allo_m4x4_concat(old_positional_transform, movement);
+  allo_m4x4 new_transform = allo_m4x4_concat(movement, old_positional_transform);
 
   entity_set_transform(ent, new_transform);
 }

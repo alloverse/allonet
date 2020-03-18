@@ -31,7 +31,6 @@ typedef struct allo_client_intent
     double pitch;     // rotation around y in radians
     allo_client_poses poses;
 } allo_client_intent;
-arr_t(allo_client_intent);
 
 typedef struct allo_entity
 {

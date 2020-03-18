@@ -2,6 +2,7 @@
 #include <enet/enet.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <cJSON/cJSON.h>
 #include "util.h"
 
@@ -27,6 +28,12 @@ static alloserver_client *_client_create()
 {
     alloserver_client *client = (alloserver_client*)calloc(1, sizeof(alloserver_client));
     client->_internal = (void*)calloc(1, sizeof(alloserv_client_internal));
+    for(int i = 0; i < AGENT_ID_LENGTH; i++)
+    {
+        client->agent_id[i] = 'a' + rand() % 25;
+    }
+    client->agent_id[AGENT_ID_LENGTH] = '\0';
+
     return client;
 }
 
@@ -51,10 +58,13 @@ static bool allo_poll(alloserver *serv, int timeout)
     switch (event.type)
     {
     case ENET_EVENT_TYPE_CONNECT: {
-        printf ("A new client connected from %x:%u.\n", 
-                event.peer -> address.host,
-                event.peer -> address.port);
         alloserver_client *new_client = _client_create();
+        printf ("A new client connected from %x:%u as %s.\n", 
+            event.peer -> address.host,
+            event.peer -> address.port,
+            new_client->agent_id
+        );
+        
         _clientinternal(new_client)->peer = event.peer;
         _clientinternal(new_client)->peer->data = (void*)new_client;
         LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
@@ -122,7 +132,7 @@ alloserver *allo_listen(void)
 {
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
-    
+    srand((unsigned int)time(NULL));
 
     ENetAddress address;
     address.host = ENET_HOST_ANY;

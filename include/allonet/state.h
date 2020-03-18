@@ -34,7 +34,10 @@ typedef struct allo_client_intent
 
 typedef struct allo_entity
 {
+    // Place-unique ID for this entity
     char *id;
+    // Place's server-side ID for the agent that owns this entity
+    char *owner_agent_id;
 
     // exposing implementation detail json isn't _great_ but best I got atm.
     // See https://github.com/alloverse/docs/blob/master/specifications/components.md for official

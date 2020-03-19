@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-void _arr_reserve(void** data, size_t n, size_t* capacity, size_t stride) {
+void __arr_reserve(void** data, size_t n, size_t* capacity, size_t stride) {
   if (*capacity == 0) {
     *capacity = 1;
   }

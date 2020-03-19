@@ -15,7 +15,7 @@
 
 #define arr_reserve(a, n)\
   n > (a)->capacity ?\
-    _arr_reserve((void**) &((a)->data), n, &(a)->capacity, sizeof(*(a)->data)) :\
+    __arr_reserve((void**) &((a)->data), n, &(a)->capacity, sizeof(*(a)->data)) :\
     (void) 0
 
 #define arr_expand(a, n)\
@@ -40,4 +40,4 @@
 #define arr_clear(a)\
   (a)->length = 0
 
-void _arr_reserve(void** data, size_t n, size_t* capacity, size_t stride);
+extern void __arr_reserve(void** data, size_t n, size_t* capacity, size_t stride);

@@ -194,6 +194,7 @@ static int l_alloclient_simulate(lua_State* L)
     l_alloclient_t* lclient = check_alloclient(L, 1);
     double dt = luaL_checknumber(L, 2);
     alloclient_simulate(lclient->client, dt);
+    return 0;
 }
 
 ////// Callbacks from allonet

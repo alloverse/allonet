@@ -15,6 +15,7 @@ void entity_destroy(allo_entity *entity)
 {
     cJSON_Delete(entity->components);
     free(entity->id);
+    free(entity->owner_agent_id);
     free(entity);
 }
 

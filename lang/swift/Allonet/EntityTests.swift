@@ -10,9 +10,10 @@ import XCTest
 
 class EntityTests: XCTestCase {
     func testEntity() {
-        let entity = Entity(children: [])
-        
-        XCTAssertEqual(entity.jsonString, #"{"children":[]}"#)
+        test(
+            Entity(components: Components()),
+            #"{"components":{}}"#
+        )
     }
 
 }

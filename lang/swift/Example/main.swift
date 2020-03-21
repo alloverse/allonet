@@ -13,7 +13,7 @@ print("Starting...")
 let client = Client.connect(
     url: URL(string: "alloplace://localhost")!,
     identity: AgentIdentity(display_name: "Voxar via Swift"),
-    avatar: Entity(children: [])
+    avatar: Entity(components: Components())
 )
 
 class Delegate: ClientDelegate {

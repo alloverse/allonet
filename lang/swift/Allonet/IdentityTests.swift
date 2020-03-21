@@ -12,6 +12,6 @@ class IdentityTests: XCTestCase {
     func testExample() {
         let identity = AgentIdentity(display_name: "Hello, World")
 
-        XCTAssertEqual(identity.jsonString, #"{"display_name":"Hello, World"}"#)
+        test(identity, #"{"display_name":"Hello, World"}"#)
     }
 }

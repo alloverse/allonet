@@ -9,8 +9,8 @@
 import Foundation
 
 
-public struct Entity: Codable {
-    
-    public var children: [Component]
+public struct Entity: Codable, Equatable {
+    public var id: String?
+    public var components: Components
 }
 

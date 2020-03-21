@@ -40,30 +40,6 @@ public class Client {
     public typealias Interaction = allo_interaction
     public typealias Intent = allo_client_intent
     
-    public struct AgentIdentity: Codable {
-        public var display_name: String
-    }
-    
-    public struct Entity: Codable {
-        public var id: String
-        public var components: [Component.Key: Component]
-    }
-    
-    public struct Component: Codable {
-        public enum Key: String, Codable {
-            case transform
-        }
-        
-        public struct Transform: Codable {
-            public var position: Vector
-            public var rotation: Vector
-            
-            public struct Vector: Codable {
-                var x, y, z: Float
-            }
-        }
-    }
-    
     public static func connect(url: URL, identity: AgentIdentity, avatar: Entity) -> Client? {
         return self.connect(
             url: url.absoluteString,

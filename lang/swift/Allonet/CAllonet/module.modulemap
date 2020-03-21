@@ -1,6 +1,6 @@
 
 module CAllonet {
-    header "../../../../include/allonet/allonet.h"
+    header "allonet/allonet.h"
     link "allonet"
     export *
 }

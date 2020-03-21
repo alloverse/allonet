@@ -7,14 +7,46 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9915ED702426AFBA00DB260E /* liballonet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA57237F587C004D30C2 /* liballonet.a */; };
+		9915EDA62426B54600DB260E /* libcjson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA5D237F587C004D30C2 /* libcjson.a */; };
+		9915EDA72426B54600DB260E /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA63237F587C004D30C2 /* libenet.a */; };
+		9915EDA82426B54600DB260E /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9915ED642426AED600DB260E /* libopus.a */; };
+		9915EDAA2426BB3000DB260E /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDA92426BB3000DB260E /* Identity.swift */; };
+		9915EDAC2426BB3F00DB260E /* Entity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAB2426BB3F00DB260E /* Entity.swift */; };
+		9915EDAE2426BB4900DB260E /* Component.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAD2426BB4900DB260E /* Component.swift */; };
 		996ECA28237F5835004D30C2 /* client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA25237F5831004D30C2 /* client.swift */; };
-		996ECA8C237F5968004D30C2 /* liballonet.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA57237F587C004D30C2 /* liballonet.dylib */; };
-		996ECA8D237F5972004D30C2 /* libcjson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA5D237F587C004D30C2 /* libcjson.a */; };
-		996ECA8E237F5972004D30C2 /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA63237F587C004D30C2 /* libenet.a */; };
 		996ECA90237F5985004D30C2 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA8F237F5985004D30C2 /* main.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		9915ED632426AED600DB260E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 53B5521E81BE4D4B88DC9486;
+			remoteInfo = opus;
+		};
+		9915ED682426AF9B00DB260E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 719A7883AA224D99A6D544BB;
+			remoteInfo = allonet;
+		};
+		9915ED7C2426B53900DB260E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 95AEBADDB11748CB93F2B911;
+			remoteInfo = "cjson-static";
+		};
+		9915ED7E2426B53900DB260E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 75502828A5AB43ECA933986B;
+			remoteInfo = opus;
+		};
 		996ECA52237F587C004D30C2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
@@ -243,6 +275,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9915EDA92426BB3000DB260E /* Identity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
+		9915EDAB2426BB3F00DB260E /* Entity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entity.swift; sourceTree = "<group>"; };
+		9915EDAD2426BB4900DB260E /* Component.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Component.swift; sourceTree = "<group>"; };
 		996ECA25237F5831004D30C2 /* client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = client.swift; sourceTree = "<group>"; };
 		996ECA27237F5831004D30C2 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		996ECA29237F587C004D30C2 /* allonet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = allonet.xcodeproj; path = ../../../build/allonet.xcodeproj; sourceTree = "<group>"; };
@@ -255,9 +290,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				996ECA8C237F5968004D30C2 /* liballonet.dylib in Frameworks */,
-				996ECA8D237F5972004D30C2 /* libcjson.a in Frameworks */,
-				996ECA8E237F5972004D30C2 /* libenet.a in Frameworks */,
+				9915EDA62426B54600DB260E /* libcjson.a in Frameworks */,
+				9915EDA72426B54600DB260E /* libenet.a in Frameworks */,
+				9915EDA82426B54600DB260E /* libopus.a in Frameworks */,
+				9915ED702426AFBA00DB260E /* liballonet.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,6 +311,9 @@
 			isa = PBXGroup;
 			children = (
 				996ECA25237F5831004D30C2 /* client.swift */,
+				9915EDA92426BB3000DB260E /* Identity.swift */,
+				9915EDAB2426BB3F00DB260E /* Entity.swift */,
+				9915EDAD2426BB4900DB260E /* Component.swift */,
 				996ECA26237F5831004D30C2 /* CAllonet */,
 			);
 			name = Allonet;
@@ -294,7 +333,7 @@
 			children = (
 				996ECA53237F587C004D30C2 /* allocubeappliance */,
 				996ECA55237F587C004D30C2 /* allodummyclient */,
-				996ECA57237F587C004D30C2 /* liballonet.dylib */,
+				996ECA57237F587C004D30C2 /* liballonet.a */,
 				996ECA59237F587C004D30C2 /* cJSON_test */,
 				996ECA5B237F587C004D30C2 /* libcjson.dylib */,
 				996ECA5D237F587C004D30C2 /* libcjson.a */,
@@ -306,6 +345,7 @@
 				996ECA69237F587C004D30C2 /* lua */,
 				996ECA6B237F587C004D30C2 /* luac */,
 				996ECA6D237F587C004D30C2 /* misc_tests */,
+				9915ED642426AED600DB260E /* libopus.a */,
 				996ECA6F237F587C004D30C2 /* parse_array */,
 				996ECA71237F587C004D30C2 /* parse_examples */,
 				996ECA73237F587C004D30C2 /* parse_hex4 */,
@@ -359,6 +399,9 @@
 			buildRules = (
 			);
 			dependencies = (
+				9915ED7D2426B53900DB260E /* PBXTargetDependency */,
+				9915ED7F2426B53900DB260E /* PBXTargetDependency */,
+				9915ED692426AF9B00DB260E /* PBXTargetDependency */,
 			);
 			name = Example;
 			productName = allonet_swift;
@@ -406,6 +449,13 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		9915ED642426AED600DB260E /* libopus.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libopus.a;
+			remoteRef = 9915ED632426AED600DB260E /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		996ECA53237F587C004D30C2 /* allocubeappliance */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
@@ -420,10 +470,10 @@
 			remoteRef = 996ECA54237F587C004D30C2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		996ECA57237F587C004D30C2 /* liballonet.dylib */ = {
+		996ECA57237F587C004D30C2 /* liballonet.a */ = {
 			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.dylib";
-			path = liballonet.dylib;
+			fileType = archive.ar;
+			path = liballonet.a;
 			remoteRef = 996ECA56237F587C004D30C2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -617,12 +667,33 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9915EDAC2426BB3F00DB260E /* Entity.swift in Sources */,
 				996ECA90237F5985004D30C2 /* main.swift in Sources */,
+				9915EDAA2426BB3000DB260E /* Identity.swift in Sources */,
 				996ECA28237F5835004D30C2 /* client.swift in Sources */,
+				9915EDAE2426BB4900DB260E /* Component.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9915ED692426AF9B00DB260E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = allonet;
+			targetProxy = 9915ED682426AF9B00DB260E /* PBXContainerItemProxy */;
+		};
+		9915ED7D2426B53900DB260E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "cjson-static";
+			targetProxy = 9915ED7C2426B53900DB260E /* PBXContainerItemProxy */;
+		};
+		9915ED7F2426B53900DB260E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = opus;
+			targetProxy = 9915ED7E2426B53900DB260E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		999EA614237F2E0900A68797 /* Debug */ = {
@@ -746,7 +817,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = R7WMBH9LHX;
 				ENABLE_HARDENED_RUNTIME = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -755,6 +827,7 @@
 					"@loader_path/../Frameworks",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -764,7 +837,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = R7WMBH9LHX;
 				ENABLE_HARDENED_RUNTIME = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -773,6 +847,7 @@
 					"@loader_path/../Frameworks",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

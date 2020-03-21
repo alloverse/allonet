@@ -2,13 +2,6 @@
 import CAllonet
 import Foundation
 
-fileprivate extension Encodable {
-    var jsonString: String {
-        let data = try! JSONEncoder().encode(self)
-        return String(data: data, encoding: .utf8)!
-    }
-}
-
 public protocol ClientDelegate: class {
     func client(_ client: Client, received state: Client.State)
     func client(_ client: Client, received interaction: Client.Interaction)

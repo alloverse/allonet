@@ -14,6 +14,14 @@
 		9915EDAA2426BB3000DB260E /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDA92426BB3000DB260E /* Identity.swift */; };
 		9915EDAC2426BB3F00DB260E /* Entity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAB2426BB3F00DB260E /* Entity.swift */; };
 		9915EDAE2426BB4900DB260E /* Component.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAD2426BB4900DB260E /* Component.swift */; };
+		9915EDB82426BEF200DB260E /* Allonet_SwiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDB72426BEF200DB260E /* Allonet_SwiftTests.swift */; };
+		9915EDBF2426BF1E00DB260E /* IdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAF2426BE7700DB260E /* IdentityTests.swift */; };
+		9915EDC02426C08300DB260E /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDA92426BB3000DB260E /* Identity.swift */; };
+		9915EDC12426C08300DB260E /* Entity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAB2426BB3F00DB260E /* Entity.swift */; };
+		9915EDC22426C08300DB260E /* Component.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDAD2426BB4900DB260E /* Component.swift */; };
+		9915EDC42426C0A100DB260E /* Json.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDC32426C0A100DB260E /* Json.swift */; };
+		9915EDC52426C0C200DB260E /* Json.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDC32426C0A100DB260E /* Json.swift */; };
+		9915EDC72426C13100DB260E /* EntityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915EDC62426C13100DB260E /* EntityTests.swift */; };
 		996ECA28237F5835004D30C2 /* client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA25237F5831004D30C2 /* client.swift */; };
 		996ECA90237F5985004D30C2 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA8F237F5985004D30C2 /* main.swift */; };
 /* End PBXBuildFile section */
@@ -278,6 +286,12 @@
 		9915EDA92426BB3000DB260E /* Identity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
 		9915EDAB2426BB3F00DB260E /* Entity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entity.swift; sourceTree = "<group>"; };
 		9915EDAD2426BB4900DB260E /* Component.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Component.swift; sourceTree = "<group>"; };
+		9915EDAF2426BE7700DB260E /* IdentityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityTests.swift; sourceTree = "<group>"; };
+		9915EDB52426BEF200DB260E /* Allonet.SwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Allonet.SwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9915EDB72426BEF200DB260E /* Allonet_SwiftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Allonet_SwiftTests.swift; sourceTree = "<group>"; };
+		9915EDB92426BEF200DB260E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9915EDC32426C0A100DB260E /* Json.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Json.swift; sourceTree = "<group>"; };
+		9915EDC62426C13100DB260E /* EntityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityTests.swift; sourceTree = "<group>"; };
 		996ECA25237F5831004D30C2 /* client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = client.swift; sourceTree = "<group>"; };
 		996ECA27237F5831004D30C2 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		996ECA29237F587C004D30C2 /* allonet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = allonet.xcodeproj; path = ../../../build/allonet.xcodeproj; sourceTree = "<group>"; };
@@ -286,6 +300,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		9915EDB22426BEF200DB260E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		999EA60C237F2E0900A68797 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -300,6 +321,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9915EDB62426BEF200DB260E /* Allonet.SwiftTests */ = {
+			isa = PBXGroup;
+			children = (
+				9915EDB72426BEF200DB260E /* Allonet_SwiftTests.swift */,
+				9915EDB92426BEF200DB260E /* Info.plist */,
+			);
+			path = Allonet.SwiftTests;
+			sourceTree = "<group>";
+		};
 		996EC9F4237F4429004D30C2 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -311,8 +341,11 @@
 			isa = PBXGroup;
 			children = (
 				996ECA25237F5831004D30C2 /* client.swift */,
+				9915EDC32426C0A100DB260E /* Json.swift */,
 				9915EDA92426BB3000DB260E /* Identity.swift */,
+				9915EDAF2426BE7700DB260E /* IdentityTests.swift */,
 				9915EDAB2426BB3F00DB260E /* Entity.swift */,
+				9915EDC62426C13100DB260E /* EntityTests.swift */,
 				9915EDAD2426BB4900DB260E /* Component.swift */,
 				996ECA26237F5831004D30C2 /* CAllonet */,
 			);
@@ -371,6 +404,7 @@
 				996ECA8F237F5985004D30C2 /* main.swift */,
 				996ECA24237F5831004D30C2 /* Allonet */,
 				996ECA29237F587C004D30C2 /* allonet.xcodeproj */,
+				9915EDB62426BEF200DB260E /* Allonet.SwiftTests */,
 				999EA610237F2E0900A68797 /* Products */,
 				996EC9F4237F4429004D30C2 /* Frameworks */,
 			);
@@ -380,6 +414,7 @@
 			isa = PBXGroup;
 			children = (
 				999EA60F237F2E0900A68797 /* Example */,
+				9915EDB52426BEF200DB260E /* Allonet.SwiftTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -387,6 +422,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		9915EDB42426BEF200DB260E /* Allonet.SwiftTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9915EDBA2426BEF200DB260E /* Build configuration list for PBXNativeTarget "Allonet.SwiftTests" */;
+			buildPhases = (
+				9915EDB12426BEF200DB260E /* Sources */,
+				9915EDB22426BEF200DB260E /* Frameworks */,
+				9915EDB32426BEF200DB260E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Allonet.SwiftTests;
+			productName = Allonet.SwiftTests;
+			productReference = 9915EDB52426BEF200DB260E /* Allonet.SwiftTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		999EA60E237F2E0900A68797 /* Example */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 999EA616237F2E0900A68797 /* Build configuration list for PBXNativeTarget "Example" */;
@@ -414,10 +466,13 @@
 		999EA607237F2E0900A68797 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1110;
+				LastSwiftUpdateCheck = 1130;
 				LastUpgradeCheck = 1110;
 				ORGANIZATIONNAME = voxar;
 				TargetAttributes = {
+					9915EDB42426BEF200DB260E = {
+						CreatedOnToolsVersion = 11.3.1;
+					};
 					999EA60E237F2E0900A68797 = {
 						CreatedOnToolsVersion = 11.1;
 						LastSwiftMigration = 1110;
@@ -444,6 +499,7 @@
 			projectRoot = "";
 			targets = (
 				999EA60E237F2E0900A68797 /* Example */,
+				9915EDB42426BEF200DB260E /* Allonet.SwiftTests */,
 			);
 		};
 /* End PBXProject section */
@@ -662,7 +718,31 @@
 		};
 /* End PBXReferenceProxy section */
 
+/* Begin PBXResourcesBuildPhase section */
+		9915EDB32426BEF200DB260E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		9915EDB12426BEF200DB260E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9915EDC12426C08300DB260E /* Entity.swift in Sources */,
+				9915EDC72426C13100DB260E /* EntityTests.swift in Sources */,
+				9915EDB82426BEF200DB260E /* Allonet_SwiftTests.swift in Sources */,
+				9915EDC02426C08300DB260E /* Identity.swift in Sources */,
+				9915EDC52426C0C200DB260E /* Json.swift in Sources */,
+				9915EDBF2426BF1E00DB260E /* IdentityTests.swift in Sources */,
+				9915EDC22426C08300DB260E /* Component.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		999EA60B237F2E0900A68797 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -670,6 +750,7 @@
 				9915EDAC2426BB3F00DB260E /* Entity.swift in Sources */,
 				996ECA90237F5985004D30C2 /* main.swift in Sources */,
 				9915EDAA2426BB3000DB260E /* Identity.swift in Sources */,
+				9915EDC42426C0A100DB260E /* Json.swift in Sources */,
 				996ECA28237F5835004D30C2 /* client.swift in Sources */,
 				9915EDAE2426BB4900DB260E /* Component.swift in Sources */,
 			);
@@ -696,6 +777,42 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		9915EDBB2426BEF200DB260E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = R7WMBH9LHX;
+				INFOPLIST_FILE = Allonet.SwiftTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "net.voxar.Allonet-SwiftTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9915EDBC2426BEF200DB260E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = R7WMBH9LHX;
+				INFOPLIST_FILE = Allonet.SwiftTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "net.voxar.Allonet-SwiftTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		999EA614237F2E0900A68797 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -855,6 +972,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		9915EDBA2426BEF200DB260E /* Build configuration list for PBXNativeTarget "Allonet.SwiftTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9915EDBB2426BEF200DB260E /* Debug */,
+				9915EDBC2426BEF200DB260E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		999EA60A237F2E0900A68797 /* Build configuration list for PBXProject "Allonet Example" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

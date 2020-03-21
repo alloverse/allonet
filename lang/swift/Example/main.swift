@@ -16,6 +16,23 @@ let client = Client.connect(
     avatar: Entity(children: [])
 )
 
+class Delegate: ClientDelegate {
+    func clientDidDisconnect(_ client: Client) {
+        print("Disconnected")
+    }
+    
+    func client(_ client: Client, received state: Client.State) {
+        print("Did receive state:", state)
+    }
+    
+    func client(_ client: Client, received interaction: Client.Interaction) {
+        print("Did receive interaction:", interaction)
+    }
+}
+
+let delegate = Delegate()
+client?.delegate = delegate
+
 print(client)
 for _ in 0...50 {
     client?.poll()

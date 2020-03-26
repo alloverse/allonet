@@ -15,19 +15,9 @@ typedef struct l_alloclient
     int audio_callback_index;
 } l_alloclient_t;
 
-static int l_alloclient_connect (lua_State *L)
+static int l_alloclient_create (lua_State *L)
 {
-    const char *url =  luaL_checkstring(L, 1);
-    const char *identity =  luaL_checkstring(L, 2);
-    const char *avatar_desc =  luaL_checkstring(L, 3);
-
-    alloclient *client = allo_connect(url, identity, avatar_desc);
-
-    if(client == NULL)
-    {
-        return luaL_error(L, "Allonet failed to connect to %s", url);
-    }
-
+    alloclient *client = alloclient_create();
     l_alloclient_t *lclient = (l_alloclient_t *)lua_newuserdata(L, sizeof(l_alloclient_t));
     lclient->client = client;
     lclient->L = L;
@@ -39,7 +29,7 @@ static int l_alloclient_connect (lua_State *L)
 
 static const struct luaL_reg allonet [] =
 {
-    {"connect", l_alloclient_connect},
+    {"create", l_alloclient_create},
     {NULL, NULL}
 };
 
@@ -52,6 +42,20 @@ static l_alloclient_t *check_alloclient (lua_State *L, int n)
 }
 
 ///// alloclient methods
+
+static int l_alloclient_connect (lua_State *L)
+{
+    l_alloclient_t *lclient = check_alloclient(L, 1);
+
+    const char *url =  luaL_checkstring(L, 2);
+    const char *identity =  luaL_checkstring(L, 3);
+    const char *avatar_desc =  luaL_checkstring(L, 4);
+
+    bool success = allo_connect(lclient->client, url, identity, avatar_desc);
+
+    lua_pushboolean(L, success);
+    return 1;
+}
 
 static int l_alloclient_disconnect (lua_State *L)
 {
@@ -244,6 +248,7 @@ static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
 ////// library initialization
 
 static const struct luaL_reg alloclient_m [] = {
+    {"connect", l_alloclient_connect},
     {"disconnect", l_alloclient_disconnect},
     {"poll", l_alloclient_poll},
     {"send_interaction", l_alloclient_send_interaction},

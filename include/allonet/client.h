@@ -7,6 +7,7 @@ typedef enum alloerror
 {
     alloerror_connection_lost = 1000,
     alloerror_client_disconnected = 1001,
+    alloerror_initialization_failure = 1002,
 } alloerror;
 
 typedef struct alloclient alloclient;
@@ -63,12 +64,16 @@ typedef struct alloclient {
     void *_backref; // use this as a backref for callbacks  
 } alloclient;
 
-/** Connect to an alloplace.
- * @param url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
- * @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
- * @param avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
- */
-alloclient *allo_connect(const char *url, const char *identity, const char *avatar_desc);
+
+alloclient *alloclient_create(void);
+
+
+/** Connect to an alloplace. Must be called once and only once on the returned alloclient from allo_create()
+* @param url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
+* @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
+* @param avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
+*/
+bool allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
 
 /** Disconnect from an alloplace and free all internal state.
  *  `client` is free()d by this call. Call this to deallocate

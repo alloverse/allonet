@@ -353,31 +353,34 @@ void alloclient_send_interaction(
 
 void alloclient_disconnect(alloclient *client, int reason)
 {
-    if(_internal(client)->peer->state != ENET_PEER_STATE_DISCONNECTED)
-    {
-        enet_peer_disconnect(_internal(client)->peer, reason);
-        int now = get_ts_mono();
-        int started_at = now;
-        int end_at = started_at + 1000;
-        ENetEvent event;
-        memset(&event, 0, sizeof(event));
-        while(now < end_at) {
-            enet_host_service(_internal(client)->host, & event, end_at-now);
-            if(event.type == ENET_EVENT_TYPE_DISCONNECT) {
-                fprintf(stderr, "alloclient: successfully disconnected");
-                break;
+    if (_internal(client)) {
+        if (_internal(client)->peer && _internal(client)->peer->state != ENET_PEER_STATE_DISCONNECTED)
+        {
+            enet_peer_disconnect(_internal(client)->peer, reason);
+            int now = get_ts_mono();
+            int started_at = now;
+            int end_at = started_at + 1000;
+            ENetEvent event;
+            memset(&event, 0, sizeof(event));
+            while(now < end_at) {
+                enet_host_service(_internal(client)->host, & event, end_at-now);
+                if(event.type == ENET_EVENT_TYPE_DISCONNECT) {
+                    fprintf(stderr, "alloclient: successfully disconnected");
+                    break;
+                }
+                now = get_ts_mono();
             }
-            now = get_ts_mono();
+            if(event.type != ENET_EVENT_TYPE_DISCONNECT) {
+                fprintf(stderr, "alloclient: disconnection timed out; just deallocating");
+            }
+        } else {
+            fprintf(stderr, "alloclient: Already disconnected; just deallocating");
         }
-        if(event.type != ENET_EVENT_TYPE_DISCONNECT) {
-            fprintf(stderr, "alloclient: disconnection timed out; just deallocating");
-        }
-    } else {
-        fprintf(stderr, "alloclient: Already disconnected; just deallocating");
+        enet_host_destroy(_internal(client)->host);
+        opus_encoder_destroy(_internal(client)->opus_encoder);
+        free(_internal(client));
     }
-    enet_host_destroy(_internal(client)->host);
-    opus_encoder_destroy(_internal(client)->opus_encoder);
-    free(_internal(client));
+    
     free(client);
 }
 
@@ -413,7 +416,17 @@ bool announce(alloclient *client, const char *identity, const char *avatar_desc)
     return true;
 }
 
-alloclient *allo_connect(const char *url, const char *identity, const char *avatar_desc)
+alloclient *alloclient_create(void)
+{
+    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
+    client->_internal = calloc(1, sizeof(alloclient_internal));
+    
+    LIST_INIT(&client->state.entities);
+    
+    return client;
+}
+
+bool allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
@@ -426,13 +439,13 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     {
         fprintf (stderr, 
                 "An error occurred while trying to create an ENet client host.\n");
-        return NULL;
+        return false;
     }
 
     // parse the url in the form of alloplace://hostname{:port}{/}
     if (strstr(url, "alloplace://") == 0) {
         fprintf(stderr, "Not an alloplace URL\n");
-        return NULL;
+        return false;
     }
     const char *hostandport = strstr(url, "://")+3;
     const char *port = strstr(hostandport, ":"); if(port) port+=1;
@@ -460,9 +473,8 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
     {
         fprintf (stderr, 
                     "No available peers for initiating an ENet connection.\n");
-        return NULL;
+        return false;
     }
-
 
     ENetEvent event;
     if (enet_host_service(host, & event, 5000) > 0 &&
@@ -477,34 +489,31 @@ alloclient *allo_connect(const char *url, const char *identity, const char *avat
         /* had run out without any significant event.            */
         enet_peer_reset (peer);
         puts ("Connection to server failed.");
-        return NULL;
+        return false;
     }
 
     enet_peer_timeout(peer, 3, 2000, 6000);
 
-    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
-    client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->host = host;
     _internal(client)->peer = peer;
-    LIST_INIT(&client->state.entities);
 
     int error;
     _internal(client)->opus_encoder = opus_encoder_create(48000, 1, OPUS_APPLICATION_VOIP, &error);
     if(_internal(client)->opus_encoder == NULL)
     {
-        alloclient_disconnect(client, 1);
+        alloclient_disconnect(client, alloerror_initialization_failure);
         fprintf(stderr, "Encoder creation failed: %d.", error);
-        return NULL;
+        return false;
     }
 
     if(!announce(client, identity, avatar_desc))
     {
-        alloclient_disconnect(client, 1);
-        return NULL;
+        alloclient_disconnect(client, alloerror_initialization_failure);
+        return false;
     }
     
 
-    return client;
+    return true;
 }
 
 allo_interaction *alloclient_pop_interaction(alloclient *client)

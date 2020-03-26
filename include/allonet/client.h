@@ -3,6 +3,12 @@
 #include "state.h"
 #include "net.h"
 
+typedef enum alloerror
+{
+    alloerror_connection_lost = 1000,
+    alloerror_client_disconnected = 1001,
+} alloerror;
+
 typedef struct alloclient alloclient;
 typedef struct alloclient {
     /** set this to get a callback when state changes. data in 'state'
@@ -46,7 +52,9 @@ typedef struct alloclient {
      *  receiving this callback.
      */
     void  (*disconnected_callback)(
-        alloclient *client
+       alloclient *client,
+       alloerror code,
+       char *message
     );
 
     // internal

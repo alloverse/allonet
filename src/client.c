@@ -270,7 +270,7 @@ void alloclient_poll(alloclient *client)
         case ENET_EVENT_TYPE_DISCONNECT:
             fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
             if (client->disconnected_callback) {
-                client->disconnected_callback(client);
+                client->disconnected_callback(client, alloerror_connection_lost, "Lost connection to Place");
                 // We might now be deallocated (that's the standard thing to do in the disconnected callback).
                 // Stop processing events.
                 return;

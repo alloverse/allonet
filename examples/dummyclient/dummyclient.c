@@ -274,7 +274,7 @@ int main(int argc, char **argv)
     char *identity = (char*)calloc(1, 255);
     snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
     alloclient *client = alloclient_create();
-    allo_connect(argv[2], identity, avatardesc);
+    allo_connect(client, argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);
 

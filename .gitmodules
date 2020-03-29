@@ -3,7 +3,7 @@
 	url = https://github.com/lsalzman/enet.git
 [submodule "lib/cJSON"]
 	path = lib/cJSON
-	url = https://github.com/DaveGamble/cJSON.git
+	url = https://github.com/alloverse/cJSON.git
 [submodule "lib/lua"]
 	path = lib/lua
 	url = https://github.com/LuaDist/lua.git

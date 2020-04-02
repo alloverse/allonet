@@ -9,6 +9,13 @@ typedef struct allo_vector
 	double x, y, z;
 } allo_vector;
 
+extern allo_vector allo_vector_subtract(allo_vector l, allo_vector r);
+extern double allo_vector_dot(allo_vector l, allo_vector r);
+extern double allo_vector_length(allo_vector l);
+extern double allo_vector_angle(allo_vector l, allo_vector r);
+
+
+
 // column major transformation matrix
 typedef union allo_m4x4
 {

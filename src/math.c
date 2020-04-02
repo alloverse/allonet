@@ -1,6 +1,29 @@
 #include "allonet/math.h"
 #include <math.h>
 
+allo_vector allo_vector_subtract(allo_vector l, allo_vector r)
+{
+    return (allo_vector){
+        l.x - r.x,
+        l.y - r.y,
+        l.z - r.z
+    };
+}
+
+double allo_vector_dot(allo_vector l, allo_vector r)
+{
+    return l.x * r.x + l.y * r.y + l.z * r.z;
+}
+
+double allo_vector_length(allo_vector l)
+{
+    return sqrt(allo_vector_dot(l, l));
+}
+double allo_vector_angle(allo_vector l, allo_vector r)
+{
+    return acos(allo_vector_dot(l, r) / (allo_vector_length(l) * allo_vector_length(r)));
+}
+
 allo_m4x4 allo_m4x4_identity()
 {
 	return (allo_m4x4) {

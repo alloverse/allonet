@@ -122,7 +122,7 @@ cJSON *vec3(float x, float y, float z)
   return cjson_create_list(cJSON_CreateNumber(x), cJSON_CreateNumber(y), cJSON_CreateNumber(z), NULL);
 }
 
-static void disconnected(alloclient *client)
+static void disconnected(alloclient *client, alloerror code, const char *reason)
 {
     alloclient_disconnect(client, 0);
     exit(1);

@@ -55,7 +55,7 @@ typedef struct alloclient {
     void  (*disconnected_callback)(
        alloclient *client,
        alloerror code,
-       char *message
+       const char *message
     );
 
     // internal

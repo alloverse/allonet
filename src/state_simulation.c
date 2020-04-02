@@ -2,8 +2,28 @@
 #include <assert.h>
 #include <string.h>
 
-static void move_avatar(allo_entity* ent, allo_client_intent intent, double dt);
+static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt);
 static void move_pose(allo_state* state, allo_entity* ent, allo_client_intent intent, double dt);
+
+static allo_entity *get_child_with_pose(allo_state *state, allo_entity *avatar, const char *pose_name)
+{
+  if (!state || !avatar || !pose_name || strlen(pose_name) == 0)
+    return NULL;
+  allo_entity* entity = NULL;
+  LIST_FOREACH(entity, &state->entities, pointers)
+  {
+    cJSON *relationships = cJSON_GetObjectItem(entity->components, "relationships");
+    cJSON *parent = cJSON_GetObjectItem(relationships, "parent");
+    cJSON *intent = cJSON_GetObjectItem(entity->components, "intent");
+    cJSON *actuate_pose = cJSON_GetObjectItem(intent, "actuate_pose");
+    
+    if (parent && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
+    {
+      return entity;
+    }
+  }
+  return NULL;
+}
 
 extern void allo_simulate(allo_state* state, double dt, allo_client_intent* intents, int intent_count)
 {
@@ -13,26 +33,30 @@ extern void allo_simulate(allo_state* state, double dt, allo_client_intent* inte
     allo_entity* avatar = state_get_entity(state, intent.entity_id);
     if (intent.entity_id == NULL || avatar == NULL)
       return;
-
-    move_avatar(avatar, intent, dt);
+    allo_entity* head = get_child_with_pose(state, avatar, "head");
+    move_avatar(avatar, head, intent, dt);
     move_pose(state, avatar, intent, dt);
   }
 }
 
-static void move_avatar(allo_entity* avatar, allo_client_intent intent, double dt)
+static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt)
 {
   double speed = 1.0; // meters per second
   double distance = speed * dt;
 
   allo_m4x4 old_transform = entity_get_transform(avatar);
+  allo_m4x4 head_transform = entity_get_transform(head);
+  allo_m4x4 inverse_head = allo_m4x4_inverse(head_transform);
 
   // intent movement is always relative to the facing direction of the user, controlled
-  // by the yaw intent.
+  // by the head transform and yaw intent.
   // Begin by creating a matrix representing that yaw and one for user-relative translation...
   allo_m4x4 rotation = allo_m4x4_rotate(intent.yaw, (allo_vector) { 0, -1, 0 });
   allo_m4x4 translation = allo_m4x4_translate((allo_vector) { intent.xmovement* distance, 0, intent.zmovement* distance });
-  // then combine rotation and translation to create a movement matrix,
-  allo_m4x4 movement = allo_m4x4_concat(translation, rotation);
+  // then combine head transform, rotation and translation to create a movement matrix,
+  // is: movement = inverse_head * translation * head_transform * rotation
+  // want: movement = inverse_head * translation * rotation * head_transform
+  allo_m4x4 movement = allo_m4x4_concat(inverse_head, allo_m4x4_concat(translation, allo_m4x4_concat(head_transform, rotation)));
 
   // which can then be concat'd into the old transform.
   allo_vector old_position = allo_m4x4_transform(old_transform, (allo_vector) { 0, 0, 0 }, true);

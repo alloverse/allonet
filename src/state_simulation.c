@@ -39,20 +39,37 @@ extern void allo_simulate(allo_state* state, double dt, allo_client_intent* inte
   }
 }
 
+// removes pitch from transform so it becomes a suitable walking direction
+static allo_m4x4 constrain_head_pitch(allo_m4x4 transform)
+{
+  allo_vector origin = {0, 0, 0};
+  allo_vector forward = {0, 0, 1};
+  allo_vector position = allo_m4x4_transform(transform, origin, true);
+  allo_vector moved = allo_m4x4_transform(transform, forward, true);
+  allo_vector direction = allo_vector_subtract(moved, position);  
+  allo_vector ground_direction = allo_vector_subtract(direction, (allo_vector){0, direction.y, 0});
+  // negate any vertical angle
+  double pitch = allo_vector_angle(ground_direction, direction);
+  if (direction.y < 0) pitch *= -1;
+  allo_m4x4 constrainer = allo_m4x4_rotate(pitch, (allo_vector){1, 0, 0});
+  return allo_m4x4_concat(constrainer, transform);
+}
+
 static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt)
 {
   double speed = 1.0; // meters per second
   double distance = speed * dt;
 
   allo_m4x4 old_transform = entity_get_transform(avatar);
-  allo_m4x4 head_transform = entity_get_transform(head);
+  allo_m4x4 raw_head_transform = entity_get_transform(head);
+  allo_m4x4 head_transform = constrain_head_pitch(raw_head_transform);
   allo_m4x4 inverse_head = allo_m4x4_inverse(head_transform);
 
   // intent movement is always relative to the facing direction of the user, controlled
   // by the head transform and yaw intent.
   // Begin by creating a matrix representing that yaw and one for user-relative translation...
   allo_m4x4 rotation = allo_m4x4_rotate(intent.yaw, (allo_vector) { 0, -1, 0 });
-  allo_m4x4 translation = allo_m4x4_translate((allo_vector) { intent.xmovement* distance, 0, intent.zmovement* distance });
+  allo_m4x4 translation = allo_m4x4_translate((allo_vector) { intent.xmovement * distance, 0, intent.zmovement * distance });
   // then combine head transform, rotation and translation to create a movement matrix,
   // is: movement = inverse_head * translation * head_transform * rotation
   // want: movement = inverse_head * translation * rotation * head_transform

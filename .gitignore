@@ -9,3 +9,4 @@ local.properties
 .vscode
 .vs
 out
+build.luarocks

@@ -98,3 +98,5 @@ target_link_libraries (allodummyclient allonet)
 # cubeappliance
 add_executable (allocubeappliance examples/cubeappliance/cubeappliance.c)
 target_link_libraries (allocubeappliance allonet)
+
+install(TARGETS allonet LIBRARY)

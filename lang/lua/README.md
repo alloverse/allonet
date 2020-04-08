@@ -12,7 +12,8 @@ get you started:
 
     require("liballonet")
     local json = require("json")
-    local client = allonet.connect(
+    local client = allonet.create()
+    client:connect(
         "alloplace://nevyn.places.alloverse.com",
         json.encode({display_name = "lua-sample"}),
         json.encode({})
@@ -24,7 +25,11 @@ get you started:
 
 ## Full API
 
-### `allonet.connect(url: string, identity: json-string, avatar: json-string)`
+### `allonet.create()`
+
+Allocate a client that you can then configure, and then connect.
+
+### `client:connect(url: string, identity: json-string, avatar: json-string)`
 
  * url: URL to an alloplace server, like alloplace://nevyn.places.alloverse.com
  * identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity

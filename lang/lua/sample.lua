@@ -3,7 +3,8 @@ local json = require("json")
 
 -- Connect is synchronous, and returns a client
 -- if connected or raises an error on failure to connect.
-local client = allonet.connect(
+local client = allonet.create()
+client:connect(
     "alloplace://nevyn.places.alloverse.com",
     json.encode({display_name = "lua-sample"}),
     json.encode({

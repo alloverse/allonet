@@ -21,6 +21,8 @@ void entity_destroy(allo_entity *entity)
 
 extern allo_m4x4 entity_get_transform(allo_entity* entity)
 {
+  if(!entity)
+    return allo_m4x4_identity();
   cJSON* transform = cJSON_GetObjectItem(entity->components, "transform");
   cJSON* matrix = cJSON_GetObjectItem(transform, "matrix");
   if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16)

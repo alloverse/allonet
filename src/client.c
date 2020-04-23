@@ -14,7 +14,7 @@
     #define nonnull(x) x
 #endif
 
-#define DEBUG_AUDIO 1
+#define DEBUG_AUDIO 0
 
 typedef struct interaction_queue {
     allo_interaction *interaction;

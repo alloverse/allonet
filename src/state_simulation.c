@@ -1,6 +1,7 @@
 #include "allonet/state.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt);
 static void move_pose(allo_state* state, allo_entity* ent, allo_client_intent intent, double dt);

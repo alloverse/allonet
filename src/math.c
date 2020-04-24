@@ -1,5 +1,7 @@
 #include "allonet/math.h"
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 allo_vector allo_vector_subtract(allo_vector l, allo_vector r)
 {
@@ -217,4 +219,16 @@ allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional)
 		l.c1r2 * r.x + l.c2r2 * r.y + l.c3r2 * r.z + l.c4r2 * positional,
 		l.c1r3 * r.x + l.c2r3 * r.y + l.c3r3 * r.z + l.c4r3 * positional
 	};
+}
+
+extern char *allo_m4x4_string(allo_m4x4 m)
+{
+    char *s = malloc(255);
+    snprintf(s, 255, "%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f",
+        m.c1r1, m.c2r1, m.c3r1, m.c4r1,
+        m.c1r2, m.c2r2, m.c3r2, m.c4r2,
+        m.c1r3, m.c2r3, m.c3r3, m.c4r3,
+        m.c1r4, m.c2r4, m.c3r4, m.c4r4
+    );
+    return s;
 }

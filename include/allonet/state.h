@@ -32,6 +32,8 @@ typedef struct allo_client_intent
     allo_client_poses poses;
 } allo_client_intent;
 
+extern void allo_client_intent_initialize(allo_client_intent *intent);
+
 typedef struct allo_entity
 {
     // Place-unique ID for this entity

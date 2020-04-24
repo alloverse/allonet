@@ -420,6 +420,7 @@ alloclient *alloclient_create(void)
 {
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
+    allo_client_intent_initialize(&_internal(client)->latest_intent);
     
     LIST_INIT(&client->state.entities);
     

@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include "util.h"
 
+void allo_client_intent_initialize(allo_client_intent *intent)
+{
+    memset(intent, 0, sizeof(*intent));
+    intent->poses.head.matrix = intent->poses.left_hand.matrix = intent->poses.right_hand.matrix = allo_m4x4_identity();
+}
 
 allo_entity *entity_create(const char *id)
 {

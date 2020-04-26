@@ -15,7 +15,6 @@
 #endif
 
 #define DEBUG_AUDIO 0
-
 typedef struct interaction_queue {
     allo_interaction *interaction;
     LIST_ENTRY(interaction_queue) pointers;
@@ -554,9 +553,8 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
         return;
     }
     // +1 because stupid server code assumes all packets end with a newline... FIX THE DAMN PROTOCOL
-    int ok = enet_packet_resize(packet, len+1);
+    int ok = enet_packet_resize(packet, headerlen + len+1);
     assert(ok == 0);
-
     ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
     assert(ok == 0);
 }

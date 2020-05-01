@@ -70,8 +70,8 @@ static allo_m4x4 create_movement(allo_m4x4 head_transform, double yaw, double xm
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt)
 {
-  //if(intent.xmovement == 0 && intent.zmovement == 0 && intent.yaw == 0)
-  //  return;
+  if(intent.xmovement == 0 && intent.zmovement == 0 && intent.yaw == 0)
+    return;
   
   double speed = 2.0; // meters per second
   double distance = speed * dt;

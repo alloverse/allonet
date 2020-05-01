@@ -232,3 +232,12 @@ extern char *allo_m4x4_string(allo_m4x4 m)
     );
     return s;
 }
+
+extern char *allo_vec_string(allo_vector l)
+{
+    char *s = malloc(40);
+    snprintf(s, 40, "%.2f %.2f %.2f",
+        l.x, l.y, l.z
+    );
+    return s;
+}

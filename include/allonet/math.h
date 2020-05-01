@@ -13,6 +13,7 @@ extern allo_vector allo_vector_subtract(allo_vector l, allo_vector r);
 extern double allo_vector_dot(allo_vector l, allo_vector r);
 extern double allo_vector_length(allo_vector l);
 extern double allo_vector_angle(allo_vector l, allo_vector r);
+extern char *allo_vec_string(allo_vector l);
 
 
 

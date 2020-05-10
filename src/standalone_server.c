@@ -8,18 +8,9 @@
 
 static alloserver* serv;
 
-static void send_interaction_to_client(alloserver* serv, alloserver_client* client, const char* from_entity, const char* to_entity, const char* cmd)
+static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
-  cJSON* cmdrep = cjson_create_object(
-    "cmd", cJSON_CreateString("interact"),
-    "interact", cjson_create_object(
-      "from_entity", cJSON_CreateString(from_entity ? from_entity : ""),
-      "to_entity", cJSON_CreateString(to_entity ? to_entity : ""),
-      "cmd", cJSON_CreateString(cmd),
-      NULL
-    ),
-    NULL
-  );
+  cJSON* cmdrep = allo_interaction_to_cjson(interaction);
   const char* json = cJSON_Print(cmdrep);
   cJSON_Delete(cmdrep);
 
@@ -37,9 +28,36 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
   client->intent = intent;
 }
 
+static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
+{
+  cJSON* body = cJSON_Parse(interaction->body);
+  // TODO: Handle "announce", "change_components"
+  cJSON_Delete(body);
+}
+
 static void handle_interaction(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
-  
+  if (strcmp(interaction->receiver_entity_id, "place") == 0)
+  {
+    handle_place_interaction(serv, client, interaction);
+  }
+  else
+  {
+    allo_entity* entity = NULL;
+    LIST_FOREACH(entity, &serv->state.entities, pointers) {
+      if (strcmp(entity->id, interaction->receiver_entity_id) == 0) {
+        alloserver_client* client2;
+        LIST_FOREACH(client2, &serv->clients, pointers) {
+          if (strcmp(entity->owner_agent_id, client2->agent_id) == 0) {
+            send_interaction_to_client(serv, client2, interaction);
+            return;
+          }
+        }
+        break;
+      }
+    }
+    // TODO: send failure response, because recipient was not found.
+  }
 }
 
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)
@@ -57,6 +75,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
     handle_interaction(serv, client, interaction);
     allo_interaction_free(interaction);
   }
+  cJSON_Delete(cmd);
 }
 
 static void broadcast_server_state(alloserver* serv)
@@ -85,6 +104,7 @@ static void broadcast_server_state(alloserver* serv)
   LIST_FOREACH(client, &serv->clients, pointers) {
     serv->send(serv, client, CHANNEL_STATEDIFFS, json, jsonlength + 1);
   }
+  free(json);
 }
 
 static void step(double dt)
@@ -99,6 +119,7 @@ static void step(double dt)
     if (count == 32) break;
   }
   allo_simulate(&serv->state, dt, intents, count);
+  broadcast_server_state(serv);
 }
 
 

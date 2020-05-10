@@ -55,7 +55,8 @@ struct alloserver {
     void *_internal; // used within server.c to hide impl
 };
 
-alloserver *allo_listen(void);
+alloserver *allo_listen(int port);
+bool alloserv_run_standalone(int port);
 
 // internal
 int allo_socket_for_select(alloserver *server);

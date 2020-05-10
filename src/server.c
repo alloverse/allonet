@@ -125,10 +125,11 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
             0
     );
     memcpy(packet->data, buf, len);
+    packet->data[len-1] = '\n';
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
 }
 
-alloserver *allo_listen(void)
+alloserver *allo_listen(int port)
 {
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
@@ -136,7 +137,7 @@ alloserver *allo_listen(void)
 
     ENetAddress address;
     address.host = ENET_HOST_ANY;
-    address.port = allo_udp_port;
+    address.port = port;
 
     _servinternal(serv)->enet = enet_host_create(
         &address,

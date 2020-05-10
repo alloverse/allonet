@@ -290,28 +290,7 @@ static void send_latest_intent(alloclient *client)
 
     cJSON *cmdrep = cjson_create_object(
         "cmd", cJSON_CreateString("intent"),
-        "intent", cjson_create_object(
-            "zmovement", cJSON_CreateNumber(intent.zmovement),
-            "xmovement", cJSON_CreateNumber(intent.xmovement),
-            "yaw", cJSON_CreateNumber(intent.yaw),
-            "pitch", cJSON_CreateNumber(intent.pitch),
-            "poses", cjson_create_object(
-                "head", cjson_create_object(
-                    "matrix", m2cjson(intent.poses.head.matrix),
-                    NULL
-                ),
-                "hand/left", cjson_create_object(
-                    "matrix", m2cjson(intent.poses.left_hand.matrix),
-                    NULL
-                ),
-                "hand/right", cjson_create_object(
-                    "matrix", m2cjson(intent.poses.right_hand.matrix),
-                    NULL
-                ),
-                NULL
-            ),
-            NULL
-        ),
+        "intent", allo_client_intent_to_cjson(&intent),
         NULL
     );
     const char *json = cJSON_Print(cmdrep);

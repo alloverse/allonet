@@ -33,6 +33,8 @@ typedef struct allo_client_intent
 } allo_client_intent;
 
 extern void allo_client_intent_initialize(allo_client_intent *intent);
+extern cJSON* allo_client_intent_to_cjson(const allo_client_intent *intent);
+extern allo_client_intent allo_client_intent_parse_cjson(cJSON* from);
 
 typedef struct allo_entity
 {
@@ -82,6 +84,8 @@ typedef struct allo_interaction
 } allo_interaction;
 
 allo_interaction *allo_interaction_create(const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body);
+extern cJSON* allo_interaction_to_cjson(const allo_interaction* interaction);
+extern allo_interaction *allo_interaction_parse_cjson(cJSON* from);
 void allo_interaction_free(allo_interaction *interaction);
 
 /**

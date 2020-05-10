@@ -36,7 +36,7 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
   );
 }
 
-allo_client_intent allo_client_intent_parse_cjson(cJSON* from)
+allo_client_intent allo_client_intent_parse_cjson(const cJSON* from)
 {
   cJSON* poses = cJSON_GetObjectItem(from, "poses");
   return (allo_client_intent) {
@@ -159,7 +159,7 @@ cJSON* allo_interaction_to_cjson(const allo_interaction* interaction)
     NULL
   );
 }
-allo_interaction *allo_interaction_parse_cjson(cJSON* inter_json)
+allo_interaction *allo_interaction_parse_cjson(const cJSON* inter_json)
 {
   const char* type = cJSON_GetArrayItem(inter_json, 1)->valuestring;
   const char* from = cJSON_GetArrayItem(inter_json, 2)->valuestring;

@@ -87,7 +87,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   const cJSON* comps = cJSON_DetachItemFromArray(body, 3);
   const cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
 
-  allo_entity* entity = state_get_entity(&serv->state, entity_id);
+  allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
   cJSON* comp = NULL;
   for (cJSON* comp = comps->child; comp != NULL;)
   {

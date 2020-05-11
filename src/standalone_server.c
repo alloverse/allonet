@@ -41,10 +41,21 @@ static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* cli
   cJSON* children = cJSON_DetachItemFromObject(avatar, "children");
   e->components = avatar;
 
-  if (parent) {
-    cJSON* relationships = cjson_create_object("parent", parent, NULL);
+  if (parent)
+  {
+    cJSON* relationships = cjson_create_object("parent", cJSON_CreateString(parent), NULL);
     cJSON_AddItemToObject(avatar, "relationships", relationships);
   }
+
+  if (!cJSON_HasObjectItem(avatar, "transform"))
+  {
+    cJSON* transform = cjson_create_object("matrix", m2cjson(allo_m4x4_identity()), NULL);
+    cJSON_AddItemToObject(avatar, "transform", transform);
+  }
+
+  printf("Creating entity %s\n", e->id);
+  LIST_INSERT_HEAD(&serv->state.entities, e, pointers);
+
 
   cJSON* child = NULL;
   cJSON_ArrayForEach(child, children) {
@@ -62,17 +73,42 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   allo_entity *ava = add_entity_for_spec(serv, client, avatar, NULL);
   client->avatar_entity_id = strdup(ava->id);
 
-  cJSON* respbody = cjson_create_array(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
   const char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbody);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  free(respbodys);
   send_interaction_to_client(serv, client, response);
+  free(respbodys);
 }
 
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  // todo
+  const cJSON* entity_id = cJSON_GetArrayItem(body, 1);
+  const cJSON* comps = cJSON_DetachItemFromArray(body, 3);
+  const cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
+
+  allo_entity* entity = state_get_entity(&serv->state, entity_id);
+  cJSON* comp = NULL;
+  for (cJSON* comp = comps->child; comp != NULL;)
+  {
+    cJSON* next = comp->next;
+    cJSON_DeleteItemFromObject(entity->components, comp->string);
+    cJSON_DetachItemViaPointer(comps, comp);
+    cJSON_AddItemToObject(entity->components, comp->string, comp);
+    comp = next;
+  }
+
+  cJSON_ArrayForEach(comp, rmcomps)
+  {
+    cJSON_DeleteItemFromObject(entity->components, comp->valuestring);
+  }
+
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
+  const char* respbodys = cJSON_Print(respbody);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+  cJSON_Delete(respbody);
+  send_interaction_to_client(serv, client, response);
+  free(respbodys);
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
@@ -193,7 +229,7 @@ bool alloserv_run_standalone(int port)
       fprintf(stderr, "Unable to open listen socket, ");
       if (retries-- > 0) {
         fprintf(stderr, "retrying %d more times...\n", retries);
-        sleep(1);
+        // todo: sleep for 1s
       }
       else {
         fprintf(stderr, "giving up. Is another server running?\n");
@@ -210,7 +246,7 @@ bool alloserv_run_standalone(int port)
   serv->raw_indata_callback = received_from_client;
   LIST_INIT(&serv->state.entities);
 
-  fprintf(stderr, "alloserv_run_standalone open\n");
+  fprintf(stderr, "alloserv_run_standalone open on port %d\n", port);
   int allosocket = allo_socket_for_select(serv);
 
   while (1) {

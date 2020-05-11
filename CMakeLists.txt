@@ -100,4 +100,8 @@ target_link_libraries (allodummyclient allonet)
 add_executable (allocubeappliance examples/cubeappliance/cubeappliance.c)
 target_link_libraries (allocubeappliance allonet)
 
+# standalone_server
+add_executable (standalone_server examples/standalone_server/standalone.c)
+target_link_libraries (standalone_server allonet)
+
 install(TARGETS allonet LIBRARY)

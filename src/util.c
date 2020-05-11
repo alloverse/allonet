@@ -57,6 +57,8 @@ cJSON* m2cjson(allo_m4x4 mat)
 
 allo_m4x4 cjson2m(const cJSON* matlist)
 {
+  if (matlist == NULL)
+    return allo_m4x4_identity();
   allo_m4x4 m;
   for (int i = 0; i < 16; i++) {
     m.v[i] = cJSON_GetArrayItem(matlist, i)->valuedouble;

@@ -20,18 +20,72 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
 
 static void clients_changed(alloserver* serv, alloserver_client* added, alloserver_client* removed)
 {
-
+  // todo: delete entities for disconnected client
 }
 
 static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent intent)
 {
+  intent.entity_id = client->avatar_entity_id;
   client->intent = intent;
+}
+
+static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* client, cJSON* avatar, const char *parent)
+{
+  char eid[11] = { 0 };
+  for (int i = 0; i < 10; i++)
+  {
+    eid[i] = 'a' + rand() % 25;
+  }
+  allo_entity* e = entity_create(eid);
+  e->owner_agent_id = strdup(client->agent_id);
+  cJSON* children = cJSON_DetachItemFromObject(avatar, "children");
+  e->components = avatar;
+
+  if (parent) {
+    cJSON* relationships = cjson_create_object("parent", parent, NULL);
+    cJSON_AddItemToObject(avatar, "relationships", relationships);
+  }
+
+  cJSON* child = NULL;
+  cJSON_ArrayForEach(child, children) {
+    add_entity_for_spec(serv, client, child, eid);
+  }
+  return e;
+}
+
+static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+  const int version = cJSON_GetArrayItem(body, 2)->valueint;
+  const cJSON* identity = cJSON_GetArrayItem(body, 4);
+  const cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
+
+  allo_entity *ava = add_entity_for_spec(serv, client, avatar, NULL);
+  client->avatar_entity_id = strdup(ava->id);
+
+  cJSON* respbody = cjson_create_array(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
+  const char* respbodys = cJSON_Print(respbody);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbody);
+  cJSON_Delete(respbody);
+  free(respbodys);
+  send_interaction_to_client(serv, client, response);
+}
+
+static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+  // todo
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
 {
   cJSON* body = cJSON_Parse(interaction->body);
-  // TODO: Handle "announce", "change_components"
+  if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "announce") == 0)
+  {
+    handle_place_announce_interaction(serv, client, interaction, body);
+  }
+  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "change_components") == 0)
+  {
+    handle_place_change_components_interaction(serv, client, interaction, body);
+  }
   cJSON_Delete(body);
 }
 

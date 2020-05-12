@@ -79,6 +79,10 @@ static bool allo_poll(alloserver *serv, int timeout)
     
     case ENET_EVENT_TYPE_RECEIVE: {
         alloserver_client *client = (alloserver_client*)event.peer->data;
+        if (client == NULL) {
+          // old data from disconnected client?!
+          break;
+        }
         
         // todo: stop newline terminating in protocol...
         event.packet->data[event.packet->dataLength-1] = 0;

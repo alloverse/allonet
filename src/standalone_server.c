@@ -240,7 +240,7 @@ bool alloserv_run_standalone(int port)
 
   if (!serv) {
     perror("errno");
-    return -2;
+    return false;
   }
   serv->clients_callback = clients_changed;
   serv->raw_indata_callback = received_from_client;
@@ -257,7 +257,7 @@ bool alloserv_run_standalone(int port)
     int selectr = enet_socketset_select(allosocket, &set, NULL, 10);
     if (selectr < 0) {
       perror("select failed, terminating");
-      return -3;
+      return false;
     }
     else
     {
@@ -265,5 +265,5 @@ bool alloserv_run_standalone(int port)
     }
   }
 
-  return 0;
+  return true;
 }

@@ -115,8 +115,12 @@ allo_entity* state_get_entity(allo_state* state, const char* entity_id)
 
 // move to allonet.c
 #include <enet/enet.h>
+static bool _has_initialized = false;
 extern bool allo_initialize(bool redirect_stdout)
 {
+    if (_has_initialized) return true;
+    _has_initialized = true;
+
     setvbuf(stdout, NULL, _IONBF, 0);
     if(redirect_stdout) {
         printf("Moving stdout...\n");

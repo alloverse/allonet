@@ -83,6 +83,7 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
 {
   allo_client_intent* intent = allo_client_intent_create();
   cJSON* poses = cJSON_GetObjectItem(from, "poses");
+  intent->entity_id = strdup(cJSON_GetStringValue(cJSON_GetObjectItem(from, "entity_id")));
   intent->zmovement = cJSON_GetObjectItem(from, "zmovement")->valuedouble;
   intent->xmovement = cJSON_GetObjectItem(from, "xmovement")->valuedouble;
   intent->yaw = cJSON_GetObjectItem(from, "yaw")->valuedouble;

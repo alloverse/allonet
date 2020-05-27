@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "util.h"
+#include <allonet/arr.h>
 
 allo_client_intent* allo_client_intent_create()
 {
@@ -118,6 +119,14 @@ void entity_destroy(allo_entity *entity)
     free(entity);
 }
 
+extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity)
+{
+  cJSON* relationships = cJSON_GetObjectItem(entity->components, "relationships");
+  cJSON* parentIdJ = cJSON_GetObjectItem(relationships, "parent");
+  if (!parentIdJ) return NULL;
+  return state_get_entity(state, cJSON_GetStringValue(parentIdJ));
+}
+
 extern allo_m4x4 entity_get_transform(allo_entity* entity)
 {
   if(!entity)
@@ -128,6 +137,30 @@ extern allo_m4x4 entity_get_transform(allo_entity* entity)
     return allo_m4x4_identity();
 
   return cjson2m(matrix);
+}
+
+allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state, allo_entity* entity, allo_entity* space)
+{
+  allo_m4x4 m = entity_get_transform(entity);
+  // go up to root, multiplying with each parent until we reach world space coordinates
+  while (entity != space && entity) {
+    entity = entity_get_parent(state, entity);
+    m = allo_m4x4_concat(entity_get_transform(entity), m);
+  }
+
+  // go down to space until we reach the local coordinate space of `space`
+  // first, compile list of ancestors so we can traverse it in reverse
+  arr_t(allo_m4x4) spaces = { 0 };
+  while (space) {
+    arr_push(&spaces, entity_get_transform(space));
+    space = entity_get_parent(state, space);
+  }
+  // then concatenate down until we're in the local space of `space`.
+  for (int i = spaces.length; i-- > 0;)
+  {
+    m = allo_m4x4_concat(m, spaces.data[i]);
+  }
+  return m;
 }
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)

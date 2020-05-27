@@ -143,9 +143,10 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_int
     allo_entity* grabbed = state_get_entity(state, grab->entity);
     if (!grab || !grabber || !grabbed) { continue; }
     
-    allo_m4x4 grabber_pos = entity_get_transform(grabber);
-    allo_m4x4 new_pos = allo_m4x4_concat(grabber_pos, allo_m4x4_translate(grab->held_at));
-    entity_set_transform(grabbed, new_pos);
+    allo_m4x4 grabber_pos = entity_get_transform_in_coordinate_space(state, grabber, NULL);
+    // todo: apply held_at somehow??? apply math. or whatever.
+    
+    entity_set_transform(grabbed, grabber_pos);
   }
 
 }

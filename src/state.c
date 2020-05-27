@@ -15,6 +15,7 @@ void allo_client_intent_free(allo_client_intent* intent)
   free(intent->poses.head.grab.entity);
   free(intent->poses.left_hand.grab.entity);
   free(intent->poses.right_hand.grab.entity);
+  free(intent->entity_id);
   free(intent);
 }
 
@@ -23,10 +24,12 @@ void allo_client_intent_clone(const allo_client_intent* original, allo_client_in
   free(destination->poses.head.grab.entity);
   free(destination->poses.left_hand.grab.entity);
   free(destination->poses.right_hand.grab.entity);
+  free(destination->entity_id);
   memcpy(destination, original, sizeof(allo_client_intent));
   destination->poses.head.grab.entity = strdup(original->poses.head.grab.entity);
   destination->poses.left_hand.grab.entity = strdup(original->poses.left_hand.grab.entity);
   destination->poses.right_hand.grab.entity = strdup(original->poses.right_hand.grab.entity);
+  destination->entity_id = strdup(original->entity_id);
 }
 
 static cJSON* grab_to_cjson(allo_client_pose_grab grab)

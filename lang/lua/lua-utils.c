@@ -1,4 +1,5 @@
 #include "lua-utils.h"
+#include <string.h>
 
 ////// convenience functions
 /* assume that table is on the stack top */
@@ -11,7 +12,7 @@ const char *get_table_string(lua_State *L, const char *key)
         luaL_error(L, "Unexpected non-string value for key %s", key);
         return NULL;
     }
-    const char *result = luaL_checkstring(L, -1);
+    const char *result = strdup(luaL_checkstring(L, -1));
     lua_pop(L, 1);
     return result;
 }
@@ -66,17 +67,13 @@ allo_client_poses get_table_poses(lua_State *L, const char *key)
 }
 allo_client_pose get_table_pose(lua_State *L, const char *key)
 {
-    allo_client_pose result;
+  allo_client_pose result = { allo_m4x4_identity(), { NULL, {0,0,0} } };
     lua_pushstring(L, key);
     lua_gettable(L, -2);
     if (!lua_isnil(L, -1))
     {
       result.matrix = get_table_matrix(L, "matrix");
       result.grab = get_table_grab(L, "grab");
-    }
-    else
-    {
-      result.matrix = allo_m4x4_identity();
     }
     lua_pop(L, 1);
     return result;

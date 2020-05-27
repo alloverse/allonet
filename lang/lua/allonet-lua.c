@@ -98,13 +98,13 @@ static int l_alloclient_send_interaction (lua_State *L)
     {
         return luaL_error(L, "send_interaction: Expected table with keys type, sender_entity_id, receiver_entity_id, request_id and body");
     }
-    allo_interaction *inter = allo_interaction_create(
-        get_table_string(L, "type"),
-        get_table_string(L, "sender_entity_id"),
-        get_table_string(L, "receiver_entity_id"),
-        get_table_string(L, "request_id"),
-        get_table_string(L, "body")
-    );
+    char* type = get_table_string(L, "type");
+    char* sender = get_table_string(L, "sender_entity_id");
+    char* recv = get_table_string(L, "receiver_entity_id");
+    char* req = get_table_string(L, "request_id");
+    char* b = get_table_string(L, "body");
+    allo_interaction *inter = allo_interaction_create(type, sender, recv, req, b);
+    free(type); free(sender); free(recv); free(req); free(b);
     alloclient_send_interaction(lclient->client, inter);
     allo_interaction_free(inter);
     return 0;

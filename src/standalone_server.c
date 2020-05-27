@@ -26,8 +26,8 @@ static void clients_changed(alloserver* serv, alloserver_client* added, alloserv
 static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent *intent)
 {
   allo_client_intent_clone(intent, client->intent);
-  free(intent->entity_id);
-  intent->entity_id = strdup(client->avatar_entity_id);
+  free(client->intent->entity_id);
+  client->intent->entity_id = strdup(client->avatar_entity_id);
 }
 
 static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* client, cJSON* spec, const char *parent)

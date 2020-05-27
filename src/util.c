@@ -40,10 +40,10 @@ allo_vector cjson2vec(const cJSON *veclist)
 
 cJSON *vec2cjson(allo_vector vec)
 {
-    return cjson_create_object(
-        "x", cJSON_CreateNumber(vec.x),
-        "y", cJSON_CreateNumber(vec.y),
-        "z", cJSON_CreateNumber(vec.z),
+    return cjson_create_list(
+        cJSON_CreateNumber(vec.x),
+        cJSON_CreateNumber(vec.y),
+        cJSON_CreateNumber(vec.z),
         NULL
     );
 }

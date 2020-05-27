@@ -30,7 +30,7 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
   intent->entity_id = strdup(client->avatar_entity_id);
 }
 
-static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* client, cJSON* avatar, const char *parent)
+static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* client, cJSON* spec, const char *parent)
 {
   char eid[11] = { 0 };
   for (int i = 0; i < 10; i++)
@@ -38,20 +38,20 @@ static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* cli
     eid[i] = 'a' + rand() % 25;
   }
   allo_entity* e = entity_create(eid);
-  e->owner_agent_id = strdup(client->agent_id);
-  cJSON* children = cJSON_DetachItemFromObject(avatar, "children");
-  e->components = avatar;
+  e->owner_agent_id = strdup(client ? client->agent_id : "place");
+  cJSON* children = cJSON_DetachItemFromObject(spec, "children");
+  e->components = spec;
 
   if (parent)
   {
     cJSON* relationships = cjson_create_object("parent", cJSON_CreateString(parent), NULL);
-    cJSON_AddItemToObject(avatar, "relationships", relationships);
+    cJSON_AddItemToObject(spec, "relationships", relationships);
   }
 
-  if (!cJSON_HasObjectItem(avatar, "transform"))
+  if (!cJSON_HasObjectItem(spec, "transform"))
   {
     cJSON* transform = cjson_create_object("matrix", m2cjson(allo_m4x4_identity()), NULL);
-    cJSON_AddItemToObject(avatar, "transform", transform);
+    cJSON_AddItemToObject(spec, "transform", transform);
   }
 
   printf("Creating entity %s\n", e->id);
@@ -214,6 +214,42 @@ static void step(double dt)
   broadcast_server_state(serv);
 }
 
+cJSON* cjson3d(double a, double b, double c)
+{
+  return cjson_create_list( cJSON_CreateNumber(a), cJSON_CreateNumber(b), cJSON_CreateNumber(c), NULL);
+}
+
+cJSON* cjson2d(double a, double b)
+{
+  return cjson_create_list(cJSON_CreateNumber(a), cJSON_CreateNumber(b), NULL);
+}
+
+
+void add_dummy(alloserver *serv)
+{
+  add_entity_for_spec(serv, NULL, cjson_create_object(
+    "transform", cjson_create_object(
+      "matrix", m2cjson(allo_m4x4_translate((allo_vector) { 0, 0.9, 0 })),
+      NULL
+    ),
+    "geometry", cjson_create_object(
+      "type", cJSON_CreateString("inline"),
+      "vertices", cjson_create_list(cjson3d(0.1, 0.0, -0.1), cjson3d(0.1, 0.0, 0.1), cjson3d(-0.1, 0.1, -0.1), cjson3d(-0.1, 0.1, 0.1), NULL),
+      "uvs", cjson_create_list(cjson2d(0.0, 0.0), cjson2d(1.0, 0.0), cjson2d(0.0, 1.0), cjson2d(1.0, 1.0), NULL),
+      "triangles", cjson_create_list(cjson3d(0, 3, 1), cjson3d(0, 2, 3), NULL),
+      "texture", cJSON_CreateString("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAD8SURBVGhD7c/LCcJgFERhq7Qgy3CfRXoQXItNGYmEeMyQbEbuhYFv9T9gzun6fPR1HofGAdP6xgHz+q4By/qWAev1/QKwftIpANNnbQKwe9EjAKPXGgRgMVQPwNxfpQOwddPRgMv99mcYqiTABkOVBNhgqJIAGwxVEmCDoUoCbDBUSYANhioJsMFQJQE2GKokwAZDlQTYYKiSABsMVRJgg6FKAmwwVEmADYYqCbDBUCUBNhiqJMAGQ5UE2GCokgAbDFUSYIOhytEAfKvjUAD+lLIfgA/V7ATgdUEyAO/K2g7Ao8o2AvCiOAbgur6vANy18AnAaSPvABx1Mg4vbr0dVP2tGoQAAAAASUVORK5CYII="),
+      NULL
+    ),
+    "collider", cjson_create_object(
+      "type", cJSON_CreateString("box"),
+      "width", cJSON_CreateNumber(0.2),
+      "height", cJSON_CreateNumber(0.2),
+      "depth", cJSON_CreateNumber(0.2),
+      NULL
+    ),
+    NULL
+  ), NULL);
+}
 
 bool alloserv_run_standalone(int port)
 {
@@ -250,6 +286,8 @@ bool alloserv_run_standalone(int port)
 
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", port);
   int allosocket = allo_socket_for_select(serv);
+
+  add_dummy(serv);
 
   while (1) {
     ENetSocketSet set;

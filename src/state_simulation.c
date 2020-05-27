@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
-static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt);
-static void move_pose(allo_state* state, allo_entity* ent, allo_client_intent intent, double dt);
+static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
+static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, double dt);
 
 static allo_entity *get_child_with_pose(allo_state *state, allo_entity *avatar, const char *pose_name)
 {
@@ -26,13 +26,13 @@ static allo_entity *get_child_with_pose(allo_state *state, allo_entity *avatar, 
   return NULL;
 }
 
-extern void allo_simulate(allo_state* state, double dt, allo_client_intent* intents, int intent_count)
+extern void allo_simulate(allo_state* state, double dt, const allo_client_intent** intents, int intent_count)
 {
   for (int i = 0; i < intent_count; i++)
   {
-    allo_client_intent intent = intents[i];
-    allo_entity* avatar = state_get_entity(state, intent.entity_id);
-    if (intent.entity_id == NULL || avatar == NULL)
+    allo_client_intent *intent = intents[i];
+    allo_entity* avatar = state_get_entity(state, intent->entity_id);
+    if (intent->entity_id == NULL || avatar == NULL)
       return;
     allo_entity* head = get_child_with_pose(state, avatar, "head");
     move_avatar(avatar, head, intent, dt);
@@ -68,9 +68,9 @@ static allo_m4x4 create_movement(allo_m4x4 head_transform, double yaw, double xm
   return allo_m4x4_concat(inverse_head, allo_m4x4_concat(translation, allo_m4x4_concat(head_transform, rotation)));
 }
 
-static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_intent intent, double dt)
+static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt)
 {
-  if(intent.xmovement == 0 && intent.zmovement == 0 && intent.yaw == 0)
+  if(intent->xmovement == 0 && intent->zmovement == 0 && intent->yaw == 0)
     return;
   
   double speed = 2.0; // meters per second
@@ -79,7 +79,7 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_inte
   allo_m4x4 old_transform = entity_get_transform(avatar);
   allo_m4x4 raw_head_transform = entity_get_transform(head);
   allo_m4x4 head_transform = constrain_head_pitch(raw_head_transform);
-  allo_m4x4 movement = create_movement(head_transform, intent.yaw, intent.xmovement * distance, intent.zmovement * distance);
+  allo_m4x4 movement = create_movement(head_transform, intent->yaw, intent->xmovement * distance, intent->zmovement * distance);
 
   // which can then be concat'd into the old transform.
   allo_vector old_position = allo_m4x4_transform(old_transform, (allo_vector){ 0, 0, 0 }, true);
@@ -89,7 +89,7 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_inte
   // the avatar so the head stays in place.
   allo_m4x4 head_worldcoords = allo_m4x4_concat(raw_head_transform, old_transform);
 
-  allo_m4x4 just_rotation = create_movement(head_transform, intent.yaw, 0, 0);
+  allo_m4x4 just_rotation = create_movement(head_transform, intent->yaw, 0, 0);
   allo_m4x4 new_transform_r = allo_m4x4_concat(just_rotation, old_positional_transform);
   allo_m4x4 new_head_worldcoords = allo_m4x4_concat(raw_head_transform, new_transform_r);
   allo_vector a = allo_m4x4_transform(head_worldcoords, (allo_vector){ 0, 0, 0 }, true);
@@ -104,7 +104,7 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, allo_client_inte
   entity_set_transform(avatar, new_transform2);
 }
 
-static void move_pose(allo_state* state, allo_entity* avatar, allo_client_intent intent, double dt)
+static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, double dt)
 {
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
@@ -118,9 +118,9 @@ static void move_pose(allo_state* state, allo_entity* avatar, allo_client_intent
     const char* posename = actuate_pose->valuestring;
 
     allo_m4x4 new_transform;
-    if (strcmp(posename, "hand/left") == 0) new_transform = intent.poses.left_hand.matrix;
-    else if (strcmp(posename, "hand/right") == 0) new_transform = intent.poses.right_hand.matrix;
-    else if (strcmp(posename, "head") == 0) new_transform = intent.poses.head.matrix;
+    if (strcmp(posename, "hand/left") == 0) new_transform = intent->poses.left_hand.matrix;
+    else if (strcmp(posename, "hand/right") == 0) new_transform = intent->poses.right_hand.matrix;
+    else if (strcmp(posename, "head") == 0) new_transform = intent->poses.head.matrix;
     else continue;
 
     entity_set_transform(entity, new_transform);

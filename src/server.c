@@ -33,13 +33,14 @@ static alloserver_client *_client_create()
         client->agent_id[i] = 'a' + rand() % 25;
     }
     client->agent_id[AGENT_ID_LENGTH] = '\0';
-    allo_client_intent_initialize(&client->intent);
+    client->intent = allo_client_intent_create();
 
     return client;
 }
 
 static void alloserv_client_free(alloserver_client *client)
 {
+    allo_client_intent_free(client->intent);
     free(_clientinternal(client));
     free(client);
 }

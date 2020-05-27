@@ -69,9 +69,30 @@ allo_client_pose get_table_pose(lua_State *L, const char *key)
     allo_client_pose result;
     lua_pushstring(L, key);
     lua_gettable(L, -2);
-    result.matrix = get_table_matrix(L, "matrix");
+    if (!lua_isnil(L, -1))
+    {
+      result.matrix = get_table_matrix(L, "matrix");
+      result.grab = get_table_grab(L, "grab");
+    }
+    else
+    {
+      result.matrix = allo_m4x4_identity();
+    }
     lua_pop(L, 1);
     return result;
+}
+allo_client_pose_grab get_table_grab(lua_State* L, const char* key)
+{
+  allo_client_pose_grab result = { NULL, {0,0,0} };
+  lua_pushstring(L, key);
+  lua_gettable(L, -2);
+  if (!lua_isnil(L, -1))
+  {
+    result.entity = get_table_string(L, "entity");
+    result.held_at = get_table_vector(L, "held_at");
+  }
+  lua_pop(L, 1);
+  return result;
 }
 allo_vector get_table_vector(lua_State *L, const char *key)
 {

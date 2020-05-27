@@ -15,5 +15,6 @@ void push_interaction_table(lua_State *L, allo_interaction *inter);
 void push_state_table(lua_State *L, allo_state *state);
 allo_client_poses get_table_poses(lua_State *L, const char *key);
 allo_client_pose get_table_pose(lua_State *L, const char *key);
+allo_client_pose_grab get_table_grab(lua_State* L, const char* key);
 allo_vector get_table_vector(lua_State *L, const char *key);
 allo_m4x4 get_table_matrix(lua_State* L, const char* key);

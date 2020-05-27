@@ -11,7 +11,7 @@ static const int allo_client_count_max = 128;
 #define AGENT_ID_LENGTH 16
 
 typedef struct alloserver_client {
-    allo_client_intent intent;
+    allo_client_intent *intent;
     char *avatar_entity_id;
     char agent_id[AGENT_ID_LENGTH+1];
 

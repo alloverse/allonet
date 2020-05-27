@@ -13,7 +13,7 @@
 #define sleep(x) Sleep(1000 * (x))
 #endif
 
-allo_client_intent intent;
+allo_client_intent *intent;
 char *me;
 
 static void interaction(alloclient *client, allo_interaction *inter)
@@ -30,12 +30,12 @@ static void interaction(alloclient *client, allo_interaction *inter)
         bool down = cJSON_IsTrue(cJSON_GetArrayItem(cmd, 1));
         if (down)
         {
-            intent.xmovement = 1;
+            intent->xmovement = 1;
             printf("Poked! Moving out of the way...\n");
         }
         else
         {
-            intent.xmovement = 0;
+            intent->xmovement = 0;
             printf("Phew! They stopped poking me, stopping.\n");
         }
         
@@ -57,6 +57,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "Usage: allodummyclient alloplace://hostname:port\n");
         return -2;
     }
+
+    intent = allo_client_intent_create();
 
     printf("hello microverse\n");
 
@@ -90,11 +92,11 @@ int main(int argc, char **argv)
     client->interaction_callback = interaction;
 
     // step out of the way
-    intent.zmovement = 1;
+    intent->zmovement = 1;
     alloclient_set_intent(client, intent);
     alloclient_poll(client);
     sleep(1);
-    intent.zmovement = 0;
+    intent->zmovement = 0;
     alloclient_set_intent(client, intent);
     
     for(;;)

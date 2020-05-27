@@ -4,10 +4,46 @@
 #include <stdio.h>
 #include "util.h"
 
-void allo_client_intent_initialize(allo_client_intent *intent)
+allo_client_intent* allo_client_intent_create()
 {
-    memset(intent, 0, sizeof(*intent));
-    intent->poses.head.matrix = intent->poses.left_hand.matrix = intent->poses.right_hand.matrix = allo_m4x4_identity();
+  allo_client_intent* intent = calloc(1, sizeof(allo_client_intent));
+  intent->poses.head.matrix = intent->poses.left_hand.matrix = intent->poses.right_hand.matrix = allo_m4x4_identity();
+  return intent;
+}
+void allo_client_intent_free(allo_client_intent* intent)
+{
+  free(intent->poses.head.grab.entity);
+  free(intent->poses.left_hand.grab.entity);
+  free(intent->poses.right_hand.grab.entity);
+  free(intent);
+}
+
+void allo_client_intent_clone(const allo_client_intent* original, allo_client_intent* destination)
+{
+  free(destination->poses.head.grab.entity);
+  free(destination->poses.left_hand.grab.entity);
+  free(destination->poses.right_hand.grab.entity);
+  memcpy(destination, original, sizeof(allo_client_intent));
+  destination->poses.head.grab.entity = strdup(original->poses.head.grab.entity);
+  destination->poses.left_hand.grab.entity = strdup(original->poses.left_hand.grab.entity);
+  destination->poses.right_hand.grab.entity = strdup(original->poses.right_hand.grab.entity);
+}
+
+static cJSON* grab_to_cjson(allo_client_pose_grab grab)
+{
+  return cjson_create_object(
+    "entity", cJSON_CreateString(grab.entity ? grab.entity : ""),
+    "held_at", vec2cjson(grab.held_at),
+    NULL
+  );
+}
+
+static allo_client_pose_grab grab_parse_cjson(cJSON* cjson)
+{
+  return (allo_client_pose_grab) {
+    .entity = strdup(cJSON_GetStringValue(cJSON_GetObjectItem(cjson, "entity"))),
+    .held_at = cjson2vec(cJSON_GetObjectItem(cjson, "held_at"))
+  };
 }
 
 cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
@@ -20,14 +56,17 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
     "poses", cjson_create_object(
       "head", cjson_create_object(
         "matrix", m2cjson(intent->poses.head.matrix),
+        "grab", grab_to_cjson(intent->poses.head.grab),
         NULL
       ),
       "hand/left", cjson_create_object(
         "matrix", m2cjson(intent->poses.left_hand.matrix),
+        "grab", grab_to_cjson(intent->poses.left_hand.grab),
         NULL
       ),
       "hand/right", cjson_create_object(
         "matrix", m2cjson(intent->poses.right_hand.matrix),
+        "grab", grab_to_cjson(intent->poses.right_hand.grab),
         NULL
       ),
       NULL
@@ -36,20 +75,29 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
   );
 }
 
-allo_client_intent allo_client_intent_parse_cjson(const cJSON* from)
+allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
 {
+  allo_client_intent* intent = allo_client_intent_create();
   cJSON* poses = cJSON_GetObjectItem(from, "poses");
-  return (allo_client_intent) {
-    .zmovement = cJSON_GetObjectItem(from, "zmovement")->valuedouble,
-      .xmovement = cJSON_GetObjectItem(from, "xmovement")->valuedouble,
-      .yaw = cJSON_GetObjectItem(from, "yaw")->valuedouble,
-      .pitch = cJSON_GetObjectItem(from, "pitch")->valuedouble,
-      .poses = (allo_client_poses){
-        .head = (allo_client_pose){.matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "head"), "matrix"))},
-        .left_hand = (allo_client_pose){.matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "left_hand"), "matrix"))},
-        .right_hand = (allo_client_pose){.matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "right_hand"), "matrix"))},
-      }
+  intent->zmovement = cJSON_GetObjectItem(from, "zmovement")->valuedouble;
+  intent->xmovement = cJSON_GetObjectItem(from, "xmovement")->valuedouble;
+  intent->yaw = cJSON_GetObjectItem(from, "yaw")->valuedouble;
+  intent->pitch = cJSON_GetObjectItem(from, "pitch")->valuedouble;
+  intent->poses = (allo_client_poses){
+    .head = (allo_client_pose){
+      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "head"), "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "head"), "grab"))
+    },
+    .left_hand = (allo_client_pose){
+      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "left_hand"), "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "left_hand"), "grab"))
+    },
+    .right_hand = (allo_client_pose){
+      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "right_hand"), "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(from, "left_hand"), "grab"))
+    },
   };
+  return intent;
 }
 
 

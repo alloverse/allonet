@@ -101,7 +101,7 @@ void alloclient_send_interaction(
 /** Change this client's movement/action intent.
  *  @see https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
  */
-void alloclient_set_intent(alloclient *client, allo_client_intent intent);
+void alloclient_set_intent(alloclient *client, allo_client_intent *intent);
 
 
 /** You can also poll for interactions instead of setting a callback.

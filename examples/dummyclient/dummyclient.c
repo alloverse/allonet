@@ -61,11 +61,7 @@ int getch()
 static const char *me;
 static int32_t track_id = 0;
 
-allo_client_intent intent = {
-    .zmovement = 1,
-    .xmovement = 0,
-    .yaw = 0,
-};
+allo_client_intent* intent;
 
 static void interaction(
     alloclient *client, 
@@ -97,7 +93,7 @@ static void interaction(
     if(strcmp(interaction_name, "poke") == 0 ) {
         bool mousedown = cJSON_IsTrue(cJSON_GetArrayItem(body, 1));
         if(mousedown) {
-            intent.zmovement = !intent.zmovement;
+            intent->zmovement = !intent->zmovement;
             alloclient_set_intent(client, intent);
             allo_interaction *response = allo_interaction_create("response", me, inter->sender_entity_id, inter->request_id, "[\"poke\", \"ok\"]");
             alloclient_send_interaction(client, response);
@@ -209,6 +205,8 @@ int main(int argc, char **argv)
         return -2;
     }
 
+    intent = allo_client_intent_create();
+
     printf("hello microverse\n");
 
     cJSON *avatardesco = cjson_create_object(
@@ -312,9 +310,9 @@ int main(int argc, char **argv)
 
         if( i++ % 100)
         {
-            if(intent.zmovement)
+            if(intent->zmovement)
             {
-                intent.yaw += 0.01;
+                intent->yaw += 0.01;
             }
             allo_client_poses poses = {
                 .left_hand = {
@@ -327,7 +325,7 @@ int main(int argc, char **argv)
                     .matrix = allo_m4x4_translate((allo_vector) { 0, 0, 2 })
                 }
             };
-            memcpy(&intent.poses, &poses, sizeof(poses));
+            memcpy(&intent->poses, &poses, sizeof(poses));
             alloclient_set_intent(client, intent);
         }
         

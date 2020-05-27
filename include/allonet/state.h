@@ -9,10 +9,16 @@
 #pragma pack(push)
 #pragma pack(1)
 
+typedef struct allo_client_pose_grab
+{
+    const char* entity; // which entity is being grabbed. null = none
+    allo_vector held_at; // where in the grabbed entity's coordinate space is it held
+} allo_client_pose_grab;
 
 typedef struct allo_client_pose
 {
-	allo_m4x4 matrix;
+    allo_m4x4 matrix;
+    allo_client_pose_grab grab;
 } allo_client_pose;
 
 typedef struct allo_client_poses
@@ -24,7 +30,7 @@ typedef struct allo_client_poses
 
 typedef struct allo_client_intent
 {
-  const char* entity_id; // which entity is this intent for
+    const char* entity_id; // which entity is this intent for
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
     double yaw;       // rotation around x in radians
@@ -32,9 +38,11 @@ typedef struct allo_client_intent
     allo_client_poses poses;
 } allo_client_intent;
 
-extern void allo_client_intent_initialize(allo_client_intent *intent);
+extern allo_client_intent *allo_client_intent_create();
+extern void allo_client_intent_free(allo_client_intent* intent);
+extern void allo_client_intent_clone(const allo_client_intent* original, allo_client_intent* destination);
 extern cJSON* allo_client_intent_to_cjson(const allo_client_intent *intent);
-extern allo_client_intent allo_client_intent_parse_cjson(const cJSON* from);
+extern allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from);
 
 typedef struct allo_entity
 {
@@ -96,7 +104,7 @@ extern bool allo_initialize(bool redirect_stdout);
 /**
  * Run world simulation for a given state and known intents. Modifies state inline.
  */
-extern void allo_simulate(allo_state* state, double dt, allo_client_intent* intents, int intent_count);
+extern void allo_simulate(allo_state* state, double dt, const allo_client_intent** intents, int intent_count);
 
 #pragma pack(pop)
 #endif

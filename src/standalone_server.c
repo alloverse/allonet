@@ -23,10 +23,10 @@ static void clients_changed(alloserver* serv, alloserver_client* added, alloserv
   // todo: delete entities for disconnected client
 }
 
-static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent intent)
+static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent *intent)
 {
-  intent.entity_id = client->avatar_entity_id;
-  client->intent = intent;
+  allo_client_intent_clone(intent, client->intent);
+  intent->entity_id = client->avatar_entity_id;
 }
 
 static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* client, cJSON* avatar, const char *parent)
@@ -67,14 +67,14 @@ static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* cli
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   const int version = cJSON_GetArrayItem(body, 2)->valueint;
-  const cJSON* identity = cJSON_GetArrayItem(body, 4);
-  const cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
+  cJSON* identity = cJSON_GetArrayItem(body, 4);
+  cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
 
   allo_entity *ava = add_entity_for_spec(serv, client, avatar, NULL);
   client->avatar_entity_id = strdup(ava->id);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
-  const char* respbodys = cJSON_Print(respbody);
+  char* respbodys = cJSON_Print(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
   send_interaction_to_client(serv, client, response);
@@ -83,9 +83,9 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
 
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  const cJSON* entity_id = cJSON_GetArrayItem(body, 1);
-  const cJSON* comps = cJSON_DetachItemFromArray(body, 3);
-  const cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
+  cJSON* entity_id = cJSON_GetArrayItem(body, 1);
+  cJSON* comps = cJSON_DetachItemFromArray(body, 3);
+  cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
 
   allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
   cJSON* comp = NULL;
@@ -104,7 +104,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   }
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
-  const char* respbodys = cJSON_Print(respbody);
+  char* respbodys = cJSON_Print(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
   send_interaction_to_client(serv, client, response);
@@ -156,8 +156,9 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
   if (channel == CHANNEL_STATEDIFFS)
   {
     const cJSON* ntvintent = cJSON_GetObjectItem(cmd, "intent");
-    allo_client_intent intent = allo_client_intent_parse_cjson(ntvintent);
+    allo_client_intent *intent = allo_client_intent_parse_cjson(ntvintent);
     handle_intent(serv, client, intent);
+    allo_client_intent_free(intent);
   }
   else if (channel == CHANNEL_COMMANDS)
   {
@@ -185,7 +186,7 @@ static void broadcast_server_state(alloserver* serv)
     "revision", cJSON_CreateNumber(serv->state.revision++),
     NULL
   );
-  const char* json = cJSON_Print(map);
+  char* json = cJSON_Print(map);
   cJSON_Delete(map);
 
   int jsonlength = strlen(json);
@@ -201,7 +202,7 @@ static void step(double dt)
 {
   while (serv->interbeat(serv, 1)) {}
 
-  allo_client_intent intents[32];
+  allo_client_intent *intents[32];
   int count = 0;
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {

@@ -129,16 +129,15 @@ static int l_alloclient_set_intent (lua_State *L)
     {
         return luaL_error(L, "set_intent: Expected table with keys zmovement, xmovement, yaw, pitch, poses");
     }
-    allo_client_intent intent = {
-        get_table_string(L, "entity_id"),
-        get_table_number(L, "zmovement"),
-        get_table_number(L, "xmovement"),
-        get_table_number(L, "yaw"),
-        get_table_number(L, "pitch"),
-        get_table_poses(L, "poses"),
-
-    };
+    allo_client_intent* intent = allo_client_intent_create();
+    intent->entity_id = get_table_string(L, "entity_id"),
+    intent->zmovement = get_table_number(L, "zmovement"),
+    intent->xmovement = get_table_number(L, "xmovement"),
+    intent->yaw = get_table_number(L, "yaw"),
+    intent->pitch = get_table_number(L, "pitch"),
+    intent->poses = get_table_poses(L, "poses"),
     alloclient_set_intent(lclient->client, intent);
+    allo_client_intent_free(intent);
     return 0;
 }
 

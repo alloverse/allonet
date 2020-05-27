@@ -31,7 +31,7 @@ typedef struct {
     ENetHost *host;
     ENetPeer *peer;
     OpusEncoder *opus_encoder;
-    allo_client_intent latest_intent;
+    allo_client_intent *latest_intent;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
 } alloclient_internal;
@@ -279,18 +279,18 @@ void alloclient_poll(alloclient *client)
     }
 }
 
-void alloclient_set_intent(alloclient* client, allo_client_intent intent)
+void alloclient_set_intent(alloclient* client, allo_client_intent *intent)
 {
-    _internal(client)->latest_intent = intent;
+    allo_client_intent_clone(intent, _internal(client)->latest_intent);
 }
 
 static void send_latest_intent(alloclient *client)
 {
-    allo_client_intent intent = _internal(client)->latest_intent;
+    allo_client_intent *intent = _internal(client)->latest_intent;
 
     cJSON *cmdrep = cjson_create_object(
         "cmd", cJSON_CreateString("intent"),
-        "intent", allo_client_intent_to_cjson(&intent),
+        "intent", allo_client_intent_to_cjson(intent),
         NULL
     );
     const char *json = cJSON_Print(cmdrep);
@@ -356,6 +356,7 @@ void alloclient_disconnect(alloclient *client, int reason)
         }
         enet_host_destroy(_internal(client)->host);
         opus_encoder_destroy(_internal(client)->opus_encoder);
+        allo_client_intent_free(_internal(client)->latest_intent);
         free(_internal(client));
     }
     
@@ -398,7 +399,7 @@ alloclient *alloclient_create(void)
 {
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
-    allo_client_intent_initialize(&_internal(client)->latest_intent);
+    _internal(client)->latest_intent = allo_client_intent_create();
     
     LIST_INIT(&client->state.entities);
     

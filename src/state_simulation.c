@@ -5,26 +5,9 @@
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
 static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, double dt);
+static void handle_grabs(allo_state *state, allo_entity *avatar, allo_client_intent *intent);
 
-static allo_entity *get_child_with_pose(allo_state *state, allo_entity *avatar, const char *pose_name)
-{
-  if (!state || !avatar || !pose_name || strlen(pose_name) == 0)
-    return NULL;
-  allo_entity* entity = NULL;
-  LIST_FOREACH(entity, &state->entities, pointers)
-  {
-    cJSON *relationships = cJSON_GetObjectItem(entity->components, "relationships");
-    cJSON *parent = cJSON_GetObjectItem(relationships, "parent");
-    cJSON *intent = cJSON_GetObjectItem(entity->components, "intent");
-    cJSON *actuate_pose = cJSON_GetObjectItem(intent, "actuate_pose");
-    
-    if (parent && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
-    {
-      return entity;
-    }
-  }
-  return NULL;
-}
+static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name);
 
 extern void allo_simulate(allo_state* state, double dt, const allo_client_intent** intents, int intent_count)
 {
@@ -37,7 +20,29 @@ extern void allo_simulate(allo_state* state, double dt, const allo_client_intent
     allo_entity* head = get_child_with_pose(state, avatar, "head");
     move_avatar(avatar, head, intent, dt);
     move_pose(state, avatar, intent, dt);
+    handle_grabs(state, avatar, intent);
   }
+}
+
+
+static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name)
+{
+  if (!state || !avatar || !pose_name || strlen(pose_name) == 0)
+    return NULL;
+  allo_entity* entity = NULL;
+  LIST_FOREACH(entity, &state->entities, pointers)
+  {
+    cJSON* relationships = cJSON_GetObjectItem(entity->components, "relationships");
+    cJSON* parent = cJSON_GetObjectItem(relationships, "parent");
+    cJSON* intent = cJSON_GetObjectItem(entity->components, "intent");
+    cJSON* actuate_pose = cJSON_GetObjectItem(intent, "actuate_pose");
+
+    if (parent && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
+    {
+      return entity;
+    }
+  }
+  return NULL;
 }
 
 // removes pitch from transform so it becomes a suitable walking direction
@@ -125,6 +130,22 @@ static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_
 
     entity_set_transform(entity, new_transform);
   }
-
 }
 
+static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_intent* intent)
+{
+  allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
+  allo_entity* grabbers[] = { get_child_with_pose(state, avatar, "hand/left"), get_child_with_pose(state, avatar, "hand/right") };
+  for (int i = 0; i < 2; i++)
+  {
+    allo_client_pose_grab* grab = grabs[i];
+    allo_entity* grabber = grabbers[i];
+    allo_entity* grabbed = state_get_entity(state, grab->entity);
+    if (!grab || !grabber || !grabbed) { continue; }
+    
+    allo_m4x4 grabber_pos = entity_get_transform(grabber);
+    allo_m4x4 new_pos = allo_m4x4_concat(grabber_pos, allo_m4x4_translate(grab->held_at));
+    entity_set_transform(grabbed, new_pos);
+  }
+
+}

@@ -234,18 +234,39 @@ void add_dummy(alloserver *serv)
     ),
     "geometry", cjson_create_object(
       "type", cJSON_CreateString("inline"),
-      "vertices", cjson_create_list(cjson3d(0.1, 0.0, -0.1), cjson3d(0.1, 0.0, 0.1), cjson3d(-0.1, 0.1, -0.1), cjson3d(-0.1, 0.1, 0.1), NULL),
+      "vertices", cjson_create_list(cjson3d(0.2, 0.0, -0.2), cjson3d(0.2, 0.0, 0.2), cjson3d(-0.2, 0.2, -0.2), cjson3d(-0.2, 0.2, 0.2), NULL),
       "uvs", cjson_create_list(cjson2d(0.0, 0.0), cjson2d(1.0, 0.0), cjson2d(0.0, 1.0), cjson2d(1.0, 1.0), NULL),
-      "triangles", cjson_create_list(cjson3d(0, 3, 1), cjson3d(0, 2, 3), NULL),
+      "triangles", cjson_create_list(cjson3d(0, 3, 1), cjson3d(0, 2, 3), cjson3d(1, 3, 0), cjson3d(3, 2, 0), NULL),
       "texture", cJSON_CreateString("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAD8SURBVGhD7c/LCcJgFERhq7Qgy3CfRXoQXItNGYmEeMyQbEbuhYFv9T9gzun6fPR1HofGAdP6xgHz+q4By/qWAev1/QKwftIpANNnbQKwe9EjAKPXGgRgMVQPwNxfpQOwddPRgMv99mcYqiTABkOVBNhgqJIAGwxVEmCDoUoCbDBUSYANhioJsMFQJQE2GKokwAZDlQTYYKiSABsMVRJgg6FKAmwwVEmADYYqCbDBUCUBNhiqJMAGQ5UE2GCokgAbDFUSYIOhytEAfKvjUAD+lLIfgA/V7ATgdUEyAO/K2g7Ao8o2AvCiOAbgur6vANy18AnAaSPvABx1Mg4vbr0dVP2tGoQAAAAASUVORK5CYII="),
       NULL
     ),
-    "collider", cjson_create_object(
-      "type", cJSON_CreateString("box"),
-      "width", cJSON_CreateNumber(0.2),
-      "height", cJSON_CreateNumber(0.2),
-      "depth", cJSON_CreateNumber(0.2),
-      NULL
+    "children", cjson_create_list(
+      cjson_create_object(
+        "transform", cjson_create_object(
+          "matrix", m2cjson(allo_m4x4_translate((allo_vector) { 0, 0.1, 0 })),
+          NULL
+        ),
+        "geometry", cjson_create_object(
+          "type", cJSON_CreateString("inline"),
+          "vertices", cjson_create_list(cjson3d(0.1, 0.0, -0.1), cjson3d(0.1, 0.0, 0.1), cjson3d(-0.1, 0.1, -0.1), cjson3d(-0.1, 0.1, 0.1), NULL),
+          "uvs", cjson_create_list(cjson2d(0.0, 0.0), cjson2d(1.0, 0.0), cjson2d(0.0, 1.0), cjson2d(1.0, 1.0), NULL),
+          "triangles", cjson_create_list(cjson3d(0, 3, 1), cjson3d(0, 2, 3), cjson3d(1, 3, 0), cjson3d(3, 2, 0), NULL),
+          "texture", cJSON_CreateString("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAD8SURBVGhD7c/LCcJgFERhq7Qgy3CfRXoQXItNGYmEeMyQbEbuhYFv9T9gzun6fPR1HofGAdP6xgHz+q4By/qWAev1/QKwftIpANNnbQKwe9EjAKPXGgRgMVQPwNxfpQOwddPRgMv99mcYqiTABkOVBNhgqJIAGwxVEmCDoUoCbDBUSYANhioJsMFQJQE2GKokwAZDlQTYYKiSABsMVRJgg6FKAmwwVEmADYYqCbDBUCUBNhiqJMAGQ5UE2GCokgAbDFUSYIOhytEAfKvjUAD+lLIfgA/V7ATgdUEyAO/K2g7Ao8o2AvCiOAbgur6vANy18AnAaSPvABx1Mg4vbr0dVP2tGoQAAAAASUVORK5CYII="),
+          NULL
+        ),
+        "collider", cjson_create_object(
+          "type", cJSON_CreateString("box"),
+          "width", cJSON_CreateNumber(0.2),
+          "height", cJSON_CreateNumber(0.2),
+          "depth", cJSON_CreateNumber(0.2),
+          NULL
+        ),
+        "grabbable", cjson_create_object(
+            "actuate_on", cJSON_CreateString("$parent"),
+            NULL
+          ),
+          NULL
+        ), NULL
     ),
     NULL
   ), NULL);

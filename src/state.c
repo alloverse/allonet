@@ -159,7 +159,7 @@ allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state, allo_entit
   // then concatenate down until we're in the local space of `space`.
   for (int i = spaces.length; i-- > 0;)
   {
-    m = allo_m4x4_concat(m, spaces.data[i]);
+    m = allo_m4x4_concat(m, allo_m4x4_inverse(spaces.data[i]));
   }
   return m;
 }

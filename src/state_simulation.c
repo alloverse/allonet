@@ -141,18 +141,30 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_int
     allo_client_pose_grab* grab = grabs[i];
     allo_entity* grabber = grabbers[i];
     allo_entity* grabbed = state_get_entity(state, grab->entity);
+    allo_entity* actuated = grabbed;
     cJSON* grabbable = cJSON_GetObjectItem(grabbed ? grabbed->components : NULL, "grabbable");
     const char* actuate_on = cJSON_GetStringValue(cJSON_GetObjectItem(grabbable, "actuate_on"));
     if (actuate_on && strlen(actuate_on) > 0)
       if (strcmp(actuate_on, "$parent") == 0)
-        grabbed = entity_get_parent(state, grabbed);
+        actuated = entity_get_parent(state, grabbed);
       else
-        grabbed = state_get_entity(state, actuate_on);
-    if (!grab || !grabber || !grabbed || !grabbable) { continue; }
+        actuated = state_get_entity(state, actuate_on);
+    if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
     
-    allo_m4x4 grabber_pos = entity_get_transform_in_coordinate_space(state, grabber, entity_get_parent(state, grabbed));
-    // todo: apply held_at somehow??? apply math. or whatever.
+    // where is the hand in worldcoord?
+    allo_m4x4 grabber_pos_world = entity_get_transform_in_coordinate_space(state, grabber, NULL);
     
-    entity_set_transform(grabbed, grabber_pos);
+    // subtract the difference in position between grabbed and actuated
+    allo_vector grabbed_pos_world = allo_m4x4_get_position(entity_get_transform_in_coordinate_space(state, grabbed, NULL));
+    allo_vector actuated_pos_world = allo_m4x4_get_position(entity_get_transform_in_coordinate_space(state, actuated, NULL));
+    allo_vector actuated_diff = allo_vector_subtract(actuated_pos_world, grabbed_pos_world);
+    allo_m4x4 actuated_diff_m = allo_m4x4_translate(actuated_diff);
+
+    allo_m4x4 grabber_minus_diff_world = allo_m4x4_concat(actuated_diff_m, grabber_pos_world);
+
+    // convert into position in the grabbed thing's parent's coordinate space (i e what its transform is relative to)
+    allo_m4x4 new_transform = state_convert_coordinate_space(state, grabber_minus_diff_world, NULL, entity_get_parent(state, actuated));
+    
+    entity_set_transform(actuated, new_transform);
   }
 }

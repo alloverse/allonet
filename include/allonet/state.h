@@ -74,7 +74,7 @@ typedef struct allo_state
 extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
 extern allo_m4x4 entity_get_transform_in_coordinate_space(allo_state* state, allo_entity* entity, allo_entity* space);
-
+extern allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space);
 
 /**
  * Describes an interaction to be sent or as received.

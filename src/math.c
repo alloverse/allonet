@@ -221,6 +221,11 @@ allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional)
 	};
 }
 
+extern allo_vector allo_m4x4_get_position(allo_m4x4 l)
+{
+  return allo_m4x4_transform(l, (allo_vector) { 0, 0, 0 }, true);
+}
+
 extern char *allo_m4x4_string(allo_m4x4 m)
 {
     char *s = malloc(255);

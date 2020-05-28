@@ -143,18 +143,23 @@ extern allo_m4x4 entity_get_transform(allo_entity* entity)
 allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state, allo_entity* entity, allo_entity* space)
 {
   allo_m4x4 m = entity_get_transform(entity);
+  return state_convert_coordinate_space(state, m, entity_get_parent(state, entity), space);
+}
+
+allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space)
+{
   // go up to root, multiplying with each parent until we reach world space coordinates
-  while (entity != space && entity) {
-    entity = entity_get_parent(state, entity);
-    m = allo_m4x4_concat(entity_get_transform(entity), m);
+  while (from_space) {
+    m = allo_m4x4_concat(entity_get_transform(from_space), m);
+    from_space = entity_get_parent(state, from_space);
   }
 
   // go down to space until we reach the local coordinate space of `space`
   // first, compile list of ancestors so we can traverse it in reverse
   arr_t(allo_m4x4) spaces = { 0 };
-  while (space) {
-    arr_push(&spaces, entity_get_transform(space));
-    space = entity_get_parent(state, space);
+  while (to_space) {
+    arr_push(&spaces, entity_get_transform(to_space));
+    to_space = entity_get_parent(state, to_space);
   }
   // then concatenate down until we're in the local space of `space`.
   for (int i = spaces.length; i-- > 0;)

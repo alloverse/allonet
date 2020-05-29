@@ -58,6 +58,50 @@ typedef struct alloclient {
        const char *message
     );
 
+    /*! 
+     * Someone is asking you if you have asset `asset_id`.
+     * @param asset_id sha identifier of the asset
+     * @param entity_id Hint of which entity might have the asset
+     * @return size_t How big is this asset? Return 0 if you don't have the asset.
+     * @discussion If you return >0 from this asset, you will later get
+     *             asset_transmission_callback asking you for the data for this asset.
+     */
+    size_t (*asset_request_callback)(
+      alloclient* client,
+      const char* asset_id,
+      const char* entity_id
+    );
+
+    /*! 
+     * Please provide data into `buf` starting at `offset` and of at most `chunk_length` bytes
+     * to send to the server. Return the number of bytes you actually put into
+     * `buf`. You must not provide more or less bytes in total than what you returned from
+     * `asset_request_callback`. If you are not ready to provide data, you can return
+     * 0 to get a callback slightly later.
+     */
+    size_t (*asset_send_callback)(
+      alloclient* client,
+      const char* asset_id,
+      char *buf,
+      size_t offset,
+      size_t chunk_length
+    );
+
+    /*!
+     * You have received data for an asset; write it to your cache or whatever.
+     * `chunk_length` is the number of bytes available in `buf`.
+     * When `offset+chunk_length == total_length`, this is your last callback 
+     * for this asset.
+     */
+    void (*asset_receive_callback)(
+      alloclient* client,
+      const char* asset_id,
+      char* buf,
+      size_t offset,
+      size_t chunk_length,
+      size_t total_length
+    );
+
     // internal
     allo_state state;
     void *_internal;
@@ -118,6 +162,15 @@ allo_interaction *alloclient_pop_interaction(alloclient *client);
   *   
   */
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
+
+/*!
+ * Request an asset. This might be a texture, a model, a sound or something that
+ * you need. You might need it because it's referenced from a component in an entity
+ * that you want to draw. If you know which entity is referencing it, you can
+ * send it as `entity_id`, but that's optional.
+ */
+void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id);
+
 
 /**
   * Run allo_simulate() on the internal world state with our latest intent, so that we get local interpolation

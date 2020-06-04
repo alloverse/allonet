@@ -188,6 +188,41 @@ void entity_set_transform(allo_entity* entity, allo_m4x4 m)
   }
 }
 
+allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agent_id, cJSON* spec, const char* parent)
+{
+  char eid[11] = { 0 };
+  for (int i = 0; i < 10; i++)
+  {
+    eid[i] = 'a' + rand() % 25;
+  }
+  allo_entity* e = entity_create(eid);
+  e->owner_agent_id = strdup(agent_id ? agent_id : "place");
+  cJSON* children = cJSON_DetachItemFromObject(spec, "children");
+  e->components = spec;
+
+  if (parent)
+  {
+    cJSON* relationships = cjson_create_object("parent", cJSON_CreateString(parent), NULL);
+    cJSON_AddItemToObject(spec, "relationships", relationships);
+  }
+
+  if (!cJSON_HasObjectItem(spec, "transform"))
+  {
+    cJSON* transform = cjson_create_object("matrix", m2cjson(allo_m4x4_identity()), NULL);
+    cJSON_AddItemToObject(spec, "transform", transform);
+  }
+
+  printf("Creating entity %s\n", e->id);
+  LIST_INSERT_HEAD(&state->entities, e, pointers);
+
+
+  cJSON* child = NULL;
+  cJSON_ArrayForEach(child, children) {
+    allo_state_add_entity_from_spec(state, agent_id, child, eid);
+  }
+  return e;
+}
+
 allo_entity* state_get_entity(allo_state* state, const char* entity_id)
 {
   if (!state || !entity_id || strlen(entity_id) == 0)

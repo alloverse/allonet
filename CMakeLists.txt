@@ -108,6 +108,7 @@ target_link_libraries (standalone_server allonet)
 install(TARGETS allonet LIBRARY)
 
 # tests
+add_definitions(-DUNITY_INCLUDE_DOUBLE)
 
 add_subdirectory(lib/unity)
 add_executable(allonet_test

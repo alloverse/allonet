@@ -30,48 +30,13 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
   client->intent->entity_id = strdup(client->avatar_entity_id);
 }
 
-static allo_entity* add_entity_for_spec(alloserver* serv, alloserver_client* client, cJSON* spec, const char *parent)
-{
-  char eid[11] = { 0 };
-  for (int i = 0; i < 10; i++)
-  {
-    eid[i] = 'a' + rand() % 25;
-  }
-  allo_entity* e = entity_create(eid);
-  e->owner_agent_id = strdup(client ? client->agent_id : "place");
-  cJSON* children = cJSON_DetachItemFromObject(spec, "children");
-  e->components = spec;
-
-  if (parent)
-  {
-    cJSON* relationships = cjson_create_object("parent", cJSON_CreateString(parent), NULL);
-    cJSON_AddItemToObject(spec, "relationships", relationships);
-  }
-
-  if (!cJSON_HasObjectItem(spec, "transform"))
-  {
-    cJSON* transform = cjson_create_object("matrix", m2cjson(allo_m4x4_identity()), NULL);
-    cJSON_AddItemToObject(spec, "transform", transform);
-  }
-
-  printf("Creating entity %s\n", e->id);
-  LIST_INSERT_HEAD(&serv->state.entities, e, pointers);
-
-
-  cJSON* child = NULL;
-  cJSON_ArrayForEach(child, children) {
-    add_entity_for_spec(serv, client, child, eid);
-  }
-  return e;
-}
-
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   const int version = cJSON_GetArrayItem(body, 2)->valueint;
   cJSON* identity = cJSON_GetArrayItem(body, 4);
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
 
-  allo_entity *ava = add_entity_for_spec(serv, client, avatar, NULL);
+  allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);
   client->avatar_entity_id = strdup(ava->id);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
@@ -227,7 +192,7 @@ cJSON* cjson2d(double a, double b)
 
 void add_dummy(alloserver *serv)
 {
-  add_entity_for_spec(serv, NULL, cjson_create_object(
+  allo_state_add_entity_from_spec(&serv->state, NULL, cjson_create_object(
     "transform", cjson_create_object(
       "matrix", m2cjson(allo_m4x4_translate((allo_vector) { 0, 0.9, 0 })),
       NULL

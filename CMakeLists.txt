@@ -34,6 +34,7 @@ ELSE()
 ENDIF()
 
 SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
+SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 add_subdirectory (lib/cJSON)
 
 # shared library
@@ -105,3 +106,18 @@ add_executable (standalone_server examples/standalone_server/standalone.c)
 target_link_libraries (standalone_server allonet)
 
 install(TARGETS allonet LIBRARY)
+
+# tests
+
+add_subdirectory(lib/unity)
+add_executable(allonet_test
+  test/state_test.c
+)
+target_link_libraries(allonet_test 
+  allonet 
+  unity
+)
+add_test(
+  NAME allonet_test
+  COMMAND allonet_test
+)

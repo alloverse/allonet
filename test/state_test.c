@@ -18,6 +18,20 @@ void test_allostate_should_ascendCoordinateSpaces(void)
   TEST_ASSERT_DOUBLE_WITHIN_MESSAGE(0.01, 8.0, aawv.x, "global x coordinate wrong");
 }
 
+void test_allostate_should_descendCoordinateSpaces(void)
+{
+  // jw is a point in world coordinate space
+  allo_vector jw = { 1, 2, 3 };
+  allo_m4x4 jwt = allo_m4x4_translate(jw);
+
+  // converting jw into the coordinate space of b, calling it jb.
+  allo_m4x4 jbt = state_convert_coordinate_space(state, jwt, NULL, b);
+  allo_vector jbv = allo_m4x4_get_position(jbt);
+
+  // this should be jw.x - b.x = 1.0 - 2.0 = -1.0, indicating that j is to the left of b's origin.
+  TEST_ASSERT_DOUBLE_WITHIN_MESSAGE(0.01, -1.0, jbv.x, "w in the coordinate space of b is wrong");
+}
+
 static cJSON* spec_located_at(float x, float y, float z)
 {
   return cjson_create_object(
@@ -89,6 +103,7 @@ int main(void)
   UNITY_BEGIN();
 
   RUN_TEST(test_allostate_should_ascendCoordinateSpaces);
+  RUN_TEST(test_allostate_should_descendCoordinateSpaces);
 
   return UNITY_END();
 }

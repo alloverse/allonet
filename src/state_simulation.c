@@ -5,7 +5,7 @@
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
 static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, double dt);
-static void handle_grabs(allo_state *state, allo_entity *avatar, allo_client_intent *intent);
+static void handle_grabs(allo_state *state, allo_entity *avatar, allo_client_intent *intent, double dt);
 
 static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name);
 
@@ -20,7 +20,7 @@ extern void allo_simulate(allo_state* state, double dt, const allo_client_intent
     allo_entity* head = get_child_with_pose(state, avatar, "head");
     move_avatar(avatar, head, intent, dt);
     move_pose(state, avatar, intent, dt);
-    handle_grabs(state, avatar, intent);
+    handle_grabs(state, avatar, intent, dt);
   }
 }
 
@@ -132,7 +132,7 @@ static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_
   }
 }
 
-static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_intent* intent)
+static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_intent* intent, double dt)
 {
   allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
   allo_entity* grabbers[] = { get_child_with_pose(state, avatar, "hand/left"), get_child_with_pose(state, avatar, "hand/right") };
@@ -164,7 +164,12 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_int
 
     // convert into position in the grabbed thing's parent's coordinate space (i e what its transform is relative to)
     allo_m4x4 new_transform = state_convert_coordinate_space(state, grabber_minus_diff_world, NULL, entity_get_parent(state, actuated));
-    
-    entity_set_transform(actuated, new_transform);
+
+    // get old transform and interpolate towards the new one
+    allo_m4x4 old_transform = entity_get_transform(actuated);
+    double factor = 1.0-dt*3.0;
+    allo_m4x4 interpolated_transform = allo_m4x4_interpolate(old_transform, new_transform, factor);
+
+    entity_set_transform(actuated, interpolated_transform);
   }
 }

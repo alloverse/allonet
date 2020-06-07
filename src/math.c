@@ -83,6 +83,30 @@ allo_m4x4 allo_m4x4_concat(allo_m4x4 a, allo_m4x4 b)
 	return m;
 }
 
+extern allo_m4x4 allo_m4x4_add(allo_m4x4 l, allo_m4x4 r)
+{
+  allo_m4x4 m;
+  for (int i = 0; i < 16; i++)
+  {
+    m.v[i] = l.v[i] + r.v[i];
+  }
+  return m;
+}
+extern allo_m4x4 allo_m4x4_scalar_multiply(allo_m4x4 l, double r)
+{
+  allo_m4x4 m;
+  for (int i = 0; i < 16; i++)
+  {
+    m.v[i] = l.v[i] * r;
+  }
+  return m;
+}
+
+extern allo_m4x4 allo_m4x4_interpolate(allo_m4x4 l, allo_m4x4 r, double fraction)
+{
+  allo_m4x4_add(allo_m4x4_scalar_multiply(l, fraction), allo_m4x4_scalar_multiply(r, 1.0 - fraction));
+}
+
 extern allo_m4x4 allo_m4x4_inverse(allo_m4x4 ma)
 {
 	double *m = ma.v;

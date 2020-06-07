@@ -11,7 +11,7 @@
 
 typedef struct allo_client_pose_grab
 {
-    const char* entity; // which entity is being grabbed. null = none
+    char* entity; // which entity is being grabbed. null = none
     allo_vector held_at; // where in the grabbed entity's coordinate space is it held
 } allo_client_pose_grab;
 
@@ -30,7 +30,7 @@ typedef struct allo_client_poses
 
 typedef struct allo_client_intent
 {
-    const char* entity_id; // which entity is this intent for
+    char* entity_id; // which entity is this intent for
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
     double yaw;       // rotation around x in radians

@@ -13,7 +13,7 @@ extern void allo_simulate(allo_state* state, double dt, const allo_client_intent
 {
   for (int i = 0; i < intent_count; i++)
   {
-    allo_client_intent *intent = intents[i];
+    const allo_client_intent *intent = intents[i];
     allo_entity* avatar = state_get_entity(state, intent->entity_id);
     if (intent->entity_id == NULL || avatar == NULL)
       return;
@@ -151,8 +151,12 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_int
         actuated = state_get_entity(state, actuate_on);
     if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
     
-    // where is the hand in worldcoord?
-    allo_m4x4 grabber_pos_world = entity_get_transform_in_coordinate_space(state, grabber, NULL);
+    // where is the hand?
+    allo_m4x4 grabber_pos_local = entity_get_transform(grabber);
+    // also rotate it to match the orientation of the weird grab handles we have now
+    allo_m4x4 rotated = allo_m4x4_concat(allo_m4x4_rotate(3.14159 / 2, (allo_vector) { 1, 0, 0 }), grabber_pos_local);
+    // and in in worldcoord?
+    allo_m4x4 grabber_pos_world = state_convert_coordinate_space(state, rotated, entity_get_parent(state, grabber), NULL);
     
     // subtract the difference in position between grabbed and actuated
     allo_vector grabbed_pos_world = allo_m4x4_get_position(entity_get_transform_in_coordinate_space(state, grabbed, NULL));

@@ -5,7 +5,7 @@
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
 static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, double dt);
-static void handle_grabs(allo_state *state, allo_entity *avatar, allo_client_intent *intent, double dt);
+static void handle_grabs(allo_state *state, allo_entity *avatar, const allo_client_intent *intent, double dt);
 
 static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name);
 
@@ -132,13 +132,14 @@ static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_
   }
 }
 
-static void handle_grabs(allo_state* state, allo_entity* avatar, allo_client_intent* intent, double dt)
+static void handle_grabs(allo_state* state, allo_entity* avatar, const allo_client_intent* intent, double dt)
 {
-  allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
+  dt = 0.01;
+  const allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
   allo_entity* grabbers[] = { get_child_with_pose(state, avatar, "hand/left"), get_child_with_pose(state, avatar, "hand/right") };
   for (int i = 0; i < 2; i++)
   {
-    allo_client_pose_grab* grab = grabs[i];
+    const allo_client_pose_grab* grab = grabs[i];
     allo_entity* grabber = grabbers[i];
     allo_entity* grabbed = state_get_entity(state, grab->entity);
     allo_entity* actuated = grabbed;

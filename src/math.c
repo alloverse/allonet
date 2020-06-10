@@ -104,7 +104,7 @@ extern allo_m4x4 allo_m4x4_scalar_multiply(allo_m4x4 l, double r)
 
 extern allo_m4x4 allo_m4x4_interpolate(allo_m4x4 l, allo_m4x4 r, double fraction)
 {
-  allo_m4x4_add(allo_m4x4_scalar_multiply(l, fraction), allo_m4x4_scalar_multiply(r, 1.0 - fraction));
+  return allo_m4x4_add(allo_m4x4_scalar_multiply(l, fraction), allo_m4x4_scalar_multiply(r, 1.0 - fraction));
 }
 
 extern allo_m4x4 allo_m4x4_inverse(allo_m4x4 ma)
@@ -253,7 +253,7 @@ extern allo_vector allo_m4x4_get_position(allo_m4x4 l)
 extern char *allo_m4x4_string(allo_m4x4 m)
 {
     char *s = malloc(255);
-    snprintf(s, 255, "%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f",
+    snprintf(s, 255, "\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f\n\t%.2f %.2f %.2f %.2f",
         m.c1r1, m.c2r1, m.c3r1, m.c4r1,
         m.c1r2, m.c2r2, m.c3r2, m.c4r2,
         m.c1r3, m.c2r3, m.c3r3, m.c4r3,

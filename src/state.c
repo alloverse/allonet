@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "util.h"
 #include <allonet/arr.h>
+#include <assert.h>
+#include <math.h>
 
 allo_client_intent* allo_client_intent_create()
 {
@@ -180,6 +182,10 @@ allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_en
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)
 {
+  for (int i = 0; i < 16; i++)
+  {
+    assert(isnan(m.v[i]) == false);
+  }
   cJSON* transform = cJSON_GetObjectItem(entity->components, "transform");
   cJSON* matrix = cJSON_GetObjectItem(transform, "matrix");
   if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16) 

@@ -105,7 +105,7 @@ target_link_libraries (allocubeappliance allonet)
 add_executable (standalone_server examples/standalone_server/standalone.c)
 target_link_libraries (standalone_server allonet)
 
-install(TARGETS allonet LIBRARY)
+install(TARGETS allonet LIBRARY DESTINATION lib)
 
 # tests
 add_definitions(-DUNITY_INCLUDE_DOUBLE)

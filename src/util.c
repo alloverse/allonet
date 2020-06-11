@@ -120,8 +120,21 @@ cJSON *cjson_create_list(cJSON *value, ...)
     return parent;
 }
 
+char *allo_strdup(const char *src)
+{
+    if(src == NULL)
+    {
+        return NULL;
+    }
+    return strdup(src);
+}
+
 char *allo_strndup(const char *src, size_t n)
 {
+    if(src == NULL || n == 0) 
+    {
+        return NULL;
+    }
     char *dest = calloc(1, n+1);
     for(size_t i = 0; i < n; i++) {
         dest[i] = src[i];

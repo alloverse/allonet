@@ -27,7 +27,7 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
 {
   allo_client_intent_clone(intent, client->intent);
   free(client->intent->entity_id);
-  client->intent->entity_id = strdup(client->avatar_entity_id);
+  client->intent->entity_id = allo_strdup(client->avatar_entity_id);
 }
 
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -37,7 +37,7 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
 
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);
-  client->avatar_entity_id = strdup(ava->id);
+  client->avatar_entity_id = allo_strdup(ava->id);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
   char* respbodys = cJSON_Print(respbody);

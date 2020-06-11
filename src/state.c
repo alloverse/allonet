@@ -22,15 +22,6 @@ void allo_client_intent_free(allo_client_intent* intent)
   free(intent);
 }
 
-static char *nullsafe_strdup(const char *src)
-{
-  if(src) {
-    return strdup(src);
-  } else {
-    return NULL;
-  }
-}
-
 void allo_client_intent_clone(const allo_client_intent* original, allo_client_intent* destination)
 {
   free(destination->poses.head.grab.entity);
@@ -38,10 +29,10 @@ void allo_client_intent_clone(const allo_client_intent* original, allo_client_in
   free(destination->poses.right_hand.grab.entity);
   free(destination->entity_id);
   memcpy(destination, original, sizeof(allo_client_intent));
-  destination->poses.head.grab.entity = nullsafe_strdup(original->poses.head.grab.entity);
-  destination->poses.left_hand.grab.entity = nullsafe_strdup(original->poses.left_hand.grab.entity);
-  destination->poses.right_hand.grab.entity = nullsafe_strdup(original->poses.right_hand.grab.entity);
-  destination->entity_id = nullsafe_strdup(original->entity_id);
+  destination->poses.head.grab.entity = allo_strdup(original->poses.head.grab.entity);
+  destination->poses.left_hand.grab.entity = allo_strdup(original->poses.left_hand.grab.entity);
+  destination->poses.right_hand.grab.entity = allo_strdup(original->poses.right_hand.grab.entity);
+  destination->entity_id = allo_strdup(original->entity_id);
 }
 
 static cJSON* grab_to_cjson(allo_client_pose_grab grab)
@@ -56,7 +47,7 @@ static cJSON* grab_to_cjson(allo_client_pose_grab grab)
 static allo_client_pose_grab grab_parse_cjson(cJSON* cjson)
 {
   return (allo_client_pose_grab) {
-    .entity = strdup(cJSON_GetStringValue(cJSON_GetObjectItem(cjson, "entity"))),
+    .entity = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItem(cjson, "entity"))),
     .held_at = cjson2vec(cJSON_GetObjectItem(cjson, "held_at"))
   };
 }
@@ -94,7 +85,7 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
 {
   allo_client_intent* intent = allo_client_intent_create();
   cJSON* poses = cJSON_GetObjectItem(from, "poses");
-  intent->entity_id = strdup(cJSON_GetStringValue(cJSON_GetObjectItem(from, "entity_id")));
+  intent->entity_id = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItem(from, "entity_id")));
   intent->zmovement = cJSON_GetObjectItem(from, "zmovement")->valuedouble;
   intent->xmovement = cJSON_GetObjectItem(from, "xmovement")->valuedouble;
   intent->yaw = cJSON_GetObjectItem(from, "yaw")->valuedouble;
@@ -283,11 +274,11 @@ extern bool allo_initialize(bool redirect_stdout)
 allo_interaction *allo_interaction_create(const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body)
 {
     allo_interaction *interaction = (allo_interaction*)malloc(sizeof(allo_interaction));
-    interaction->type = nullsafe_strdup(type);
-    interaction->sender_entity_id = nullsafe_strdup(sender_entity_id);
-    interaction->receiver_entity_id  = nullsafe_strdup(receiver_entity_id);
-    interaction->request_id = nullsafe_strdup(request_id);
-    interaction->body = nullsafe_strdup(body);
+    interaction->type = allo_strdup(type);
+    interaction->sender_entity_id = allo_strdup(sender_entity_id);
+    interaction->receiver_entity_id  = allo_strdup(receiver_entity_id);
+    interaction->request_id = allo_strdup(request_id);
+    interaction->body = allo_strdup(body);
     return interaction;
 }
 

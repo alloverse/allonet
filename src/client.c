@@ -204,9 +204,10 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
 }
 
 
-static void parse_media(alloclient *client, char *data, int length)
+static void parse_media(alloclient *client, unsigned char *data, int length)
 {
     uint32_t track_id;
+    assert(length >= sizeof(track_id) + 3);
     memcpy(&track_id, data, sizeof(track_id));
     track_id = ntohl(track_id);
     data += sizeof(track_id);
@@ -215,8 +216,9 @@ static void parse_media(alloclient *client, char *data, int length)
     // todo: decode on another tread
     decoder_track *dec = decoder_find_or_create_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
-    int16_t pcm[5760];
+    int16_t pcm[5760] = { 0 };
     int samples_decoded = opus_decode(dec->decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
+
     assert(samples_decoded >= 0);
     if (DEBUG_AUDIO && dec->debug) {
         fwrite(pcm, sizeof(int16_t), samples_decoded, dec->debug);
@@ -247,7 +249,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_MEDIA: {
-        parse_media(client, (char*)packet->data, packet->dataLength);
+        parse_media(client, (char*)packet->data, packet->dataLength-1);
     }
     }
 }

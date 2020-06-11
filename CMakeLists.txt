@@ -110,7 +110,7 @@ install(TARGETS allonet LIBRARY DESTINATION lib)
 # tests
 add_definitions(-DUNITY_INCLUDE_DOUBLE)
 
-add_subdirectory(lib/unity)
+add_subdirectory(lib/unity EXCLUDE_FROM_ALL)
 add_executable(allonet_test
   test/state_test.c
 )

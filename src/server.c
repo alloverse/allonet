@@ -95,7 +95,7 @@ static bool allo_poll(alloserver *serv, int timeout)
                 client, 
                 event.channelID, 
                 event.packet->data,
-                event.packet->dataLength-1
+                event.packet->dataLength
             );
         }
         

@@ -1,4 +1,5 @@
 #include <allonet/client.h>
+#include <allonet/arr.h>
 #include <enet/enet.h>
 #include <opus.h>
 #include <cJSON/cJSON.h>
@@ -7,6 +8,7 @@
 #include <assert.h>
 #include <math.h>
 #include "util.h"
+#include <allonet/jobs.h>
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
     #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
@@ -34,6 +36,7 @@ typedef struct {
     allo_client_intent *latest_intent;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
+    scheduler jobs;
 } alloclient_internal;
 
 static alloclient_internal *_internal(alloclient *client)
@@ -248,6 +251,9 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         parse_command(client, cmdrep);
         cJSON_Delete(cmdrep);
         break; }
+    case CHANNEL_ASSETS: {
+        parse_asset(client, (char*)packet->data, packet->dataLength);
+        } break;
     case CHANNEL_MEDIA: {
         parse_media(client, (char*)packet->data, packet->dataLength-1);
     }
@@ -402,6 +408,8 @@ alloclient *alloclient_create(void)
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
+    
+    scheduler_init(&_internal(client)->jobs);
     
     LIST_INIT(&client->state.entities);
     

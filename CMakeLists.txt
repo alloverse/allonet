@@ -46,6 +46,8 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/net.h
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
+    ${INCLUDE_FILES_PREFIX}/jobs.h
+    ${INCLUDE_FILES_PREFIX}/asset.h
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
@@ -58,6 +60,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/state_simulation.c
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/math.c
+    ${SOURCE_FILES_PREFIX}/jobs.c
+    ${SOURCE_FILES_PREFIX}/asset.c
 )
 
 if(ALLONET_USE_LUA)
@@ -109,16 +113,16 @@ install(TARGETS allonet LIBRARY DESTINATION lib)
 
 # tests
 add_definitions(-DUNITY_INCLUDE_DOUBLE)
-
 add_subdirectory(lib/unity EXCLUDE_FROM_ALL)
-add_executable(allonet_test
-  test/state_test.c
-)
-target_link_libraries(allonet_test 
-  allonet 
-  unity
-)
-add_test(
-  NAME allonet_test
-  COMMAND allonet_test
-)
+
+add_executable(allonet_test test/state_test.c)
+target_link_libraries(allonet_test allonet unity)
+add_test(NAME allonet_test COMMAND allonet_test)
+
+add_executable(jobs_test test/jobs_test.c)
+target_link_libraries(jobs_test allonet unity)
+add_test(NAME jobs_test COMMAND jobs_test)
+
+add_executable(asset_test test/asset_test.c)
+target_link_libraries(asset_test allonet unity)
+add_test(NAME asset_test COMMAND asset_test)

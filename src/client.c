@@ -515,7 +515,7 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
     assert(frameCount == 480 || frameCount == 960);
     
     const int headerlen = sizeof(int32_t); // track id header
-    const int outlen = headerlen + frameCount*2; // theoretical max
+    const int outlen = headerlen + frameCount*2 + 1; // theoretical max
     ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);
     assert(packet != NULL);
     int32_t big_track_id = htonl(track_id);

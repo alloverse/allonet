@@ -282,7 +282,13 @@ static const struct luaL_reg alloclient_m [] = {
     {NULL, NULL}
 };
 
-int luaopen_liballonet (lua_State *L) {
+int luaopen_allonet(lua_State* L)
+{
+    return luaopen_liballonet(L);
+}
+
+int luaopen_liballonet (lua_State *L)
+{
 	load_weak_lua_symbols();
 	allo_initialize(false);
 	assert(luaL_register != NULL);

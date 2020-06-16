@@ -8,8 +8,8 @@
 #ifndef jobs_h
 #define jobs_h
 
-#import <stdbool.h>
-#import <allonet/arr.h>
+#include <stdbool.h>
+#include <allonet/arr.h>
 
 struct scheduler;
 

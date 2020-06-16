@@ -252,7 +252,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_ASSETS: {
-        parse_asset(client, (char*)packet->data, packet->dataLength);
+        //parse_asset(client, (char*)packet->data, packet->dataLength);
         } break;
     case CHANNEL_MEDIA: {
         parse_media(client, (char*)packet->data, packet->dataLength-1);

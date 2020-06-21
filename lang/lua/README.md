@@ -42,6 +42,16 @@ Disconnect from an alloplace and free all internal state.
 even if you're already disconnected remotely (and you
 notice from the disconnect callback)
 
+### `client:poll()`
+
+Sends and receives network data, and performs other housekeeping tasks.
+Must be called at least at 20hz, preferrably more often.
+
+### `client:simulate(dt: float)`
+
+Perform client-side world state interpolation, running physics and other
+entitiy movement. Call every frame for smoother movements.
+
 ### `client:send_interaction(interaction: interaction)`
 
 Have one of your entites interact with another entity.

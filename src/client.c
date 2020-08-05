@@ -255,7 +255,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         //parse_asset(client, (char*)packet->data, packet->dataLength);
         } break;
     case CHANNEL_MEDIA: {
-        parse_media(client, (char*)packet->data, packet->dataLength-1);
+        parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);
     }
     }
 }
@@ -551,7 +551,8 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
 
 void alloclient_simulate(alloclient *client, double dt)
 {
-  allo_simulate(&client->state, dt, &_internal(client)->latest_intent, 1);
+  const allo_client_intent *intents[] = {_internal(client)->latest_intent};
+  allo_simulate(&client->state, dt, intents, 1);
   if (client->state_callback)
   {
     client->state_callback(client, &client->state);

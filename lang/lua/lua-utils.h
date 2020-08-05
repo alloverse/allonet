@@ -3,6 +3,7 @@
 #include "lualib.h"
 #include "lua-weak.h"
 #include "../../include/allonet/client.h"
+#include "../../include/allonet/server.h"
 
 // Utility APIs:
 const char *get_table_string(lua_State *L, const char *key);

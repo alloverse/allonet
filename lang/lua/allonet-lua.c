@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <malloc.h>
 #include "lua-utils.h"
 
 //// alloclient structure
@@ -44,7 +45,7 @@ static int l_alloserv_standalone_server_count(lua_State* L)
   return 1;
 }
 
-static const struct luaL_reg allonet [] =
+static const struct luaL_Reg allonet [] =
 {
     {"create", l_alloclient_create},
     {"start_standalone_server", l_alloserv_start_standalone},
@@ -98,13 +99,13 @@ static int l_alloclient_send_interaction (lua_State *L)
     {
         return luaL_error(L, "send_interaction: Expected table with keys type, sender_entity_id, receiver_entity_id, request_id and body");
     }
-    char* type = get_table_string(L, "type");
-    char* sender = get_table_string(L, "sender_entity_id");
-    char* recv = get_table_string(L, "receiver_entity_id");
-    char* req = get_table_string(L, "request_id");
-    char* b = get_table_string(L, "body");
+    const char* type = get_table_string(L, "type");
+    const char* sender = get_table_string(L, "sender_entity_id");
+    const char* recv = get_table_string(L, "receiver_entity_id");
+    const char* req = get_table_string(L, "request_id");
+    const char* b = get_table_string(L, "body");
     allo_interaction *inter = allo_interaction_create(type, sender, recv, req, b);
-    free(type); free(sender); free(recv); free(req); free(b);
+    free((void*)type); free((void*)sender); free((void*)recv); free((void*)req); free((void*)b);
     alloclient_send_interaction(lclient->client, inter);
     allo_interaction_free(inter);
     return 0;
@@ -130,7 +131,7 @@ static int l_alloclient_set_intent (lua_State *L)
         return luaL_error(L, "set_intent: Expected table with keys zmovement, xmovement, yaw, pitch, poses");
     }
     allo_client_intent* intent = allo_client_intent_create();
-    intent->entity_id = get_table_string(L, "entity_id");
+    intent->entity_id = strdup(get_table_string(L, "entity_id"));
     intent->zmovement = get_table_number(L, "zmovement");
     intent->xmovement = get_table_number(L, "xmovement");
     intent->yaw = get_table_number(L, "yaw");
@@ -265,7 +266,7 @@ static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
 
 ////// library initialization
 
-static const struct luaL_reg alloclient_m [] = {
+static const struct luaL_Reg alloclient_m [] = {
     {"connect", l_alloclient_connect},
     {"disconnect", l_alloclient_disconnect},
     {"poll", l_alloclient_poll},
@@ -282,11 +283,6 @@ static const struct luaL_reg alloclient_m [] = {
     {NULL, NULL}
 };
 
-int luaopen_allonet(lua_State* L)
-{
-    return luaopen_liballonet(L);
-}
-
 int luaopen_liballonet (lua_State *L)
 {
 	load_weak_lua_symbols();
@@ -302,3 +298,9 @@ int luaopen_liballonet (lua_State *L)
     luaL_register (L, "allonet", allonet);
     return 1;
 }
+
+int luaopen_allonet(lua_State* L)
+{
+    return luaopen_liballonet(L);
+}
+

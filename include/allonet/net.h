@@ -11,8 +11,8 @@ typedef enum allochannel {
     CHANNEL_COMMANDS = 1,   // reliable
     CHANNEL_ASSETS = 2,     // reliable
     CHANNEL_MEDIA = 3,      // unreliable
-
-    CHANNEL_COUNT
 } allochannel;
+
+#define CHANNEL_COUNT 4
 
 #endif

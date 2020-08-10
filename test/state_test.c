@@ -2,6 +2,7 @@
 #include <allonet/state.h>
 #include "../src/util.h"
 #include <stdlib.h>
+#include <string.h>
 
 static allo_state* state;
 allo_entity* a, *aa, *b, *bb;

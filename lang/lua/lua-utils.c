@@ -85,7 +85,7 @@ allo_client_pose_grab get_table_grab(lua_State* L, const char* key)
   lua_gettable(L, -2);
   if (!lua_isnil(L, -1))
   {
-    result.entity = get_table_string(L, "entity");
+    result.entity = strdup(get_table_string(L, "entity"));
     result.held_at = get_table_vector(L, "held_at");
   }
   lua_pop(L, 1);

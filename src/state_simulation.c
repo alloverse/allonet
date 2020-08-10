@@ -145,11 +145,13 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, const allo_clie
     allo_entity* actuated = grabbed;
     cJSON* grabbable = cJSON_GetObjectItem(grabbed ? grabbed->components : NULL, "grabbable");
     const char* actuate_on = cJSON_GetStringValue(cJSON_GetObjectItem(grabbable, "actuate_on"));
-    if (actuate_on && strlen(actuate_on) > 0)
-      if (strcmp(actuate_on, "$parent") == 0)
+    if (actuate_on && strlen(actuate_on) > 0) {
+      if (strcmp(actuate_on, "$parent") == 0) {
         actuated = entity_get_parent(state, grabbed);
-      else
+      } else {
         actuated = state_get_entity(state, actuate_on);
+      }
+    }
     if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
     
     // where is the hand?

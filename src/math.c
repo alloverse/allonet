@@ -28,22 +28,22 @@ double allo_vector_angle(allo_vector l, allo_vector r)
 
 allo_m4x4 allo_m4x4_identity()
 {
-	return (allo_m4x4) {
-		1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1
-	};
+	return (allo_m4x4) {{
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    }};
 }
 
 allo_m4x4 allo_m4x4_translate(allo_vector t)
 {
-	return (allo_m4x4) {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		t.x, t.y, t.z, 1
-	};
+	return (allo_m4x4) {{
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        t.x, t.y, t.z, 1
+    }};
 }
 
 allo_m4x4 allo_m4x4_rotate(double phi, allo_vector axis)

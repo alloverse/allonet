@@ -14,7 +14,7 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
   const char* json = cJSON_Print(cmdrep);
   cJSON_Delete(cmdrep);
 
-  serv->send(serv, client, CHANNEL_COMMANDS, json, strlen(json)+1);
+  serv->send(serv, client, CHANNEL_COMMANDS, (const uint8_t*)json, strlen(json)+1);
   free((void*)json);
 }
 

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "lua-utils.h"
 
 //// alloclient structure

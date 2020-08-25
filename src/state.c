@@ -39,7 +39,7 @@ static cJSON* grab_to_cjson(allo_client_pose_grab grab)
 {
   return cjson_create_object(
     "entity", cJSON_CreateString(grab.entity ? grab.entity : ""),
-    "held_at", vec2cjson(grab.held_at),
+    "grabber_from_entity_transform", m2cjson(grab.grabber_from_entity_transform),
     NULL
   );
 }
@@ -48,7 +48,7 @@ static allo_client_pose_grab grab_parse_cjson(cJSON* cjson)
 {
   return (allo_client_pose_grab) {
     .entity = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItem(cjson, "entity"))),
-    .held_at = cjson2vec(cJSON_GetObjectItem(cjson, "held_at"))
+    .grabber_from_entity_transform = cjson2m(cJSON_GetObjectItem(cjson, "grabber_from_entity_transform"))
   };
 }
 
@@ -148,27 +148,29 @@ allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state, allo_entit
   return state_convert_coordinate_space(state, m, entity_get_parent(state, entity), space);
 }
 
+static allo_m4x4 entity_get_transform_to_world(allo_state* state, allo_entity *ent)
+{
+  if (!ent) {
+    return allo_m4x4_identity();
+  }
+  allo_entity* parent = entity_get_parent(state, ent);
+  allo_m4x4 my_transform = entity_get_transform(ent);
+  if (parent) {
+    return allo_m4x4_concat(entity_get_transform_to_world(state, parent), my_transform);
+  }
+  return my_transform;
+}
+
 allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space)
 {
-  // go up to root, multiplying with each parent until we reach world space coordinates
-  while (from_space) {
-    m = allo_m4x4_concat(entity_get_transform(from_space), m);
-    from_space = entity_get_parent(state, from_space);
-  }
+  // First, convert m to world coordinates
+  allo_m4x4 worldFromFromSpace = entity_get_transform_to_world(state, from_space);
+  allo_m4x4 m_in_world = allo_m4x4_concat(worldFromFromSpace, m);
 
-  // go down to space until we reach the local coordinate space of `space`
-  // first, compile list of ancestors so we can traverse it in reverse
-  arr_t(allo_m4x4) spaces = { 0 };
-  while (to_space) {
-    arr_push(&spaces, entity_get_transform(to_space));
-    to_space = entity_get_parent(state, to_space);
-  }
-  // then concatenate down until we're in the local space of `space`.
-  for (int i = spaces.length; i-- > 0;)
-  {
-    m = allo_m4x4_concat(m, allo_m4x4_inverse(spaces.data[i]));
-  }
-  return m;
+  allo_m4x4 worldFromToSpace = entity_get_transform_to_world(state, to_space);
+  allo_m4x4 toSpaceFromWorld = allo_m4x4_inverse(worldFromToSpace);
+
+  return allo_m4x4_concat(toSpaceFromWorld, m_in_world);
 }
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)

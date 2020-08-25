@@ -153,30 +153,18 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, const allo_clie
       }
     }
     if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
+
+    // goal: worldFromSelf = worldFromHand * handFromSelf;
     
     // where is the hand?
-    allo_m4x4 grabber_pos_local = entity_get_transform(grabber);
-    // also rotate it to match the orientation of the weird grab handles we have now
-    allo_m4x4 rotated = allo_m4x4_concat(allo_m4x4_rotate(3.14159 / 2, (allo_vector) { 1, 0, 0 }), grabber_pos_local);
-    // and in in worldcoord?
-    allo_m4x4 grabber_pos_world = state_convert_coordinate_space(state, rotated, entity_get_parent(state, grabber), NULL);
-    
-    // subtract the difference in position between grabbed and actuated
-    allo_vector grabbed_pos_world = allo_m4x4_get_position(entity_get_transform_in_coordinate_space(state, grabbed, NULL));
-    allo_vector actuated_pos_world = allo_m4x4_get_position(entity_get_transform_in_coordinate_space(state, actuated, NULL));
-    allo_vector actuated_diff = allo_vector_subtract(actuated_pos_world, grabbed_pos_world);
-    allo_m4x4 actuated_diff_m = allo_m4x4_translate(actuated_diff);
+    allo_m4x4 parent_from_grabber_transform = entity_get_transform(grabber);
+    allo_m4x4 world_from_grabber_transform = state_convert_coordinate_space(state, parent_from_grabber_transform, entity_get_parent(state, grabber), NULL);
 
-    allo_m4x4 grabber_minus_diff_world = allo_m4x4_concat(actuated_diff_m, grabber_pos_world);
+    // where in world should grabbed be?
+    allo_m4x4 world_from_grabbed_transform = allo_m4x4_concat(world_from_grabber_transform, grab->grabber_from_entity_transform);
+    // okay but this is a scenegraph -- in grabbed PARENT'S coordinate space, where is it?
+    allo_m4x4 parent_from_grabbed_transform = state_convert_coordinate_space(state, world_from_grabbed_transform, NULL, entity_get_parent(state, grabbed));
 
-    // convert into position in the grabbed thing's parent's coordinate space (i e what its transform is relative to)
-    allo_m4x4 new_transform = state_convert_coordinate_space(state, grabber_minus_diff_world, NULL, entity_get_parent(state, actuated));
-
-    // get old transform and interpolate towards the new one
-    allo_m4x4 old_transform = entity_get_transform(actuated);
-    double factor = 1.0-dt*3.0;
-    allo_m4x4 interpolated_transform = allo_m4x4_interpolate(old_transform, new_transform, factor);
-
-    entity_set_transform(actuated, interpolated_transform);
+    entity_set_transform(grabbed, parent_from_grabbed_transform);
   }
 }

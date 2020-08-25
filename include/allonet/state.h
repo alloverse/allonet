@@ -12,7 +12,7 @@
 typedef struct allo_client_pose_grab
 {
     char* entity; // which entity is being grabbed. null = none
-    allo_vector held_at; // where in the grabbed entity's coordinate space is it held
+    allo_m4x4 grabber_from_entity_transform;
 } allo_client_pose_grab;
 
 typedef struct allo_client_pose

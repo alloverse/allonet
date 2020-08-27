@@ -161,16 +161,14 @@ static allo_m4x4 entity_get_transform_to_world(allo_state* state, allo_entity *e
   return my_transform;
 }
 
-allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space)
+allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* old, allo_entity* new)
 {
-  // First, convert m to world coordinates
-  allo_m4x4 worldFromFromSpace = entity_get_transform_to_world(state, from_space);
-  allo_m4x4 m_in_world = allo_m4x4_concat(worldFromFromSpace, m);
+  allo_m4x4 worldFromOld = entity_get_transform_to_world(state, old);
+  allo_m4x4 worldFromNew = entity_get_transform_to_world(state, new);
+  allo_m4x4 newFromWorld = allo_m4x4_inverse(worldFromNew);
+  allo_m4x4 newFromOld = allo_m4x4_concat(newFromWorld, worldFromOld);
 
-  allo_m4x4 worldFromToSpace = entity_get_transform_to_world(state, to_space);
-  allo_m4x4 toSpaceFromWorld = allo_m4x4_inverse(worldFromToSpace);
-
-  return allo_m4x4_concat(toSpaceFromWorld, m_in_world);
+  return allo_m4x4_concat(newFromOld, m);
 }
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)

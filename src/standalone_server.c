@@ -226,6 +226,7 @@ void add_dummy(alloserver *serv)
   spec_add_child(root, plate);
   cJSON* button = spec_located_at(0.2, 0.3, 0, 0.1);
   spec_add_child(plate, button);
+
   cJSON_AddItemToObject(button, "collider", cjson_create_object(
     "type", cJSON_CreateString("box"),
     "width", cJSON_CreateNumber(0.2),
@@ -235,6 +236,30 @@ void add_dummy(alloserver *serv)
   ));
   cJSON_AddItemToObject(button, "grabbable", cjson_create_object(
     "actuate_on", cJSON_CreateString("$parent"),
+    NULL
+  ));
+
+  cJSON_AddItemToObject(plate, "grabbable", cjson_create_object(
+    "foo", cJSON_CreateString("bar"),
+    NULL
+  ));
+  cJSON_AddItemToObject(plate, "collider", cjson_create_object(
+    "type", cJSON_CreateString("box"),
+    "width", cJSON_CreateNumber(0.2),
+    "height", cJSON_CreateNumber(0.2),
+    "depth", cJSON_CreateNumber(0.2),
+    NULL
+  ));
+
+  cJSON_AddItemToObject(root, "grabbable", cjson_create_object(
+    "foo", cJSON_CreateString("bar"),
+    NULL
+  ));
+  cJSON_AddItemToObject(root, "collider", cjson_create_object(
+    "type", cJSON_CreateString("box"),
+    "width", cJSON_CreateNumber(0.2),
+    "height", cJSON_CreateNumber(0.2),
+    "depth", cJSON_CreateNumber(0.2),
     NULL
   ));
 

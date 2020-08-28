@@ -152,19 +152,21 @@ static void handle_grabs(allo_state *const state, allo_entity *const avatar, con
         actuated = state_get_entity(state, actuate_on);
       }
     }
-    if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
-
-    // goal: worldFromSelf = worldFromHand * handFromSelf;
-    
+    if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }    
     // where is the hand?
     allo_m4x4 parent_from_grabber_transform = entity_get_transform(grabber);
     allo_m4x4 world_from_grabber_transform = state_convert_coordinate_space(state, parent_from_grabber_transform, entity_get_parent(state, grabber), NULL);
 
     // where in world should grabbed be?
     allo_m4x4 world_from_grabbed_transform = allo_m4x4_concat(world_from_grabber_transform, grab->grabber_from_entity_transform);
-    // okay but this is a scenegraph -- in grabbed PARENT'S coordinate space, where is it?
-    allo_m4x4 parent_from_grabbed_transform = state_convert_coordinate_space(state, world_from_grabbed_transform, NULL, entity_get_parent(state, grabbed));
 
-    entity_set_transform(grabbed, parent_from_grabbed_transform);
+    // consequently, where should ACTUATED be?
+    allo_m4x4 grabbed_from_actuated_transform = state_convert_coordinate_space(state, allo_m4x4_identity(), actuated, grabbed);
+    allo_m4x4 world_from_actuated = allo_m4x4_concat(world_from_grabbed_transform, grabbed_from_actuated_transform);
+
+    // okay but this is a scenegraph -- in grabbed PARENT'S coordinate space, where is it?
+    allo_m4x4 parent_from_actuated_transform = state_convert_coordinate_space(state, world_from_actuated, NULL, entity_get_parent(state, actuated));
+
+    entity_set_transform(actuated, parent_from_actuated_transform);
   }
 }

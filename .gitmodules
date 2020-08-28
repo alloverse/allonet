@@ -13,3 +13,6 @@
 [submodule "lib/unity"]
 	path = lib/unity
 	url = https://github.com/ThrowTheSwitch/Unity
+[submodule "lib/mathc"]
+	path = lib/mathc
+	url = https://github.com/felselva/mathc.git

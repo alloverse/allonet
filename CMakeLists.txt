@@ -6,7 +6,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 
-include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
@@ -37,6 +37,9 @@ SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 add_subdirectory (lib/cJSON)
 
+add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
+
+
 # shared library
 
 set(INCLUDE_FILES_PREFIX include/allonet)
@@ -62,6 +65,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/math.c
     ${SOURCE_FILES_PREFIX}/jobs.c
     ${SOURCE_FILES_PREFIX}/asset.c
+    lib/mathc/mathc.c
 )
 
 if(ALLONET_USE_LUA)
@@ -115,14 +119,18 @@ install(TARGETS allonet LIBRARY DESTINATION lib)
 add_definitions(-DUNITY_INCLUDE_DOUBLE)
 add_subdirectory(lib/unity EXCLUDE_FROM_ALL)
 
-add_executable(allonet_test test/state_test.c)
-target_link_libraries(allonet_test allonet unity)
-add_test(NAME allonet_test COMMAND allonet_test)
+add_executable(allonet_state_test test/state_test.c)
+target_link_libraries(allonet_state_test allonet unity)
+add_test(NAME allonet_state_test COMMAND allonet_state_test)
 
-add_executable(jobs_test test/jobs_test.c)
-target_link_libraries(jobs_test allonet unity)
-add_test(NAME jobs_test COMMAND jobs_test)
+add_executable(allonet_math_test test/math_test.c)
+target_link_libraries(allonet_math_test allonet unity)
+add_test(NAME allonet_math_test COMMAND allonet_math_test)
 
-add_executable(asset_test test/asset_test.c)
-target_link_libraries(asset_test allonet unity)
-add_test(NAME asset_test COMMAND asset_test)
+add_executable(allonet_jobs_test test/jobs_test.c)
+target_link_libraries(allonet_jobs_test allonet unity)
+add_test(NAME allonet_jobs_test COMMAND allonet_jobs_test)
+
+add_executable(allonet_asset_test test/asset_test.c)
+target_link_libraries(allonet_asset_test allonet unity)
+add_test(NAME allonet_asset_test COMMAND allonet_asset_test)

@@ -132,7 +132,7 @@ static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_
   }
 }
 
-static void handle_grabs(allo_state* state, allo_entity* avatar, const allo_client_intent* intent, double dt)
+static void handle_grabs(allo_state *const state, allo_entity *const avatar, const allo_client_intent *const intent, double dt)
 {
   dt = 0.01;
   const allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
@@ -140,10 +140,10 @@ static void handle_grabs(allo_state* state, allo_entity* avatar, const allo_clie
   for (int i = 0; i < 2; i++)
   {
     const allo_client_pose_grab* grab = grabs[i];
-    allo_entity* grabber = grabbers[i];
-    allo_entity* grabbed = state_get_entity(state, grab->entity);
-    allo_entity* actuated = grabbed;
-    cJSON* grabbable = cJSON_GetObjectItem(grabbed ? grabbed->components : NULL, "grabbable");
+    allo_entity *const grabber = grabbers[i];
+    allo_entity *const grabbed = state_get_entity(state, grab->entity);
+    allo_entity * actuated = grabbed;
+    cJSON *const grabbable = cJSON_GetObjectItem(grabbed ? grabbed->components : NULL, "grabbable");
     const char* actuate_on = cJSON_GetStringValue(cJSON_GetObjectItem(grabbable, "actuate_on"));
     if (actuate_on && strlen(actuate_on) > 0) {
       if (strcmp(actuate_on, "$parent") == 0) {

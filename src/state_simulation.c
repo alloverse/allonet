@@ -155,13 +155,13 @@ static void handle_grabs(allo_state *const state, allo_entity *const avatar, con
     if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
 
     cJSON* const trcj = cJSON_GetObjectItem(grabbed->components, "translation_constraint");
-    allo_vector translation_constraint = (cJSON_GetArraySize(trcj) == 3) ?
-      (allo_vector){ cJSON_GetArrayItem(trcj, 0)->valuedouble, cJSON_GetArrayItem(trcj, 1)->valuedouble , cJSON_GetArrayItem(trcj, 2)->valuedouble } :
-      (allo_vector){ 1,1,1 };
+    allo_vector translation_constraint = { 1,1,1 };
+    if (cJSON_GetArraySize(trcj) == 3)
+        translation_constraint = (allo_vector){ cJSON_GetArrayItem(trcj, 0)->valuedouble, cJSON_GetArrayItem(trcj, 1)->valuedouble , cJSON_GetArrayItem(trcj, 2)->valuedouble };
     cJSON* const rcj = cJSON_GetObjectItem(grabbed->components, "rotation_constraint");
-    allo_vector rotation_constraint = (cJSON_GetArraySize(rcj) == 3) ?
-      (allo_vector) {cJSON_GetArrayItem(rcj, 0)->valuedouble, cJSON_GetArrayItem(rcj, 1)->valuedouble, cJSON_GetArrayItem(rcj, 2)->valuedouble } :
-      (allo_vector) {1, 1, 1};
+    allo_vector rotation_constraint = { 1, 1, 1 };
+    if(cJSON_GetArraySize(rcj) == 3)
+      rotation_constraint = (allo_vector) {cJSON_GetArrayItem(rcj, 0)->valuedouble, cJSON_GetArrayItem(rcj, 1)->valuedouble, cJSON_GetArrayItem(rcj, 2)->valuedouble };
     
 
     // where is the hand?

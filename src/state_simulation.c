@@ -152,7 +152,18 @@ static void handle_grabs(allo_state *const state, allo_entity *const avatar, con
         actuated = state_get_entity(state, actuate_on);
       }
     }
-    if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }    
+    if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
+
+    cJSON* const trcj = cJSON_GetObjectItem(grabbed->components, "translation_constraint");
+    allo_vector translation_constraint = (cJSON_GetArraySize(trcj) == 3) ?
+      (allo_vector){ cJSON_GetArrayItem(trcj, 0)->valuedouble, cJSON_GetArrayItem(trcj, 1)->valuedouble , cJSON_GetArrayItem(trcj, 2)->valuedouble } :
+      (allo_vector){ 1,1,1 };
+    cJSON* const rcj = cJSON_GetObjectItem(grabbed->components, "rotation_constraint");
+    allo_vector rotation_constraint = (cJSON_GetArraySize(rcj) == 3) ?
+      (allo_vector) {cJSON_GetArrayItem(rcj, 0)->valuedouble, cJSON_GetArrayItem(rcj, 1)->valuedouble, cJSON_GetArrayItem(rcj, 2)->valuedouble } :
+      (allo_vector) {1, 1, 1};
+    
+
     // where is the hand?
     allo_m4x4 parent_from_grabber_transform = entity_get_transform(grabber);
     allo_m4x4 world_from_grabber_transform = state_convert_coordinate_space(state, parent_from_grabber_transform, entity_get_parent(state, grabber), NULL);

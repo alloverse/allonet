@@ -58,7 +58,7 @@ static allo_m4x4 constrain_head_pitch(allo_m4x4 transform)
   double pitch = allo_vector_angle(ground_direction, direction);
   if (direction.y < 0) pitch *= -1;
   allo_m4x4 constrainer = allo_m4x4_rotate(pitch, (allo_vector){1, 0, 0});
-  return allo_m4x4_concat(constrainer, transform);
+  return allo_m4x4_concat(transform, constrainer);
 }
 
 static allo_m4x4 create_movement(allo_m4x4 head_transform, double yaw, double xmovement, double zmovement)
@@ -70,7 +70,7 @@ static allo_m4x4 create_movement(allo_m4x4 head_transform, double yaw, double xm
   allo_m4x4 rotation = allo_m4x4_rotate(yaw, (allo_vector) { 0, -1, 0 });
   allo_m4x4 translation = allo_m4x4_translate((allo_vector) { xmovement, 0, zmovement });
   // then combine head transform, rotation and translation to create a movement matrix,
-  return allo_m4x4_concat(inverse_head, allo_m4x4_concat(translation, allo_m4x4_concat(head_transform, rotation)));
+  return allo_m4x4_concat(allo_m4x4_concat(allo_m4x4_concat(rotation, head_transform), translation), inverse_head);
 }
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt)
@@ -92,19 +92,19 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_clien
 
   // now we gotta compensate: rotating the avatar will MOVE the head if it's not in origin, so we'll have to move
   // the avatar so the head stays in place.
-  allo_m4x4 head_worldcoords = allo_m4x4_concat(raw_head_transform, old_transform);
+  allo_m4x4 head_worldcoords = allo_m4x4_concat(old_transform, raw_head_transform);
 
   allo_m4x4 just_rotation = create_movement(head_transform, intent->yaw, 0, 0);
-  allo_m4x4 new_transform_r = allo_m4x4_concat(just_rotation, old_positional_transform);
-  allo_m4x4 new_head_worldcoords = allo_m4x4_concat(raw_head_transform, new_transform_r);
+  allo_m4x4 new_transform_r = allo_m4x4_concat(old_positional_transform, just_rotation);
+  allo_m4x4 new_head_worldcoords = allo_m4x4_concat(new_transform_r, raw_head_transform);
   allo_vector a = allo_m4x4_transform(head_worldcoords, (allo_vector){ 0, 0, 0 }, true);
   allo_vector b = allo_m4x4_transform(new_head_worldcoords, (allo_vector){ 0, 0, 0 }, true);
   allo_vector head_movement = allo_vector_subtract(a, b);
   allo_m4x4 keep_head_centered = allo_m4x4_translate(head_movement);
 
   // Now calculate the new transform for the root entity
-  allo_m4x4 new_transform = allo_m4x4_concat(movement, old_positional_transform);
-  allo_m4x4 new_transform2 = allo_m4x4_concat(new_transform, keep_head_centered);
+  allo_m4x4 new_transform = allo_m4x4_concat(old_positional_transform, movement);
+  allo_m4x4 new_transform2 = allo_m4x4_concat(keep_head_centered, new_transform);
 
   entity_set_transform(avatar, new_transform2);
 }

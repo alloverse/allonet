@@ -236,6 +236,8 @@ void add_dummy(alloserver *serv)
   ));
   cJSON_AddItemToObject(button, "grabbable", cjson_create_object(
     "actuate_on", cJSON_CreateString("$parent"),
+    "translation_constraint", cjson_create_list(cJSON_CreateNumber(1), cJSON_CreateNumber(0), cJSON_CreateNumber(1)),
+    "rotation_constraint", cjson_create_list(cJSON_CreateNumber(0), cJSON_CreateNumber(1), cJSON_CreateNumber(0)),
     NULL
   ));
 

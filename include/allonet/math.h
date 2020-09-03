@@ -4,17 +4,30 @@
 #pragma pack(push)
 #pragma pack(1)
 
-typedef struct allo_vector
+typedef union allo_vector
 {
-	double x, y, z;
+	struct {
+		double x, y, z;
+	};
+	double v[3];
 } allo_vector;
 
 extern allo_vector allo_vector_subtract(allo_vector l, allo_vector r);
+extern allo_vector allo_vector_add(allo_vector l, allo_vector r);
+extern allo_vector allo_vector_mul(allo_vector l, allo_vector r);
+extern allo_vector allo_vector_scale(allo_vector l, double r);
+extern allo_vector allo_vector_div(allo_vector l, allo_vector r);
+extern allo_vector allo_vector_normalize(allo_vector l);
 extern double allo_vector_dot(allo_vector l, allo_vector r);
 extern double allo_vector_length(allo_vector l);
 extern double allo_vector_angle(allo_vector l, allo_vector r);
 extern char *allo_vec_string(allo_vector l);
 
+typedef struct allo_rotation
+{
+	double angle;
+	allo_vector axis;
+} allo_rotation;
 
 
 // column major transformation matrix
@@ -39,5 +52,6 @@ extern allo_m4x4 allo_m4x4_interpolate(allo_m4x4 l, allo_m4x4 r, double fraction
 extern allo_m4x4 allo_m4x4_inverse(allo_m4x4 m);
 extern allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional);
 extern allo_vector allo_m4x4_get_position(allo_m4x4 l);
+extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
 extern char *allo_m4x4_string(allo_m4x4 m);
 #pragma pack(pop)

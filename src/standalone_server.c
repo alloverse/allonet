@@ -20,7 +20,20 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
 
 static void clients_changed(alloserver* serv, alloserver_client* added, alloserver_client* removed)
 {
-  // todo: delete entities for disconnected client
+  if (removed) {
+    allo_entity* entity = serv->state.entities.lh_first;
+    while (entity)
+    {
+      allo_entity* to_delete = entity;
+      entity = entity->pointers.le_next;
+      if (strcmp(to_delete->owner_agent_id, removed->agent_id) == 0)
+      {
+        printf("Removing entity %s for %s\n", to_delete->id, to_delete->owner_agent_id);
+        LIST_REMOVE(to_delete, pointers);
+        entity_destroy(to_delete);
+      }
+    }
+  }
 }
 
 static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent *intent)
@@ -55,7 +68,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
 
   allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
   cJSON* comp = NULL;
-  for (cJSON* comp = comps->child; comp != NULL;)
+  for (cJSON* comp = comps->child; comp != NULL;) 
   {
     cJSON* next = comp->next;
     cJSON_DeleteItemFromObject(entity->components, comp->string);
@@ -64,9 +77,13 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
     comp = next;
   }
 
-  cJSON_ArrayForEach(comp, rmcomps)
+  assert(cJSON_GetArraySize(comps) == 0);
+  cJSON_Delete(comps);
+
+  cJSON* compname;
+  cJSON_ArrayForEach(compname, rmcomps)
   {
-    cJSON_DeleteItemFromObject(entity->components, comp->valuestring);
+    cJSON_DeleteItemFromObject(entity->components, compname->valuestring);
   }
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);

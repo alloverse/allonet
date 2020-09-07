@@ -222,9 +222,13 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
   LIST_INSERT_HEAD(&state->entities, e, pointers);
 
 
-  cJSON* child = NULL;
-  cJSON_ArrayForEach(child, children) {
-    allo_state_add_entity_from_spec(state, agent_id, child, eid);
+  cJSON* child = children ? children->child : NULL;
+  while (child) 
+  {
+    cJSON* next = child->next;
+    cJSON* spec = cJSON_DetachItemViaPointer(children, child);
+    allo_state_add_entity_from_spec(state, agent_id, spec, eid);
+    child = next;
   }
   return e;
 }

@@ -304,7 +304,7 @@ bool alloserv_run_standalone(int port)
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", port);
   int allosocket = allo_socket_for_select(serv);
 
-  add_dummy(serv);
+  //add_dummy(serv);
 
   while (1) {
     ENetSocketSet set;

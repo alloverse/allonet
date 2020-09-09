@@ -29,7 +29,7 @@ static int l_alloclient_create (lua_State *L)
 }
 
 static int server_count = 0;
-static int l_alloserv_start_standalone(lua_State* L)
+static int l_alloserv_run_standalone(lua_State* L)
 {
   int port = luaL_checkint(L, 1);
   server_count++;
@@ -45,10 +45,33 @@ static int l_alloserv_standalone_server_count(lua_State* L)
   return 1;
 }
 
+static int l_alloserv_start_standalone(lua_State* L)
+{
+  int port = luaL_checkint(L, 1);
+  server_count++;
+  int allosocket = alloserv_start_standalone(port);
+  lua_pushinteger(L, allosocket);
+  return 1;
+}
+
+static int l_alloserv_poll_standalone(lua_State* L)
+{
+  int allosocket = luaL_checkint(L, 1);
+  bool done_successfully = alloserv_poll_standalone(allosocket);
+  if (done_successfully == false)
+  {
+    server_count--;
+  }
+  lua_pushboolean(L, done_successfully);
+  return 1;
+}
+
 static const struct luaL_Reg allonet [] =
 {
     {"create", l_alloclient_create},
+    {"run_standalone_server", l_alloserv_run_standalone},
     {"start_standalone_server", l_alloserv_start_standalone},
+    {"poll_standalone_server", l_alloserv_poll_standalone},
     {"standalone_server_count", l_alloserv_standalone_server_count},
     {NULL, NULL}
 };

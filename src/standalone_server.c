@@ -285,12 +285,32 @@ void add_dummy(alloserver *serv)
   allo_state_add_entity_from_spec(&serv->state, NULL, root, NULL);
 }
 
+bool alloserv_poll_standalone(int allosocket);
+int alloserv_start_standalone(int port);
+
 bool alloserv_run_standalone(int port)
+{
+  int allosocket = alloserv_start_standalone(port);
+  if (allosocket == -1)
+  {
+    return false;
+  }
+
+  while (1) {
+    if (alloserv_poll_standalone(allosocket) == false)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+int alloserv_start_standalone(int port)
 {
   if (!allo_initialize(false))
   {
     fprintf(stderr, "Unable to initialize allostate");
-    return false;
+    return -1;
   }
 
   int retries = 3;
@@ -312,7 +332,7 @@ bool alloserv_run_standalone(int port)
 
   if (!serv) {
     perror("errno");
-    return false;
+    return -1;
   }
   serv->clients_callback = clients_changed;
   serv->raw_indata_callback = received_from_client;
@@ -323,21 +343,23 @@ bool alloserv_run_standalone(int port)
 
   //add_dummy(serv);
 
-  while (1) {
-    ENetSocketSet set;
-    ENET_SOCKETSET_EMPTY(set);
-    ENET_SOCKETSET_ADD(set, allosocket);
+  return allosocket;
+}
 
-    int selectr = enet_socketset_select(allosocket, &set, NULL, 10);
-    if (selectr < 0) {
-      perror("select failed, terminating");
-      return false;
-    }
-    else
-    {
-      step(0.01);
-    }
+bool alloserv_poll_standalone(int allosocket)
+{
+  ENetSocketSet set;
+  ENET_SOCKETSET_EMPTY(set);
+  ENET_SOCKETSET_ADD(set, allosocket);
+
+  int selectr = enet_socketset_select(allosocket, &set, NULL, 10);
+  if (selectr < 0) {
+    perror("select failed, terminating");
+    return false;
   }
-
+  else
+  {
+    step(0.01);
+  }
   return true;
 }

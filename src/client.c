@@ -34,6 +34,7 @@ typedef struct {
     ENetPeer *peer;
     OpusEncoder *opus_encoder;
     allo_client_intent *latest_intent;
+    int64_t latest_intent_ts;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
     scheduler jobs;
@@ -262,7 +263,12 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
 
 void alloclient_poll(alloclient *client)
 {
-    send_latest_intent(client);
+    int64_t ts = get_ts_mono();
+    // send intent at maximum 20hz
+    if(ts > _internal(client)->latest_intent_ts + (1000/20)) {
+        send_latest_intent(client);
+        _internal(client)->latest_intent_ts = ts;
+    }
 
     ENetEvent event;
     while (enet_host_service(_internal(client)->host, & event, 10) > 0)

@@ -33,9 +33,9 @@ allo_vector cjson2vec(const cJSON *veclist)
     const cJSON *z = cJSON_GetArrayItem(veclist, 2);
     if (!x || !y || !z)
     {
-      return (allo_vector) {0, 0, 0};
+      return (allo_vector) {{0, 0, 0}};
     }
-    return (allo_vector){x->valuedouble, y->valuedouble, z->valuedouble};
+    return (allo_vector){{x->valuedouble, y->valuedouble, z->valuedouble}};
 }
 
 cJSON *vec2cjson(allo_vector vec)

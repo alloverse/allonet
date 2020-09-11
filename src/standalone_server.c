@@ -135,7 +135,7 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
 
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)
 {
-  cJSON* cmd = cJSON_Parse(data);
+  cJSON* cmd = cJSON_Parse((const char*)data);
   if (channel == CHANNEL_STATEDIFFS)
   {
     const cJSON* ntvintent = cJSON_GetObjectItem(cmd, "intent");

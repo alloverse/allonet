@@ -8,44 +8,44 @@
 
 allo_vector allo_vector_subtract(allo_vector l, allo_vector r)
 {
-    return (allo_vector){
+    return (allo_vector){{
         l.x - r.x,
         l.y - r.y,
         l.z - r.z
-    };
+    }};
 }
 
 allo_vector allo_vector_add(allo_vector l, allo_vector r)
 {
-    return (allo_vector) {
+    return (allo_vector) {{
         l.x + r.x,
         l.y + r.y,
         l.z + r.z
-    };
+    }};
 }
 allo_vector allo_vector_mul(allo_vector l, allo_vector r)
 {
-    return (allo_vector) {
+    return (allo_vector) {{
         l.x * r.x,
         l.y * r.y,
         l.z * r.z
-    };
+    }};
 }
 extern allo_vector allo_vector_scale(allo_vector l, double r)
 {
-    return (allo_vector) {
+    return (allo_vector) {{
         l.x* r,
         l.y* r,
         l.z* r
-    };
+    }};
 }
 allo_vector allo_vector_div(allo_vector l, allo_vector r)
 {
-  return (allo_vector) {
+  return (allo_vector) {{
       l.x / r.x,
       l.y / r.y,
       l.z / r.z
-  };
+  }};
 }
 
 allo_vector allo_vector_normalize(allo_vector l)
@@ -289,16 +289,16 @@ extern allo_m4x4 allo_m4x4_inverse(allo_m4x4 ma)
 
 allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional)
 {
-	return (allo_vector) {
+	return (allo_vector) {{
 		l.c1r1 * r.x + l.c2r1 * r.y + l.c3r1 * r.z + l.c4r1 * positional,
 		l.c1r2 * r.x + l.c2r2 * r.y + l.c3r2 * r.z + l.c4r2 * positional,
 		l.c1r3 * r.x + l.c2r3 * r.y + l.c3r3 * r.z + l.c4r3 * positional
-	};
+	}};
 }
 
 extern allo_vector allo_m4x4_get_position(allo_m4x4 l)
 {
-  return allo_m4x4_transform(l, (allo_vector) { 0, 0, 0 }, true);
+  return allo_m4x4_transform(l, (allo_vector) {{ 0, 0, 0 }}, true);
 }
 
 extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l)
@@ -306,10 +306,10 @@ extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l)
   allo_rotation rot;
   double* m = l.v;
 
-  rot.axis = allo_vector_normalize((allo_vector) { m[6] - m[9], m[8] - m[2], m[1] - m[4] });
+  rot.axis = allo_vector_normalize((allo_vector) {{ m[6] - m[9], m[8] - m[2], m[1] - m[4] }});
 
-  allo_vector lengths = { vec3_length(m + 0), vec3_length(m + 4), vec3_length(m + 8) };
-  allo_vector diagonal = { m[0], m[5], m[10] };
+  allo_vector lengths = {{ vec3_length(m + 0), vec3_length(m + 4), vec3_length(m + 8) }};
+  allo_vector diagonal = {{ m[0], m[5], m[10] }};
   allo_vector scaled_diagonal = allo_vector_div(diagonal, lengths);
   rot.angle = acosf((scaled_diagonal.x + scaled_diagonal.y + scaled_diagonal.z - 1.) / 2.);
 

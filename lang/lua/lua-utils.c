@@ -67,7 +67,7 @@ allo_client_poses get_table_poses(lua_State *L, const char *key)
 }
 allo_client_pose get_table_pose(lua_State *L, const char *key)
 {
-  allo_client_pose result = { allo_m4x4_identity(), { NULL, {0,0,0} } };
+  allo_client_pose result = { allo_m4x4_identity(), { NULL, {{0,0,0}} } };
     lua_pushstring(L, key);
     lua_gettable(L, -2);
     if (!lua_isnil(L, -1))
@@ -80,7 +80,7 @@ allo_client_pose get_table_pose(lua_State *L, const char *key)
 }
 allo_client_pose_grab get_table_grab(lua_State* L, const char* key)
 {
-  allo_client_pose_grab result = { NULL, {0,0,0} };
+  allo_client_pose_grab result = { NULL, {{0,0,0}} };
   lua_pushstring(L, key);
   lua_gettable(L, -2);
   if (!lua_isnil(L, -1))

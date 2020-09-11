@@ -48,16 +48,16 @@ static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, 
 // removes pitch from transform so it becomes a suitable walking direction
 static allo_m4x4 constrain_head_pitch(allo_m4x4 transform)
 {
-  allo_vector origin = {0, 0, 0};
-  allo_vector forward = {0, 0, 1};
+  allo_vector origin = {{0, 0, 0}};
+  allo_vector forward = {{0, 0, 1}};
   allo_vector position = allo_m4x4_transform(transform, origin, true);
   allo_vector moved = allo_m4x4_transform(transform, forward, true);
   allo_vector direction = allo_vector_subtract(moved, position);  
-  allo_vector ground_direction = allo_vector_subtract(direction, (allo_vector){0, direction.y, 0});
+  allo_vector ground_direction = allo_vector_subtract(direction, (allo_vector){{0, direction.y, 0}});
   // negate any vertical angle
   double pitch = allo_vector_angle(ground_direction, direction);
   if (direction.y < 0) pitch *= -1;
-  allo_m4x4 constrainer = allo_m4x4_rotate(pitch, (allo_vector){1, 0, 0});
+  allo_m4x4 constrainer = allo_m4x4_rotate(pitch, (allo_vector){{1, 0, 0}});
   return allo_m4x4_concat(transform, constrainer);
 }
 
@@ -67,8 +67,8 @@ static allo_m4x4 create_movement(allo_m4x4 head_transform, double yaw, double xm
   // intent movement is always relative to the facing direction of the user, controlled
   // by the head transform and yaw intent.
   // Begin by creating a matrix representing that yaw and one for user-relative translation...
-  allo_m4x4 rotation = allo_m4x4_rotate(yaw, (allo_vector) { 0, -1, 0 });
-  allo_m4x4 translation = allo_m4x4_translate((allo_vector) { xmovement, 0, zmovement });
+  allo_m4x4 rotation = allo_m4x4_rotate(yaw, (allo_vector) {{ 0, -1, 0 }});
+  allo_m4x4 translation = allo_m4x4_translate((allo_vector) {{ xmovement, 0, zmovement }});
   // then combine head transform, rotation and translation to create a movement matrix,
   return allo_m4x4_concat(allo_m4x4_concat(allo_m4x4_concat(rotation, head_transform), translation), inverse_head);
 }
@@ -87,7 +87,7 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_clien
   allo_m4x4 movement = create_movement(head_transform, intent->yaw, intent->xmovement * distance, intent->zmovement * distance);
 
   // which can then be concat'd into the old transform.
-  allo_vector old_position = allo_m4x4_transform(old_transform, (allo_vector){ 0, 0, 0 }, true);
+  allo_vector old_position = allo_m4x4_transform(old_transform, (allo_vector){{ 0, 0, 0 }}, true);
   allo_m4x4 old_positional_transform = allo_m4x4_translate(old_position);
 
   // now we gotta compensate: rotating the avatar will MOVE the head if it's not in origin, so we'll have to move
@@ -97,8 +97,8 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_clien
   allo_m4x4 just_rotation = create_movement(head_transform, intent->yaw, 0, 0);
   allo_m4x4 new_transform_r = allo_m4x4_concat(old_positional_transform, just_rotation);
   allo_m4x4 new_head_worldcoords = allo_m4x4_concat(new_transform_r, raw_head_transform);
-  allo_vector a = allo_m4x4_transform(head_worldcoords, (allo_vector){ 0, 0, 0 }, true);
-  allo_vector b = allo_m4x4_transform(new_head_worldcoords, (allo_vector){ 0, 0, 0 }, true);
+  allo_vector a = allo_m4x4_transform(head_worldcoords, (allo_vector){{ 0, 0, 0 }}, true);
+  allo_vector b = allo_m4x4_transform(new_head_worldcoords, (allo_vector){{ 0, 0, 0 }}, true);
   allo_vector head_movement = allo_vector_subtract(a, b);
   allo_m4x4 keep_head_centered = allo_m4x4_translate(head_movement);
 
@@ -157,13 +157,13 @@ static void handle_grabs(allo_state *const state, allo_entity *const avatar, con
     if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
 
     cJSON* const trcj = cJSON_GetObjectItem(grabbable, "translation_constraint");
-    allo_vector translation_constraint = { 1,1,1 };
+    allo_vector translation_constraint = {{ 1,1,1 }};
     if (cJSON_GetArraySize(trcj) == 3)
-      translation_constraint = (allo_vector){ cJSON_GetArrayItem(trcj, 0)->valuedouble, cJSON_GetArrayItem(trcj, 1)->valuedouble , cJSON_GetArrayItem(trcj, 2)->valuedouble };
+      translation_constraint = (allo_vector){{ cJSON_GetArrayItem(trcj, 0)->valuedouble, cJSON_GetArrayItem(trcj, 1)->valuedouble , cJSON_GetArrayItem(trcj, 2)->valuedouble }};
     cJSON* const rcj = cJSON_GetObjectItem(grabbable, "rotation_constraint");
-    allo_vector rotation_constraint = { 1, 1, 1 };
+    allo_vector rotation_constraint = {{ 1, 1, 1 }};
     if(cJSON_GetArraySize(rcj) == 3)
-      rotation_constraint = (allo_vector) {cJSON_GetArrayItem(rcj, 0)->valuedouble, cJSON_GetArrayItem(rcj, 1)->valuedouble, cJSON_GetArrayItem(rcj, 2)->valuedouble };
+      rotation_constraint = (allo_vector) {{cJSON_GetArrayItem(rcj, 0)->valuedouble, cJSON_GetArrayItem(rcj, 1)->valuedouble, cJSON_GetArrayItem(rcj, 2)->valuedouble }};
     
 
     // where is the hand?
@@ -193,13 +193,13 @@ static allo_m4x4 _constrain(allo_m4x4 orig, allo_m4x4 update, allo_vector tconst
   // figure out a new translation that picks the axes from 'update' that are >0 in tconstraint, and keeps the rest from 'orig'
   allo_vector oldT = allo_m4x4_get_position(orig);
   allo_vector newT = allo_m4x4_get_position(update);
-  allo_vector tconstraint_inv = allo_vector_subtract((allo_vector) { 1, 1, 1 }, tconstraint);
+  allo_vector tconstraint_inv = allo_vector_subtract((allo_vector) {{ 1, 1, 1 }}, tconstraint);
   allo_vector constrainedTranslation = allo_vector_add(allo_vector_mul(oldT, tconstraint_inv), allo_vector_mul(newT, tconstraint));
 
   // not sure how to do the same for rotation. let's pretend the axis-angle pair can be cherry-picked from; it sorta-kinda works at least.
   allo_rotation oldR = allo_m4x4_get_rotation(orig);
   allo_rotation newR = allo_m4x4_get_rotation(update);
-  allo_vector rconstraint_inv = allo_vector_subtract((allo_vector) { 1, 1, 1 }, rconstraint);
+  allo_vector rconstraint_inv = allo_vector_subtract((allo_vector) {{ 1, 1, 1 }}, rconstraint);
   allo_vector constrainedAxis = allo_vector_add(allo_vector_mul(oldR.axis, rconstraint_inv), allo_vector_mul(newR.axis, rconstraint));
 
   // concat for a new and fresh transform for our entity!

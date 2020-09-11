@@ -261,17 +261,22 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     }
 }
 
-void alloclient_poll(alloclient *client)
+bool alloclient_poll(alloclient *client, int timeout_ms)
 {
     int64_t ts = get_ts_mono();
+    int64_t deadline = ts + timeout_ms;
+    
     // send intent at maximum 20hz
     if(ts > _internal(client)->latest_intent_ts + (1000/20)) {
         send_latest_intent(client);
         _internal(client)->latest_intent_ts = ts;
     }
-
+    
+    ts = get_ts_mono();
+    int64_t servicing_timeout = MAX(deadline - ts, 0);
     ENetEvent event;
-    while (enet_host_service(_internal(client)->host, & event, 10) > 0)
+    bool any_messages = false;
+    while (enet_host_service(_internal(client)->host, & event, servicing_timeout) > 0)
     {
         switch (event.type)
         {
@@ -286,11 +291,15 @@ void alloclient_poll(alloclient *client)
                 client->disconnected_callback(client, alloerror_connection_lost, "Lost connection to Place");
                 // We might now be deallocated (that's the standard thing to do in the disconnected callback).
                 // Stop processing events.
-                return;
+                return true;
             }
         default: break;
         }
+        any_messages = true;
+        ts = get_ts_mono();
+        servicing_timeout = MAX(deadline - ts, 0);
     }
+    return any_messages;
 }
 
 void alloclient_set_intent(alloclient* client, allo_client_intent *intent)

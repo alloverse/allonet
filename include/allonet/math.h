@@ -4,6 +4,11 @@
 #pragma pack(push)
 #pragma pack(1)
 
+#ifndef MAX
+#define MAX(a,b) ((a) > (b) ? a : b)
+#define MIN(a,b) ((a) < (b) ? a : b)
+#endif
+
 typedef union allo_vector
 {
 	struct {

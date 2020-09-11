@@ -19,8 +19,7 @@ get you started:
         json.encode({})
     )
     while true do
-        client:poll()
-        sleep(1.0/20.0) -- poll at 20hz
+        client:poll(1.0/20.0) -- poll at 20hz
     end
 
 ## Full API
@@ -42,7 +41,7 @@ Disconnect from an alloplace and free all internal state.
 even if you're already disconnected remotely (and you
 notice from the disconnect callback)
 
-### `client:poll()`
+### `client:poll(timeout)`
 
 Sends and receives network data, and performs other housekeeping tasks.
 Must be called at least at 20hz, preferrably more often.

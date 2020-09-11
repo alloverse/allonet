@@ -120,7 +120,8 @@ static int l_alloclient_disconnect (lua_State *L)
 static int l_alloclient_poll (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    alloclient_poll(lclient->client);
+    double timeout = luaL_checknumber(L, 2);
+    alloclient_poll(lclient->client, timeout * 1000);
     return 0;
 }
 

@@ -126,9 +126,14 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
  */
 void alloclient_disconnect(alloclient *client, int reason);
 
-/** Call regularly at 20hz to process incoming and outgoing network traffic.
+/** Send and receive buffered data synchronously now. Loops over all queued
+ network messages until the queue is empty.
+ @param timeout_ms how many ms to wait for incoming messages before giving up. Default 10.
+ @discussion Call regularly at 20hz to process incoming and outgoing network traffic.
+ @return bool whether any messages were parsed
  */
-void alloclient_poll(alloclient *client);
+bool alloclient_poll(alloclient *client, int timeout_ms);
+
 
 /** Have one of your entites interact with another entity.
   * Use this same method to send back a response when you get a request. 

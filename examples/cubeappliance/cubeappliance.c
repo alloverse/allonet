@@ -94,14 +94,14 @@ int main(int argc, char **argv)
     // step out of the way
     intent->zmovement = 1;
     alloclient_set_intent(client, intent);
-    alloclient_poll(client);
+    alloclient_poll(client, 10);
     sleep(1);
     intent->zmovement = 0;
     alloclient_set_intent(client, intent);
     
     for(;;)
     {
-        alloclient_poll(client);
+        alloclient_poll(client, 10);
     }
     return 0;
 }

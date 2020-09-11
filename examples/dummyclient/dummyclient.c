@@ -301,7 +301,7 @@ int main(int argc, char **argv)
             alloclient_set_intent(client, intent);
         }
 #endif
-        alloclient_poll(client);
+        alloclient_poll(client, 10);
 
         allo_interaction *inter = NULL;
         while((inter = alloclient_pop_interaction(client))) {

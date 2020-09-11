@@ -40,5 +40,5 @@ end)
 -- In an ideal app, poll() at 20hz, not as fast as you can :)
 -- But you have to poll regularly, or nothing works.
 while true do
-    client:poll()
+    client:poll(1.0/20.0)
 end

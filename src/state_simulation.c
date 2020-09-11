@@ -136,7 +136,6 @@ static allo_m4x4 _constrain(allo_m4x4 orig, allo_m4x4 update, allo_vector tconst
 
 static void handle_grabs(allo_state *const state, allo_entity *const avatar, const allo_client_intent *const intent, double dt)
 {
-  dt = 0.01;
   const allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
   allo_entity* grabbers[] = { get_child_with_pose(state, avatar, "hand/left"), get_child_with_pose(state, avatar, "hand/right") };
   for (int i = 0; i < 2; i++)

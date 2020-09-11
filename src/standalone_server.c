@@ -45,8 +45,8 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
 
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  const int version = cJSON_GetArrayItem(body, 2)->valueint;
-  cJSON* identity = cJSON_GetArrayItem(body, 4);
+  const int version = cJSON_GetArrayItem(body, 2)->valueint; (void)version;
+  cJSON* identity = cJSON_GetArrayItem(body, 4); (void)identity;
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
 
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);
@@ -67,7 +67,6 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
 
   allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
-  cJSON* comp = NULL;
   for (cJSON* comp = comps->child; comp != NULL;) 
   {
     cJSON* next = comp->next;
@@ -176,7 +175,7 @@ static void broadcast_server_state(alloserver* serv)
 
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
-    serv->send(serv, client, CHANNEL_STATEDIFFS, json, jsonlength + 1);
+    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength + 1);
   }
   free(json);
 }
@@ -192,7 +191,7 @@ static void step(double dt)
     intents[count++] = client->intent;
     if (count == 32) break;
   }
-  allo_simulate(&serv->state, dt, intents, count);
+  allo_simulate(&serv->state, dt, (allo_client_intent**)intents, count);
   broadcast_server_state(serv);
 }
 
@@ -210,7 +209,7 @@ static cJSON* spec_located_at(float x, float y, float z, float sz)
 {
   return cjson_create_object(
     "transform", cjson_create_object(
-      "matrix", m2cjson(allo_m4x4_translate((allo_vector) { x, y, z })),
+      "matrix", m2cjson(allo_m4x4_translate((allo_vector) {{ x, y, z }})),
       NULL
     ),
     "geometry", cjson_create_object(

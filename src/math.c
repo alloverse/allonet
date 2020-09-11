@@ -156,11 +156,11 @@ extern allo_m4x4 allo_m4x4_interpolate(allo_m4x4 l, allo_m4x4 r, double fraction
 
 extern allo_m4x4 allo_m4x4_inverse(allo_m4x4 ma)
 {
-	double *m = ma.v;
 	allo_m4x4 out;
   mat4_inverse(out.v, ma.v); return out;
 
   // this code seems to be correct, but I'm gonna use theirs anyway.
+  double *m = ma.v;
   double* inv = out.v;
 
   inv[0] = m[5] * m[10] * m[15] -

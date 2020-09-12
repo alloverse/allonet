@@ -45,13 +45,6 @@ static void alloserv_client_free(alloserver_client *client)
     free(client);
 }
 
-static void allo_free(alloserver *serv)
-{
-    enet_host_destroy(_servinternal(serv)->enet);
-    free(_servinternal(serv));
-    free(serv);
-}
-
 static bool allo_poll(alloserver *serv, int timeout)
 {
     ENetEvent event;
@@ -158,7 +151,7 @@ alloserver *allo_listen(int port)
             stderr, 
              "An error occurred while trying to create an ENet server host.\n"
         );
-        allo_free(serv);
+        alloserv_stop(serv);
         return NULL;
     }
 
@@ -168,6 +161,13 @@ alloserver *allo_listen(int port)
     LIST_INIT(&serv->state.entities);
     
     return serv;
+}
+
+void alloserv_stop(alloserver* serv)
+{
+  enet_host_destroy(_servinternal(serv)->enet);
+  free(_servinternal(serv));
+  free(serv);
 }
 
 int allo_socket_for_select(alloserver *serv)

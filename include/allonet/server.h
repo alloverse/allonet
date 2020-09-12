@@ -57,13 +57,17 @@ struct alloserver {
 
 alloserver *allo_listen(int port);
 
+void alloserv_stop(alloserver* serv);
+
 // run a minimal standalone C server. returns when it shuts down. false means it broke.
 bool alloserv_run_standalone(int port);
+
 // start it but don't run it. returns allosocket.
 int alloserv_start_standalone(int port);
-// call this frequently to run it. returns false if server has broken and shut down.
+// call this frequently to run it. returns false if server has broken and shut down; then you should call stop on it to clean up.
 bool alloserv_poll_standalone(int allosocket);
-
+// and then call this to stop and clean up state.
+void alloserv_stop_standalone();
 
 
 // internal

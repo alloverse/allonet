@@ -298,9 +298,13 @@ bool alloserv_run_standalone(int port)
   while (1) {
     if (alloserv_poll_standalone(allosocket) == false)
     {
+      alloserv_stop_standalone();
       return false;
     }
   }
+
+  alloserv_stop_standalone();
+
   return true;
 }
 
@@ -311,6 +315,8 @@ int alloserv_start_standalone(int port)
     fprintf(stderr, "Unable to initialize allostate");
     return -1;
   }
+
+  assert(serv == NULL);
 
   int retries = 3;
   while (!serv)
@@ -331,6 +337,7 @@ int alloserv_start_standalone(int port)
 
   if (!serv) {
     perror("errno");
+    alloserv_stop_standalone();
     return -1;
   }
   serv->clients_callback = clients_changed;
@@ -361,4 +368,10 @@ bool alloserv_poll_standalone(int allosocket)
     step(0.01);
   }
   return true;
+}
+
+void alloserv_stop_standalone()
+{
+  alloserv_stop(serv);
+  serv = NULL;
 }

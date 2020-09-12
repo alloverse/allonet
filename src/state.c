@@ -218,7 +218,6 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
     cJSON_AddItemToObject(spec, "transform", transform);
   }
 
-  printf("Creating entity %s\n", e->id);
   LIST_INSERT_HEAD(&state->entities, e, pointers);
 
 

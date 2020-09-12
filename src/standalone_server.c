@@ -28,7 +28,6 @@ static void clients_changed(alloserver* serv, alloserver_client* added, alloserv
       entity = entity->pointers.le_next;
       if (strcmp(to_delete->owner_agent_id, removed->agent_id) == 0)
       {
-        printf("Removing entity %s for %s\n", to_delete->id, to_delete->owner_agent_id);
         LIST_REMOVE(to_delete, pointers);
         entity_destroy(to_delete);
       }

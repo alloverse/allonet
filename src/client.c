@@ -139,7 +139,6 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         allo_entity *entity = state_get_entity(&client->state, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
-            printf("Creating entity %s\n", entity->id);
             LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
         }
         
@@ -154,7 +153,6 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         allo_entity *to_delete = entity;
         entity = entity->pointers.le_next;
         if(cjson_find_in_array(deletes, to_delete->id) != -1) {
-            printf("Deleting entity %s\n", to_delete->id);
             LIST_REMOVE(to_delete, pointers);
             
             // if we find a decoder linked to the entity we remove it

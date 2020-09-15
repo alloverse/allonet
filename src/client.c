@@ -571,3 +571,9 @@ void alloclient_simulate(alloclient *client, double dt)
     client->state_callback(client, &client->state);
   }
 }
+
+double alloclient_get_time(alloclient* client)
+{
+    // heh sync with server will come later...
+    return get_ts_mono() / 1000.0;
+}

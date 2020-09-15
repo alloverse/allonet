@@ -237,6 +237,14 @@ static int l_alloclient_simulate(lua_State* L)
     return 0;
 }
 
+static int l_alloclient_get_time(lua_State *L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    double t = alloclient_get_time(lclient->client);
+    lua_pushnumber(L, t);
+    return 1;
+}
+
 ////// Callbacks from allonet
 static void state_callback(alloclient *client, allo_state *state)
 {
@@ -297,6 +305,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"set_audio_callback", l_alloclient_set_audio_callback},
     {"get_state", l_alloclient_get_state},
     {"simulate", l_alloclient_simulate},
+    {"get_time", l_alloclient_get_time},
     {NULL, NULL}
 };
 

@@ -183,4 +183,10 @@ void alloclient_request_asset(alloclient* client, const char* asset_id, const ch
   */
 void alloclient_simulate(alloclient* client, double dt);
 
+/** Get current estimated alloplace time that is hopefully uniform across all
+  * connected clients; or best-effort if it's out of sync.
+  * @return seconds since some arbitrary point in the past
+  */
+double alloclient_get_time(alloclient* client);
+
 #endif

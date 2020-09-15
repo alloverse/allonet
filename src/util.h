@@ -11,6 +11,7 @@
 #include <cJSON/cJSON.h>
 #include <allonet/state.h>
 
+// return milliseconds since... some time ago
 int64_t get_ts_mono(void);
 
 allo_vector cjson2vec(const cJSON *veclist);

@@ -316,6 +316,14 @@ extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l)
   return rot;
 }
 
+bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma)
+{
+  for (int i = 0; i < 16; i++)
+    if (fabs(a.v[i] - b.v[i]) > sigma)
+      return false;
+  return true;
+}
+
 extern char *allo_m4x4_string(allo_m4x4 m)
 {
     char *s = malloc(255);

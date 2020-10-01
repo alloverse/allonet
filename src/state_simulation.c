@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
-static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, double dt);
+static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt);
 static void handle_grabs(allo_state *state, allo_entity *avatar, const allo_client_intent *intent, double dt);
 
 static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name);
@@ -19,7 +19,7 @@ extern void allo_simulate(allo_state* state, double dt, const allo_client_intent
       return;
     allo_entity* head = get_child_with_pose(state, avatar, "head");
     move_avatar(avatar, head, intent, dt);
-    move_pose(state, avatar, intent, dt);
+    move_pose(state, avatar, intent, intents, intent_count, dt);
     handle_grabs(state, avatar, intent, dt);
   }
 }
@@ -109,24 +109,46 @@ static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_clien
   entity_set_transform(avatar, new_transform2);
 }
 
-static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, double dt)
+static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt)
 {
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
   {
     cJSON* rels = cJSON_GetObjectItem(entity->components, "relationships");
-    cJSON* parent = cJSON_GetObjectItem(rels, "parent");
+    const char* parent = cJSON_GetStringValue(cJSON_GetObjectItem(rels, "parent"));
     cJSON* intents = cJSON_GetObjectItem(entity->components, "intent");
-    cJSON* actuate_pose = cJSON_GetObjectItem(intents, "actuate_pose");
-    if (!parent || !actuate_pose || strcmp(avatar->id, parent->valuestring) != 0)
+    const char* actuate_pose = cJSON_GetStringValue(cJSON_GetObjectItem(intents, "actuate_pose"));
+    const char* from_avatar = cJSON_GetStringValue(cJSON_GetObjectItem(intents, "from_avatar"));
+
+    // don't care about entities that don't try to pose
+    if (!actuate_pose)
       continue;
-    const char* posename = actuate_pose->valuestring;
+    // only do the work in this call of move_pose if this entity is owned by the current avatar
+    if (entity->owner_agent_id && strcmp(entity->owner_agent_id, avatar->owner_agent_id) != 0)
+      continue;
+
+    // if this entity wants to actuate some _other_ agent's intent...
+    if (from_avatar)
+    {
+      for (int i = 0; i < intent_count; i++)
+      {
+        const allo_client_intent* other_intent = other_intents[i];
+        if (strcmp(from_avatar, other_intent->entity_id) == 0) {
+          intent = other_intent;
+          break;
+        }
+      }
+    }
 
     allo_m4x4 new_transform;
-    if (strcmp(posename, "hand/left") == 0) new_transform = intent->poses.left_hand.matrix;
-    else if (strcmp(posename, "hand/right") == 0) new_transform = intent->poses.right_hand.matrix;
-    else if (strcmp(posename, "head") == 0) new_transform = intent->poses.head.matrix;
+    if (strcmp(actuate_pose, "hand/left") == 0) new_transform = intent->poses.left_hand.matrix;
+    else if (strcmp(actuate_pose, "hand/right") == 0) new_transform = intent->poses.right_hand.matrix;
+    else if (strcmp(actuate_pose, "head") == 0) new_transform = intent->poses.head.matrix;
     else continue;
+
+    // ignore identity transform, since it probably means nothing has been set
+    if (allo_m4x4_equal(new_transform, allo_m4x4_identity(), 0.00001))
+      continue;
 
     entity_set_transform(entity, new_transform);
   }

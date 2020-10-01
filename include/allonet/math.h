@@ -58,5 +58,6 @@ extern allo_m4x4 allo_m4x4_inverse(allo_m4x4 m);
 extern allo_vector allo_m4x4_transform(allo_m4x4 l, allo_vector r, bool positional);
 extern allo_vector allo_m4x4_get_position(allo_m4x4 l);
 extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
+extern bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma);
 extern char *allo_m4x4_string(allo_m4x4 m);
 #pragma pack(pop)

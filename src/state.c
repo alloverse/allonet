@@ -77,6 +77,7 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
       ),
       NULL
     ),
+    "ack_state_rev", cJSON_CreateNumber(intent->ack_state_rev),
     NULL
   );
 }
@@ -104,6 +105,7 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
       .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "grab"))
     },
   };
+  intent->ack_state_rev = cjson_get_int64_value(cJSON_GetObjectItem(from, "ack_state_rev"));
   return intent;
 }
 

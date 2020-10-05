@@ -36,6 +36,7 @@ typedef struct allo_client_intent
     double yaw;       // rotation around x in radians
     double pitch;     // rotation around y in radians
     allo_client_poses poses;
+    uint64_t ack_state_rev;
 } allo_client_intent;
 
 extern allo_client_intent *allo_client_intent_create();

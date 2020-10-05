@@ -5,6 +5,7 @@
 
 #include <allonet/allonet.h>
 #include "util.h"
+#include "delta.h"
 
 static alloserver* serv;
 
@@ -150,6 +151,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
   cJSON_Delete(cmd);
 }
 
+static statehistory_t hist;
 static void broadcast_server_state(alloserver* serv)
 {
   cJSON* entities_rep = cJSON_CreateArray();
@@ -167,16 +169,18 @@ static void broadcast_server_state(alloserver* serv)
     "revision", cJSON_CreateNumber(serv->state.revision++),
     NULL
   );
-  char* json = cJSON_Print(map);
-  cJSON_Delete(map);
-
-  int jsonlength = strlen(json);
+  allo_delta_insert(hist, map);
 
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
+    cJSON *payload = allo_delta_compute(hist, client->intent->ack_state_rev);
+    char* json = cJSON_Print(payload);
+    cJSON_Delete(payload);
+
+    int jsonlength = strlen(json);
     serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength + 1);
+    free(json);
   }
-  free(json);
 }
 
 static void step(double dt)

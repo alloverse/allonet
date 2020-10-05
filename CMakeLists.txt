@@ -35,6 +35,7 @@ ENDIF()
 
 SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
+SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
@@ -65,6 +66,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/math.c
     ${SOURCE_FILES_PREFIX}/jobs.c
     ${SOURCE_FILES_PREFIX}/asset.c
+    ${SOURCE_FILES_PREFIX}/delta.h
+    ${SOURCE_FILES_PREFIX}/delta.c
     lib/mathc/mathc.c
 )
 
@@ -99,7 +102,7 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
-target_link_libraries(allonet enet cjson-static opus ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
+target_link_libraries(allonet enet cjson-static cjson_utils-static opus ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
 
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)
@@ -134,3 +137,7 @@ add_test(NAME allonet_jobs_test COMMAND allonet_jobs_test)
 add_executable(allonet_asset_test test/asset_test.c)
 target_link_libraries(allonet_asset_test allonet unity)
 add_test(NAME allonet_asset_test COMMAND allonet_asset_test)
+
+add_executable(allonet_delta_test test/delta_test.c)
+target_link_libraries(allonet_delta_test allonet unity cjson)
+add_test(NAME allonet_delta_test COMMAND allonet_delta_test)

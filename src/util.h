@@ -23,6 +23,7 @@ int cjson_find_in_array(cJSON *array, const char *value);
 void cjson_delete_from_array(cJSON *array, const char *value);
 cJSON *cjson_create_object(const char *key, cJSON *value, ...);
 cJSON *cjson_create_list(cJSON *value, ...);
+int64_t cjson_get_int64_value(cJSON *value);
 
 char *allo_strdup(const char *src); // null-safe
 char *allo_strndup(const char *src, size_t n);

@@ -120,6 +120,15 @@ cJSON *cjson_create_list(cJSON *value, ...)
     return parent;
 }
 
+int64_t cjson_get_int64_value(cJSON *value)
+{
+    if(value == NULL)
+    {
+        return 0;
+    }
+    return value->valuedouble;
+}
+
 char *allo_strdup(const char *src)
 {
     if(src == NULL)

@@ -77,7 +77,9 @@ extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
 extern allo_m4x4 entity_get_transform_in_coordinate_space(allo_state* state, allo_entity* entity, allo_entity* space);
 extern allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space);
-
+extern void allo_state_init(allo_state *state);
+extern void allo_state_destroy(allo_state *state);
+extern cJSON *allo_state_to_json(allo_state *state);
 /**
  * Describes an interaction to be sent or as received.
  * @field type: oneway, request, response or publication

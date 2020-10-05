@@ -173,6 +173,44 @@ allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_en
   return allo_m4x4_concat(newFromOld, m);
 }
 
+void allo_state_init(allo_state *state)
+{
+  state->revision = 1;
+  LIST_INIT(&state->entities);
+}
+
+void allo_state_destroy(allo_state *state)
+{
+  allo_entity *entity = state->entities.lh_first;
+  while(entity)
+  {
+    allo_entity *to_delete = entity;
+    entity = entity->pointers.le_next;
+    entity_destroy(to_delete);
+  }
+}
+
+cJSON *allo_state_to_json(allo_state *state)
+{
+  cJSON* entities_rep = cJSON_CreateObject();
+  allo_entity* entity = NULL;
+  LIST_FOREACH(entity, &state->entities, pointers) {
+    cJSON* entity_rep = cjson_create_object(
+      "id", cJSON_CreateString(entity->id),
+      NULL
+    );
+    cJSON_AddItemReferenceToObject(entity_rep, "components", entity->components);
+    cJSON_AddItemToArray(entities_rep, entity_rep);
+    todo: add item to object, not array
+  }
+  cJSON* map = cjson_create_object(
+    "entities", entities_rep,
+    "revision", cJSON_CreateNumber(state->revision),
+    NULL
+  );
+  return map;
+}
+
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)
 {
   for (int i = 0; i < 16; i++)

@@ -154,26 +154,13 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
 static statehistory_t hist;
 static void broadcast_server_state(alloserver* serv)
 {
-  cJSON* entities_rep = cJSON_CreateArray();
-  allo_entity* entity = NULL;
-  LIST_FOREACH(entity, &serv->state.entities, pointers) {
-    cJSON* entity_rep = cjson_create_object(
-      "id", cJSON_CreateString(entity->id),
-      NULL
-    );
-    cJSON_AddItemReferenceToObject(entity_rep, "components", entity->components);
-    cJSON_AddItemToArray(entities_rep, entity_rep);
-  }
-  cJSON* map = cjson_create_object(
-    "entities", entities_rep,
-    "revision", cJSON_CreateNumber(serv->state.revision++),
-    NULL
-  );
-  allo_delta_insert(hist, map);
+  serv->state.revision++;
+  cJSON *map = allo_state_to_json(&serv->state);
+  allo_delta_insert(&hist, map);
 
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
-    cJSON *payload = allo_delta_compute(hist, client->intent->ack_state_rev);
+    cJSON *payload = allo_delta_compute(&hist, client->intent->ack_state_rev);
     char* json = cJSON_Print(payload);
     cJSON_Delete(payload);
 
@@ -345,7 +332,7 @@ int alloserv_start_standalone(int port)
   }
   serv->clients_callback = clients_changed;
   serv->raw_indata_callback = received_from_client;
-  LIST_INIT(&serv->state.entities);
+  allo_state_init(&serv->state);
 
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", port);
   int allosocket = allo_socket_for_select(serv);

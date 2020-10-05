@@ -8,7 +8,7 @@ void test_matrices_equal(allo_m4x4 a, allo_m4x4 b)
 {
   for (int i = 0; i < 16; i++) {
     TEST_ASSERT_DOUBLE_WITHIN_MESSAGE(
-      0.001, b.v[i], a.v[i], "Index is wrong"
+      0.001, a.v[i], b.v[i], "Index is wrong"
     );
   }
 }

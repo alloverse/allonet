@@ -129,6 +129,17 @@ int64_t cjson_get_int64_value(cJSON *value)
     return value->valuedouble;
 }
 
+void cjson_clear(cJSON *object)
+{
+    cJSON *child = object->child;
+    while(child) {
+        cJSON *next= child->next;
+        cJSON_DetachItemViaPointer(object, child);
+        cJSON_Delete(child);
+        child = next;
+    }
+}
+
 char *allo_strdup(const char *src)
 {
     if(src == NULL)

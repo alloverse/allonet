@@ -22,6 +22,10 @@ void allo_delta_destroy(statehistory_t *history)
     }
 }
 
+// figure out which one is most efficient in practice...
+static int64_t delta_count = 0;
+static int64_t patch_count = 0;
+
 char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 {
     cJSON *latest = history->history[history->latest_revision%allo_statehistory_length];
@@ -53,11 +57,13 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 
     if(deltasl < patchl)
     {
+        delta_count++;
         free(patchs);
         return deltas;
     }
     else
     {
+        patch_count++;
         free(deltas);
         return patchs;
     }

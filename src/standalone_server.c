@@ -160,10 +160,7 @@ static void broadcast_server_state(alloserver* serv)
 
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
-    cJSON *payload = allo_delta_compute(&hist, client->intent->ack_state_rev);
-    char* json = cJSON_Print(payload);
-    cJSON_Delete(payload);
-
+    char *json = allo_delta_compute(&hist, client->intent->ack_state_rev);
     int jsonlength = strlen(json);
     serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength + 1);
     free(json);

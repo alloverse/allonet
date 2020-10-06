@@ -22,10 +22,6 @@ void allo_delta_destroy(statehistory_t *history)
     }
 }
 
-// figure out which one is most efficient in practice...
-static int64_t apply_count = 0;
-static int64_t merge_count = 0;
-
 char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 {
     cJSON *latest = history->history[history->latest_revision%allo_statehistory_length];
@@ -40,37 +36,14 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
         return deltas;
     }
 
-    cJSON *patches = cJSONUtils_GeneratePatches(old, latest);
-    cJSON *delta = cjson_create_object(
-        "patches", patches,
-        "patch_style", cJSON_CreateString("apply"),
-        "patch_from", cJSON_CreateNumber(old_revision),
-        NULL
-    );
-    char *deltas = cJSON_Print(delta);
-    size_t deltasl = strlen(deltas);
-    cJSON_Delete(delta);
-
     cJSON *mergePatch = cJSONUtils_GenerateMergePatch(old, latest);
     assert(mergePatch); // should never generate a COMPLETELY empty merge. Should at least have a new revision.
     cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
     cJSON_AddItemToObject(mergePatch, "patch_from", cJSON_CreateNumber(old_revision));
     char *patchs = cJSON_Print(mergePatch);
-    size_t patchl = strlen(patchs);
     cJSON_Delete(mergePatch);
 
-    if(deltasl < patchl)
-    {
-        apply_count++;
-        free(patchs);
-        return deltas;
-    }
-    else
-    {
-        merge_count++;
-        free(deltas);
-        return patchs;
-    }
+    return patchs;
 }
 
 typedef enum { Set, Apply, Merge } PatchStyle;

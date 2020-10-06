@@ -43,6 +43,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     cJSON *delta = cjson_create_object(
         "patches", patches,
         "patch_style", cJSON_CreateString("apply"),
+        "patch_from", cJSON_CreateNumber(old_revision),
         NULL
     );
     char *deltas = cJSON_Print(delta);
@@ -51,6 +52,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 
     cJSON *mergePatch = cJSONUtils_GenerateMergePatch(old, latest);
     cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
+    cJSON_AddItemToObject(mergePatch, "patch_from", cJSON_CreateNumber(old_revision));
     char *patchs = cJSON_Print(mergePatch);
     size_t patchl = strlen(patchs);
     cJSON_Delete(mergePatch);
@@ -81,18 +83,28 @@ bool allo_delta_apply(cJSON *current, cJSON *delta)
     if(strcmp(patch_styles, "merge") == 0) patch_style = Merge;
     cJSON_Delete(patch_stylej);
 
+    cJSON *patch_fromj = cJSON_DetachItemFromObject(delta, "patch_from");
+    int64_t patch_from = cjson_get_int64_value(patch_fromj);
+    int64_t current_rev = cjson_get_int64_value(cJSON_GetObjectItem(current, "revision"));
+
+    if(patch_fromj && patch_from != current_rev)
+    {
+        // patch is not from our rev; can't apply
+        return false;
+    }
+
     cJSON *result;
     switch(patch_style) {
         case Set:
             cjson_clear(current);
             result = cJSONUtils_MergePatch(current, delta);
-            assert(result == current);
-            return true;
+            assert(result == current); // or else it's a malformed pathc and we will leak memory
+            return result == current;
         case Apply:
             return cJSONUtils_ApplyPatches(current, cJSON_GetObjectItem(delta, "patches")) == 0;
         case Merge:
             result = cJSONUtils_MergePatch(current, delta) == current;
-            assert(result == current);
-            return true;
+            assert(result == current); // same
+            return result == current;
     }
 }

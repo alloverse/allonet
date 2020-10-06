@@ -35,6 +35,7 @@ typedef struct {
     OpusEncoder *opus_encoder;
     allo_client_intent *latest_intent;
     int64_t latest_intent_ts;
+    cJSON *jstate;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
     scheduler jobs;

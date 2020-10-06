@@ -155,6 +155,9 @@ static statehistory_t hist;
 static void broadcast_server_state(alloserver* serv)
 {
   serv->state.revision++;
+  // roll over revision to 0 before it reaches biggest consecutive integer representable in json
+  if(serv->state.revision == 9007199254740990) { serv->state.revision = 0; }
+
   cJSON *map = allo_state_to_json(&serv->state);
   allo_delta_insert(&hist, map);
 

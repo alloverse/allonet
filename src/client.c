@@ -36,6 +36,7 @@ typedef struct {
     OpusEncoder *opus_encoder;
     allo_client_intent *latest_intent;
     int64_t latest_intent_ts;
+    char *avatar_id;
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
@@ -120,10 +121,15 @@ static void decoder_destroy_for_track(alloclient *client, uint32_t track_id)
 
 static void parse_statediff(alloclient *client, cJSON *cmd)
 {
+    int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItem(cmd, "patch_from"));
     cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
     if(staterep == NULL)
     {
-        fprintf(stderr, "alloclient[W]: Received unmergeable state, requesting full state\n");
+        fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %zd (I'm %zd), requesting full state\n",
+            _internal(client)->avatar_id,
+            patch_from,
+            _internal(client)->history.latest_revision
+        );
         _internal(client)->latest_intent->ack_state_rev = 0;
         return;
     }
@@ -195,6 +201,10 @@ static void parse_interaction(alloclient *client, cJSON *inter_json)
     const char *request_id = nonnull(cJSON_GetArrayItem(inter_json, 4))->valuestring;
     cJSON *body = nonnull(cJSON_GetArrayItem(inter_json, 5));
     const char *bodystr = cJSON_Print(body);
+    if(strcmp(cJSON_GetStringValue(cJSON_GetArrayItem(body, 0)), "announce") == 0)
+    {
+        _internal(client)->avatar_id = allo_strdup(cJSON_GetStringValue(cJSON_GetArrayItem(body, 1)));
+    }
     allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
     if(client->interaction_callback) {
         client->interaction_callback(client, interaction);
@@ -254,8 +264,8 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     switch(channel) {
     case CHANNEL_STATEDIFFS: { 
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
+        //printf("alloclient(%s): My latest rev is %zd. Receiving delta %s\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev, packet->data);
         parse_statediff(client, cmdrep);
-        cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_COMMANDS: {
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
@@ -323,6 +333,8 @@ void alloclient_set_intent(alloclient* client, allo_client_intent *intent)
 static void send_latest_intent(alloclient *client)
 {
     allo_client_intent *intent = _internal(client)->latest_intent;
+
+    //printf("%s Sending latest intent, ACKing rev %zd.\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev);
 
     cJSON *cmdrep = cjson_create_object(
         "cmd", cJSON_CreateString("intent"),
@@ -394,6 +406,7 @@ void alloclient_disconnect(alloclient *client, int reason)
         opus_encoder_destroy(_internal(client)->opus_encoder);
         allo_client_intent_free(_internal(client)->latest_intent);
         allo_delta_destroy(&_internal(client)->history);
+        free(_internal(client)->avatar_id);
         free(_internal(client));
     }
     

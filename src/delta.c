@@ -23,15 +23,16 @@ void allo_delta_destroy(statehistory_t *history)
 }
 
 // figure out which one is most efficient in practice...
-static int64_t delta_count = 0;
-static int64_t patch_count = 0;
+static int64_t apply_count = 0;
+static int64_t merge_count = 0;
 
 char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 {
     cJSON *latest = history->history[history->latest_revision%allo_statehistory_length];
     assert(latest);
     cJSON *old = history->history[old_revision%allo_statehistory_length];
-    if(!old)
+    int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItem(old, "revision"));
+    if(!old || old_history_rev != old_revision)
     {
         cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
         char *deltas = cJSON_Print(latest);
@@ -51,6 +52,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     cJSON_Delete(delta);
 
     cJSON *mergePatch = cJSONUtils_GenerateMergePatch(old, latest);
+    assert(mergePatch); // should never generate a COMPLETELY empty merge. Should at least have a new revision.
     cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
     cJSON_AddItemToObject(mergePatch, "patch_from", cJSON_CreateNumber(old_revision));
     char *patchs = cJSON_Print(mergePatch);
@@ -59,13 +61,13 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 
     if(deltasl < patchl)
     {
-        delta_count++;
+        apply_count++;
         free(patchs);
         return deltas;
     }
     else
     {
-        patch_count++;
+        merge_count++;
         free(deltas);
         return patchs;
     }
@@ -89,6 +91,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     if(!(patch_fromj != NULL || patch_style == Set))
     {
         // Invalid patch. If it's not Set, patch_from must be available.
+        cJSON_Delete(delta);
         return NULL;
     }
 
@@ -98,6 +101,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     if(patch_fromj && (patch_from != current_rev || current == NULL))
     {
         // patch is not from our rev; can't apply
+        cJSON_Delete(delta);
         return NULL;
     }
 
@@ -113,10 +117,12 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
                 cJSON_Delete(result);
                 return NULL;
             }
+            cJSON_Delete(delta);
             break;
         case Merge:
             result = cJSON_Duplicate(current, 1);
             cJSONUtils_MergePatch(result, delta);
+            cJSON_Delete(delta);
             break;
     }
     allo_delta_insert(history, result);

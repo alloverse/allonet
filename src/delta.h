@@ -20,6 +20,7 @@ extern void allo_delta_destroy(statehistory_t *history);
 extern char* allo_delta_compute(statehistory_t *history, int64_t old_revision);
 
 /// In a receiving client, apply delta to something in history.
+/// This call takes ownership of delta, and frees it when needed.
 /// If successful, returns new full state and also inserts it into history.
 /// If delta is corrupt or a patch for a state we don't have, returns false. In thiis case,
 /// you should send intent.ack_state_rev=0 to get a new full state.

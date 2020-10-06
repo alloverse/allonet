@@ -2,6 +2,7 @@
 #include "util.h"
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 void allo_delta_insert(statehistory_t *history, cJSON *next_state)
 {
@@ -41,11 +42,28 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
         NULL
     );
     char *deltas = cJSON_Print(delta);
+    size_t deltasl = strlen(deltas);
     cJSON_Delete(delta);
-    return deltas;
+
+    cJSON *mergePatch = cJSONUtils_GenerateMergePatch(old, latest);
+    cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
+    char *patchs = cJSON_Print(mergePatch);
+    size_t patchl = strlen(patchs);
+    cJSON_Delete(mergePatch);
+
+    if(deltasl < patchl)
+    {
+        free(patchs);
+        return deltas;
+    }
+    else
+    {
+        free(deltas);
+        return patchs;
+    }
 }
 
-typedef enum { Set, Apply } PatchStyle;
+typedef enum { Set, Apply, Merge } PatchStyle;
 
 bool allo_delta_apply(cJSON *current, cJSON *delta)
 {
@@ -54,14 +72,21 @@ bool allo_delta_apply(cJSON *current, cJSON *delta)
     assert(patch_styles);
     PatchStyle patch_style = Set;
     if(strcmp(patch_styles, "apply") == 0) patch_style = Apply;
+    if(strcmp(patch_styles, "merge") == 0) patch_style = Merge;
     cJSON_Delete(patch_stylej);
 
+    cJSON *result;
     switch(patch_style) {
         case Set:
             cjson_clear(current);
-            cJSONUtils_MergePatch(current, delta);
+            result = cJSONUtils_MergePatch(current, delta);
+            assert(result == current);
             return true;
         case Apply:
             return cJSONUtils_ApplyPatches(current, cJSON_GetObjectItem(delta, "patches")) == 0;
+        case Merge:
+            result = cJSONUtils_MergePatch(current, delta) == current;
+            assert(result == current);
+            return true;
     }
 }

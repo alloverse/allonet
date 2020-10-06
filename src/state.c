@@ -199,9 +199,8 @@ cJSON *allo_state_to_json(allo_state *state)
       "id", cJSON_CreateString(entity->id),
       NULL
     );
-    cJSON_AddItemReferenceToObject(entity_rep, "components", entity->components);
-    cJSON_AddItemToArray(entities_rep, entity_rep);
-    todo: add item to object, not array
+    cJSON_AddItemToObject(entity_rep, "components", cJSON_Duplicate(entity->components, 1));
+    cJSON_AddItemToObject(entities_rep, entity->id, entity_rep);
   }
   cJSON* map = cjson_create_object(
     "entities", entities_rep,

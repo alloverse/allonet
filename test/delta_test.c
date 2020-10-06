@@ -48,23 +48,22 @@ void test_basic(void)
 {
   cJSON *first = allo_state_to_json(state);
   allo_delta_insert(history, first);
-  printf("First state: %s\n", cJSON_Print(first));
 
   allo_m4x4 moved = allo_m4x4_translate((allo_vector){2, 3, 4});
   entity_set_transform(foo, moved);
   state->revision++;
   cJSON *second = allo_state_to_json(state);
-  printf("Second state: %s\n", cJSON_Print(second));
   allo_delta_insert(history, second);
 
-  char *delta = allo_delta_compute(history, 0);
-  printf("delta %s\n", delta);
+  char *delta = allo_delta_compute(history, 1);
   cJSON *base = cJSON_Duplicate(first, 1);
   cJSON *patch = cJSON_Parse(delta);
   bool success = allo_delta_apply(base, patch);
   TEST_ASSERT_TRUE_MESSAGE(success, "expected applying patch to succeed");
   free(delta);
   TEST_ASSERT_TRUE_MESSAGE(cJSON_Compare(second, base, true), "expected patch to bring state up to speed");
+
+  // and make sure the change is propagated to the actual entity rep
   cJSON *entsj = cJSON_GetObjectItem(base, "entities");
   cJSON *fooj = cJSON_GetObjectItem(entsj, foo->id);
   cJSON *componentsj = cJSON_GetObjectItem(fooj, "components");

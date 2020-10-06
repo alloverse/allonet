@@ -9,6 +9,7 @@
 #include <math.h>
 #include "util.h"
 #include <allonet/jobs.h>
+#include "delta.h"
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
     #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
@@ -35,7 +36,7 @@ typedef struct {
     OpusEncoder *opus_encoder;
     allo_client_intent *latest_intent;
     int64_t latest_intent_ts;
-    cJSON *jstate;
+    statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
     scheduler jobs;
@@ -119,9 +120,18 @@ static void decoder_destroy_for_track(alloclient *client, uint32_t track_id)
 
 static void parse_statediff(alloclient *client, cJSON *cmd)
 {
-    int64_t rev = nonnull(cJSON_GetObjectItem(cmd, "revision"))->valueint;
-    const cJSON *entities = nonnull(cJSON_GetObjectItem(cmd, "entities"));
-    client->state.revision = rev;
+    cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
+    if(staterep == NULL)
+    {
+        fprintf(stderr, "alloclient[W]: Received unmergeable state, requesting full state\n");
+        _internal(client)->latest_intent->ack_state_rev = 0;
+        return;
+    }
+
+    int64_t rev = nonnull(cJSON_GetObjectItem(staterep, "revision"))->valueint;
+    _internal(client)->latest_intent->ack_state_rev = client->state.revision = rev;
+
+    const cJSON *entities = nonnull(cJSON_GetObjectItem(staterep, "entities"));
     
     // keep track of entities that aren't mentioned in the incoming list
     cJSON *deletes = cJSON_CreateArray();
@@ -136,7 +146,8 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
     cJSON_ArrayForEach(edesc, entities) {
         const char *entity_id = nonnull(cJSON_GetObjectItem(edesc, "id"))->valuestring;
         cjson_delete_from_array(deletes, entity_id);
-        cJSON *components = nonnull(cJSON_DetachItemFromObject(edesc, "components"));
+        
+        cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItem(edesc, "components"), 1));
         allo_entity *entity = state_get_entity(&client->state, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
@@ -303,7 +314,10 @@ bool alloclient_poll(alloclient *client, int timeout_ms)
 
 void alloclient_set_intent(alloclient* client, allo_client_intent *intent)
 {
+    // this one is set internally, so don't overwrite it
+    int64_t ack_state_rev = _internal(client)->latest_intent->ack_state_rev;
     allo_client_intent_clone(intent, _internal(client)->latest_intent);
+    _internal(client)->latest_intent->ack_state_rev = ack_state_rev;
 }
 
 static void send_latest_intent(alloclient *client)
@@ -379,6 +393,7 @@ void alloclient_disconnect(alloclient *client, int reason)
         enet_host_destroy(_internal(client)->host);
         opus_encoder_destroy(_internal(client)->opus_encoder);
         allo_client_intent_free(_internal(client)->latest_intent);
+        allo_delta_destroy(&_internal(client)->history);
         free(_internal(client));
     }
     

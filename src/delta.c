@@ -73,7 +73,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 
 typedef enum { Set, Apply, Merge } PatchStyle;
 
-bool allo_delta_apply(cJSON *current, cJSON *delta)
+cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
 {
     cJSON *patch_stylej = cJSON_DetachItemFromObject(delta, "patch_style");
     const char *patch_styles = cJSON_GetStringValue(patch_stylej);
@@ -85,26 +85,40 @@ bool allo_delta_apply(cJSON *current, cJSON *delta)
 
     cJSON *patch_fromj = cJSON_DetachItemFromObject(delta, "patch_from");
     int64_t patch_from = cjson_get_int64_value(patch_fromj);
+    assert(patch_fromj != NULL || patch_style == Set);
+    if(!(patch_fromj != NULL || patch_style == Set))
+    {
+        // Invalid patch. If it's not Set, patch_from must be available.
+        return NULL;
+    }
+
+    cJSON *current = history->history[patch_from%allo_statehistory_length];
     int64_t current_rev = cjson_get_int64_value(cJSON_GetObjectItem(current, "revision"));
 
-    if(patch_fromj && patch_from != current_rev)
+    if(patch_fromj && (patch_from != current_rev || current == NULL))
     {
         // patch is not from our rev; can't apply
-        return false;
+        return NULL;
     }
 
     cJSON *result;
     switch(patch_style) {
         case Set:
-            cjson_clear(current);
-            result = cJSONUtils_MergePatch(current, delta);
-            assert(result == current); // or else it's a malformed pathc and we will leak memory
-            return result == current;
+            result = delta;
+            break;
         case Apply:
-            return cJSONUtils_ApplyPatches(current, cJSON_GetObjectItem(delta, "patches")) == 0;
+            result = cJSON_Duplicate(current, 1);
+            if(cJSONUtils_ApplyPatches(current, cJSON_GetObjectItem(delta, "patches")) != 0)
+            {
+                cJSON_Delete(result);
+                return NULL;
+            }
+            break;
         case Merge:
-            result = cJSONUtils_MergePatch(current, delta) == current;
-            assert(result == current); // same
-            return result == current;
+            result = cJSON_Duplicate(current, 1);
+            cJSONUtils_MergePatch(result, delta);
+            break;
     }
+    allo_delta_insert(history, result);
+    return result;
 }

@@ -10,7 +10,8 @@ typedef struct statehistory_t
     int64_t latest_revision;
 } statehistory_t;
 
-/// Add a new state to the history. You relinquish ownership and must not touch the state afterwards.
+/// Add a new state to the history. You relinquish ownership and may only use it until the
+/// next call of allo_delta_* (and you sould definitely not modify it).
 extern void allo_delta_insert(statehistory_t *history, cJSON *next_state);
 /// Destroy all cached states (but not the history pointer itself; that's on you)
 extern void allo_delta_destroy(statehistory_t *history);
@@ -18,7 +19,9 @@ extern void allo_delta_destroy(statehistory_t *history);
 /// You own the returned memory and must free it.
 extern char* allo_delta_compute(statehistory_t *history, int64_t old_revision);
 
-/// In a receiving client, apply delta to current. Returns false if it has failed because
-/// it was corrupt. `current` is likely also corrupt at that point :S not sure what to do about that.
-/// Probably send ack_state_rev=0 and wait for a new full state.
-extern bool allo_delta_apply(cJSON *current, cJSON *delta);
+/// In a receiving client, apply delta to something in history.
+/// If successful, returns new full state and also inserts it into history.
+/// If delta is corrupt or a patch for a state we don't have, returns false. In thiis case,
+/// you should send intent.ack_state_rev=0 to get a new full state.
+/// The returned cJSON has the same restrictions as one that is allo_delta_inserted.
+extern cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta);

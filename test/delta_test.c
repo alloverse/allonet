@@ -24,12 +24,14 @@ void test_matrices_equal(allo_m4x4 a, allo_m4x4 b)
   }
 }
 
-statehistory_t *history;
+statehistory_t *sendhistory;
+statehistory_t *recvhistory;
 allo_state *state;
 allo_entity *foo;
 void setUp()
 {
-  history = calloc(1, sizeof(statehistory_t));
+  sendhistory = calloc(1, sizeof(statehistory_t));
+  recvhistory = calloc(1, sizeof(statehistory_t));
   state = calloc(1, sizeof(allo_state));
   allo_state_init(state);
 
@@ -38,33 +40,40 @@ void setUp()
 }
 void tearDown()
 {
-  allo_delta_destroy(history);
-  free(history);
+  allo_delta_destroy(sendhistory);
+  free(sendhistory);
+  allo_delta_destroy(recvhistory);
+  free(recvhistory);
   allo_state_destroy(state);
   free(state);
 }
 
 void test_basic(void)
 {
+  // initialize sender and receiver with an initial state
   cJSON *first = allo_state_to_json(state);
-  allo_delta_insert(history, first);
+  allo_delta_insert(sendhistory, first);
+  allo_delta_insert(recvhistory, first);
 
+  // pretend we moved an object, insert that into sender's history....
   allo_m4x4 moved = allo_m4x4_translate((allo_vector){2, 3, 4});
   entity_set_transform(foo, moved);
   state->revision++;
   cJSON *second = allo_state_to_json(state);
-  allo_delta_insert(history, second);
+  allo_delta_insert(sendhistory, second);
 
-  char *delta = allo_delta_compute(history, 1);
-  cJSON *base = cJSON_Duplicate(first, 1);
+  // ... and then pretend-send it to receiver
+  char *delta = allo_delta_compute(sendhistory, recvhistory->latest_revision);
+
+  // ... and pretend-receive it
   cJSON *patch = cJSON_Parse(delta);
-  bool success = allo_delta_apply(base, patch);
-  TEST_ASSERT_TRUE_MESSAGE(success, "expected applying patch to succeed");
+  cJSON *merged = allo_delta_apply(recvhistory, patch);
+  TEST_ASSERT_NOT_NULL_MESSAGE(merged, "expected applying patch to succeed");
   free(delta);
-  TEST_ASSERT_TRUE_MESSAGE(cJSON_Compare(second, base, true), "expected patch to bring state up to speed");
+  TEST_ASSERT_TRUE_MESSAGE(cJSON_Compare(second, merged, true), "expected patch to bring state up to speed");
 
   // and make sure the change is propagated to the actual entity rep
-  cJSON *entsj = cJSON_GetObjectItem(base, "entities");
+  cJSON *entsj = cJSON_GetObjectItem(merged, "entities");
   cJSON *fooj = cJSON_GetObjectItem(entsj, foo->id);
   cJSON *componentsj = cJSON_GetObjectItem(fooj, "components");
   cJSON *transformj = cJSON_GetObjectItem(componentsj, "transform");

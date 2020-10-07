@@ -31,7 +31,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     if(!old || old_history_rev != old_revision)
     {
         cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
-        char *deltas = cJSON_Print(latest);
+        char *deltas = cJSON_PrintUnformatted(latest);
         cJSON_DeleteItemFromObject(latest, "patch_style");
         return deltas;
     }
@@ -40,7 +40,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     assert(mergePatch); // should never generate a COMPLETELY empty merge. Should at least have a new revision.
     cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
     cJSON_AddItemToObject(mergePatch, "patch_from", cJSON_CreateNumber(old_revision));
-    char *patchs = cJSON_Print(mergePatch);
+    char *patchs = cJSON_PrintUnformatted(mergePatch);
     cJSON_Delete(mergePatch);
 
     return patchs;

@@ -163,6 +163,11 @@ alloserver *allo_listen(int port)
     return serv;
 }
 
+void alloserv_disconnect(alloserver *serv, alloserver_client *client, int reason_code)
+{
+    enet_peer_disconnect_later(_clientinternal(client)->peer, reason_code);
+}
+
 void alloserv_stop(alloserver* serv)
 {
   enet_host_destroy(_servinternal(serv)->enet);

@@ -391,16 +391,16 @@ void alloclient_disconnect(alloclient *client, int reason)
             while(now < end_at) {
                 enet_host_service(_internal(client)->host, & event, end_at-now);
                 if(event.type == ENET_EVENT_TYPE_DISCONNECT) {
-                    fprintf(stderr, "alloclient: successfully disconnected");
+                    fprintf(stderr, "alloclient: successfully disconnected\n");
                     break;
                 }
                 now = get_ts_mono();
             }
             if(event.type != ENET_EVENT_TYPE_DISCONNECT) {
-                fprintf(stderr, "alloclient: disconnection timed out; just deallocating");
+                fprintf(stderr, "alloclient: disconnection timed out; just deallocating\n");
             }
         } else {
-            fprintf(stderr, "alloclient: Already disconnected; just deallocating");
+            fprintf(stderr, "alloclient: Already disconnected; just deallocating\n");
         }
         enet_host_destroy(_internal(client)->host);
         opus_encoder_destroy(_internal(client)->opus_encoder);

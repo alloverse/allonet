@@ -15,4 +15,6 @@ typedef enum allochannel {
 
 #define CHANNEL_COUNT 4
 
+#define ALLO_PROTOCOL_VERSION 2
+
 #endif

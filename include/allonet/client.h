@@ -8,6 +8,7 @@ typedef enum alloerror
     alloerror_connection_lost = 1000,
     alloerror_client_disconnected = 1001,
     alloerror_initialization_failure = 1002,
+    alloerror_outdated_version = 1003,
 } alloerror;
 
 typedef struct alloclient alloclient;

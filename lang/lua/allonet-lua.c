@@ -181,45 +181,54 @@ static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
 static int l_alloclient_set_state_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
+    printf("Setting %s callback. Before: %d\n", "state", lclient->state_callback_index);
     if(store_function(L, &lclient->state_callback_index)) {
         lclient->client->state_callback = state_callback;
     } else {
         lclient->client->state_callback = NULL;
     }
+    printf("Setting %s callback. After: %d\n", "state", lclient->state_callback_index);
     return 0;
 }
 
 static int l_alloclient_set_interaction_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
+    printf("Setting %s callback. Before: %d\n", "interaction", lclient->interaction_callback_index);
     if(store_function(L, &lclient->interaction_callback_index)) {
         lclient->client->interaction_callback = interaction_callback;
     } else {
         lclient->client->interaction_callback = NULL;
     }
+        printf("Setting %s callback. After: %d\n", "interaction", lclient->interaction_callback_index);
+
     return 0;
 }
 
 static int l_alloclient_set_disconnected_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
+    printf("Setting %s callback. Before: %d\n", "disconnected", lclient->disconnected_callback_index);
     if(store_function(L, &lclient->disconnected_callback_index)) {
         lclient->client->disconnected_callback = disconnected_callback;
     } else {
         lclient->client->disconnected_callback = NULL;
     }
+    printf("Setting %s callback. After: %d\n", "disconnected", lclient->disconnected_callback_index);
     return 0;
 }
 
 static int l_alloclient_set_audio_callback(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
+    printf("Setting %s callback. Before: %d\n", "audio", lclient->audio_callback_index);
     if (store_function(L, &lclient->audio_callback_index)) {
         lclient->client->audio_callback = audio_callback;
     }
     else {
         lclient->client->audio_callback = NULL;
     }
+    printf("Setting %s callback. After: %d\n", "audio", lclient->audio_callback_index);
     return 0;
 }
 

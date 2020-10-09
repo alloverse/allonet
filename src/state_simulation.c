@@ -140,6 +140,10 @@ static void move_pose(allo_state* state, allo_entity* avatar, const allo_client_
       }
     }
 
+    // if this is a client-side move pose, make sure we're only moving this client's avatar...
+    if(!from_avatar && strcmp(intent->entity_id, parent))
+      continue;
+
     allo_m4x4 new_transform;
     if (strcmp(actuate_pose, "hand/left") == 0) new_transform = intent->poses.left_hand.matrix;
     else if (strcmp(actuate_pose, "hand/right") == 0) new_transform = intent->poses.right_hand.matrix;

@@ -20,6 +20,7 @@ static int l_alloclient_create (lua_State *L)
 {
     alloclient *client = alloclient_create();
     l_alloclient_t *lclient = (l_alloclient_t *)lua_newuserdata(L, sizeof(l_alloclient_t));
+    memset(lclient, 0, sizeof(*lclient));
     lclient->client = client;
     lclient->L = L;
     client->_backref = lclient;

@@ -13,6 +13,8 @@
 
 // internals in client.c
 void alloclient_parse_statediff(alloclient *client, cJSON *cmd);
+// forwards in this file
+static void bridge_disconnected_callback(alloclient *bridgeclient, alloerror code, const char *message);
 
 /**
  * This file proxies the network client to its own thread.
@@ -120,6 +122,11 @@ static void bridge_alloclient_connect(alloclient *bridgeclient, proxy_message *m
     free(msg->value.connect.url);
     free(msg->value.connect.identity);
     free(msg->value.connect.avatar_desc);
+
+    if(!success)
+    {
+        bridge_disconnected_callback(bridgeclient, alloerror_failed_to_connect, "Failed to connect");
+    }
 }
 
 static void (*original_alloclient_disconnect)(alloclient *proxyclient, int reason);

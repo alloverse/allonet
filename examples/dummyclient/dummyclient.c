@@ -122,6 +122,7 @@ static cJSON *cvec3(float x, float y, float z)
 
 static void disconnected(alloclient *client, alloerror code, const char *reason)
 {
+    printf("Disconnected: %d/%s\n", code, reason);
     alloclient_disconnect(client, 0);
     exit(1);
 }

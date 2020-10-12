@@ -9,7 +9,7 @@ option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
-    "${PROJECT_SOURCE_DIR}/lib/enet/include"
+    "${PROJECT_SOURCE_DIR}/lib/tinycthread/source"
     "${PROJECT_SOURCE_DIR}/lib"
 )
 add_subdirectory (lib/enet)
@@ -37,6 +37,8 @@ SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
+
+add_subdirectory (lib/tinycthread)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 

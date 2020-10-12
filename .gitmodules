@@ -16,3 +16,6 @@
 [submodule "lib/mathc"]
 	path = lib/mathc
 	url = https://github.com/felselva/mathc.git
+[submodule "lib/tinycthread"]
+	path = lib/tinycthread
+	url = https://github.com/tinycthread/tinycthread

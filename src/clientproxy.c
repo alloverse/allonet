@@ -87,7 +87,7 @@ typedef struct {
 
 static clientproxy_internal *_internal(alloclient *client)
 {
-    return (clientproxy_internal*)client->_backref;
+    return (clientproxy_internal*)client->_internal2;
 }
 
 static void enqueue_proxy_to_bridge(clientproxy_internal *internal, proxy_message *msg)
@@ -136,7 +136,7 @@ static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
     thrd_join(_internal(proxyclient)->thr, NULL);
     mtx_destroy(&_internal(proxyclient)->bridge_to_proxy_mtx);
     mtx_destroy(&_internal(proxyclient)->proxy_to_bridge_mtx);
-    free(proxyclient->_backref);
+    free(proxyclient->_internal2);
     // TODO: clean out the message queues, goddammit.
     original_alloclient_disconnect(proxyclient, msg->value.disconnection.code);
 }
@@ -335,7 +335,7 @@ static void _bridgethread(alloclient *bridgeclient)
 alloclient *clientproxy_create(void)
 {
     alloclient *proxyclient = alloclient_create(false);
-    proxyclient->_backref = calloc(1, sizeof(clientproxy_internal));
+    proxyclient->_internal2 = calloc(1, sizeof(clientproxy_internal));
     _internal(proxyclient)->bridgeclient = alloclient_create(false);
     _internal(proxyclient)->bridgeclient->_backref = proxyclient;
     _internal(proxyclient)->bridgeclient->raw_state_delta_callback = bridge_raw_state_delta_callback;

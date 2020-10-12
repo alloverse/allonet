@@ -112,6 +112,7 @@ typedef struct alloclient {
     // internal
     allo_state _state;
     void *_internal;
+    void *_internal2;
     void *_backref; // use this as a backref for callbacks  
 
     void (*raw_state_delta_callback)(alloclient *client, cJSON *delta);

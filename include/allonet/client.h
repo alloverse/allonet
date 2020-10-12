@@ -17,7 +17,7 @@ typedef struct alloclient {
      * @param state Full world state. Only valid during duration of callback.
      * 
      */
-    bool (*state_callback)(alloclient *client, allo_state *state);
+    void (*state_callback)(alloclient *client, allo_state *state);
 
     /** Set this to get a callback when another entity is trying to 
       * interact with one of your entities.

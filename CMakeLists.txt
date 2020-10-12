@@ -68,6 +68,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/asset.c
     ${SOURCE_FILES_PREFIX}/delta.h
     ${SOURCE_FILES_PREFIX}/delta.c
+    ${SOURCE_FILES_PREFIX}/clientproxy.h
+    ${SOURCE_FILES_PREFIX}/clientproxy.c
     lib/mathc/mathc.c
 )
 

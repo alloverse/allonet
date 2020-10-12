@@ -107,10 +107,22 @@ typedef struct alloclient {
     allo_state state;
     void *_internal;
     void *_backref; // use this as a backref for callbacks  
+
+    bool (*allo_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
+    void (*alloclient_disconnect)(alloclient *client, int reason);
+    bool (*alloclient_poll)(alloclient *client, int timeout_ms);
+    void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
+    void (*alloclient_set_intent)(alloclient *client, allo_client_intent *intent);
+    void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
+    void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
+    void (*alloclient_simulate)(alloclient* client, double dt);
+    double (*alloclient_get_time)(alloclient* client);
 } alloclient;
 
-
-alloclient *alloclient_create(void);
+/**
+ * @param threaded: whether to run the network code inline and blocking on this thread, or on its own thread
+ */
+alloclient *alloclient_create(bool threaded);
 
 
 /** Connect to an alloplace. Must be called once and only once on the returned alloclient from allo_create()
@@ -143,21 +155,12 @@ bool alloclient_poll(alloclient *client, int timeout_ms);
   *                     freed.
   * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
   */
-void alloclient_send_interaction(
-    alloclient *client,
-    allo_interaction *interaction
-);
+void alloclient_send_interaction(alloclient *client, allo_interaction *interaction);
 
 /** Change this client's movement/action intent.
  *  @see https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
  */
 void alloclient_set_intent(alloclient *client, allo_client_intent *intent);
-
-
-/** You can also poll for interactions instead of setting a callback.
- *  If no callback is set, they'll queue up so do pop them after every poll().
- */
-allo_interaction *alloclient_pop_interaction(alloclient *client);
 
 /** Transmit audio from your avatar, e g microphone audio for
   * voice communication.

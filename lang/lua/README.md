@@ -96,13 +96,6 @@ Each entity has:
 
 See more at https://github.com/alloverse/docs/blob/master/specifications/README.md#entity .
 
-### `interaction = client:pop_interaction()`
-
-If you don't like callbacks and haven't `set_interaction_callback`, you can also
-call this method until it returns null after each time you call `client:poll` to
-fetch interactions. See `send_interaction` for description of the interaction
-table.
-
 ### `client:set_state_callback(callback: state_callback_fn)`
 
 Set this to get a callback when state changes. Callback function receives
@@ -113,9 +106,6 @@ the new state as a parameter.
 Set this to get a callback whenever another entity sends you an interaction.
 The callback function receives an `interaction` table immediately upon
 interaction.
-
-If you set this, `pop_interaction` will stop working. Choose either method
-to receive interactions.
 
 ### `client:set_disconnected_callback(callback: disconnected_callback_fn)`
 

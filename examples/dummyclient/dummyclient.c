@@ -271,7 +271,7 @@ int main(int argc, char **argv)
 
     char *identity = (char*)calloc(1, 255);
     snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
-    alloclient *client = alloclient_create();
+    alloclient *client = alloclient_create(false);
     allo_connect(client, argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 #if MODIFY_TERMINAL == 1
     set_conio_terminal_mode();
 #endif
-    //client->interaction_callback = interaction;
+    client->interaction_callback = interaction;
     client->disconnected_callback = disconnected;
     
     int i = 0;
@@ -302,11 +302,6 @@ int main(int argc, char **argv)
         }
 #endif
         alloclient_poll(client, 10);
-
-        allo_interaction *inter = NULL;
-        while((inter = alloclient_pop_interaction(client))) {
-            interaction(client, inter);
-        }
 
         if( i++ % 100)
         {

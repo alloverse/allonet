@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
     const char *identity = "{\"display_name\": \"cube\"}";
 
-    alloclient *client = alloclient_create();
+    alloclient *client = alloclient_create(false);
     allo_connect(client, argv[1], identity, avatardesc);
     free((void*)avatardesc);
 

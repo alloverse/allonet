@@ -283,6 +283,10 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
 
 bool alloclient_poll(alloclient *client, int timeout_ms)
 {
+    client->alloclient_poll(client, timeout_ms);
+}
+bool _alloclient_poll(alloclient *client, int timeout_ms)
+{
     int64_t ts = get_ts_mono();
     int64_t deadline = ts + timeout_ms;
     
@@ -324,6 +328,10 @@ bool alloclient_poll(alloclient *client, int timeout_ms)
 
 void alloclient_set_intent(alloclient* client, allo_client_intent *intent)
 {
+    client->alloclient_set_intent(client, intent);
+}
+static void _alloclient_set_intent(alloclient* client, allo_client_intent *intent)
+{
     // this one is set internally, so don't overwrite it
     int64_t ack_state_rev = _internal(client)->latest_intent->ack_state_rev;
     allo_client_intent_clone(intent, _internal(client)->latest_intent);
@@ -352,10 +360,11 @@ static void send_latest_intent(alloclient *client)
     free((void*)json);
 }
 
-void alloclient_send_interaction(
-    alloclient *client,
-    allo_interaction *interaction
-)
+void alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
+{
+    client->alloclient_send_interaction(client, interaction);
+}
+static void _alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
 {
     cJSON *cmdrep = cjson_create_list(
         nonnull(cJSON_CreateString("interaction")),
@@ -378,6 +387,10 @@ void alloclient_send_interaction(
 }
 
 void alloclient_disconnect(alloclient *client, int reason)
+{
+    client->alloclient_disconnect(client, reason);
+}
+static void _alloclient_disconnect(alloclient *client, int reason)
 {
     if (_internal(client)) {
         if (_internal(client)->peer && _internal(client)->peer->state != ENET_PEER_STATE_DISCONNECTED)
@@ -413,7 +426,7 @@ void alloclient_disconnect(alloclient *client, int reason)
     free(client);
 }
 
-bool announce(alloclient *client, const char *identity, const char *avatar_desc)
+static bool announce(alloclient *client, const char *identity, const char *avatar_desc)
 {
     cJSON *bodyobj = cjson_create_list(
         cJSON_CreateString("announce"),
@@ -445,20 +458,11 @@ bool announce(alloclient *client, const char *identity, const char *avatar_desc)
     return true;
 }
 
-alloclient *alloclient_create(void)
-{
-    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
-    client->_internal = calloc(1, sizeof(alloclient_internal));
-    _internal(client)->latest_intent = allo_client_intent_create();
-    
-    scheduler_init(&_internal(client)->jobs);
-    
-    LIST_INIT(&client->state.entities);
-    
-    return client;
-}
-
 bool allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
+{
+    client->allo_connect(client, url, identity, avatar_desc);
+}
+static bool _allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
@@ -548,19 +552,11 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
     return true;
 }
 
-allo_interaction *alloclient_pop_interaction(alloclient *client)
-{
-    allo_interaction *interaction = NULL;
-    interaction_queue *first = _internal(client)->interactions.lh_first;
-    if(first) {
-        interaction = first->interaction;
-        LIST_REMOVE(first, pointers);
-        free(first);
-    }
-    return interaction;
-}
-
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
+{
+    client->alloclient_send_audio(client, track_id, pcm, frameCount);
+}
+static void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
 {
     assert(frameCount == 480 || frameCount == 960);
     
@@ -593,6 +589,10 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
 
 void alloclient_simulate(alloclient *client, double dt)
 {
+    client->alloclient_simulate(client, dt);
+}
+static void _alloclient_simulate(alloclient *client, double dt)
+{
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
   allo_simulate(&client->state, dt, intents, 1);
   if (client->state_callback)
@@ -603,6 +603,39 @@ void alloclient_simulate(alloclient *client, double dt)
 
 double alloclient_get_time(alloclient* client)
 {
+    client->alloclient_get_time(client);
+}
+static double _alloclient_get_time(alloclient* client)
+{
     // heh sync with server will come later...
     return get_ts_mono() / 1000.0;
+}
+
+
+
+alloclient *alloclient_create(bool threaded)
+{
+    if(threaded)
+    {
+        return clientproxy_create();
+    }
+
+    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
+    client->_internal = calloc(1, sizeof(alloclient_internal));
+    _internal(client)->latest_intent = allo_client_intent_create();
+    
+    scheduler_init(&_internal(client)->jobs);
+    
+    LIST_INIT(&client->state.entities);
+
+    client->allo_connect = _allo_connect;
+    client->alloclient_disconnect = _alloclient_disconnect;
+    client->alloclient_poll = _alloclient_poll;
+    client->alloclient_send_interaction = _alloclient_send_interaction;
+    client->alloclient_set_intent = _alloclient_set_intent;
+    client->alloclient_send_audio = _alloclient_send_audio;
+    client->alloclient_simulate = _alloclient_simulate;
+    client->alloclient_get_time = _alloclient_get_time;
+    
+    return client;
 }

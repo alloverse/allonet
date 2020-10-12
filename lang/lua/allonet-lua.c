@@ -18,7 +18,8 @@ typedef struct l_alloclient
 
 static int l_alloclient_create (lua_State *L)
 {
-    alloclient *client = alloclient_create();
+    bool threaded = luaL_checkint(L, 1);
+    alloclient *client = alloclient_create(threaded);
     l_alloclient_t *lclient = (l_alloclient_t *)lua_newuserdata(L, sizeof(l_alloclient_t));
     memset(lclient, 0, sizeof(*lclient));
     lclient->client = client;
@@ -160,19 +161,6 @@ static int l_alloclient_set_intent (lua_State *L)
     return 0;
 }
 
-static int l_alloclient_pop_interaction (lua_State *L)
-{
-    l_alloclient_t *lclient = check_alloclient(L, 1);
-    allo_interaction *inter = alloclient_pop_interaction(lclient->client);
-    if(!inter)
-    {
-        lua_pushnil(L);
-    } else {
-        push_interaction_table(L, inter);
-    }
-    return 1;
-}
-
 static void state_callback(alloclient *client, allo_state *state);
 static void interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client, alloerror code, const char* message );
@@ -308,7 +296,6 @@ static const struct luaL_Reg alloclient_m [] = {
     {"send_interaction", l_alloclient_send_interaction},
     {"send_audio", l_alloclient_send_audio},
     {"set_intent", l_alloclient_set_intent},
-    {"pop_interaction", l_alloclient_pop_interaction},
     {"set_state_callback", l_alloclient_set_state_callback},
     {"set_interaction_callback", l_alloclient_set_interaction_callback},
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},

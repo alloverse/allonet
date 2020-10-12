@@ -208,7 +208,7 @@ static bool bridge_interaction_callback(alloclient *bridgeclient, allo_interacti
     enqueue_bridge_to_proxy(_internal(proxyclient), msg);
     return false;
 }
-static bool proxy_interaction_callback(alloclient *proxyclient, proxy_message *msg)
+static void proxy_interaction_callback(alloclient *proxyclient, proxy_message *msg)
 {
     if(!proxyclient->interaction_callback || proxyclient->interaction_callback(proxyclient, msg->value.interaction))
     {
@@ -235,6 +235,11 @@ static void proxy_disconnected_callback(alloclient *proxyclient, proxy_message *
 
 }
 
+static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
+    [msg_state_delta] = proxy_raw_state_delta_callback,
+    [msg_interaction] = proxy_interaction_callback,
+};
+
 
 //////// Thread scaffolding on proxy
 // thread: proxy (parsing messages from bridge)
@@ -244,15 +249,9 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
     proxy_message *msg = NULL;
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->bridge_to_proxy))) {
         STAILQ_REMOVE_HEAD(&_internal(proxyclient)->bridge_to_proxy, entries);
-        switch(msg->type) {
-            case msg_interaction:
-                proxy_interaction_callback(proxyclient, msg);
-                break;
-            case msg_state_delta:
-                proxy_raw_state_delta_callback(proxyclient, msg);
-                break;
-            default: assert(false && "unhandled message");
-        }
+        void (*callback)(alloclient*, proxy_message*) = proxy_message_lookup_table[msg->type];
+        assert(callback != NULL && "missing proxy callback");
+        callback(proxyclient, msg);
         free(msg);
     }
     mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
@@ -270,7 +269,7 @@ static void bridge_check_for_messages(alloclient *bridgeclient)
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->proxy_to_bridge))) {
         STAILQ_REMOVE_HEAD(&_internal(proxyclient)->proxy_to_bridge, entries);
         void (*callback)(alloclient*, proxy_message*) = bridge_message_lookup_table[msg->type];
-        assert(callback != NULL && "missing callback");
+        assert(callback != NULL && "missing bridge callback");
         callback(bridgeclient, msg);
         free(msg);
     }

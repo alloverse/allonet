@@ -507,9 +507,8 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     enet_address_set_host (& address, justhost);
     address.port = justport ? atoi(justport) : 21337;
 
-    printf("Connecting to %s:%d\n", justhost, address.port);
-    free(justhost);
-    free(justport);
+    printf("Connecting to %s:%d (as %s)\n", justhost, address.port, identity);
+    
 
     ENetPeer *peer;
     peer = enet_host_connect (host, &address, CHANNEL_COUNT, 0);    
@@ -517,6 +516,8 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     {
         fprintf (stderr, 
                     "No available peers for initiating an ENet connection.\n");
+        free(justhost);
+        free(justport);
         return false;
     }
 
@@ -524,7 +525,7 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     if (enet_host_service(host, & event, 5000) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT)
     {
-        puts ("Connection succeeded.");
+        printf("Connection to %s:%d (as %s) succeeded.\n", justhost, address.port, identity);
     }
     else
     {
@@ -532,9 +533,13 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
         /* received. Reset the peer in the event the 5 seconds   */
         /* had run out without any significant event.            */
         enet_peer_reset (peer);
-        puts ("Connection to server failed.");
+        printf("Connection to %s:%d (as %s) failed.\n", justhost, address.port, identity);
+        free(justhost);
+        free(justport);
         return false;
     }
+    free(justhost);
+    free(justport);
 
     enet_peer_timeout(peer, 3, 2000, 6000);
 

@@ -130,18 +130,21 @@ static void bridge_alloclient_disconnect(alloclient *bridgeclient, proxy_message
 
 static void proxy_alloclient_send_interaction(alloclient *proxyclient, allo_interaction *interaction)
 {
-
+    proxy_message *msg = proxy_message_create(msg_interaction);
+    msg->value.interaction = allo_interaction_clone(interaction);
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
-static void bridge_alloclient_send_interaction(alloclient *bridgeclient, allo_interaction *interaction)
+static void bridge_alloclient_send_interaction(alloclient *bridgeclient, proxy_message *msg)
 {
-
+    alloclient_send_interaction(bridgeclient, msg->value.interaction);
+    allo_interaction_free(msg->value.interaction);
 }
 
 static void proxy_alloclient_set_intent(alloclient *proxyclient, allo_client_intent *intent)
 {
 
 }
-static void bridge_alloclient_set_intent(alloclient *bridgeclient, allo_client_intent *intent)
+static void bridge_alloclient_set_intent(alloclient *bridgeclient, proxy_message *msg)
 {
 
 }
@@ -150,7 +153,7 @@ static void proxy_alloclient_send_audio(alloclient *proxyclient, int32_t track_i
 {
 
 }
-static void bridge_alloclient_send_audio(alloclient *bridgeclient, int32_t track_id, const int16_t *pcm, size_t sample_count)
+static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message *msg)
 {
 
 }
@@ -159,7 +162,7 @@ static void proxy_alloclient_request_asset(alloclient* proxyclient, const char* 
 {
 
 }
-static void bridge_alloclient_request_asset(alloclient* bridgeclient, const char* asset_id, const char* entity_id)
+static void bridge_alloclient_request_asset(alloclient* bridgeclient, proxy_message *msg)
 {
 
 }
@@ -168,7 +171,7 @@ static void proxy_alloclient_simulate(alloclient* proxyclient, double dt)
 {
 
 }
-static void bridge_alloclient_simulate(alloclient* bridgeclient, double dt)
+static void bridge_alloclient_simulate(alloclient* bridgeclient, proxy_message *msg)
 {
 
 }
@@ -177,7 +180,7 @@ static double proxy_alloclient_get_time(alloclient* proxyclient)
 {
 
 }
-static double bridge_alloclient_get_time(alloclient* bridgeclient)
+static double bridge_alloclient_get_time(alloclient* bridgeclient, proxy_message *msg)
 {
 
 }
@@ -279,6 +282,9 @@ static void bridge_check_for_messages(alloclient *bridgeclient)
                 break;
             case msg_disconnect:
                 bridge_alloclient_disconnect(bridgeclient, msg);
+                break;
+            case msg_interaction:
+                bridge_alloclient_send_interaction(bridgeclient, msg);
                 break;
             default: assert(false && "unhandled message");
         }

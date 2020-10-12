@@ -324,6 +324,11 @@ allo_interaction *allo_interaction_create(const char *type, const char *sender_e
     return interaction;
 }
 
+allo_interaction *allo_interaction_clone(const allo_interaction *interaction)
+{
+  return allo_interaction_create(interaction->type, interaction->sender_entity_id, interaction->receiver_entity_id, interaction->request_id, interaction->body);
+}
+
 cJSON* allo_interaction_to_cjson(const allo_interaction* interaction)
 {
   return cjson_create_list(

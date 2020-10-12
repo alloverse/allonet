@@ -286,7 +286,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
 
 bool alloclient_poll(alloclient *client, int timeout_ms)
 {
-    client->alloclient_poll(client, timeout_ms);
+    return client->alloclient_poll(client, timeout_ms);
 }
 bool _alloclient_poll(alloclient *client, int timeout_ms)
 {
@@ -468,7 +468,7 @@ static bool announce(alloclient *client, const char *identity, const char *avata
 
 bool alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
-    client->alloclient_connect(client, url, identity, avatar_desc);
+    return client->alloclient_connect(client, url, identity, avatar_desc);
 }
 static bool _alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
@@ -611,7 +611,7 @@ static void _alloclient_simulate(alloclient *client, double dt)
 
 double alloclient_get_time(alloclient* client)
 {
-    client->alloclient_get_time(client);
+    return client->alloclient_get_time(client);
 }
 static double _alloclient_get_time(alloclient* client)
 {

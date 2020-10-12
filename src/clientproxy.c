@@ -111,6 +111,7 @@ static bool proxy_alloclient_connect(alloclient *proxyclient, const char *url, c
     msg->value.connect.identity = strdup(identity);
     msg->value.connect.avatar_desc = strdup(avatar_desc);
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
+    return true;
 }
 static void bridge_alloclient_connect(alloclient *bridgeclient, proxy_message *msg)
 {
@@ -293,6 +294,7 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
         free(msg);
     }
     mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    return true;
 }
 
 //////// Thread scaffolding on bridge

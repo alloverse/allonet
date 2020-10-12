@@ -29,7 +29,8 @@ typedef enum
 {
     msg_connect,
     msg_interaction,
-    msg_state_delta
+    msg_state_delta,
+    msg_disconnect
 } proxy_message_type;
 
 /// Messages to be sent from proxy to bridge
@@ -46,6 +47,7 @@ typedef struct proxy_message
         } connect;
         allo_interaction *interaction;
         cJSON *state_delta;
+        int disconnection_code;
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
@@ -104,13 +106,26 @@ static bool bridge_alloclient_connect(alloclient *bridgeclient, proxy_message *m
     free(msg->value.connect.avatar_desc);
 }
 
+static void (*original_alloclient_disconnect)(alloclient *proxyclient, int reason);
 static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
 {
+    fprintf(stderr, "alloclient[clientproxy]: Shutting down...\n");
+    proxy_message *msg = proxy_message_create(msg_disconnect);
+    msg->value.disconnection_code = reason;
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 
+    thrd_join(_internal(proxyclient)->thr, NULL);
+    mtx_destroy(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    mtx_destroy(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    free(proxyclient->_backref);
+    // TODO: clean out the message queues, goddammit.
+    original_alloclient_disconnect(proxyclient, msg->value.disconnection_code);
 }
-static void bridge_alloclient_disconnect(alloclient *bridgeclient, int reason)
+static void bridge_alloclient_disconnect(alloclient *bridgeclient, proxy_message *msg)
 {
-
+    alloclient *proxyclient = bridgeclient->_backref;
+    alloclient_disconnect(bridgeclient, msg->value.disconnection_code);
+    _internal(proxyclient)->running = false;
 }
 
 static void proxy_alloclient_send_interaction(alloclient *proxyclient, allo_interaction *interaction)
@@ -177,7 +192,7 @@ static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd
     // thread and somehow do a pointer swap with the main thread. That's too complicated for my
     // poor brain right now, so let's try it this way, and if the performance is good enough,
     // keep it this way.
-    
+
     alloclient *proxyclient = bridgeclient->_backref;
     proxy_message *msg = proxy_message_create(msg_state_delta);
     msg->value.state_delta = cmd;
@@ -262,6 +277,9 @@ static void bridge_check_for_messages(alloclient *bridgeclient)
             case msg_connect:
                 bridge_alloclient_connect(bridgeclient, msg);
                 break;
+            case msg_disconnect:
+                bridge_alloclient_disconnect(bridgeclient, msg);
+                break;
             default: assert(false && "unhandled message");
         }
         free(msg);
@@ -280,9 +298,10 @@ static void _bridgethread(alloclient *bridgeclient)
 {
     while(_internal(bridgeclient->_backref)->running)
     {
-        bridge_check_for_messages(bridgeclient);
         bridge_check_for_network(bridgeclient);
+        bridge_check_for_messages(bridgeclient);
     }
+    fprintf(stderr, "alloclient[clientproxy]: exiting network thread...\n");
 }
 
 // thread: proxy
@@ -301,6 +320,7 @@ alloclient *clientproxy_create(void)
     STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);
     STAILQ_INIT(&_internal(proxyclient)->bridge_to_proxy);
 
+    original_alloclient_disconnect = proxyclient->alloclient_disconnect;
     proxyclient->alloclient_connect = proxy_alloclient_connect;
     proxyclient->alloclient_disconnect = proxy_alloclient_disconnect;
     proxyclient->alloclient_poll = proxy_alloclient_poll;
@@ -309,8 +329,6 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
     proxyclient->alloclient_simulate = proxy_alloclient_simulate;
     proxyclient->alloclient_get_time = proxy_alloclient_get_time;
-
-    // todo: setup callbacks in bridgeclient
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

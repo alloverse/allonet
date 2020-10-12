@@ -53,6 +53,13 @@ typedef struct proxy_message
         allo_client_intent *intent;
         cJSON *state_delta;
         int disconnection_code;
+        struct 
+        {
+            int32_t track_id;
+            int16_t *pcm;
+            size_t sample_count;
+        } audio;
+        
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
@@ -163,11 +170,18 @@ static void bridge_alloclient_set_intent(alloclient *bridgeclient, proxy_message
 
 static void proxy_alloclient_send_audio(alloclient *proxyclient, int32_t track_id, const int16_t *pcm, size_t sample_count)
 {
-
+    proxy_message *msg = proxy_message_create(msg_audio);
+    msg->value.audio.pcm = calloc(sizeof(int16_t), sample_count);
+    memcpy(msg->value.audio.pcm, pcm, sizeof(int16_t)*sample_count);
+    msg->value.audio.sample_count = sample_count;
+    msg->value.audio.track_id = track_id;
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
 static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message *msg)
 {
-
+    alloclient_send_audio(bridgeclient, msg->value.audio.track_id, msg->value.audio.pcm, msg->value.audio.sample_count);
+    // in the best of worlds, we'd use a pool of buffers here to avoid malloc churn
+    free(msg->value.audio.pcm);
 }
 
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {

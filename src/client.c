@@ -10,6 +10,7 @@
 #include "util.h"
 #include <allonet/jobs.h>
 #include "delta.h"
+#include "clientproxy.h"
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
     #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
@@ -287,6 +288,11 @@ bool alloclient_poll(alloclient *client, int timeout_ms)
 }
 bool _alloclient_poll(alloclient *client, int timeout_ms)
 {
+    if(_internal(client)->peer == NULL)
+    {
+        return false;
+    } 
+
     int64_t ts = get_ts_mono();
     int64_t deadline = ts + timeout_ms;
     

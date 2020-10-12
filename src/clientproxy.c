@@ -3,7 +3,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <tinycthread.h>
+#if __STDC_VERSION__ >= 201112L
+#   include <threads.h>
+#else
+#   include <tinycthread.h>
+#endif
+
 #include "inlinesys/queue.h"
 
 /**
@@ -76,6 +81,97 @@ static bool __alloclient_connect(alloclient *client, proxy_message *msg)
     free(msg->value.connect.avatar_desc);
 }
 
+// thread: proxy
+static void _alloclient_disconnect(alloclient *client, int reason)
+{
+
+}
+// thread: bridge
+static void __alloclient_disconnect(alloclient *client, int reason)
+{
+
+}
+
+// thread: proxy
+static bool _alloclient_poll(alloclient *client, int timeout_ms)
+{
+
+}
+// thread: bridge
+static bool __alloclient_poll(alloclient *client, int timeout_ms)
+{
+
+}
+
+// thread: proxy
+static void _alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
+{
+
+}
+// thread: bridge
+static void __alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
+{
+
+}
+
+// thread: proxy
+static void _alloclient_set_intent(alloclient *client, allo_client_intent *intent)
+{
+
+}
+// thread: bridge
+static void __alloclient_set_intent(alloclient *client, allo_client_intent *intent)
+{
+
+}
+
+// thread: proxy
+static void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count)
+{
+
+}
+// thread: bridge
+static void __alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count)
+{
+
+}
+
+// thread: proxy
+static void _alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id)
+{
+
+}
+// thread: bridge
+static void __alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id)
+{
+
+}
+
+// thread: proxy
+static void _alloclient_simulate(alloclient* client, double dt)
+{
+
+}
+// thread: bridge
+static void __alloclient_simulate(alloclient* client, double dt)
+{
+
+}
+
+// thread: proxy
+static double _alloclient_get_time(alloclient* client)
+{
+
+}
+// thread: bridge
+static double __alloclient_get_time(alloclient* client)
+{
+
+
+
+}
+
+
 // thread: bridge
 static void check_for_messages(alloclient *client)
 {
@@ -96,7 +192,7 @@ static void check_for_messages(alloclient *client)
 // thread: bridge
 static void check_for_network(alloclient *client)
 {
-    alloclient_poll(_internal(client)->bridgeclient, 1.0/40);
+    alloclient_poll(_internal(client)->bridgeclient, (1.0/40)*1000);
 }
 
 // thread: bridge
@@ -121,13 +217,13 @@ alloclient *clientproxy_create(void)
     STAILQ_INIT(&_internal(client)->messages);
 
     client->alloclient_connect = _alloclient_connect;
-/*    client->alloclient_disconnect = _alloclient_disconnect;
+    client->alloclient_disconnect = _alloclient_disconnect;
     client->alloclient_poll = _alloclient_poll;
     client->alloclient_send_interaction = _alloclient_send_interaction;
     client->alloclient_set_intent = _alloclient_set_intent;
     client->alloclient_send_audio = _alloclient_send_audio;
     client->alloclient_simulate = _alloclient_simulate;
-    client->alloclient_get_time = _alloclient_get_time;*/
+    client->alloclient_get_time = _alloclient_get_time;
 
     // todo: setup callbacks in bridgeclient
 

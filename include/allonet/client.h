@@ -9,13 +9,15 @@ typedef enum alloerror
     alloerror_client_disconnected = 1001,
     alloerror_initialization_failure = 1002,
     alloerror_outdated_version = 1003,
+    alloerror_failed_to_connect = 1004,
 } alloerror;
 
 typedef struct alloclient alloclient;
 typedef struct alloclient {
-    /** set this to get a callback when state changes. data in 'state'
-      * is valid only during duration of callback.
-      */
+    /** set this to get a callback when state changes. 
+     * @param state Full world state. Only valid during duration of callback.
+     * 
+     */
     void (*state_callback)(alloclient *client, allo_state *state);
 
     /** Set this to get a callback when another entity is trying to 
@@ -23,9 +25,11 @@ typedef struct alloclient {
       * 
       * @param interaction: interaction received. Freed after callback;
       *                     copy it if you need to keep it.
+      * @return bool: whether the caller should free the interaction afterwards (if you return false,
+      *               you have to allo_interaction_free(interaction) yourself later).
       * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
       */
-    void (*interaction_callback)(
+    bool (*interaction_callback)(
         alloclient *client, 
         allo_interaction *interaction
     );
@@ -38,8 +42,10 @@ typedef struct alloclient {
      *  @param track_id: which track/entity is transmitting this audio
      *  @param pcm: n samples of 48000 Hz mono PCM audio data (most often 480 samples, 10ms, 960 bytes)
      *  @param samples_decoded: 'n': how many samples in pcm
+     *  @return bool: whether the caller should free the pcm afterwards (if you return false,
+     *                you have to free(pcm) yourself later).
      */
-    void (*audio_callback)(
+    bool (*audio_callback)(
         alloclient *client,
         uint32_t track_id,
         int16_t pcm[],
@@ -104,13 +110,28 @@ typedef struct alloclient {
     );
 
     // internal
-    allo_state state;
+    allo_state _state;
     void *_internal;
+    void *_internal2;
     void *_backref; // use this as a backref for callbacks  
+
+    void (*raw_state_delta_callback)(alloclient *client, cJSON *delta);
+
+    bool (*alloclient_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
+    void (*alloclient_disconnect)(alloclient *client, int reason);
+    bool (*alloclient_poll)(alloclient *client, int timeout_ms);
+    void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
+    void (*alloclient_set_intent)(alloclient *client, allo_client_intent *intent);
+    void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
+    void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
+    void (*alloclient_simulate)(alloclient* client, double dt);
+    double (*alloclient_get_time)(alloclient* client);
 } alloclient;
 
-
-alloclient *alloclient_create(void);
+/**
+ * @param threaded: whether to run the network code inline and blocking on this thread, or on its own thread
+ */
+alloclient *alloclient_create(bool threaded);
 
 
 /** Connect to an alloplace. Must be called once and only once on the returned alloclient from allo_create()
@@ -118,7 +139,7 @@ alloclient *alloclient_create(void);
 * @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
 * @param avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
 */
-bool allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
+bool alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
 
 /** Disconnect from an alloplace and free all internal state.
  *  `client` is free()d by this call. Call this to deallocate
@@ -143,21 +164,12 @@ bool alloclient_poll(alloclient *client, int timeout_ms);
   *                     freed.
   * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
   */
-void alloclient_send_interaction(
-    alloclient *client,
-    allo_interaction *interaction
-);
+void alloclient_send_interaction(alloclient *client, allo_interaction *interaction);
 
 /** Change this client's movement/action intent.
  *  @see https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
  */
 void alloclient_set_intent(alloclient *client, allo_client_intent *intent);
-
-
-/** You can also poll for interactions instead of setting a callback.
- *  If no callback is set, they'll queue up so do pop them after every poll().
- */
-allo_interaction *alloclient_pop_interaction(alloclient *client);
 
 /** Transmit audio from your avatar, e g microphone audio for
   * voice communication.

@@ -18,7 +18,8 @@ typedef struct l_alloclient
 
 static int l_alloclient_create (lua_State *L)
 {
-    alloclient *client = alloclient_create();
+    bool threaded = lua_toboolean(L, 1);
+    alloclient *client = alloclient_create(threaded);
     l_alloclient_t *lclient = (l_alloclient_t *)lua_newuserdata(L, sizeof(l_alloclient_t));
     memset(lclient, 0, sizeof(*lclient));
     lclient->client = client;
@@ -88,7 +89,7 @@ static int l_alloclient_connect (lua_State *L)
     const char *identity =  luaL_checkstring(L, 3);
     const char *avatar_desc =  luaL_checkstring(L, 4);
 
-    bool success = allo_connect(lclient->client, url, identity, avatar_desc);
+    bool success = alloclient_connect(lclient->client, url, identity, avatar_desc);
 
     lua_pushboolean(L, success);
     return 1;
@@ -160,23 +161,10 @@ static int l_alloclient_set_intent (lua_State *L)
     return 0;
 }
 
-static int l_alloclient_pop_interaction (lua_State *L)
-{
-    l_alloclient_t *lclient = check_alloclient(L, 1);
-    allo_interaction *inter = alloclient_pop_interaction(lclient->client);
-    if(!inter)
-    {
-        lua_pushnil(L);
-    } else {
-        push_interaction_table(L, inter);
-    }
-    return 1;
-}
-
 static void state_callback(alloclient *client, allo_state *state);
-static void interaction_callback(alloclient *client, allo_interaction *interaction);
+static bool interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client, alloerror code, const char* message );
-static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
+static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
 
 static int l_alloclient_set_state_callback (lua_State *L)
 {
@@ -232,13 +220,6 @@ static int l_alloclient_set_audio_callback(lua_State* L)
     return 0;
 }
 
-static int l_alloclient_get_state (lua_State *L)
-{
-    l_alloclient_t *lclient = check_alloclient(L, 1);
-    push_state_table(L, &lclient->client->state);
-    return 1;
-}
-
 static int l_alloclient_simulate(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
@@ -261,12 +242,12 @@ static void state_callback(alloclient *client, allo_state *state)
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->state_callback_index))
     {
-        push_state_table(lclient->L, &lclient->client->state);
+        push_state_table(lclient->L, state);
         lua_call(lclient->L, 1, 0);
     }
 }
 
-static void interaction_callback(alloclient *client, allo_interaction *inter)
+static bool interaction_callback(alloclient *client, allo_interaction *inter)
 {
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->interaction_callback_index))
@@ -274,6 +255,7 @@ static void interaction_callback(alloclient *client, allo_interaction *inter)
         push_interaction_table(lclient->L, inter);
         lua_call(lclient->L, 1, 0);
     }
+    return true;
 }
 
 static void disconnected_callback(alloclient *client, alloerror code, const char* message )
@@ -287,7 +269,7 @@ static void disconnected_callback(alloclient *client, alloerror code, const char
     }
 }
 
-static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t samples_decoded)
+static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t samples_decoded)
 {
     l_alloclient_t* lclient = (l_alloclient_t*)client->_backref;
     if (get_function(lclient->L, lclient->audio_callback_index))
@@ -296,6 +278,7 @@ static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
         lua_pushlstring(lclient->L, (const char*)pcm, samples_decoded*sizeof(int16_t));
         lua_call(lclient->L, 2, 0);
     }
+    return true;
 }
 
 
@@ -308,12 +291,10 @@ static const struct luaL_Reg alloclient_m [] = {
     {"send_interaction", l_alloclient_send_interaction},
     {"send_audio", l_alloclient_send_audio},
     {"set_intent", l_alloclient_set_intent},
-    {"pop_interaction", l_alloclient_pop_interaction},
     {"set_state_callback", l_alloclient_set_state_callback},
     {"set_interaction_callback", l_alloclient_set_interaction_callback},
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
     {"set_audio_callback", l_alloclient_set_audio_callback},
-    {"get_state", l_alloclient_get_state},
     {"simulate", l_alloclient_simulate},
     {"get_time", l_alloclient_get_time},
     {NULL, NULL}

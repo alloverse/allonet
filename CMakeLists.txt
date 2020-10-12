@@ -9,7 +9,7 @@ option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
-    "${PROJECT_SOURCE_DIR}/lib/enet/include"
+    "${PROJECT_SOURCE_DIR}/lib/tinycthread/source"
     "${PROJECT_SOURCE_DIR}/lib"
 )
 add_subdirectory (lib/enet)
@@ -68,6 +68,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/asset.c
     ${SOURCE_FILES_PREFIX}/delta.h
     ${SOURCE_FILES_PREFIX}/delta.c
+    ${SOURCE_FILES_PREFIX}/clientproxy.h
+    ${SOURCE_FILES_PREFIX}/clientproxy.c
     lib/mathc/mathc.c
 )
 
@@ -88,11 +90,16 @@ else()
   SET(ALLONET_BUILDTYPE SHARED)
 endif()
 
-add_library(allonet ${ALLONET_BUILDTYPE} 
+add_library(allonet ${ALLONET_BUILDTYPE})
+
+target_sources(allonet
+  PRIVATE
+    lib/tinycthread/source/tinycthread.c
+  
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
-    ${SVC_FILES}
 )
+#add_subdirectory (lib/tinycthread)
 
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)

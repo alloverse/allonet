@@ -10,6 +10,7 @@
 #include "util.h"
 #include <allonet/jobs.h>
 #include "delta.h"
+#include "clientproxy.h"
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
     #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
@@ -39,7 +40,6 @@ typedef struct {
     char *avatar_id;
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
-    LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
     scheduler jobs;
 } alloclient_internal;
 
@@ -119,8 +119,14 @@ static void decoder_destroy_for_track(alloclient *client, uint32_t track_id)
     free(dec);
 }
 
-static void parse_statediff(alloclient *client, cJSON *cmd)
+void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 {
+    if(client->raw_state_delta_callback) 
+    {
+        client->raw_state_delta_callback(client, cmd);
+        return;
+    }
+
     int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItem(cmd, "patch_from"));
     cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
     if(staterep == NULL)
@@ -135,14 +141,14 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
     }
 
     int64_t rev = nonnull(cJSON_GetObjectItem(staterep, "revision"))->valueint;
-    _internal(client)->latest_intent->ack_state_rev = client->state.revision = rev;
+    _internal(client)->latest_intent->ack_state_rev = client->_state.revision = rev;
 
     const cJSON *entities = nonnull(cJSON_GetObjectItem(staterep, "entities"));
     
     // keep track of entities that aren't mentioned in the incoming list
     cJSON *deletes = cJSON_CreateArray();
     allo_entity *entity = NULL;
-    LIST_FOREACH(entity, &client->state.entities, pointers)
+    LIST_FOREACH(entity, &client->_state.entities, pointers)
     {
         cJSON_AddItemToArray(deletes, cJSON_CreateString(entity->id));
     }
@@ -154,10 +160,10 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         cjson_delete_from_array(deletes, entity_id);
         
         cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItem(edesc, "components"), 1));
-        allo_entity *entity = state_get_entity(&client->state, entity_id);
+        allo_entity *entity = state_get_entity(&client->_state, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
-            LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
+            LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
         }
         
         cJSON_Delete(entity->components);
@@ -165,7 +171,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
     }
 
     // now, delete old entities
-    entity = client->state.entities.lh_first;
+    entity = client->_state.entities.lh_first;
     while(entity)
     {
         allo_entity *to_delete = entity;
@@ -188,7 +194,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
 
     if(client->state_callback)
     {
-        client->state_callback(client, &client->state);
+        client->state_callback(client, &client->_state);
     }
 }
 
@@ -206,13 +212,9 @@ static void parse_interaction(alloclient *client, cJSON *inter_json)
         _internal(client)->avatar_id = allo_strdup(cJSON_GetStringValue(cJSON_GetArrayItem(body, 1)));
     }
     allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
-    if(client->interaction_callback) {
-        client->interaction_callback(client, interaction);
+    if(!client->interaction_callback || client->interaction_callback(client, interaction))
+    {
         allo_interaction_free(interaction);
-    } else {
-        interaction_queue *entry = (interaction_queue*)calloc(1, sizeof(interaction_queue));
-        entry->interaction = interaction;
-        LIST_INSERT_HEAD(&_internal(client)->interactions, entry, pointers);
     }
     free((void*)bodystr);
 }
@@ -240,7 +242,7 @@ static void parse_media(alloclient *client, unsigned char *data, int length)
     // todo: decode on another tread
     decoder_track *dec = decoder_find_or_create_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
-    int16_t pcm[5760] = { 0 };
+    int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
     int samples_decoded = opus_decode(dec->decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
 
     assert(samples_decoded >= 0);
@@ -249,8 +251,9 @@ static void parse_media(alloclient *client, unsigned char *data, int length)
         fflush(dec->debug);
     }
 
-    if(client->audio_callback) {
-        client->audio_callback(client, track_id, pcm, samples_decoded);
+    if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded))
+    {
+        free(pcm);
     }
 }
 
@@ -265,7 +268,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     case CHANNEL_STATEDIFFS: { 
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         //printf("alloclient(%s): My latest rev is %zd. Receiving delta %s\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev, packet->data);
-        parse_statediff(client, cmdrep);
+        alloclient_parse_statediff(client, cmdrep);
         break; }
     case CHANNEL_COMMANDS: {
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
@@ -283,6 +286,15 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
 
 bool alloclient_poll(alloclient *client, int timeout_ms)
 {
+    return client->alloclient_poll(client, timeout_ms);
+}
+bool _alloclient_poll(alloclient *client, int timeout_ms)
+{
+    if(_internal(client)->peer == NULL)
+    {
+        return false;
+    } 
+
     int64_t ts = get_ts_mono();
     int64_t deadline = ts + timeout_ms;
     
@@ -324,6 +336,10 @@ bool alloclient_poll(alloclient *client, int timeout_ms)
 
 void alloclient_set_intent(alloclient* client, allo_client_intent *intent)
 {
+    client->alloclient_set_intent(client, intent);
+}
+static void _alloclient_set_intent(alloclient* client, allo_client_intent *intent)
+{
     // this one is set internally, so don't overwrite it
     int64_t ack_state_rev = _internal(client)->latest_intent->ack_state_rev;
     allo_client_intent_clone(intent, _internal(client)->latest_intent);
@@ -352,10 +368,11 @@ static void send_latest_intent(alloclient *client)
     free((void*)json);
 }
 
-void alloclient_send_interaction(
-    alloclient *client,
-    allo_interaction *interaction
-)
+void alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
+{
+    client->alloclient_send_interaction(client, interaction);
+}
+static void _alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
 {
     cJSON *cmdrep = cjson_create_list(
         nonnull(cJSON_CreateString("interaction")),
@@ -378,6 +395,10 @@ void alloclient_send_interaction(
 }
 
 void alloclient_disconnect(alloclient *client, int reason)
+{
+    client->alloclient_disconnect(client, reason);
+}
+static void _alloclient_disconnect(alloclient *client, int reason)
 {
     if (_internal(client)) {
         if (_internal(client)->peer && _internal(client)->peer->state != ENET_PEER_STATE_DISCONNECTED)
@@ -413,7 +434,7 @@ void alloclient_disconnect(alloclient *client, int reason)
     free(client);
 }
 
-bool announce(alloclient *client, const char *identity, const char *avatar_desc)
+static bool announce(alloclient *client, const char *identity, const char *avatar_desc)
 {
     cJSON *bodyobj = cjson_create_list(
         cJSON_CreateString("announce"),
@@ -445,20 +466,11 @@ bool announce(alloclient *client, const char *identity, const char *avatar_desc)
     return true;
 }
 
-alloclient *alloclient_create(void)
+bool alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
-    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
-    client->_internal = calloc(1, sizeof(alloclient_internal));
-    _internal(client)->latest_intent = allo_client_intent_create();
-    
-    scheduler_init(&_internal(client)->jobs);
-    
-    LIST_INIT(&client->state.entities);
-    
-    return client;
+    return client->alloclient_connect(client, url, identity, avatar_desc);
 }
-
-bool allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
+static bool _alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
     ENetHost * host;
     host = enet_host_create (NULL /* create a client host */,
@@ -495,9 +507,8 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
     enet_address_set_host (& address, justhost);
     address.port = justport ? atoi(justport) : 21337;
 
-    printf("Connecting to %s:%d\n", justhost, address.port);
-    free(justhost);
-    free(justport);
+    printf("Connecting to %s:%d (as %s)\n", justhost, address.port, identity);
+    
 
     ENetPeer *peer;
     peer = enet_host_connect (host, &address, CHANNEL_COUNT, 0);    
@@ -505,6 +516,8 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
     {
         fprintf (stderr, 
                     "No available peers for initiating an ENet connection.\n");
+        free(justhost);
+        free(justport);
         return false;
     }
 
@@ -512,7 +525,7 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
     if (enet_host_service(host, & event, 5000) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT)
     {
-        puts ("Connection succeeded.");
+        printf("Connection to %s:%d (as %s) succeeded.\n", justhost, address.port, identity);
     }
     else
     {
@@ -520,9 +533,13 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
         /* received. Reset the peer in the event the 5 seconds   */
         /* had run out without any significant event.            */
         enet_peer_reset (peer);
-        puts ("Connection to server failed.");
+        printf("Connection to %s:%d (as %s) failed.\n", justhost, address.port, identity);
+        free(justhost);
+        free(justport);
         return false;
     }
+    free(justhost);
+    free(justport);
 
     enet_peer_timeout(peer, 3, 2000, 6000);
 
@@ -548,19 +565,11 @@ bool allo_connect(alloclient *client, const char *url, const char *identity, con
     return true;
 }
 
-allo_interaction *alloclient_pop_interaction(alloclient *client)
-{
-    allo_interaction *interaction = NULL;
-    interaction_queue *first = _internal(client)->interactions.lh_first;
-    if(first) {
-        interaction = first->interaction;
-        LIST_REMOVE(first, pointers);
-        free(first);
-    }
-    return interaction;
-}
-
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
+{
+    client->alloclient_send_audio(client, track_id, pcm, frameCount);
+}
+static void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
 {
     assert(frameCount == 480 || frameCount == 960);
     
@@ -593,16 +602,53 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
 
 void alloclient_simulate(alloclient *client, double dt)
 {
+    client->alloclient_simulate(client, dt);
+}
+static void _alloclient_simulate(alloclient *client, double dt)
+{
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
-  allo_simulate(&client->state, dt, intents, 1);
+  allo_simulate(&client->_state, dt, intents, 1);
   if (client->state_callback)
   {
-    client->state_callback(client, &client->state);
+    client->state_callback(client, &client->_state);
   }
 }
 
 double alloclient_get_time(alloclient* client)
 {
+    return client->alloclient_get_time(client);
+}
+static double _alloclient_get_time(alloclient* client)
+{
     // heh sync with server will come later...
     return get_ts_mono() / 1000.0;
+}
+
+
+
+alloclient *alloclient_create(bool threaded)
+{
+    if(threaded)
+    {
+        return clientproxy_create();
+    }
+
+    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
+    client->_internal = calloc(1, sizeof(alloclient_internal));
+    _internal(client)->latest_intent = allo_client_intent_create();
+    
+    scheduler_init(&_internal(client)->jobs);
+    
+    LIST_INIT(&client->_state.entities);
+
+    client->alloclient_connect = _alloclient_connect;
+    client->alloclient_disconnect = _alloclient_disconnect;
+    client->alloclient_poll = _alloclient_poll;
+    client->alloclient_send_interaction = _alloclient_send_interaction;
+    client->alloclient_set_intent = _alloclient_set_intent;
+    client->alloclient_send_audio = _alloclient_send_audio;
+    client->alloclient_simulate = _alloclient_simulate;
+    client->alloclient_get_time = _alloclient_get_time;
+    
+    return client;
 }

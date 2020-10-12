@@ -81,10 +81,12 @@ Change this client's movement/action intent.
 See https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
 for description of the fields.
 
-### `state = client:get_state()`
+### `client:set_state_callback(callback: state_callback_fn)`
 
-Get the current state of the place, i e a list of all entities
-and their components. Returns a table with:
+Set this to get a callback when state changes. Callback function receives
+the new state as a parameter.
+
+The state is a list of all entities and their components. It's a table with:
 
 * `revision`: current revision of world, as number
 * `entities`: table of unsorted entities
@@ -96,26 +98,14 @@ Each entity has:
 
 See more at https://github.com/alloverse/docs/blob/master/specifications/README.md#entity .
 
-### `interaction = client:pop_interaction()`
-
-If you don't like callbacks and haven't `set_interaction_callback`, you can also
-call this method until it returns null after each time you call `client:poll` to
-fetch interactions. See `send_interaction` for description of the interaction
-table.
-
-### `client:set_state_callback(callback: state_callback_fn)`
-
-Set this to get a callback when state changes. Callback function receives
-the new state as a parameter.
+Note that you must not store the incoming state; you must copy it or use it only
+within this function.
 
 ### `client:set_interaction_callback(callback: interaction_callback_fn)`
 
 Set this to get a callback whenever another entity sends you an interaction.
 The callback function receives an `interaction` table immediately upon
 interaction.
-
-If you set this, `pop_interaction` will stop working. Choose either method
-to receive interactions.
 
 ### `client:set_disconnected_callback(callback: disconnected_callback_fn)`
 

@@ -22,6 +22,7 @@ end
 -- if you want to use more lua functions, add them here.
 local funcs = {
 	luaL_checkinteger = "lua_Integer luaL_checkinteger (lua_State *L, int narg)",
+	lua_toboolean = "int lua_toboolean (lua_State *L, int index)",
 	lua_settop = "void  lua_settop (lua_State *L, int idx)",
 	luaL_argerror = "int luaL_argerror (lua_State *L, int numarg, const char *extramsg)",
 	lua_call = "void   lua_call (lua_State *L, int nargs, int nresults)",

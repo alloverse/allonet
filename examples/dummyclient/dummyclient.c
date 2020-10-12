@@ -7,8 +7,9 @@
 #include <cJSON/cJSON.h>
 #include "../../src/util.h"
 #include <enet/enet.h>
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
+#ifndef MIN
+#   define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#endif
 
 #define MODIFY_TERMINAL 0
 
@@ -63,7 +64,7 @@ static int32_t track_id = 0;
 
 allo_client_intent* intent;
 
-static void interaction(
+static bool interaction(
     alloclient *client, 
     allo_interaction *inter
 )
@@ -72,7 +73,7 @@ static void interaction(
     const char *interaction_name = cJSON_GetArrayItem(body, 0)->valuestring;
     
     if(strcmp(interaction_name, "point") == 0 ) {
-        return;
+        return true;
     }
 
     printf(
@@ -106,6 +107,7 @@ static void interaction(
     }
 
     cJSON_Delete(body);
+    return true;
 }
 
 static cJSON *cvec2(float u, float v)
@@ -120,6 +122,7 @@ static cJSON *cvec3(float x, float y, float z)
 
 static void disconnected(alloclient *client, alloerror code, const char *reason)
 {
+    printf("Disconnected: %d/%s\n", code, reason);
     alloclient_disconnect(client, 0);
     exit(1);
 }
@@ -271,8 +274,8 @@ int main(int argc, char **argv)
 
     char *identity = (char*)calloc(1, 255);
     snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
-    alloclient *client = alloclient_create();
-    allo_connect(client, argv[2], identity, avatardesc);
+    alloclient *client = alloclient_create(true);
+    alloclient_connect(client, argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);
 
@@ -283,7 +286,7 @@ int main(int argc, char **argv)
 #if MODIFY_TERMINAL == 1
     set_conio_terminal_mode();
 #endif
-    //client->interaction_callback = interaction;
+    client->interaction_callback = interaction;
     client->disconnected_callback = disconnected;
     
     int i = 0;
@@ -302,11 +305,6 @@ int main(int argc, char **argv)
         }
 #endif
         alloclient_poll(client, 10);
-
-        allo_interaction *inter = NULL;
-        while((inter = alloclient_pop_interaction(client))) {
-            interaction(client, inter);
-        }
 
         if( i++ % 100)
         {

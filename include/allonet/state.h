@@ -100,7 +100,8 @@ typedef struct allo_interaction
 allo_interaction *allo_interaction_create(const char *type, const char *sender_entity_id, const char *receiver_entity_id, const char *request_id, const char *body);
 extern cJSON* allo_interaction_to_cjson(const allo_interaction* interaction);
 extern allo_interaction *allo_interaction_parse_cjson(const cJSON* from);
-void allo_interaction_free(allo_interaction *interaction);
+extern allo_interaction *allo_interaction_clone(const allo_interaction *interaction);
+extern void allo_interaction_free(allo_interaction *interaction);
 
 /**
  * Initialize the Allonet library. Must be called before any other Allonet calls.

@@ -89,7 +89,7 @@ public class Client {
         return url.withCString { urlPointer in
             identity.withCString { identity in
                 avatar.withCString { avatar in
-                    return allo_connect(url, identity, avatar)?.pointee
+                    return alloclient_connect(url, identity, avatar)?.pointee
                 }
             }
         }.flatMap(Client.init)

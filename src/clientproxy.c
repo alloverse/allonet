@@ -12,7 +12,8 @@ static clientproxy_internal *_internal(alloclient *client)
     return (clientproxy_internal*)client->_internal;
 }
 
-static bool _allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
+// single underscore function: proxy-side implementation
+static bool _alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
 {
 
 }
@@ -31,7 +32,7 @@ alloclient *clientproxy_create(void)
 
     LIST_INIT(&client->state.entities);
 
-    client->allo_connect = _allo_connect;
+    client->alloclient_connect = _alloclient_connect;
 /*    client->alloclient_disconnect = _alloclient_disconnect;
     client->alloclient_poll = _alloclient_poll;
     client->alloclient_send_interaction = _alloclient_send_interaction;

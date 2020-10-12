@@ -89,7 +89,7 @@ static int l_alloclient_connect (lua_State *L)
     const char *identity =  luaL_checkstring(L, 3);
     const char *avatar_desc =  luaL_checkstring(L, 4);
 
-    bool success = allo_connect(lclient->client, url, identity, avatar_desc);
+    bool success = alloclient_connect(lclient->client, url, identity, avatar_desc);
 
     lua_pushboolean(L, success);
     return 1;

@@ -108,7 +108,7 @@ typedef struct alloclient {
     void *_internal;
     void *_backref; // use this as a backref for callbacks  
 
-    bool (*allo_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
+    bool (*alloclient_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
     void (*alloclient_disconnect)(alloclient *client, int reason);
     bool (*alloclient_poll)(alloclient *client, int timeout_ms);
     void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
@@ -130,7 +130,7 @@ alloclient *alloclient_create(bool threaded);
 * @param identity: JSON dict describing user, as per https://github.com/alloverse/docs/blob/master/specifications/README.md#agent-identity
 * @param avatar_desc: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
 */
-bool allo_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
+bool alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
 
 /** Disconnect from an alloplace and free all internal state.
  *  `client` is free()d by this call. Call this to deallocate

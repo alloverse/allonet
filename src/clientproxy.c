@@ -8,7 +8,7 @@
 #else
 #   include <tinycthread.h>
 #endif
-
+#include "util.h"
 #include "inlinesys/queue.h"
 
 // internals in client.c
@@ -52,7 +52,10 @@ typedef struct proxy_message
         allo_interaction *interaction;
         allo_client_intent *intent;
         cJSON *state_delta;
-        int disconnection_code;
+        struct {
+            int code;
+            char *msg;
+        } disconnection;
         struct 
         {
             int32_t track_id;
@@ -124,7 +127,7 @@ static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
 {
     fprintf(stderr, "alloclient[clientproxy]: Shutting down...\n");
     proxy_message *msg = proxy_message_create(msg_disconnect);
-    msg->value.disconnection_code = reason;
+    msg->value.disconnection.code = reason;
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 
     thrd_join(_internal(proxyclient)->thr, NULL);
@@ -132,12 +135,12 @@ static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
     mtx_destroy(&_internal(proxyclient)->proxy_to_bridge_mtx);
     free(proxyclient->_backref);
     // TODO: clean out the message queues, goddammit.
-    original_alloclient_disconnect(proxyclient, msg->value.disconnection_code);
+    original_alloclient_disconnect(proxyclient, msg->value.disconnection.code);
 }
 static void bridge_alloclient_disconnect(alloclient *bridgeclient, proxy_message *msg)
 {
     alloclient *proxyclient = bridgeclient->_backref;
-    alloclient_disconnect(bridgeclient, msg->value.disconnection_code);
+    alloclient_disconnect(bridgeclient, msg->value.disconnection.code);
     _internal(proxyclient)->running = false;
 }
 
@@ -250,17 +253,26 @@ static void proxy_audio_callback(alloclient *proxyclient, proxy_message *msg)
 
 static void bridge_disconnected_callback(alloclient *bridgeclient, alloerror code, const char *message)
 {
-
+    alloclient *proxyclient = bridgeclient->_backref;
+    proxy_message *msg = proxy_message_create(msg_disconnect);
+    msg->value.disconnection.code = code;
+    msg->value.disconnection.msg = allo_strdup(message);
+    enqueue_bridge_to_proxy(_internal(proxyclient), msg);
 }
 static void proxy_disconnected_callback(alloclient *proxyclient, proxy_message *msg)
 {
-
+    if(proxyclient->disconnected_callback)
+    {
+        proxyclient->disconnected_callback(proxyclient, msg->value.disconnection.code, msg->value.disconnection.msg);
+    }
+    free(msg->value.disconnection.msg);
 }
 
 static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_state_delta] = proxy_raw_state_delta_callback,
     [msg_interaction] = proxy_interaction_callback,
     [msg_audio] = proxy_audio_callback,
+    [msg_disconnect] = proxy_disconnected_callback,
 };
 
 

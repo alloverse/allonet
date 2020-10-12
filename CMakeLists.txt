@@ -38,8 +38,6 @@ SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
 
-add_subdirectory (lib/tinycthread)
-
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 
 
@@ -92,11 +90,16 @@ else()
   SET(ALLONET_BUILDTYPE SHARED)
 endif()
 
-add_library(allonet ${ALLONET_BUILDTYPE} 
+add_library(allonet ${ALLONET_BUILDTYPE})
+
+target_sources(allonet
+  PRIVATE
+    lib/tinycthread/source/tinycthread.c
+  
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
-    ${SVC_FILES}
 )
+#add_subdirectory (lib/tinycthread)
 
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)

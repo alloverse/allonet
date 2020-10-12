@@ -3,11 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#if __STDC_VERSION__ >= 201112L
-#   include <threads.h>
-#else
-#   include <tinycthread.h>
-#endif
+#include <tinycthread.h>
 #include "util.h"
 #include "inlinesys/queue.h"
 

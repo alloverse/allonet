@@ -18,7 +18,7 @@ typedef struct l_alloclient
 
 static int l_alloclient_create (lua_State *L)
 {
-    bool threaded = luaL_checkint(L, 1);
+    bool threaded = lua_toboolean(L, 1);
     alloclient *client = alloclient_create(threaded);
     l_alloclient_t *lclient = (l_alloclient_t *)lua_newuserdata(L, sizeof(l_alloclient_t));
     memset(lclient, 0, sizeof(*lclient));

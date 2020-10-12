@@ -232,12 +232,20 @@ static void proxy_interaction_callback(alloclient *proxyclient, proxy_message *m
 
 static bool bridge_audio_callback(alloclient *bridgeclient, uint32_t track_id, int16_t pcm[], int32_t samples_decoded)
 {
-
+    alloclient *proxyclient = bridgeclient->_backref;
+    proxy_message *msg = proxy_message_create(msg_audio);
+    msg->value.audio.pcm = pcm;
+    msg->value.audio.sample_count = samples_decoded;
+    msg->value.audio.track_id = track_id;
+    enqueue_bridge_to_proxy(_internal(proxyclient), msg);
     return false;
 }
-static bool proxy_audio_callback(alloclient *proxyclient, proxy_message *msg)
+static void proxy_audio_callback(alloclient *proxyclient, proxy_message *msg)
 {
-
+    if(!proxyclient->audio_callback || proxyclient->audio_callback(proxyclient, msg->value.audio.track_id, msg->value.audio.pcm, msg->value.audio.sample_count))
+    {
+        free(msg->value.audio.pcm);
+    }
 }
 
 static void bridge_disconnected_callback(alloclient *bridgeclient, alloerror code, const char *message)
@@ -252,6 +260,7 @@ static void proxy_disconnected_callback(alloclient *proxyclient, proxy_message *
 static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_state_delta] = proxy_raw_state_delta_callback,
     [msg_interaction] = proxy_interaction_callback,
+    [msg_audio] = proxy_audio_callback,
 };
 
 

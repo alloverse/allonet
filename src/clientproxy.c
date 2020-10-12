@@ -31,7 +31,10 @@ typedef enum
     msg_interaction,
     msg_intent,
     msg_state_delta,
-    msg_disconnect
+    msg_disconnect,
+    msg_audio,
+
+    msg_count
 } proxy_message_type;
 
 /// Messages to be sent from proxy to bridge
@@ -53,6 +56,7 @@ typedef struct proxy_message
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
+
 
 static proxy_message *proxy_message_create(proxy_message_type type)
 {
@@ -100,7 +104,7 @@ static bool proxy_alloclient_connect(alloclient *proxyclient, const char *url, c
     msg->value.connect.avatar_desc = strdup(avatar_desc);
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
-static bool bridge_alloclient_connect(alloclient *bridgeclient, proxy_message *msg)
+static void bridge_alloclient_connect(alloclient *bridgeclient, proxy_message *msg)
 {
     bool success = alloclient_connect(bridgeclient, msg->value.connect.url, msg->value.connect.identity, msg->value.connect.avatar_desc);
     free(msg->value.connect.url);
@@ -166,32 +170,13 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
 
 }
 
-static void proxy_alloclient_request_asset(alloclient* proxyclient, const char* asset_id, const char* entity_id)
-{
-
-}
-static void bridge_alloclient_request_asset(alloclient* bridgeclient, proxy_message *msg)
-{
-
-}
-
-static void proxy_alloclient_simulate(alloclient* proxyclient, double dt)
-{
-
-}
-static void bridge_alloclient_simulate(alloclient* bridgeclient, proxy_message *msg)
-{
-
-}
-
-static double proxy_alloclient_get_time(alloclient* proxyclient)
-{
-
-}
-static double bridge_alloclient_get_time(alloclient* bridgeclient, proxy_message *msg)
-{
-
-}
+static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
+    [msg_connect] = bridge_alloclient_connect,
+    [msg_disconnect] = bridge_alloclient_disconnect,
+    [msg_interaction] = bridge_alloclient_send_interaction,
+    [msg_intent] = bridge_alloclient_set_intent,
+    [msg_audio] = bridge_alloclient_send_audio
+};
 
 
 //////// Callbacks
@@ -284,21 +269,9 @@ static void bridge_check_for_messages(alloclient *bridgeclient)
     proxy_message *msg = NULL;
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->proxy_to_bridge))) {
         STAILQ_REMOVE_HEAD(&_internal(proxyclient)->proxy_to_bridge, entries);
-        switch(msg->type) {
-            case msg_connect:
-                bridge_alloclient_connect(bridgeclient, msg);
-                break;
-            case msg_disconnect:
-                bridge_alloclient_disconnect(bridgeclient, msg);
-                break;
-            case msg_interaction:
-                bridge_alloclient_send_interaction(bridgeclient, msg);
-                break;
-            case msg_intent:
-                bridge_alloclient_set_intent(bridgeclient, msg);
-                break;
-            default: assert(false && "unhandled message");
-        }
+        void (*callback)(alloclient*, proxy_message*) = bridge_message_lookup_table[msg->type];
+        assert(callback != NULL && "missing callback");
+        callback(bridgeclient, msg);
         free(msg);
     }
     mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
@@ -345,8 +318,6 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_send_interaction = proxy_alloclient_send_interaction;
     proxyclient->alloclient_set_intent = proxy_alloclient_set_intent;
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
-    proxyclient->alloclient_simulate = proxy_alloclient_simulate;
-    proxyclient->alloclient_get_time = proxy_alloclient_get_time;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

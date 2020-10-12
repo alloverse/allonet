@@ -14,8 +14,8 @@
 /**
  * This file proxies the network client to its own thread.
  * Terminology:
- * - Proxy: The object that runs on the calling thread, probably app's main thread
- * - Bridge: The object that runs on the internal network thread
+ * - Proxy: The object that runs on the calling thread, probably app's main thread. Methods prefixed with single _
+ * - Bridge: The object that runs on the internal network thread.                   Methods prefixed with double _
  * - ProxyClient: Externally responds to the client.h API, but just sends messages over
  *   to the bridge thread.
  * - BridgeClient: Uses the client.c implementation to actually perform the requested 
@@ -24,7 +24,8 @@
 
 typedef enum
 {
-    msg_connect
+    msg_connect,
+    msg_interaction
 } proxy_message_type;
 
 /// Messages to be sent from proxy to bridge
@@ -39,16 +40,21 @@ typedef struct proxy_message
             char *identity;
             char *avatar_desc;
         } connect;
+        allo_interaction *interaction;
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
 
+typedef STAILQ_HEAD(proxy_message_stailq, proxy_message) proxy_message_stailq;
+
 typedef struct {
     alloclient *bridgeclient;
     thrd_t thr;
-    mtx_t messages_mtx;
+    mtx_t proxy_to_bridge_mtx;
+    mtx_t bridge_to_proxy_mtx;
     bool running;
-    STAILQ_HEAD(proxy_message_stailq, proxy_message) messages;
+    proxy_message_stailq proxy_to_bridge;
+    proxy_message_stailq bridge_to_proxy;
 } clientproxy_internal;
 
 static clientproxy_internal *_internal(alloclient *client)
@@ -57,7 +63,7 @@ static clientproxy_internal *_internal(alloclient *client)
 }
 
 // single underscore function: proxy-side implementation
-static bool _alloclient_connect(alloclient *client, const char *url, const char *identity, const char *avatar_desc)
+static bool _alloclient_connect(alloclient *proxyclient, const char *url, const char *identity, const char *avatar_desc)
 {
     proxy_message *msg = calloc(1, sizeof(proxy_message));
     msg->type = msg_connect;
@@ -65,17 +71,14 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     msg->value.connect.identity = strdup(identity);
     msg->value.connect.avatar_desc = strdup(avatar_desc);
     
-    mtx_lock(&_internal(client)->messages_mtx);
-    STAILQ_INSERT_TAIL(&_internal(client)->messages, msg, entries);
-    mtx_unlock(&_internal(client)->messages_mtx);
-    printf("Added connect message to queue\n");
+    mtx_lock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    STAILQ_INSERT_TAIL(&_internal(proxyclient)->proxy_to_bridge, msg, entries);
+    mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
 }
 // double underscore function: bridge-side (internal thread) imeplementation
-static bool __alloclient_connect(alloclient *client, proxy_message *msg)
+static bool __alloclient_connect(alloclient *bridgeclient, proxy_message *msg)
 {
-    printf("Bridge thread: Popped connect message\n");
-    bool success = alloclient_connect(_internal(client)->bridgeclient, msg->value.connect.url, msg->value.connect.identity, msg->value.connect.avatar_desc);
-    printf("Bridge thread: connection status: %d\n", success);
+    bool success = alloclient_connect(bridgeclient, msg->value.connect.url, msg->value.connect.identity, msg->value.connect.avatar_desc);
     free(msg->value.connect.url);
     free(msg->value.connect.identity);
     free(msg->value.connect.avatar_desc);
@@ -88,17 +91,6 @@ static void _alloclient_disconnect(alloclient *client, int reason)
 }
 // thread: bridge
 static void __alloclient_disconnect(alloclient *client, int reason)
-{
-
-}
-
-// thread: proxy
-static bool _alloclient_poll(alloclient *client, int timeout_ms)
-{
-
-}
-// thread: bridge
-static bool __alloclient_poll(alloclient *client, int timeout_ms)
 {
 
 }
@@ -167,71 +159,163 @@ static double _alloclient_get_time(alloclient* client)
 static double __alloclient_get_time(alloclient* client)
 {
 
+}
 
+
+//////// Callbacks
+
+// thread: bridge
+static void __state_callback(alloclient *bridgeclient, allo_state *state)
+{
+    alloclient *proxyclient = bridgeclient->_backref;
+    /*allo_state *swap = proxyclient->_state;
+    proxyclient->state = bridgeclient->_state;
+    bridgeclient->state = swap;*/
+}
+// thread: proxy
+static void _state_callback(alloclient *bridgeclient, proxy_message *msg)
+{
+
+}
+
+// thread: bridge
+static bool __interaction_callback(alloclient *bridgeclient, allo_interaction *interaction)
+{
+    alloclient *proxyclient = bridgeclient->_backref;
+    proxy_message *msg = calloc(1, sizeof(proxy_message));
+    msg->type = msg_interaction;
+    msg->value.interaction = interaction;
+    
+    mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    STAILQ_INSERT_TAIL(&_internal(proxyclient)->bridge_to_proxy, msg, entries);
+    mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    return false;
+}
+// thread: proxy
+static bool _interaction_callback(alloclient *proxyclient, proxy_message *msg)
+{
+    if(!proxyclient->interaction_callback || proxyclient->interaction_callback(proxyclient, msg->value.interaction))
+    {
+        allo_interaction_free(msg->value.interaction);
+    }
+}
+
+// thread: bridge
+static bool __audio_callback(alloclient *bridgeclient, uint32_t track_id, int16_t pcm[], int32_t samples_decoded)
+{
+
+    return false;
+}
+// thread: proxy
+static bool _audio_callback(alloclient *bridgeclient, proxy_message *msg)
+{
+
+}
+
+// thread: bridge
+static void __disconnected_callback(alloclient *bridgeclient, alloerror code, const char *message)
+{
+
+}
+// thread: proxy
+static void _disconnected_callback(alloclient *bridgeclient, proxy_message *msg)
+{
 
 }
 
 
-// thread: bridge
-static void check_for_messages(alloclient *client)
+//////// Thread scaffolding on proxy
+// thread: proxy (parsing messages from bridge)
+static bool _alloclient_poll(alloclient *proxyclient, int timeout_ms)
 {
-    mtx_lock(&_internal(client)->messages_mtx);
+    mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
     proxy_message *msg = NULL;
-    while((msg = STAILQ_FIRST(&_internal(client)->messages))) {
-        STAILQ_REMOVE_HEAD(&_internal(client)->messages, entries);
+    while((msg = STAILQ_FIRST(&_internal(proxyclient)->bridge_to_proxy))) {
+        STAILQ_REMOVE_HEAD(&_internal(proxyclient)->bridge_to_proxy, entries);
         switch(msg->type) {
-            case msg_connect:
-                __alloclient_connect(client, msg);
+            case msg_interaction:
+                _interaction_callback(proxyclient, msg);
                 break;
+            default: assert(false && "unhandled message");
         }
         free(msg);
     }
-    mtx_unlock(&_internal(client)->messages_mtx);
+    mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+}
+
+//////// Thread scaffolding on bridge
+
+
+// thread: bridge
+static void check_for_messages(alloclient *bridgeclient)
+{
+    alloclient *proxyclient = bridgeclient->_backref;
+    mtx_lock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    proxy_message *msg = NULL;
+    while((msg = STAILQ_FIRST(&_internal(proxyclient)->proxy_to_bridge))) {
+        STAILQ_REMOVE_HEAD(&_internal(proxyclient)->proxy_to_bridge, entries);
+        switch(msg->type) {
+            case msg_connect:
+                __alloclient_connect(bridgeclient, msg);
+                break;
+            default: assert(false && "unhandled message");
+        }
+        free(msg);
+    }
+    mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
 }
 
 // thread: bridge
-static void check_for_network(alloclient *client)
+static void check_for_network(alloclient *bridgeclient)
 {
-    alloclient_poll(_internal(client)->bridgeclient, (1.0/40)*1000);
+    alloclient_poll(bridgeclient, (1.0/40)*1000);
 }
 
 // thread: bridge
-static void _bridgethread(alloclient *client)
+static void _bridgethread(alloclient *bridgeclient)
 {
-    while(_internal(client)->running)
+    while(_internal(bridgeclient->_backref)->running)
     {
-        check_for_messages(client);
-        check_for_network(client);
+        check_for_messages(bridgeclient);
+        check_for_network(bridgeclient);
     }
 }
 
 // thread: proxy
 alloclient *clientproxy_create(void)
 {
-    alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
-    client->_internal = calloc(1, sizeof(clientproxy_internal));
-    _internal(client)->bridgeclient = alloclient_create(false);
-    _internal(client)->running = true;
+    alloclient *proxyclient = (alloclient*)calloc(1, sizeof(alloclient));
+    proxyclient->_internal = calloc(1, sizeof(clientproxy_internal));
+    _internal(proxyclient)->bridgeclient = alloclient_create(false);
+    _internal(proxyclient)->bridgeclient->_backref = proxyclient;
+    _internal(proxyclient)->bridgeclient->state_callback = __state_callback;
+    _internal(proxyclient)->bridgeclient->interaction_callback = __interaction_callback;
+    _internal(proxyclient)->bridgeclient->audio_callback = __audio_callback;
+    _internal(proxyclient)->bridgeclient->disconnected_callback = __disconnected_callback;
+    _internal(proxyclient)->running = true;
 
-    LIST_INIT(&client->_state.entities);
-    STAILQ_INIT(&_internal(client)->messages);
+    LIST_INIT(&proxyclient->_state.entities);
+    STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);
+    STAILQ_INIT(&_internal(proxyclient)->bridge_to_proxy);
 
-    client->alloclient_connect = _alloclient_connect;
-    client->alloclient_disconnect = _alloclient_disconnect;
-    client->alloclient_poll = _alloclient_poll;
-    client->alloclient_send_interaction = _alloclient_send_interaction;
-    client->alloclient_set_intent = _alloclient_set_intent;
-    client->alloclient_send_audio = _alloclient_send_audio;
-    client->alloclient_simulate = _alloclient_simulate;
-    client->alloclient_get_time = _alloclient_get_time;
+    proxyclient->alloclient_connect = _alloclient_connect;
+    proxyclient->alloclient_disconnect = _alloclient_disconnect;
+    proxyclient->alloclient_poll = _alloclient_poll;
+    proxyclient->alloclient_send_interaction = _alloclient_send_interaction;
+    proxyclient->alloclient_set_intent = _alloclient_set_intent;
+    proxyclient->alloclient_send_audio = _alloclient_send_audio;
+    proxyclient->alloclient_simulate = _alloclient_simulate;
+    proxyclient->alloclient_get_time = _alloclient_get_time;
 
     // todo: setup callbacks in bridgeclient
 
-    int success = thrd_create(&_internal(client)->thr, (thrd_start_t)_bridgethread, (void*)client);
+    int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);
-    success = mtx_init(&_internal(client)->messages_mtx, mtx_plain);
+    success = mtx_init(&_internal(proxyclient)->proxy_to_bridge_mtx, mtx_plain);
+    assert(success == thrd_success);
+    success = mtx_init(&_internal(proxyclient)->bridge_to_proxy_mtx, mtx_plain);
     assert(success == thrd_success);
 
 
-    return client;
+    return proxyclient;
 }

@@ -21,10 +21,11 @@ fileprivate func stateCallback(client: UnsafeMutablePointer<alloclient>!, state:
     client.delegate?.client(client, received: state)
 }
 
-fileprivate func interactionCallback(client: UnsafeMutablePointer<alloclient>!, interaction: UnsafeMutablePointer<allo_interaction>!) {
+fileprivate func interactionCallback(client: UnsafeMutablePointer<alloclient>!, interaction: UnsafeMutablePointer<allo_interaction>!) -> Boolean {
     guard let interaction = interaction?.pointee else { return }
     let client = Unmanaged<Client>.fromOpaque(client.pointee._backref!).takeUnretainedValue()
     client.delegate?.client(client, received: interaction)
+    return true
 }
 
 fileprivate func disconnectedCallback(client: UnsafeMutablePointer<alloclient>!) {

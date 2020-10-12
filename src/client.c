@@ -206,10 +206,9 @@ static void parse_interaction(alloclient *client, cJSON *inter_json)
         _internal(client)->avatar_id = allo_strdup(cJSON_GetStringValue(cJSON_GetArrayItem(body, 1)));
     }
     allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
-    if(client->interaction_callback) {
-        client->interaction_callback(client, interaction);
+    if(!client->interaction_callback || client->interaction_callback(client, interaction))
+    {
         allo_interaction_free(interaction);
-    } else {
     }
     free((void*)bodystr);
 }
@@ -237,7 +236,7 @@ static void parse_media(alloclient *client, unsigned char *data, int length)
     // todo: decode on another tread
     decoder_track *dec = decoder_find_or_create_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
-    int16_t pcm[5760] = { 0 };
+    int16_t pcm = calloc(1, 5760);
     int samples_decoded = opus_decode(dec->decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
 
     assert(samples_decoded >= 0);
@@ -246,8 +245,9 @@ static void parse_media(alloclient *client, unsigned char *data, int length)
         fflush(dec->debug);
     }
 
-    if(client->audio_callback) {
-        client->audio_callback(client, track_id, pcm, samples_decoded);
+    if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded))
+    {
+        free(pcm);
     }
 }
 

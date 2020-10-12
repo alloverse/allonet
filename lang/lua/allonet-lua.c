@@ -162,9 +162,9 @@ static int l_alloclient_set_intent (lua_State *L)
 }
 
 static void state_callback(alloclient *client, allo_state *state);
-static void interaction_callback(alloclient *client, allo_interaction *interaction);
+static bool interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client, alloerror code, const char* message );
-static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
+static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
 
 static int l_alloclient_set_state_callback (lua_State *L)
 {
@@ -247,7 +247,7 @@ static void state_callback(alloclient *client, allo_state *state)
     }
 }
 
-static void interaction_callback(alloclient *client, allo_interaction *inter)
+static bool interaction_callback(alloclient *client, allo_interaction *inter)
 {
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->interaction_callback_index))
@@ -255,6 +255,7 @@ static void interaction_callback(alloclient *client, allo_interaction *inter)
         push_interaction_table(lclient->L, inter);
         lua_call(lclient->L, 1, 0);
     }
+    return true;
 }
 
 static void disconnected_callback(alloclient *client, alloerror code, const char* message )
@@ -268,7 +269,7 @@ static void disconnected_callback(alloclient *client, alloerror code, const char
     }
 }
 
-static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t samples_decoded)
+static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t samples_decoded)
 {
     l_alloclient_t* lclient = (l_alloclient_t*)client->_backref;
     if (get_function(lclient->L, lclient->audio_callback_index))
@@ -277,6 +278,7 @@ static void audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
         lua_pushlstring(lclient->L, (const char*)pcm, samples_decoded*sizeof(int16_t));
         lua_call(lclient->L, 2, 0);
     }
+    return true;
 }
 
 

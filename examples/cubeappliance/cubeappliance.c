@@ -16,7 +16,7 @@
 allo_client_intent *intent;
 char *me;
 
-static void interaction(alloclient *client, allo_interaction *inter)
+static bool interaction(alloclient *client, allo_interaction *inter)
 {
     cJSON *cmd = cJSON_Parse(inter->body);
     const char *iname = cJSON_GetStringValue(cJSON_GetArrayItem(cmd, 0));
@@ -44,6 +44,7 @@ static void interaction(alloclient *client, allo_interaction *inter)
         alloclient_send_interaction(client, response);
         allo_interaction_free(response);
     }
+    return true;
 }
 
 int main(int argc, char **argv)

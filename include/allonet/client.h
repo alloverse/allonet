@@ -23,9 +23,11 @@ typedef struct alloclient {
       * 
       * @param interaction: interaction received. Freed after callback;
       *                     copy it if you need to keep it.
+      * @return bool: whether the caller should free the interaction afterwards (if you return false,
+      *               you have to allo_interaction_free(interaction) yourself later).
       * @see https://github.com/alloverse/docs/blob/master/specifications/interactions.md
       */
-    void (*interaction_callback)(
+    bool (*interaction_callback)(
         alloclient *client, 
         allo_interaction *interaction
     );
@@ -38,8 +40,10 @@ typedef struct alloclient {
      *  @param track_id: which track/entity is transmitting this audio
      *  @param pcm: n samples of 48000 Hz mono PCM audio data (most often 480 samples, 10ms, 960 bytes)
      *  @param samples_decoded: 'n': how many samples in pcm
+     *  @return bool: whether the caller should free the pcm afterwards (if you return false,
+     *                you have to free(pcm) yourself later).
      */
-    void (*audio_callback)(
+    bool (*audio_callback)(
         alloclient *client,
         uint32_t track_id,
         int16_t pcm[],

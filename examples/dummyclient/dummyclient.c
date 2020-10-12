@@ -7,8 +7,9 @@
 #include <cJSON/cJSON.h>
 #include "../../src/util.h"
 #include <enet/enet.h>
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
+#ifndef MIN
+#   define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#endif
 
 #define MODIFY_TERMINAL 0
 
@@ -63,7 +64,7 @@ static int32_t track_id = 0;
 
 allo_client_intent* intent;
 
-static void interaction(
+static bool interaction(
     alloclient *client, 
     allo_interaction *inter
 )
@@ -72,7 +73,7 @@ static void interaction(
     const char *interaction_name = cJSON_GetArrayItem(body, 0)->valuestring;
     
     if(strcmp(interaction_name, "point") == 0 ) {
-        return;
+        return true;
     }
 
     printf(
@@ -106,6 +107,7 @@ static void interaction(
     }
 
     cJSON_Delete(body);
+    return true;
 }
 
 static cJSON *cvec2(float u, float v)

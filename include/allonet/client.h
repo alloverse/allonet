@@ -13,10 +13,11 @@ typedef enum alloerror
 
 typedef struct alloclient alloclient;
 typedef struct alloclient {
-    /** set this to get a callback when state changes. data in 'state'
-      * is valid only during duration of callback.
-      */
-    void (*state_callback)(alloclient *client, allo_state *state);
+    /** set this to get a callback when state changes. 
+     * @param state Full world state. Only valid during duration of callback.
+     * 
+     */
+    bool (*state_callback)(alloclient *client, allo_state *state);
 
     /** Set this to get a callback when another entity is trying to 
       * interact with one of your entities.
@@ -111,6 +112,8 @@ typedef struct alloclient {
     allo_state _state;
     void *_internal;
     void *_backref; // use this as a backref for callbacks  
+
+    void (*raw_state_delta_callback)(alloclient *client, cJSON *delta);
 
     bool (*alloclient_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
     void (*alloclient_disconnect)(alloclient *client, int reason);

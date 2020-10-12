@@ -119,8 +119,14 @@ static void decoder_destroy_for_track(alloclient *client, uint32_t track_id)
     free(dec);
 }
 
-static void parse_statediff(alloclient *client, cJSON *cmd)
+void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 {
+    if(client->raw_state_delta_callback) 
+    {
+        client->raw_state_delta_callback(client, cmd);
+        return;
+    }
+
     int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItem(cmd, "patch_from"));
     cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
     if(staterep == NULL)
@@ -236,7 +242,7 @@ static void parse_media(alloclient *client, unsigned char *data, int length)
     // todo: decode on another tread
     decoder_track *dec = decoder_find_or_create_for_track(client, track_id);
     const int maximumFrameCount = 5760; // 120ms as per documentation
-    int16_t pcm = calloc(1, 5760);
+    int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
     int samples_decoded = opus_decode(dec->decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
 
     assert(samples_decoded >= 0);
@@ -262,7 +268,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     case CHANNEL_STATEDIFFS: { 
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
         //printf("alloclient(%s): My latest rev is %zd. Receiving delta %s\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev, packet->data);
-        parse_statediff(client, cmdrep);
+        alloclient_parse_statediff(client, cmdrep);
         break; }
     case CHANNEL_COMMANDS: {
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));

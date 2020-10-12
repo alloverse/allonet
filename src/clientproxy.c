@@ -11,6 +11,9 @@
 
 #include "inlinesys/queue.h"
 
+// internals in client.c
+void alloclient_parse_statediff(alloclient *client, cJSON *cmd);
+
 /**
  * This file proxies the network client to its own thread.
  * Terminology:
@@ -25,7 +28,8 @@
 typedef enum
 {
     msg_connect,
-    msg_interaction
+    msg_interaction,
+    msg_state_delta
 } proxy_message_type;
 
 /// Messages to be sent from proxy to bridge
@@ -41,9 +45,17 @@ typedef struct proxy_message
             char *avatar_desc;
         } connect;
         allo_interaction *interaction;
+        cJSON *state_delta;
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
+
+static proxy_message *proxy_message_create(proxy_message_type type)
+{
+    proxy_message *msg = calloc(1, sizeof(proxy_message));
+    msg->type = type;
+    return msg;
+}
 
 typedef STAILQ_HEAD(proxy_message_stailq, proxy_message) proxy_message_stailq;
 
@@ -59,20 +71,30 @@ typedef struct {
 
 static clientproxy_internal *_internal(alloclient *client)
 {
-    return (clientproxy_internal*)client->_internal;
+    return (clientproxy_internal*)client->_backref;
+}
+
+static void enqueue_proxy_to_bridge(clientproxy_internal *internal, proxy_message *msg)
+{
+    mtx_lock(&internal->proxy_to_bridge_mtx);
+    STAILQ_INSERT_TAIL(&internal->proxy_to_bridge, msg, entries);
+    mtx_unlock(&internal->proxy_to_bridge_mtx);
+}
+
+static void enqueue_bridge_to_proxy(clientproxy_internal *internal, proxy_message *msg)
+{
+    mtx_lock(&internal->bridge_to_proxy_mtx);
+    STAILQ_INSERT_TAIL(&internal->bridge_to_proxy, msg, entries);
+    mtx_unlock(&internal->bridge_to_proxy_mtx);
 }
 
 static bool proxy_alloclient_connect(alloclient *proxyclient, const char *url, const char *identity, const char *avatar_desc)
 {
-    proxy_message *msg = calloc(1, sizeof(proxy_message));
-    msg->type = msg_connect;
+    proxy_message *msg = proxy_message_create(msg_connect);
     msg->value.connect.url = strdup(url);
     msg->value.connect.identity = strdup(identity);
     msg->value.connect.avatar_desc = strdup(avatar_desc);
-    
-    mtx_lock(&_internal(proxyclient)->proxy_to_bridge_mtx);
-    STAILQ_INSERT_TAIL(&_internal(proxyclient)->proxy_to_bridge, msg, entries);
-    mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
 static bool bridge_alloclient_connect(alloclient *bridgeclient, proxy_message *msg)
 {
@@ -148,28 +170,31 @@ static double bridge_alloclient_get_time(alloclient* bridgeclient)
 
 //////// Callbacks
 
-static void bridge_state_callback(alloclient *bridgeclient, allo_state *state)
+static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd)
 {
+    // Our strategy here is to parse the deltas on the main thread instead of the network thread.
+    // This is a bit much work to do on a main thread, so it would be much nicer to parse on the network
+    // thread and somehow do a pointer swap with the main thread. That's too complicated for my
+    // poor brain right now, so let's try it this way, and if the performance is good enough,
+    // keep it this way.
+    
     alloclient *proxyclient = bridgeclient->_backref;
-    /*allo_state *swap = proxyclient->_state;
-    proxyclient->state = bridgeclient->_state;
-    bridgeclient->state = swap;*/
+    proxy_message *msg = proxy_message_create(msg_state_delta);
+    msg->value.state_delta = cmd;
+    enqueue_bridge_to_proxy(_internal(proxyclient), msg);
 }
-static void proxy_state_callback(alloclient *proxyclient, proxy_message *msg)
+static void proxy_raw_state_delta_callback(alloclient *proxyclient, proxy_message *msg)
 {
-
+    alloclient_parse_statediff(proxyclient, msg->value.state_delta);
+    // note: parse_statediff takes ownership of state_delta, so no need to free it.
 }
 
 static bool bridge_interaction_callback(alloclient *bridgeclient, allo_interaction *interaction)
 {
     alloclient *proxyclient = bridgeclient->_backref;
-    proxy_message *msg = calloc(1, sizeof(proxy_message));
-    msg->type = msg_interaction;
+    proxy_message *msg = proxy_message_create(msg_interaction);
     msg->value.interaction = interaction;
-    
-    mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
-    STAILQ_INSERT_TAIL(&_internal(proxyclient)->bridge_to_proxy, msg, entries);
-    mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    enqueue_bridge_to_proxy(_internal(proxyclient), msg);
     return false;
 }
 static bool proxy_interaction_callback(alloclient *proxyclient, proxy_message *msg)
@@ -211,6 +236,9 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
         switch(msg->type) {
             case msg_interaction:
                 proxy_interaction_callback(proxyclient, msg);
+                break;
+            case msg_state_delta:
+                proxy_raw_state_delta_callback(proxyclient, msg);
                 break;
             default: assert(false && "unhandled message");
         }
@@ -260,17 +288,16 @@ static void _bridgethread(alloclient *bridgeclient)
 // thread: proxy
 alloclient *clientproxy_create(void)
 {
-    alloclient *proxyclient = (alloclient*)calloc(1, sizeof(alloclient));
-    proxyclient->_internal = calloc(1, sizeof(clientproxy_internal));
+    alloclient *proxyclient = alloclient_create(false);
+    proxyclient->_backref = calloc(1, sizeof(clientproxy_internal));
     _internal(proxyclient)->bridgeclient = alloclient_create(false);
     _internal(proxyclient)->bridgeclient->_backref = proxyclient;
-    _internal(proxyclient)->bridgeclient->state_callback = bridge_state_callback;
+    _internal(proxyclient)->bridgeclient->raw_state_delta_callback = bridge_raw_state_delta_callback;
     _internal(proxyclient)->bridgeclient->interaction_callback = bridge_interaction_callback;
     _internal(proxyclient)->bridgeclient->audio_callback = bridge_audio_callback;
     _internal(proxyclient)->bridgeclient->disconnected_callback = bridge_disconnected_callback;
     _internal(proxyclient)->running = true;
 
-    LIST_INIT(&proxyclient->_state.entities);
     STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);
     STAILQ_INIT(&_internal(proxyclient)->bridge_to_proxy);
 
@@ -291,7 +318,6 @@ alloclient *clientproxy_create(void)
     assert(success == thrd_success);
     success = mtx_init(&_internal(proxyclient)->bridge_to_proxy_mtx, mtx_plain);
     assert(success == thrd_success);
-
 
     return proxyclient;
 }

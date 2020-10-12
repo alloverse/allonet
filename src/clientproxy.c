@@ -213,7 +213,7 @@ alloclient *clientproxy_create(void)
     _internal(client)->bridgeclient = alloclient_create(false);
     _internal(client)->running = true;
 
-    LIST_INIT(&client->state.entities);
+    LIST_INIT(&client->_state.entities);
     STAILQ_INIT(&_internal(client)->messages);
 
     client->alloclient_connect = _alloclient_connect;

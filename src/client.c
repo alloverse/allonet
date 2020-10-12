@@ -135,14 +135,14 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
     }
 
     int64_t rev = nonnull(cJSON_GetObjectItem(staterep, "revision"))->valueint;
-    _internal(client)->latest_intent->ack_state_rev = client->state.revision = rev;
+    _internal(client)->latest_intent->ack_state_rev = client->_state.revision = rev;
 
     const cJSON *entities = nonnull(cJSON_GetObjectItem(staterep, "entities"));
     
     // keep track of entities that aren't mentioned in the incoming list
     cJSON *deletes = cJSON_CreateArray();
     allo_entity *entity = NULL;
-    LIST_FOREACH(entity, &client->state.entities, pointers)
+    LIST_FOREACH(entity, &client->_state.entities, pointers)
     {
         cJSON_AddItemToArray(deletes, cJSON_CreateString(entity->id));
     }
@@ -154,10 +154,10 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
         cjson_delete_from_array(deletes, entity_id);
         
         cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItem(edesc, "components"), 1));
-        allo_entity *entity = state_get_entity(&client->state, entity_id);
+        allo_entity *entity = state_get_entity(&client->_state, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
-            LIST_INSERT_HEAD(&client->state.entities, entity, pointers);
+            LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
         }
         
         cJSON_Delete(entity->components);
@@ -165,7 +165,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
     }
 
     // now, delete old entities
-    entity = client->state.entities.lh_first;
+    entity = client->_state.entities.lh_first;
     while(entity)
     {
         allo_entity *to_delete = entity;
@@ -188,7 +188,7 @@ static void parse_statediff(alloclient *client, cJSON *cmd)
 
     if(client->state_callback)
     {
-        client->state_callback(client, &client->state);
+        client->state_callback(client, &client->_state);
     }
 }
 
@@ -596,10 +596,10 @@ void alloclient_simulate(alloclient *client, double dt)
 static void _alloclient_simulate(alloclient *client, double dt)
 {
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
-  allo_simulate(&client->state, dt, intents, 1);
+  allo_simulate(&client->_state, dt, intents, 1);
   if (client->state_callback)
   {
-    client->state_callback(client, &client->state);
+    client->state_callback(client, &client->_state);
   }
 }
 
@@ -628,7 +628,7 @@ alloclient *alloclient_create(bool threaded)
     
     scheduler_init(&_internal(client)->jobs);
     
-    LIST_INIT(&client->state.entities);
+    LIST_INIT(&client->_state.entities);
 
     client->alloclient_connect = _alloclient_connect;
     client->alloclient_disconnect = _alloclient_disconnect;

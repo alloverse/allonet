@@ -104,7 +104,7 @@ typedef struct alloclient {
     );
 
     // internal
-    allo_state state;
+    allo_state _state;
     void *_internal;
     void *_backref; // use this as a backref for callbacks  
 

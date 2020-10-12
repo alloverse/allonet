@@ -220,13 +220,6 @@ static int l_alloclient_set_audio_callback(lua_State* L)
     return 0;
 }
 
-static int l_alloclient_get_state (lua_State *L)
-{
-    l_alloclient_t *lclient = check_alloclient(L, 1);
-    push_state_table(L, &lclient->client->state);
-    return 1;
-}
-
 static int l_alloclient_simulate(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
@@ -249,7 +242,7 @@ static void state_callback(alloclient *client, allo_state *state)
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->state_callback_index))
     {
-        push_state_table(lclient->L, &lclient->client->state);
+        push_state_table(lclient->L, state);
         lua_call(lclient->L, 1, 0);
     }
 }
@@ -300,7 +293,6 @@ static const struct luaL_Reg alloclient_m [] = {
     {"set_interaction_callback", l_alloclient_set_interaction_callback},
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
     {"set_audio_callback", l_alloclient_set_audio_callback},
-    {"get_state", l_alloclient_get_state},
     {"simulate", l_alloclient_simulate},
     {"get_time", l_alloclient_get_time},
     {NULL, NULL}

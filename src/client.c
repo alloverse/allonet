@@ -40,7 +40,6 @@ typedef struct {
     char *avatar_id;
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
-    LIST_HEAD(interaction_queue_list, interaction_queue) interactions;
     scheduler jobs;
 } alloclient_internal;
 
@@ -211,9 +210,6 @@ static void parse_interaction(alloclient *client, cJSON *inter_json)
         client->interaction_callback(client, interaction);
         allo_interaction_free(interaction);
     } else {
-        interaction_queue *entry = (interaction_queue*)calloc(1, sizeof(interaction_queue));
-        entry->interaction = interaction;
-        LIST_INSERT_HEAD(&_internal(client)->interactions, entry, pointers);
     }
     free((void*)bodystr);
 }

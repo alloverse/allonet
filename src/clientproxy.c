@@ -29,6 +29,7 @@ typedef enum
 {
     msg_connect,
     msg_interaction,
+    msg_intent,
     msg_state_delta,
     msg_disconnect
 } proxy_message_type;
@@ -46,6 +47,7 @@ typedef struct proxy_message
             char *avatar_desc;
         } connect;
         allo_interaction *interaction;
+        allo_client_intent *intent;
         cJSON *state_delta;
         int disconnection_code;
     } value;
@@ -140,13 +142,19 @@ static void bridge_alloclient_send_interaction(alloclient *bridgeclient, proxy_m
     allo_interaction_free(msg->value.interaction);
 }
 
+static void (*original_alloclient_set_intent)(alloclient *proxyclient, allo_client_intent *intent);
 static void proxy_alloclient_set_intent(alloclient *proxyclient, allo_client_intent *intent)
 {
-
+    original_alloclient_set_intent(proxyclient, intent);
+    proxy_message *msg = proxy_message_create(msg_intent);
+    msg->value.intent = allo_client_intent_create();
+    allo_client_intent_clone(intent, msg->value.intent);
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
 static void bridge_alloclient_set_intent(alloclient *bridgeclient, proxy_message *msg)
 {
-
+    alloclient_set_intent(bridgeclient, msg->value.intent);
+    allo_client_intent_free(msg->value.intent);
 }
 
 static void proxy_alloclient_send_audio(alloclient *proxyclient, int32_t track_id, const int16_t *pcm, size_t sample_count)
@@ -286,6 +294,9 @@ static void bridge_check_for_messages(alloclient *bridgeclient)
             case msg_interaction:
                 bridge_alloclient_send_interaction(bridgeclient, msg);
                 break;
+            case msg_intent:
+                bridge_alloclient_set_intent(bridgeclient, msg);
+                break;
             default: assert(false && "unhandled message");
         }
         free(msg);
@@ -327,6 +338,7 @@ alloclient *clientproxy_create(void)
     STAILQ_INIT(&_internal(proxyclient)->bridge_to_proxy);
 
     original_alloclient_disconnect = proxyclient->alloclient_disconnect;
+    original_alloclient_set_intent = proxyclient->alloclient_set_intent;
     proxyclient->alloclient_connect = proxy_alloclient_connect;
     proxyclient->alloclient_disconnect = proxy_alloclient_disconnect;
     proxyclient->alloclient_poll = proxy_alloclient_poll;

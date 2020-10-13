@@ -5,6 +5,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
+option(ALLONET_LINK_TINYCTHREAD "Whether to link with tinycthread. say off if you already have it in the process." ON)
 
 include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")
 include_directories(SYSTEM
@@ -92,14 +93,13 @@ endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
 
+
 target_sources(allonet
   PRIVATE
-    lib/tinycthread/source/tinycthread.c
-  
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
 )
-#add_subdirectory (lib/tinycthread)
+add_subdirectory (lib/tinycthread)
 
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)
@@ -109,7 +109,13 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
-target_link_libraries(allonet enet cjson-static cjson_utils-static opus ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
+if(ALLONET_LINK_TINYCTHREAD)
+  SET(TINYCTHREAD tinycthread)
+else()
+  SET(TINYCTHREAD )
+endif()
+
+target_link_libraries(allonet enet cjson-static cjson_utils-static opus ${TINYCTHREAD} ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
 
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)

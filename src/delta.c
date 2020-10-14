@@ -16,7 +16,7 @@ void allo_delta_insert(statehistory_t *history, cJSON *next_state)
 }
 void allo_delta_destroy(statehistory_t *history)
 {
-    for(int i = 0; i++; i < allo_statehistory_length)
+    for(int i = 0; i < allo_statehistory_length; i++)
     {
         cJSON_Delete(history->history[i]);
     }

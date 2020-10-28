@@ -656,8 +656,10 @@ static void _alloclient_simulate(alloclient *client, double dt)
   
   // extrapolate world time
   allo_entity *place = state_get_entity(&client->_state, "place");
-  cJSON *time =cJSON_GetObjectItem(cJSON_GetObjectItem(place->components, "clock"), "time");
-  cJSON_SetNumberValue(time, alloclient_get_time(client));
+  if(place) {
+    cJSON *time =cJSON_GetObjectItem(cJSON_GetObjectItem(place->components, "clock"), "time");
+    cJSON_SetNumberValue(time, alloclient_get_time(client));
+  }
   
   // simulate world
   allo_simulate(&client->_state, dt, intents, 1);

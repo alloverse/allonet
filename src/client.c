@@ -653,6 +653,13 @@ void alloclient_simulate(alloclient *client, double dt)
 static void _alloclient_simulate(alloclient *client, double dt)
 {
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
+  
+  // extrapolate world time
+  allo_entity *place = state_get_entity(&client->_state, "place");
+  cJSON *time =cJSON_GetObjectItem(cJSON_GetObjectItem(place->components, "clock"), "time");
+  cJSON_SetNumberValue(time, alloclient_get_time(client));
+  
+  // simulate world
   allo_simulate(&client->_state, dt, intents, 1);
   if (client->state_callback)
   {

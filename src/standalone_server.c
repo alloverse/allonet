@@ -306,7 +306,9 @@ static allo_entity* add_place(alloserver *serv)
     NULL
   );
 
-  return allo_state_add_entity_from_spec(&serv->state, NULL, place, NULL);
+  allo_entity *e = allo_state_add_entity_from_spec(&serv->state, NULL, place, NULL);
+  free(e->id); e->id = strdup("place");
+  return e;
 }
 
 bool alloserv_poll_standalone(int allosocket);

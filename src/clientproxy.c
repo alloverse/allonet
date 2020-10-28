@@ -89,8 +89,6 @@ typedef struct {
     bool running;
     proxy_message_stailq proxy_to_bridge;
     proxy_message_stailq bridge_to_proxy;
-    double clock_latency;
-    double clock_deltaToServer;
 } clientproxy_internal;
 
 static clientproxy_internal *_internal(alloclient *client)
@@ -201,7 +199,7 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
 
 static double proxy_alloclient_get_time(alloclient *bridgeclient)
 {
-    return get_ts_monod() + _internal(bridgeclient)->clock_deltaToServer;
+    return get_ts_monod() + bridgeclient->clock_deltaToServer;
 }
 
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
@@ -288,15 +286,17 @@ static void proxy_disconnected_callback(alloclient *proxyclient, proxy_message *
 static void bridge_clock_callback(alloclient *bridgeclient, double latency, double delta)
 {
     alloclient *proxyclient = bridgeclient->_backref;
-    _internal(proxyclient)->clock_latency = latency;
-    _internal(proxyclient)->clock_deltaToServer = delta;
+    proxy_message *msg = proxy_message_create(msg_clock);
+    msg->value.clock.latency = latency;
+    msg->value.clock.delta = delta;
+    enqueue_bridge_to_proxy(_internal(proxyclient), msg);
 }
 static void proxy_clock_callback(alloclient *proxyclient, proxy_message *msg)
 {
-    _internal(proxyclient)->clock_latency = msg->value.clock.latency;
-    _internal(proxyclient)->clock_deltaToServer = msg->value.clock.delta;
+    proxyclient->clock_latency = msg->value.clock.latency;
+    proxyclient->clock_deltaToServer = msg->value.clock.delta;
     if(proxyclient->clock_callback) {
-        proxyclient->clock_callback(proxyclient, _internal(proxyclient)->clock_latency, _internal(proxyclient)->clock_deltaToServer);
+        proxyclient->clock_callback(proxyclient, proxyclient->clock_latency, proxyclient->clock_deltaToServer);
     }
 }
 

@@ -38,8 +38,6 @@ typedef struct {
     allo_client_intent *latest_intent;
     int64_t latest_intent_ts;
     int64_t latest_clockreq_ts;
-    double clock_latency;
-    double clock_deltaToServer;
     char *avatar_id;
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
@@ -267,8 +265,8 @@ static void parse_clock(alloclient *client, cJSON *response)
     double then = cJSON_GetObjectItem(response, "client_time")->valuedouble;
     double server_time = cJSON_GetObjectItem(response, "server_time")->valuedouble;
     double roundtrip = now - then;
-    double latency = _internal(client)->clock_latency = roundtrip / 2.0;
-    double delta = _internal(client)->clock_deltaToServer = server_time + roundtrip - now;
+    double latency = client->clock_latency = roundtrip / 2.0;
+    double delta = client->clock_deltaToServer = server_time + roundtrip - now;
     if(client->clock_callback)
     {
         client->clock_callback(client, latency, delta);
@@ -668,7 +666,7 @@ double alloclient_get_time(alloclient* client)
 }
 static double _alloclient_get_time(alloclient* client)
 {
-    return get_ts_monod() + _internal(client)->clock_deltaToServer;
+    return get_ts_monod() + client->clock_deltaToServer;
 }
 
 

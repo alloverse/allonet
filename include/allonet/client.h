@@ -117,6 +117,8 @@ typedef struct alloclient {
 
     void (*raw_state_delta_callback)(alloclient *client, cJSON *delta);
     void (*clock_callback)(alloclient *client, double latency, double server_delta);
+    double clock_latency;
+    double clock_deltaToServer;
 
     bool (*alloclient_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
     void (*alloclient_disconnect)(alloclient *client, int reason);

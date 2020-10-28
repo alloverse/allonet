@@ -135,7 +135,9 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
 
 static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd)
 {
-  cJSON *server_time = cJSON_GetObjectItem(cmd, "server_time") ?: cJSON_AddNumberToObject(cmd, "server_time", 0.0);
+  cJSON *server_time = cJSON_GetObjectItem(cmd, "server_time");
+  if(server_time == NULL)
+    server_time = cJSON_AddNumberToObject(cmd, "server_time", 0.0);
   cJSON_SetNumberValue(server_time, get_ts_monod());
 
   const char* json = cJSON_Print(cmd);

@@ -295,6 +295,9 @@ static void proxy_clock_callback(alloclient *proxyclient, proxy_message *msg)
 {
     _internal(proxyclient)->clock_latency = msg->value.clock.latency;
     _internal(proxyclient)->clock_deltaToServer = msg->value.clock.delta;
+    if(proxyclient->clock_callback) {
+        proxyclient->clock_callback(proxyclient, _internal(proxyclient)->clock_latency, _internal(proxyclient)->clock_deltaToServer);
+    }
 }
 
 static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {

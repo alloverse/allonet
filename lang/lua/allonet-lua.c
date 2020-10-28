@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "lua-utils.h"
+#include "../../src/util.h"
 
 //// alloclient structure
 typedef struct l_alloclient
@@ -222,6 +223,14 @@ static int l_alloclient_simulate(lua_State* L)
 static int l_alloclient_get_time(lua_State *L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
+    double t = get_ts_monod();
+    lua_pushnumber(L, t);
+    return 1;
+}
+
+static int l_alloclient_get_server_time(lua_State *L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
     double t = alloclient_get_time(lclient->client);
     lua_pushnumber(L, t);
     return 1;
@@ -288,6 +297,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"set_audio_callback", l_alloclient_set_audio_callback},
     {"simulate", l_alloclient_simulate},
     {"get_time", l_alloclient_get_time},
+    {"get_server_time", l_alloclient_get_server_time},
     {NULL, NULL}
 };
 

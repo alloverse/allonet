@@ -26,6 +26,11 @@ get_ts_mono(void)
 #endif
 }
 
+double get_ts_monod(void)
+{
+    return get_ts_mono()/1000.0;
+}
+
 allo_vector cjson2vec(const cJSON *veclist)
 {
     const cJSON *x = cJSON_GetArrayItem(veclist, 0);

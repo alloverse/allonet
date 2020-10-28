@@ -31,6 +31,7 @@ typedef enum
     msg_state_delta,
     msg_disconnect,
     msg_audio,
+    msg_clock,
 
     msg_count
 } proxy_message_type;
@@ -60,6 +61,11 @@ typedef struct proxy_message
             int16_t *pcm;
             size_t sample_count;
         } audio;
+        struct 
+        {
+            double latency;
+            double delta;
+        } clock;
         
     } value;
     STAILQ_ENTRY(proxy_message) entries;
@@ -83,6 +89,8 @@ typedef struct {
     bool running;
     proxy_message_stailq proxy_to_bridge;
     proxy_message_stailq bridge_to_proxy;
+    double clock_latency;
+    double clock_deltaToServer;
 } clientproxy_internal;
 
 static clientproxy_internal *_internal(alloclient *client)
@@ -191,6 +199,11 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
     free(msg->value.audio.pcm);
 }
 
+static double proxy_alloclient_get_time(alloclient *bridgeclient)
+{
+    return get_ts_monod() + _internal(bridgeclient)->clock_deltaToServer;
+}
+
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_connect] = bridge_alloclient_connect,
     [msg_disconnect] = bridge_alloclient_disconnect,
@@ -272,11 +285,24 @@ static void proxy_disconnected_callback(alloclient *proxyclient, proxy_message *
     free(msg->value.disconnection.msg);
 }
 
+static void bridge_clock_callback(alloclient *bridgeclient, double latency, double delta)
+{
+    alloclient *proxyclient = bridgeclient->_backref;
+    _internal(proxyclient)->clock_latency = latency;
+    _internal(proxyclient)->clock_deltaToServer = delta;
+}
+static void proxy_clock_callback(alloclient *proxyclient, proxy_message *msg)
+{
+    _internal(proxyclient)->clock_latency = msg->value.clock.latency;
+    _internal(proxyclient)->clock_deltaToServer = msg->value.clock.delta;
+}
+
 static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_state_delta] = proxy_raw_state_delta_callback,
     [msg_interaction] = proxy_interaction_callback,
     [msg_audio] = proxy_audio_callback,
     [msg_disconnect] = proxy_disconnected_callback,
+    [msg_clock] = proxy_clock_callback,
 };
 
 
@@ -344,6 +370,7 @@ alloclient *clientproxy_create(void)
     _internal(proxyclient)->bridgeclient->interaction_callback = bridge_interaction_callback;
     _internal(proxyclient)->bridgeclient->audio_callback = bridge_audio_callback;
     _internal(proxyclient)->bridgeclient->disconnected_callback = bridge_disconnected_callback;
+    _internal(proxyclient)->bridgeclient->clock_callback = bridge_clock_callback;
     _internal(proxyclient)->running = true;
 
     STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);
@@ -357,6 +384,7 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_send_interaction = proxy_alloclient_send_interaction;
     proxyclient->alloclient_set_intent = proxy_alloclient_set_intent;
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
+    proxyclient->alloclient_get_time = proxy_alloclient_get_time;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

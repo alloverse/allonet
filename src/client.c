@@ -37,6 +37,9 @@ typedef struct {
     OpusEncoder *opus_encoder;
     allo_client_intent *latest_intent;
     int64_t latest_intent_ts;
+    int64_t latest_clockreq_ts;
+    double clock_latency;
+    double clock_deltaToServer;
     char *avatar_id;
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
@@ -49,6 +52,7 @@ static alloclient_internal *_internal(alloclient *client)
 }
 
 static void send_latest_intent(alloclient* client);
+static void send_clock_request(alloclient *client);
 
 // TODO: nevyn: teach voxar cmake
 // TODO: voxar: split out decoder.c
@@ -257,6 +261,20 @@ static void parse_media(alloclient *client, unsigned char *data, int length)
     }
 }
 
+static void parse_clock(alloclient *client, cJSON *response)
+{
+    double now = get_ts_monod();
+    double then = cJSON_GetObjectItem(response, "client_time")->valuedouble;
+    double server_time = cJSON_GetObjectItem(response, "server_time")->valuedouble;
+    double roundtrip = now - then;
+    double latency = _internal(client)->clock_latency = roundtrip / 2.0;
+    double delta = _internal(client)->clock_deltaToServer = server_time + roundtrip - now;
+    if(client->clock_callback)
+    {
+        client->clock_callback(client, latency, delta);
+    }
+}
+
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
     // Stupid: protocol says "end with newline". Either way we can't guarantee that remote side
@@ -280,7 +298,12 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         } break;
     case CHANNEL_MEDIA: {
         parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);
-    }
+        break; }
+    case CHANNEL_CLOCK: {
+        cJSON *response = cJSON_Parse((const char*)(packet->data));
+        parse_clock(client, response);
+        cJSON_Delete(response);
+        break; }
     }
 }
 
@@ -297,9 +320,17 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
 
     int64_t ts = get_ts_mono();
     int64_t deadline = ts + timeout_ms;
+
+    // send clock sync request at maximum 1hz
+    if(ts > _internal(client)->latest_clockreq_ts + 1000)
+    {
+        send_clock_request(client);
+        _internal(client)->latest_clockreq_ts = ts;
+    }
     
     // send intent at maximum 20hz
-    if(ts > _internal(client)->latest_intent_ts + (1000/20)) {
+    if(ts > _internal(client)->latest_intent_ts + (1000/20))
+    {
         send_latest_intent(client);
         _internal(client)->latest_intent_ts = ts;
     }
@@ -361,10 +392,27 @@ static void send_latest_intent(alloclient *client)
     cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, 0);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     ((char*)packet->data)[jsonlength] = '\n';
     enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
+    free((void*)json);
+}
+
+static void send_clock_request(alloclient *client)
+{
+    cJSON *cmdrep = cjson_create_object(
+        "client_time", cJSON_CreateNumber(get_ts_monod()),
+        NULL
+    );
+    const char *json = cJSON_Print(cmdrep);
+    cJSON_Delete(cmdrep);
+
+    int jsonlength = strlen(json);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, 0 /* unreliable */);
+    memcpy(packet->data, json, jsonlength);
+    ((char*)packet->data)[jsonlength] = '\n';
+    enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
     free((void*)json);
 }
 
@@ -620,8 +668,7 @@ double alloclient_get_time(alloclient* client)
 }
 static double _alloclient_get_time(alloclient* client)
 {
-    // heh sync with server will come later...
-    return get_ts_mono() / 1000.0;
+    return get_ts_monod() + _internal(client)->clock_deltaToServer;
 }
 
 

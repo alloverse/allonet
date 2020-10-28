@@ -8,6 +8,7 @@
 #include "delta.h"
 
 static alloserver* serv;
+static allo_entity* place;
 
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
@@ -132,6 +133,16 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
   }
 }
 
+static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd)
+{
+  cJSON *server_time = cJSON_GetObjectItem(cmd, "server_time") ?: cJSON_AddNumberToObject(cmd, "server_time", 0.0);
+  cJSON_SetNumberValue(server_time, get_ts_monod());
+
+  const char* json = cJSON_Print(cmd);
+  serv->send(serv, client, CHANNEL_CLOCK, (const uint8_t*)json, strlen(json)+1);
+  free((void*)json);
+}
+
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)
 {
   cJSON* cmd = cJSON_Parse((const char*)data);
@@ -147,6 +158,10 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
     allo_interaction* interaction = allo_interaction_parse_cjson(cmd);
     handle_interaction(serv, client, interaction);
     allo_interaction_free(interaction);
+  }
+  else if (channel == CHANNEL_CLOCK)
+  {
+    handle_clock(serv, client, cmd);
   }
   cJSON_Delete(cmd);
 }
@@ -173,6 +188,9 @@ static void broadcast_server_state(alloserver* serv)
 static void step(double dt)
 {
   while (serv->interbeat(serv, 1)) {}
+
+  cJSON *clock = cJSON_GetObjectItem(place->components, "clock");
+  cJSON_SetNumberValue(cJSON_GetObjectItem(clock, "time"), get_ts_monod());
 
   allo_client_intent *intents[32];
   int count = 0;
@@ -274,6 +292,23 @@ void add_dummy(alloserver *serv)
   allo_state_add_entity_from_spec(&serv->state, NULL, root, NULL);
 }
 
+static allo_entity* add_place(alloserver *serv)
+{
+  cJSON* place = cjson_create_object(
+    "transform", cjson_create_object(
+      "matrix", m2cjson(allo_m4x4_translate((allo_vector) {{ 0, 0, 0 }})),
+      NULL
+    ),
+    "clock", cjson_create_object(
+      "time", cJSON_CreateNumber(0.0),
+      NULL
+    ),
+    NULL
+  );
+
+  return allo_state_add_entity_from_spec(&serv->state, NULL, place, NULL);
+}
+
 bool alloserv_poll_standalone(int allosocket);
 int alloserv_start_standalone(int port);
 
@@ -337,7 +372,7 @@ int alloserv_start_standalone(int port)
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", port);
   int allosocket = allo_socket_for_select(serv);
 
-  //add_dummy(serv);
+  place = add_place(serv);
 
   return allosocket;
 }
@@ -363,5 +398,6 @@ bool alloserv_poll_standalone(int allosocket)
 void alloserv_stop_standalone()
 {
   alloserv_stop(serv);
+  place = NULL;
   serv = NULL;
 }

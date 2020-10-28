@@ -13,6 +13,7 @@
 
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
+double get_ts_monod(void);
 
 allo_vector cjson2vec(const cJSON *veclist);
 cJSON *vec2cjson(allo_vector vec);

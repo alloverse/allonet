@@ -15,17 +15,24 @@ typedef struct allo_client_pose_grab
     allo_m4x4 grabber_from_entity_transform;
 } allo_client_pose_grab;
 
-typedef struct allo_client_pose
+#define ALLO_HAND_SKELETON_JOINT_COUNT 26
+typedef struct allo_client_hand_pose
 {
     allo_m4x4 matrix;
+    allo_m4x4 skeleton[ALLO_HAND_SKELETON_JOINT_COUNT];
     allo_client_pose_grab grab;
-} allo_client_pose;
+} allo_client_hand_pose;
+
+typedef struct allo_client_head_pose
+{
+    allo_m4x4 matrix;
+} allo_client_head_pose;
 
 typedef struct allo_client_poses
 {
-    allo_client_pose head;
-    allo_client_pose left_hand;
-    allo_client_pose right_hand;
+    allo_client_head_pose head;
+    allo_client_hand_pose left_hand;
+    allo_client_hand_pose right_hand;
 } allo_client_poses;
 
 typedef struct allo_client_intent

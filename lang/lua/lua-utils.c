@@ -59,25 +59,58 @@ allo_client_poses get_table_poses(lua_State *L, const char *key)
     allo_client_poses result;
     lua_pushstring(L, key);
     lua_gettable(L, -2);
-    result.head = get_table_pose(L, "head");
-    result.left_hand = get_table_pose(L, "hand/left");
-    result.right_hand = get_table_pose(L, "hand/right");
+    result.head = get_table_head_pose(L, "head");
+    result.left_hand = get_table_hand_pose(L, "hand/left");
+    result.right_hand = get_table_hand_pose(L, "hand/right");
     lua_pop(L, 1);
     return result;
 }
-allo_client_pose get_table_pose(lua_State *L, const char *key)
+allo_client_hand_pose get_table_hand_pose(lua_State *L, const char *key)
 {
-  allo_client_pose result = { allo_m4x4_identity(), { NULL, {{0,0,0}} } };
-    lua_pushstring(L, key);
-    lua_gettable(L, -2);
-    if (!lua_isnil(L, -1))
-    {
-      result.matrix = get_table_matrix(L, "matrix");
-      result.grab = get_table_grab(L, "grab");
-    }
-    lua_pop(L, 1);
-    return result;
+  allo_client_hand_pose result;
+  result.matrix = allo_m4x4_identity();
+  for(int i = 0; i < ALLO_HAND_SKELETON_JOINT_COUNT; i++)
+    result.skeleton[i] = allo_m4x4_identity();
+  
+  lua_pushstring(L, key);
+  lua_gettable(L, -2);
+  if (!lua_isnil(L, -1))
+  {
+    result.matrix = get_table_matrix(L, "matrix");
+    get_table_skeleton(L, "skeleton", result.skeleton);
+    result.grab = get_table_grab(L, "grab");
+  }
+  lua_pop(L, 1);
+  return result;
 }
+
+allo_client_head_pose get_table_head_pose(lua_State *L, const char *key)
+{
+  allo_client_head_pose result = {allo_m4x4_identity()};
+  lua_pushstring(L, key);
+  lua_gettable(L, -2);
+  if (!lua_isnil(L, -1))
+  {
+    result.matrix = get_table_matrix(L, "matrix");
+  }
+  lua_pop(L, 1);
+  return result;
+}
+
+void get_table_skeleton(lua_State *L, const char *key, allo_m4x4 skeleton[ALLO_HAND_SKELETON_JOINT_COUNT])
+{
+  lua_pushstring(L, key);
+  lua_gettable(L, -2);
+  if (!lua_isnil(L, -1))
+  {
+    for(int i = 0; i < ALLO_HAND_SKELETON_JOINT_COUNT; i++)
+    {
+      skeleton[i] = get_table_imatrix(L, i+1);
+    }
+  }
+  lua_pop(L, 1);
+}
+
 allo_client_pose_grab get_table_grab(lua_State* L, const char* key)
 {
   allo_client_pose_grab result = { NULL, {{0,0,0}} };
@@ -102,7 +135,17 @@ allo_vector get_table_vector(lua_State *L, const char *key)
     lua_pop(L, 1);
     return result;
 }
-
+allo_m4x4 get_table_imatrix(lua_State* L, int idx)
+{
+  allo_m4x4 result;
+	lua_pushinteger(L, idx);
+	lua_gettable(L, -2);
+	for (int i = 0; i < 16; i++) {
+		result.v[i] = get_table_inumber(L, i+1);
+	}
+	lua_pop(L, 1);
+	return result;
+}
 allo_m4x4 get_table_matrix(lua_State* L, const char* key)
 {
 	allo_m4x4 result;

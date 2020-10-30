@@ -11,11 +11,15 @@ allo_client_intent* allo_client_intent_create()
 {
   allo_client_intent* intent = calloc(1, sizeof(allo_client_intent));
   intent->poses.head.matrix = intent->poses.left_hand.matrix = intent->poses.right_hand.matrix = allo_m4x4_identity();
+  for(int i = 0; i < ALLO_HAND_SKELETON_JOINT_COUNT; i++)
+  {
+    intent->poses.left_hand.skeleton[i] = allo_m4x4_identity();
+    intent->poses.right_hand.skeleton[i] = allo_m4x4_identity();
+  }
   return intent;
 }
 void allo_client_intent_free(allo_client_intent* intent)
 {
-  free(intent->poses.head.grab.entity);
   free(intent->poses.left_hand.grab.entity);
   free(intent->poses.right_hand.grab.entity);
   free(intent->entity_id);
@@ -24,15 +28,34 @@ void allo_client_intent_free(allo_client_intent* intent)
 
 void allo_client_intent_clone(const allo_client_intent* original, allo_client_intent* destination)
 {
-  free(destination->poses.head.grab.entity);
   free(destination->poses.left_hand.grab.entity);
   free(destination->poses.right_hand.grab.entity);
   free(destination->entity_id);
   memcpy(destination, original, sizeof(allo_client_intent));
-  destination->poses.head.grab.entity = allo_strdup(original->poses.head.grab.entity);
   destination->poses.left_hand.grab.entity = allo_strdup(original->poses.left_hand.grab.entity);
   destination->poses.right_hand.grab.entity = allo_strdup(original->poses.right_hand.grab.entity);
   destination->entity_id = allo_strdup(original->entity_id);
+}
+
+static cJSON *skeleton_to_cjson(const allo_m4x4 skeleton[26])
+{
+  cJSON *list = cJSON_CreateArray();
+  for(int i = 0; i < ALLO_HAND_SKELETON_JOINT_COUNT; i++)
+  {
+    cJSON_AddItemToArray(list, m2cjson(skeleton[i]));
+  }
+  return list;
+}
+
+static void cjson_to_skeleton(allo_m4x4 skeleton[26], cJSON *list)
+{
+  cJSON *node = list->child;
+  int i = 0;
+  while(node && i < ALLO_HAND_SKELETON_JOINT_COUNT)
+  {
+    skeleton[i] = cjson2m(node);
+    node = node->next;
+  }
 }
 
 static cJSON* grab_to_cjson(allo_client_pose_grab grab)
@@ -62,16 +85,17 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
     "poses", cjson_create_object(
       "head", cjson_create_object(
         "matrix", m2cjson(intent->poses.head.matrix),
-        "grab", grab_to_cjson(intent->poses.head.grab),
         NULL
       ),
       "hand/left", cjson_create_object(
         "matrix", m2cjson(intent->poses.left_hand.matrix),
+        "skeleton", skeleton_to_cjson(intent->poses.left_hand.skeleton),
         "grab", grab_to_cjson(intent->poses.left_hand.grab),
         NULL
       ),
       "hand/right", cjson_create_object(
         "matrix", m2cjson(intent->poses.right_hand.matrix),
+        "skeleton", skeleton_to_cjson(intent->poses.right_hand.skeleton),
         "grab", grab_to_cjson(intent->poses.right_hand.grab),
         NULL
       ),
@@ -92,19 +116,21 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
   intent->yaw = cJSON_GetObjectItem(from, "yaw")->valuedouble;
   intent->pitch = cJSON_GetObjectItem(from, "pitch")->valuedouble;
   intent->poses = (allo_client_poses){
-    .head = (allo_client_pose){
+    .head = (allo_client_head_pose){
       .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "head"), "matrix")),
-      .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "head"), "grab"))
     },
-    .left_hand = (allo_client_pose){
+    .left_hand = (allo_client_hand_pose){
       .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "matrix")),
       .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "grab"))
     },
-    .right_hand = (allo_client_pose){
+    .right_hand = (allo_client_hand_pose){
       .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "matrix")),
       .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "grab"))
     },
   };
+  cjson_to_skeleton(intent->poses.left_hand.skeleton, cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "skeleton"));
+  cjson_to_skeleton(intent->poses.right_hand.skeleton, cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "skeleton"));
+
   intent->ack_state_rev = cjson_get_int64_value(cJSON_GetObjectItem(from, "ack_state_rev"));
   return intent;
 }

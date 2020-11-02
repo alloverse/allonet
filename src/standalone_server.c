@@ -101,6 +101,11 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
 
   allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
+  if(entity == NULL)
+  {
+    fprintf(stderr, "warning: trying to change comp on non-existing entity %s\n", entity_id->valuestring);
+    return;
+  }
   for (cJSON* comp = comps->child; comp != NULL;) 
   {
     cJSON* next = comp->next;

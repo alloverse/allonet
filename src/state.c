@@ -49,6 +49,11 @@ static cJSON *skeleton_to_cjson(const allo_m4x4 skeleton[26])
 
 static void cjson_to_skeleton(allo_m4x4 skeleton[26], cJSON *list)
 {
+  if(list == NULL)
+  {
+    return;
+  }
+  
   cJSON *node = list->child;
   int i = 0;
   while(node && i < ALLO_HAND_SKELETON_JOINT_COUNT)

@@ -61,6 +61,39 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   free(respbodys);
 }
 
+static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+  cJSON* edesc = cJSON_DetachItemFromArray(body, 1);
+
+  allo_entity *entity = allo_state_add_entity_from_spec(&serv->state, client->agent_id, edesc, NULL);
+
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id), NULL);
+  char* respbodys = cJSON_Print(respbody);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+  cJSON_Delete(respbody);
+  send_interaction_to_client(serv, client, response);
+  free(respbodys);
+}
+
+static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+  const char *eid = cJSON_GetStringValue(cJSON_DetachItemFromArray(body, 1));
+  const char *modes = cJSON_GetStringValue(cJSON_DetachItemFromArray(body, 2));
+  allo_removal_mode mode = AlloRemovalCascade;
+  if(modes && strcmp(modes, "reparent") == 0)
+  {
+    mode == AlloRemovalReparent;
+  }
+  bool ok = allo_state_remove_entity(&serv->state, eid, mode);
+
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("remove_entity"), cJSON_CreateString(ok?"ok":"failed"), NULL);
+  char* respbodys = cJSON_Print(respbody);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+  cJSON_Delete(respbody);
+  send_interaction_to_client(serv, client, response);
+  free(respbodys);
+}
+
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   cJSON* entity_id = cJSON_GetArrayItem(body, 1);
@@ -104,6 +137,14 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
   else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "change_components") == 0)
   {
     handle_place_change_components_interaction(serv, client, interaction, body);
+  }
+  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "spawn_entity") == 0)
+  {
+    handle_place_spawn_entity_interaction(serv, client, interaction, body);
+  }
+  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "remove_entity") == 0)
+  {
+    handle_place_remove_entity_interaction(serv, client, interaction, body);
   }
   cJSON_Delete(body);
 }

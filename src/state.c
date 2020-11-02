@@ -297,6 +297,50 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
   return e;
 }
 
+bool allo_state_remove_entity(allo_state *state, const char *eid, allo_removal_mode mode)
+{
+  allo_entity* removed_entity = state_get_entity(state, eid);
+  if(!removed_entity)
+  {
+    return false;
+  }
+
+  LIST_REMOVE(removed_entity, pointers);
+
+  // remove or reparent children too
+  arr_t(allo_entity*) children;
+  arr_init(&children);
+  allo_entity *entity = state->entities.lh_first;
+  while(entity)
+  {
+    allo_entity *potential_child = entity;
+    entity = entity->pointers.le_next;
+    cJSON *relationships = cJSON_GetObjectItem(potential_child->components, "relationships");
+    const char *parent = cJSON_GetStringValue(cJSON_GetObjectItem(relationships, "parent"));
+    if(parent && strcmp(parent, removed_entity->id) == 0)
+    {
+      arr_push(&children, potential_child);
+    }
+  }
+
+  for(int i = 0; i < children.length; i++)
+  {
+    allo_entity *child = children.data[i];
+    if(mode == AlloRemovalCascade)
+    {
+      allo_state_remove_entity(state, child->id, mode);
+    }
+    else if(mode == AlloRemovalReparent)
+    {
+      cJSON_DeleteItemFromObject(child->components, "relationships");
+    }
+  }
+
+  entity_destroy(removed_entity);
+  arr_free(&children);
+  return true;
+}
+
 allo_entity* state_get_entity(allo_state* state, const char* entity_id)
 {
   if (!state || !entity_id || strlen(entity_id) == 0)

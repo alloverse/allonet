@@ -351,6 +351,10 @@ static allo_entity* add_place(alloserver *serv)
       "time", cJSON_CreateNumber(0.0),
       NULL
     ),
+    "decorations", cjson_create_object(
+      "type", cJSON_CreateString("mainmenu"),
+      NULL
+    ),
     NULL
   );
 

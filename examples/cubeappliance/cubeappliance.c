@@ -6,7 +6,7 @@
 #include <math.h>
 #include <cJSON/cJSON.h>
 #include "../../src/util.h"
-#ifdef __unix__
+#ifdef __unix__ || __APPLE__
 # include <unistd.h>
 #elif defined _WIN32
 # include <windows.h>

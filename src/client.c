@@ -283,6 +283,12 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     switch(channel) {
     case CHANNEL_STATEDIFFS: { 
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
+        if(!cmdrep) {
+            fprintf(stderr, "alloclient: unparseable statediff:\n");
+            fprintf(stderr, "%s\n", packet->data);
+            assert(cmdrep);
+            return;
+        }
         //printf("alloclient(%s): My latest rev is %zd. Receiving delta %s\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev, packet->data);
         alloclient_parse_statediff(client, cmdrep);
         break; }

@@ -317,10 +317,15 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
     proxy_message *msg = NULL;
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->bridge_to_proxy))) {
         STAILQ_REMOVE_HEAD(&_internal(proxyclient)->bridge_to_proxy, entries);
+        bool was_disconnect = msg->type == msg_disconnect;
         void (*callback)(alloclient*, proxy_message*) = proxy_message_lookup_table[msg->type];
         assert(callback != NULL && "missing proxy callback");
         callback(proxyclient, msg);
         free(msg);
+        if(was_disconnect)
+        {
+            break;
+        }
     }
     mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
     return true;

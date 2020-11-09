@@ -646,23 +646,15 @@ static void _alloclient_send_audio(alloclient *client, int32_t track_id, const i
     assert(ok == 0);
 }
 
-void alloclient_simulate(alloclient *client, double dt)
+void alloclient_simulate(alloclient *client)
 {
-    client->alloclient_simulate(client, dt);
+    client->alloclient_simulate(client);
 }
-static void _alloclient_simulate(alloclient *client, double dt)
+static void _alloclient_simulate(alloclient *client)
 {
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
   
-  // extrapolate world time
-  allo_entity *place = state_get_entity(&client->_state, "place");
-  if(place) {
-    cJSON *time =cJSON_GetObjectItem(cJSON_GetObjectItem(place->components, "clock"), "time");
-    cJSON_SetNumberValue(time, alloclient_get_time(client));
-  }
-  
-  // simulate world
-  allo_simulate(&client->_state, dt, intents, 1);
+  allo_simulate(&client->_state, intents, 1, alloclient_get_time(client));
   if (client->state_callback)
   {
     client->state_callback(client, &client->_state);

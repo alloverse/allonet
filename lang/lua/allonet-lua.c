@@ -215,8 +215,7 @@ static int l_alloclient_set_audio_callback(lua_State* L)
 static int l_alloclient_simulate(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
-    double dt = luaL_checknumber(L, 2);
-    alloclient_simulate(lclient->client, dt);
+    alloclient_simulate(lclient->client);
     return 0;
 }
 

@@ -237,8 +237,7 @@ static void step(double dt)
 {
   while (serv->interbeat(serv, 1)) {}
 
-  cJSON *clock = cJSON_GetObjectItem(place->components, "clock");
-  cJSON_SetNumberValue(cJSON_GetObjectItem(clock, "time"), get_ts_monod());
+  double now = get_ts_monod();
 
   allo_client_intent *intents[32];
   int count = 0;
@@ -247,7 +246,7 @@ static void step(double dt)
     intents[count++] = client->intent;
     if (count == 32) break;
   }
-  allo_simulate(&serv->state, dt, (allo_client_intent**)intents, count);
+  allo_simulate(&serv->state, (const allo_client_intent**)intents, count, now);
   broadcast_server_state(serv);
 }
 

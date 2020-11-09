@@ -2,14 +2,37 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <cJSON/cJSON.h>
 
+static void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double dt);
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
 static void move_pose(allo_state* state, allo_entity* ent, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt);
 static void handle_grabs(allo_state *state, allo_entity *avatar, const allo_client_intent *intent, double dt);
-
 static allo_entity* get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name);
 
-extern void allo_simulate(allo_state* state, double dt, const allo_client_intent** intents, int intent_count)
+
+void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time)
+{
+  // figure out what time was in pre-sim state
+  allo_entity *place = state_get_entity(state, "place");
+  double old_time = 0.0;
+  if(place) {
+    cJSON *time =cJSON_GetObjectItem(cJSON_GetObjectItem(place->components, "clock"), "time");
+    old_time = time->valuedouble;
+    cJSON_SetNumberValue(time, server_time);
+  }
+
+  // todo: run simulate at fixed-sized steps
+  // https://gafferongames.com/post/fix_your_timestep/
+  // https://www.gamasutra.com/blogs/BramStolk/20160408/269988/Fixing_your_time_step_the_easy_way_with_the_golden_48537_ms.php
+  // for now, slow down simulation if we're given a larger dt than a 20fps equivalent
+  double dt = server_time - old_time;
+  dt = MIN(dt, 1/20.0);
+
+  allo_simulate_iteration(state, intents, intent_count, dt);
+}
+
+static void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double dt)
 {
   for (int i = 0; i < intent_count; i++)
   {

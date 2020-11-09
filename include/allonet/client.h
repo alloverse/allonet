@@ -127,7 +127,7 @@ typedef struct alloclient {
     void (*alloclient_set_intent)(alloclient *client, allo_client_intent *intent);
     void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
     void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
-    void (*alloclient_simulate)(alloclient* client, double dt);
+    void (*alloclient_simulate)(alloclient* client);
     double (*alloclient_get_time)(alloclient* client);
 } alloclient;
 
@@ -197,7 +197,7 @@ void alloclient_request_asset(alloclient* client, const char* asset_id, const ch
   * Run allo_simulate() on the internal world state with our latest intent, so that we get local interpolation
   * of hand movement etc
   */
-void alloclient_simulate(alloclient* client, double dt);
+void alloclient_simulate(alloclient* client);
 
 /** Get current estimated alloplace time that is hopefully uniform across all
   * connected clients; or best-effort if it's out of sync.

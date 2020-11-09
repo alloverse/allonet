@@ -124,8 +124,9 @@ extern bool allo_initialize(bool redirect_stdout);
 
 /**
  * Run world simulation for a given state and known intents. Modifies state inline.
+ * Will run the number of world iterations needed to get to server_time (or skip if too many)
  */
-extern void allo_simulate(allo_state* state, double dt, const allo_client_intent** intents, int intent_count);
+extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time);
 
 #pragma pack(pop)
 #endif

@@ -54,8 +54,10 @@ static bool allo_poll(alloserver *serv, int timeout)
     {
     case ENET_EVENT_TYPE_CONNECT: {
         alloserver_client *new_client = _client_create();
-        printf ("A new client connected from %x:%u as %s.\n", 
-            event.peer -> address.host,
+        char address[256] = {0};
+        enet_address_get_host_ip(&event.peer->address, address, 255);
+        printf ("A new client connected from %s:%u as %s.\n", 
+            address,
             event.peer -> address.port,
             new_client->agent_id
         );
@@ -128,16 +130,18 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
 }
 
-alloserver *allo_listen(int port)
+alloserver *allo_listen(int listenhost, int port)
 {
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     srand((unsigned int)time(NULL));
 
     ENetAddress address;
-    address.host = ENET_HOST_ANY;
+    address.host = listenhost;
     address.port = port;
-
+    char printable[255] = {0};
+    enet_address_get_host_ip(&address, printable, 254);
+    printf("Alloserv attempting listen on %s:%d...\n", printable, port);
     _servinternal(serv)->enet = enet_host_create(
         &address,
         allo_client_count_max,
@@ -155,6 +159,7 @@ alloserver *allo_listen(int port)
         return NULL;
     }
 
+    serv->_port = _servinternal(serv)->enet->address.port;
     serv->interbeat = allo_poll;
     serv->send = allo_send;
     LIST_INIT(&serv->clients);

@@ -362,16 +362,15 @@ static allo_entity* add_place(alloserver *serv)
   return e;
 }
 
-bool alloserv_poll_standalone(int allosocket);
-int alloserv_start_standalone(int port);
-
-bool alloserv_run_standalone(int port)
+bool alloserv_run_standalone(int host, int port)
 {
-  int allosocket = alloserv_start_standalone(port);
-  if (allosocket == -1)
+  alloserver *serv = alloserv_start_standalone(host, port);
+  
+  if (serv == NULL)
   {
     return false;
   }
+  int allosocket = allo_socket_for_select(serv);
 
   while (1) {
     if (alloserv_poll_standalone(allosocket) == false)
@@ -386,12 +385,12 @@ bool alloserv_run_standalone(int port)
   return true;
 }
 
-int alloserv_start_standalone(int port)
+alloserver *alloserv_start_standalone(int listenhost, int port)
 {
   if (!allo_initialize(false))
   {
     fprintf(stderr, "Unable to initialize allostate");
-    return -1;
+    return NULL;
   }
 
   assert(serv == NULL);
@@ -399,7 +398,7 @@ int alloserv_start_standalone(int port)
   int retries = 3;
   while (!serv)
   {
-    serv = allo_listen(port);
+    serv = allo_listen(listenhost, port);
     if (!serv) {
       fprintf(stderr, "Unable to open listen socket, ");
       if (retries-- > 0) {
@@ -416,18 +415,16 @@ int alloserv_start_standalone(int port)
   if (!serv) {
     perror("errno");
     alloserv_stop_standalone();
-    return -1;
+    return NULL;
   }
   serv->clients_callback = clients_changed;
   serv->raw_indata_callback = received_from_client;
   allo_state_init(&serv->state);
 
-  fprintf(stderr, "alloserv_run_standalone open on port %d\n", port);
-  int allosocket = allo_socket_for_select(serv);
-
+  fprintf(stderr, "alloserv_run_standalone open on port %d\n", serv->_port);
   place = add_place(serv);
 
-  return allosocket;
+  return serv;
 }
 
 bool alloserv_poll_standalone(int allosocket)

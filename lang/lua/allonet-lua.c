@@ -33,19 +33,23 @@ static int l_alloclient_create (lua_State *L)
 
 static int l_alloserv_run_standalone(lua_State* L)
 {
-  int port = luaL_checkint(L, 1);
-  bool done_successfully = alloserv_run_standalone(port);
+  int host = luaL_checkint(L, 1);
+  int port = luaL_checkint(L, 2);
+  bool done_successfully = alloserv_run_standalone(host, port);
   lua_pushboolean(L, done_successfully);
   return 1;
 }
 
-static int last_allosocket = -1;
 static int l_alloserv_start_standalone(lua_State* L)
 {
-  int port = luaL_checkint(L, 1);
-  int allosocket = last_allosocket = alloserv_start_standalone(port);
+  int host = luaL_checkint(L, 1);
+  int port = luaL_checkint(L, 2);
+  alloserver *serv = alloserv_start_standalone(host, port);
+  int allosocket = allo_socket_for_select(serv);
+  int actualport = serv->_port;
   lua_pushinteger(L, allosocket);
-  return 1;
+  lua_pushinteger(L, actualport);
+  return 2;
 }
 
 static int l_alloserv_poll_standalone(lua_State* L)

@@ -39,9 +39,11 @@ struct alloserver {
 
     void *_backref; // use this as a backref for callbacks
     void *_internal; // used within server.c to hide impl
+    int _port;
 };
 
-alloserver *allo_listen(int port);
+// send 0 for any host or any port
+alloserver *allo_listen(int listenhost, int port);
 
 // immediately shutdown the server
 void alloserv_stop(alloserver* serv);
@@ -51,10 +53,10 @@ void alloserv_stop(alloserver* serv);
 void alloserv_disconnect(alloserver *serv, alloserver_client *client, int reason_code);
 
 // run a minimal standalone C server. returns when it shuts down. false means it broke.
-bool alloserv_run_standalone(int port);
+bool alloserv_run_standalone(int listenhost, int port);
 
 // start it but don't run it. returns allosocket.
-int alloserv_start_standalone(int port);
+alloserver *alloserv_start_standalone(int listenhost, int port);
 // call this frequently to run it. returns false if server has broken and shut down; then you should call stop on it to clean up.
 bool alloserv_poll_standalone(int allosocket);
 // and then call this to stop and clean up state.

@@ -112,6 +112,11 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
 {
     assert(frameCount == 480 || frameCount == 960);
     
+    if (_internal(client)->peer->state != ENET_PEER_STATE_CONNECTED) {
+        fprintf(stderr, "alloclient: Skipping send audio as peer is not connected\n");
+        return;
+    }
+    
     const int headerlen = sizeof(int32_t); // track id header
     const int outlen = headerlen + frameCount*2 + 1; // theoretical max
     ENetPacket *packet = enet_packet_create(NULL, outlen, 0 /* unreliable */);

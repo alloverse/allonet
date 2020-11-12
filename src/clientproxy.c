@@ -88,7 +88,9 @@ typedef struct {
     mtx_t bridge_to_proxy_mtx;
     bool running;
     proxy_message_stailq proxy_to_bridge;
+    int32_t proxy_to_bridge_len;
     proxy_message_stailq bridge_to_proxy;
+    int32_t bridge_to_proxy_len;
 } clientproxy_internal;
 
 static clientproxy_internal *_internal(alloclient *client)
@@ -100,6 +102,7 @@ static void enqueue_proxy_to_bridge(clientproxy_internal *internal, proxy_messag
 {
     mtx_lock(&internal->proxy_to_bridge_mtx);
     STAILQ_INSERT_TAIL(&internal->proxy_to_bridge, msg, entries);
+    internal->proxy_to_bridge_len++;
     mtx_unlock(&internal->proxy_to_bridge_mtx);
 }
 
@@ -107,6 +110,7 @@ static void enqueue_bridge_to_proxy(clientproxy_internal *internal, proxy_messag
 {
     mtx_lock(&internal->bridge_to_proxy_mtx);
     STAILQ_INSERT_TAIL(&internal->bridge_to_proxy, msg, entries);
+    internal->bridge_to_proxy_len++;
     mtx_unlock(&internal->bridge_to_proxy_mtx);
 }
 
@@ -197,9 +201,21 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
     free(msg->value.audio.pcm);
 }
 
-static double proxy_alloclient_get_time(alloclient *bridgeclient)
+static double proxy_alloclient_get_time(alloclient *proxyclient)
 {
-    return get_ts_monod() + bridgeclient->clock_deltaToServer;
+    return get_ts_monod() + proxyclient->clock_deltaToServer;
+}
+
+static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, size_t bufferlen)
+{
+    mtx_lock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    int p2b = _internal(proxyclient)->proxy_to_bridge_len;
+    mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    int b2p = _internal(proxyclient)->bridge_to_proxy_len;
+    mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+
+    snprintf(buffer, bufferlen, "p2b %d\nb2p %d", p2b, b2p);
 }
 
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
@@ -317,6 +333,7 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
     proxy_message *msg = NULL;
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->bridge_to_proxy))) {
         STAILQ_REMOVE_HEAD(&_internal(proxyclient)->bridge_to_proxy, entries);
+        _internal(proxyclient)->bridge_to_proxy_len--;
         bool was_disconnect = msg->type == msg_disconnect;
         void (*callback)(alloclient*, proxy_message*) = proxy_message_lookup_table[msg->type];
         assert(callback != NULL && "missing proxy callback");
@@ -342,6 +359,7 @@ static void bridge_check_for_messages(alloclient *bridgeclient)
     proxy_message *msg = NULL;
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->proxy_to_bridge))) {
         STAILQ_REMOVE_HEAD(&_internal(proxyclient)->proxy_to_bridge, entries);
+        _internal(proxyclient)->proxy_to_bridge_len--;
         void (*callback)(alloclient*, proxy_message*) = bridge_message_lookup_table[msg->type];
         assert(callback != NULL && "missing bridge callback");
         callback(bridgeclient, msg);
@@ -393,6 +411,7 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_set_intent = proxy_alloclient_set_intent;
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
     proxyclient->alloclient_get_time = proxy_alloclient_get_time;
+    proxyclient->alloclient_get_stats = proxy_alloclient_get_stats;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

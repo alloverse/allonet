@@ -129,6 +129,7 @@ typedef struct alloclient {
     void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
     void (*alloclient_simulate)(alloclient* client);
     double (*alloclient_get_time)(alloclient* client);
+    void (*alloclient_get_stats)(alloclient* client, char *buffer, size_t bufferlen);
 } alloclient;
 
 /**
@@ -204,5 +205,7 @@ void alloclient_simulate(alloclient* client);
   * @return seconds since some arbitrary point in the past
   */
 double alloclient_get_time(alloclient* client);
+
+void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
 
 #endif

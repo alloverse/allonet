@@ -516,7 +516,14 @@ static double _alloclient_get_time(alloclient* client)
     return get_ts_monod() + client->clock_deltaToServer;
 }
 
-
+void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
+{
+    return client->alloclient_get_stats(client, buffer, bufferlen);
+}
+static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
+{
+    snprintf(buffer, bufferlen, "--");
+}
 
 alloclient *alloclient_create(bool threaded)
 {
@@ -541,6 +548,7 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_send_audio = _alloclient_send_audio;
     client->alloclient_simulate = _alloclient_simulate;
     client->alloclient_get_time = _alloclient_get_time;
+    client->alloclient_get_stats = _alloclient_get_stats;
     
     return client;
 }

@@ -255,6 +255,16 @@ static int l_alloclient_get_clock_delta(lua_State *L)
     return 1;
 }
 
+static int l_alloclient_get_stats(lua_State *L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    char buf[255];
+    alloclient_get_stats(lclient->client, buf, 255);
+    lua_pushstring(L, buf);
+    return 1;
+}
+
+
 ////// Callbacks from allonet
 static void state_callback(alloclient *client, allo_state *state)
 {
@@ -319,6 +329,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"get_server_time", l_alloclient_get_server_time},
     {"get_latency", l_alloclient_get_latency},
     {"get_clock_delta", l_alloclient_get_clock_delta},
+    {"get_stats", l_alloclient_get_stats},
     {NULL, NULL}
 };
 

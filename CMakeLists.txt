@@ -56,7 +56,8 @@ set(INCLUDE_FILES
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
-    ${SOURCE_FILES_PREFIX}/client.c
+    ${SOURCE_FILES_PREFIX}/client/client.c
+    ${SOURCE_FILES_PREFIX}/client/audio.c
     ${SOURCE_FILES_PREFIX}/server.c
     ${SOURCE_FILES_PREFIX}/standalone_server.c
     ${SOURCE_FILES_PREFIX}/state.c

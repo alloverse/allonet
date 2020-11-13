@@ -236,7 +236,7 @@ static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd
     // thread and somehow do a pointer swap with the main thread. That's too complicated for my
     // poor brain right now, so let's try it this way, and if the performance is good enough,
     // keep it this way.
-
+    assert(cmd);
     alloclient *proxyclient = bridgeclient->_backref;
     proxy_message *msg = proxy_message_create(msg_state_delta);
     msg->value.state_delta = cmd;

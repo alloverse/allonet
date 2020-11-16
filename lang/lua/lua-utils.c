@@ -3,7 +3,7 @@
 
 ////// convenience functions
 /* assume that table is on the stack top */
-const char *get_table_string(lua_State *L, const char *key)
+char *get_table_string(lua_State *L, const char *key)
 {
     lua_pushstring(L, key);
     lua_gettable(L, -2);
@@ -12,7 +12,7 @@ const char *get_table_string(lua_State *L, const char *key)
         luaL_error(L, "Unexpected non-string value for key %s", key);
         return NULL;
     }
-    const char *result = strdup(luaL_checkstring(L, -1));
+    char *result = strdup(luaL_checkstring(L, -1));
     lua_pop(L, 1);
     return result;
 }

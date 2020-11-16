@@ -6,7 +6,7 @@
 #include "../../include/allonet/server.h"
 
 // Utility APIs:
-const char *get_table_string(lua_State *L, const char *key);
+char *get_table_string(lua_State *L, const char *key); // returns owning reference
 void set_table_string(lua_State *L, const char *key, const char *value);
 double get_table_number(lua_State *L, const char *key);
 double get_table_inumber(lua_State *L, int key);

@@ -45,72 +45,88 @@ static void alloserv_client_free(alloserver_client *client)
     free(client);
 }
 
+static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
+{
+    alloserver_client *new_client = _client_create();
+    char host[255] = {0};
+    enet_address_get_host_ip(&new_peer->address, host, 254);
+    printf ("A new client connected from %s:%u as %s/%p.\n", 
+        host,
+        new_peer->address.port,
+        new_client->agent_id,
+        new_client
+    );
+    
+    _clientinternal(new_client)->peer = new_peer;
+    _clientinternal(new_client)->peer->data = (void*)new_client;
+    LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
+
+    // very hard timeout limits; change once clients actually send SYN
+    enet_peer_timeout(new_peer, 0, 5000, 5000);
+    if(serv->clients_callback) {
+        serv->clients_callback(serv, new_client, NULL);
+    }
+}
+
+static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
+{
+    // todo: stop newline terminating in protocol...
+    packet->data[packet->dataLength-1] = 0;
+    
+    if(serv->raw_indata_callback)
+    {
+        serv->raw_indata_callback(
+            serv, 
+            client, 
+            channel, 
+            packet->data,
+            packet->dataLength
+        );
+    }
+}
+
+static void handle_lost_connection(alloserver *serv, alloserver_client *client)
+{
+    char host[255] = {0};
+    ENetPeer *peer = _clientinternal(client)->peer;
+    enet_address_get_host_ip(&peer->address, host, 254);
+    printf("%s/%p from %s:%d disconnected.\n", client->agent_id, client, host, peer->address.port);
+
+    LIST_REMOVE(client, pointers);
+    peer->data = NULL;
+    if(serv->clients_callback) {
+        serv->clients_callback(serv, NULL, client);
+    }
+    alloserv_client_free(client);
+}
+
 static bool allo_poll(alloserver *serv, int timeout)
 {
     ENetEvent event;
     enet_host_service (_servinternal(serv)->enet, &event, timeout);
-    
+    alloserver_client *client = event.peer ? (alloserver_client*)event.peer->data : NULL;
+
     switch (event.type)
     {
-    case ENET_EVENT_TYPE_CONNECT: {
-        alloserver_client *new_client = _client_create();
-        char address[256] = {0};
-        enet_address_get_host_ip(&event.peer->address, address, 255);
-        printf ("A new client connected from %s:%u as %s.\n", 
-            address,
-            event.peer -> address.port,
-            new_client->agent_id
-        );
-        
-        _clientinternal(new_client)->peer = event.peer;
-        _clientinternal(new_client)->peer->data = (void*)new_client;
-        LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
+        case ENET_EVENT_TYPE_CONNECT:
+            handle_incoming_connection(serv, event.peer);
+            break;
+    
+        case ENET_EVENT_TYPE_RECEIVE:
+            if (client == NULL) {
+                // old data from disconnected client?!
+                break;
+            }
+            handle_incoming_data(serv, client, event.channelID, event.packet);
+            enet_packet_destroy (event.packet);
+            break;
+    
+        case ENET_EVENT_TYPE_DISCONNECT:
+            handle_lost_connection(serv, client);
+            break;
 
-        // very hard timeout limits; change once clients actually send SYN
-        enet_peer_timeout(event.peer, 0, 5000, 5000);
-        if(serv->clients_callback) {
-            serv->clients_callback(serv, new_client, NULL);
-        }
-        break; }
-    
-    case ENET_EVENT_TYPE_RECEIVE: {
-        alloserver_client *client = (alloserver_client*)event.peer->data;
-        if (client == NULL) {
-          // old data from disconnected client?!
-          break;
-        }
-        
-        // todo: stop newline terminating in protocol...
-        event.packet->data[event.packet->dataLength-1] = 0;
-        
-        if(serv->raw_indata_callback)
-        {
-            serv->raw_indata_callback(
-                serv, 
-                client, 
-                event.channelID, 
-                event.packet->data,
-                event.packet->dataLength
-            );
-        }
-        
-        enet_packet_destroy (event.packet);
-        
-        break;
-    }
-    
-    case ENET_EVENT_TYPE_DISCONNECT: {
-        alloserver_client *client = (alloserver_client*)event.peer->data;
-        printf("%p disconnected.\n", client);
-        LIST_REMOVE(client, pointers);
-        event.peer->data = NULL;
-        if(serv->clients_callback) {
-            serv->clients_callback(serv, NULL, client);
-        }
-        alloserv_client_free(client);
-        break; }
-    case ENET_EVENT_TYPE_NONE:
-        return false;
+        case ENET_EVENT_TYPE_NONE:
+            return false;
     }
     return true;
 }

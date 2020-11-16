@@ -73,6 +73,18 @@ static void handle_incoming_data(alloserver *serv, alloserver_client *client, al
     // todo: stop newline terminating in protocol...
     packet->data[packet->dataLength-1] = 0;
     
+    if(channel == CHANNEL_MEDIA)
+    {
+        alloserver_client *other;
+        LIST_FOREACH(other, &serv->clients, pointers)
+        {
+            if(other == client) continue;
+
+            allo_send(serv, other, CHANNEL_MEDIA, packet->data, packet->dataLength);
+        }
+        return;
+    }
+    
     if(serv->raw_indata_callback)
     {
         serv->raw_indata_callback(

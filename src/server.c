@@ -6,6 +6,8 @@
 #include <cJSON/cJSON.h>
 #include "util.h"
 
+void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len);
+
 typedef struct {
     ENetHost *enet;
 } alloserv_internal;

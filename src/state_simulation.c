@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <cJSON/cJSON.h>
+#include "util.h"
 
 static void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double dt);
 static void move_avatar(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);
@@ -17,7 +18,12 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   allo_entity *place = state_get_entity(state, "place");
   double old_time = 0.0;
   if(place) {
-    cJSON *time =cJSON_GetObjectItem(cJSON_GetObjectItem(place->components, "clock"), "time");
+    cJSON *clock = cJSON_GetObjectItem(place->components, "clock");
+    if(!clock) {
+      clock = cjson_create_object("time", cJSON_CreateNumber(server_time));
+      cJSON_AddItemToObject(place->components, "clock", clock);
+    }
+    cJSON *time =cJSON_GetObjectItem(clock, "time");
     old_time = time->valuedouble;
     cJSON_SetNumberValue(time, server_time);
   }

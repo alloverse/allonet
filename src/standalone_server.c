@@ -82,7 +82,7 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
   allo_removal_mode mode = AlloRemovalCascade;
   if(modes && strcmp(modes, "reparent") == 0)
   {
-    mode == AlloRemovalReparent;
+    mode = AlloRemovalReparent;
   }
   bool ok = allo_state_remove_entity(&serv->state, eid, mode);
 

@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <cJSON/cJSON.h>
+#include "../util.h"
+
 
 extern void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double dt);
 extern void allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt);

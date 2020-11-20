@@ -63,7 +63,10 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/state.c
     ${SOURCE_FILES_PREFIX}/util.c
     ${SOURCE_FILES_PREFIX}/util.h
-    ${SOURCE_FILES_PREFIX}/state_simulation.c
+    ${SOURCE_FILES_PREFIX}/simulation/simulation.c
+    ${SOURCE_FILES_PREFIX}/simulation/grabbing.c
+    ${SOURCE_FILES_PREFIX}/simulation/pose_movement.c
+    ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/math.c
     ${SOURCE_FILES_PREFIX}/jobs.c

@@ -112,6 +112,11 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
 {
     assert(frameCount == 480 || frameCount == 960);
     
+    if (_internal(client)->peer == NULL) {
+        fprintf(stderr, "alloclient: Skipping send audio as we don't even have a peer\n");
+        return;
+    }
+    
     if (_internal(client)->peer->state != ENET_PEER_STATE_CONNECTED) {
         fprintf(stderr, "alloclient: Skipping send audio as peer is not connected\n");
         return;

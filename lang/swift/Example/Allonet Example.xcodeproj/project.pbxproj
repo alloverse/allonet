@@ -8,10 +8,21 @@
 
 /* Begin PBXBuildFile section */
 		996ECA28237F5835004D30C2 /* client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA25237F5831004D30C2 /* client.swift */; };
-		996ECA8C237F5968004D30C2 /* liballonet.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA57237F587C004D30C2 /* liballonet.dylib */; };
-		996ECA8D237F5972004D30C2 /* libcjson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA5D237F587C004D30C2 /* libcjson.a */; };
-		996ECA8E237F5972004D30C2 /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA63237F587C004D30C2 /* libenet.a */; };
 		996ECA90237F5985004D30C2 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA8F237F5985004D30C2 /* main.swift */; };
+		9989B45B256D707A00E4D7A6 /* libopus.a in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9989B3C1256D65C200E4D7A6 /* libopus.a */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9989B539256D73C800E4D7A6 /* libcjson_utils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3BF256D65C200E4D7A6 /* libcjson_utils.a */; };
+		9989B53A256D73C800E4D7A6 /* libcjson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA5D237F587C004D30C2 /* libcjson.a */; };
+		9989B53B256D73CD00E4D7A6 /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3C1256D65C200E4D7A6 /* libopus.a */; };
+		9989B53C256D73D300E4D7A6 /* liballonet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA57237F587C004D30C2 /* liballonet.a */; };
+		9989B53D256D73DC00E4D7A6 /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA63237F587C004D30C2 /* libenet.a */; };
+		9989B53E256D73E100E4D7A6 /* libtinycthread.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3CB256D65C200E4D7A6 /* libtinycthread.a */; };
+		9989B540256E62DD00E4D7A6 /* allo_interaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B53F256E62DD00E4D7A6 /* allo_interaction.swift */; };
+		9989B542256E62F200E4D7A6 /* helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B541256E62F200E4D7A6 /* helpers.swift */; };
+		9989B544256E631400E4D7A6 /* cJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B543256E631400E4D7A6 /* cJSON.swift */; };
+		9989B546256E633A00E4D7A6 /* allo_entity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B545256E633A00E4D7A6 /* allo_entity.swift */; };
+		9989B548256E634900E4D7A6 /* allo_state.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B547256E634900E4D7A6 /* allo_state.swift */; };
+		9989B5B6256E6F7D00E4D7A6 /* dummycube.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B5B5256E6F7D00E4D7A6 /* dummycube.swift */; };
+		9989B5B8256E89B800E4D7A6 /* component.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9989B5B7256E89B800E4D7A6 /* component.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,13 +47,6 @@
 			remoteGlobalIDString = 5DE3552F3ADC44389865F0F0;
 			remoteInfo = allonet;
 		};
-		996ECA58237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = FED38ACBA8B94FA39143223B;
-			remoteInfo = cJSON_test;
-		};
 		996ECA5A237F587C004D30C2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
@@ -56,20 +60,6 @@
 			proxyType = 2;
 			remoteGlobalIDString = A80FE768F6444EB081271D89;
 			remoteInfo = "cjson-static";
-		};
-		996ECA5E237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 2E04085984B1417BA6CA6475;
-			remoteInfo = cjson_add;
-		};
-		996ECA60237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 9F9FBD4611DD406F99B55FAE;
-			remoteInfo = compare_tests;
 		};
 		996ECA62237F587C004D30C2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -106,111 +96,6 @@
 			remoteGlobalIDString = DDAB6B4FB30B4085A50B4DBE;
 			remoteInfo = luac;
 		};
-		996ECA6C237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = E2C5FC7191244EC3A3E02A0F;
-			remoteInfo = misc_tests;
-		};
-		996ECA6E237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 0AA894AB8C2142C4884623A1;
-			remoteInfo = parse_array;
-		};
-		996ECA70237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 3051EDF4D3C249C5A789B0C5;
-			remoteInfo = parse_examples;
-		};
-		996ECA72237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 34D132FBC4784D77BE00A3FB;
-			remoteInfo = parse_hex4;
-		};
-		996ECA74237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 66C9EE6754304B9C88C4B4C1;
-			remoteInfo = parse_number;
-		};
-		996ECA76237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 34672879F3474B8889FCB088;
-			remoteInfo = parse_object;
-		};
-		996ECA78237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8BAC5E0C41A54C5AB72563FB;
-			remoteInfo = parse_string;
-		};
-		996ECA7A237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F5FDE826C4DA4F8F9F5C1C22;
-			remoteInfo = parse_value;
-		};
-		996ECA7C237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 01A773E9337D434E80BAE321;
-			remoteInfo = parse_with_opts;
-		};
-		996ECA7E237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = A9D35362F90A4C92AD5E4B87;
-			remoteInfo = print_array;
-		};
-		996ECA80237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 37862710B36F4956A3ECBE07;
-			remoteInfo = print_number;
-		};
-		996ECA82237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = CA8AF3943D444E8FBF18618E;
-			remoteInfo = print_object;
-		};
-		996ECA84237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = A07668E6DA58411D9373EC72;
-			remoteInfo = print_string;
-		};
-		996ECA86237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 0B4575B315F3401FB7A3C299;
-			remoteInfo = print_value;
-		};
-		996ECA88237F587C004D30C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = BC340D7C5ABA451E8C32EC33;
-			remoteInfo = readme_examples;
-		};
 		996ECA8A237F587C004D30C2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
@@ -218,15 +103,93 @@
 			remoteGlobalIDString = 0B3118BC026147588B33B1CD;
 			remoteInfo = unity;
 		};
+		9989B3B2256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FA040C259A5A4E67A0C74107;
+			remoteInfo = allonet_asset_test;
+		};
+		9989B3B4256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 1A569B53B30D404DBC970822;
+			remoteInfo = allonet_delta_test;
+		};
+		9989B3B6256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5080757B4F5343B99597AB08;
+			remoteInfo = allonet_jobs_test;
+		};
+		9989B3B8256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 7849923F915948D5B905982D;
+			remoteInfo = allonet_math_test;
+		};
+		9989B3BA256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = DD5DCFE5CE364C1E9454A138;
+			remoteInfo = allonet_state_test;
+		};
+		9989B3BC256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8473E57A721F4AC1A64103B5;
+			remoteInfo = cjson_utils;
+		};
+		9989B3BE256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E24F93AF89854B0F93663503;
+			remoteInfo = "cjson_utils-static";
+		};
+		9989B3C0256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 903E3D4A73C748D983AB372E;
+			remoteInfo = opus;
+		};
+		9989B3C2256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 35C736D44FC64376B9209CC8;
+			remoteInfo = standalone_server;
+		};
+		9989B3C4256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 928E8D2BB92B47F68C035C25;
+			remoteInfo = "test-tinycthread";
+		};
+		9989B3CA256D65C200E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6D55F5E8B4AD46C19520AE96;
+			remoteInfo = tinycthread;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		996EC9F7237F4429004D30C2 /* Embed Libraries */ = {
+		9989B45C256D707A00E4D7A6 /* Embed Libraries */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				9989B45B256D707A00E4D7A6 /* libopus.a in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -247,6 +210,13 @@
 		996ECA27237F5831004D30C2 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		996ECA29237F587C004D30C2 /* allonet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = allonet.xcodeproj; path = ../../../build/allonet.xcodeproj; sourceTree = "<group>"; };
 		996ECA8F237F5985004D30C2 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		9989B53F256E62DD00E4D7A6 /* allo_interaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = allo_interaction.swift; sourceTree = "<group>"; };
+		9989B541256E62F200E4D7A6 /* helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = helpers.swift; sourceTree = "<group>"; };
+		9989B543256E631400E4D7A6 /* cJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cJSON.swift; sourceTree = "<group>"; };
+		9989B545256E633A00E4D7A6 /* allo_entity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = allo_entity.swift; sourceTree = "<group>"; };
+		9989B547256E634900E4D7A6 /* allo_state.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = allo_state.swift; sourceTree = "<group>"; };
+		9989B5B5256E6F7D00E4D7A6 /* dummycube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = dummycube.swift; sourceTree = "<group>"; };
+		9989B5B7256E89B800E4D7A6 /* component.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = component.swift; sourceTree = "<group>"; };
 		999EA60F237F2E0900A68797 /* Example */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Example; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -255,9 +225,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				996ECA8C237F5968004D30C2 /* liballonet.dylib in Frameworks */,
-				996ECA8D237F5972004D30C2 /* libcjson.a in Frameworks */,
-				996ECA8E237F5972004D30C2 /* libenet.a in Frameworks */,
+				9989B539256D73C800E4D7A6 /* libcjson_utils.a in Frameworks */,
+				9989B53C256D73D300E4D7A6 /* liballonet.a in Frameworks */,
+				9989B53A256D73C800E4D7A6 /* libcjson.a in Frameworks */,
+				9989B53D256D73DC00E4D7A6 /* libenet.a in Frameworks */,
+				9989B53B256D73CD00E4D7A6 /* libopus.a in Frameworks */,
+				9989B53E256D73E100E4D7A6 /* libtinycthread.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,6 +248,12 @@
 			isa = PBXGroup;
 			children = (
 				996ECA25237F5831004D30C2 /* client.swift */,
+				9989B5B7256E89B800E4D7A6 /* component.swift */,
+				9989B547256E634900E4D7A6 /* allo_state.swift */,
+				9989B545256E633A00E4D7A6 /* allo_entity.swift */,
+				9989B543256E631400E4D7A6 /* cJSON.swift */,
+				9989B53F256E62DD00E4D7A6 /* allo_interaction.swift */,
+				9989B541256E62F200E4D7A6 /* helpers.swift */,
 				996ECA26237F5831004D30C2 /* CAllonet */,
 			);
 			name = Allonet;
@@ -294,32 +273,25 @@
 			children = (
 				996ECA53237F587C004D30C2 /* allocubeappliance */,
 				996ECA55237F587C004D30C2 /* allodummyclient */,
-				996ECA57237F587C004D30C2 /* liballonet.dylib */,
-				996ECA59237F587C004D30C2 /* cJSON_test */,
+				996ECA57237F587C004D30C2 /* liballonet.a */,
+				9989B3B3256D65C200E4D7A6 /* allonet_asset_test */,
+				9989B3B5256D65C200E4D7A6 /* allonet_delta_test */,
+				9989B3B7256D65C200E4D7A6 /* allonet_jobs_test */,
+				9989B3B9256D65C200E4D7A6 /* allonet_math_test */,
+				9989B3BB256D65C200E4D7A6 /* allonet_state_test */,
 				996ECA5B237F587C004D30C2 /* libcjson.dylib */,
 				996ECA5D237F587C004D30C2 /* libcjson.a */,
-				996ECA5F237F587C004D30C2 /* cjson_add */,
-				996ECA61237F587C004D30C2 /* compare_tests */,
+				9989B3BD256D65C200E4D7A6 /* libcjson_utils.dylib */,
+				9989B3BF256D65C200E4D7A6 /* libcjson_utils.a */,
 				996ECA63237F587C004D30C2 /* libenet.a */,
 				996ECA65237F587C004D30C2 /* liblua.dylib */,
 				996ECA67237F587C004D30C2 /* libliblua_static.a */,
 				996ECA69237F587C004D30C2 /* lua */,
 				996ECA6B237F587C004D30C2 /* luac */,
-				996ECA6D237F587C004D30C2 /* misc_tests */,
-				996ECA6F237F587C004D30C2 /* parse_array */,
-				996ECA71237F587C004D30C2 /* parse_examples */,
-				996ECA73237F587C004D30C2 /* parse_hex4 */,
-				996ECA75237F587C004D30C2 /* parse_number */,
-				996ECA77237F587C004D30C2 /* parse_object */,
-				996ECA79237F587C004D30C2 /* parse_string */,
-				996ECA7B237F587C004D30C2 /* parse_value */,
-				996ECA7D237F587C004D30C2 /* parse_with_opts */,
-				996ECA7F237F587C004D30C2 /* print_array */,
-				996ECA81237F587C004D30C2 /* print_number */,
-				996ECA83237F587C004D30C2 /* print_object */,
-				996ECA85237F587C004D30C2 /* print_string */,
-				996ECA87237F587C004D30C2 /* print_value */,
-				996ECA89237F587C004D30C2 /* readme_examples */,
+				9989B3C1256D65C200E4D7A6 /* libopus.a */,
+				9989B3C3256D65C200E4D7A6 /* standalone_server */,
+				9989B3C5256D65C200E4D7A6 /* test-tinycthread */,
+				9989B3CB256D65C200E4D7A6 /* libtinycthread.a */,
 				996ECA8B237F587C004D30C2 /* libunity.a */,
 			);
 			name = Products;
@@ -328,6 +300,7 @@
 		999EA606237F2E0900A68797 = {
 			isa = PBXGroup;
 			children = (
+				9989B5B5256E6F7D00E4D7A6 /* dummycube.swift */,
 				996ECA8F237F5985004D30C2 /* main.swift */,
 				996ECA24237F5831004D30C2 /* Allonet */,
 				996ECA29237F587C004D30C2 /* allonet.xcodeproj */,
@@ -354,7 +327,7 @@
 				999EA60B237F2E0900A68797 /* Sources */,
 				999EA60C237F2E0900A68797 /* Frameworks */,
 				999EA60D237F2E0900A68797 /* CopyFiles */,
-				996EC9F7237F4429004D30C2 /* Embed Libraries */,
+				9989B45C256D707A00E4D7A6 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -420,18 +393,11 @@
 			remoteRef = 996ECA54237F587C004D30C2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		996ECA57237F587C004D30C2 /* liballonet.dylib */ = {
+		996ECA57237F587C004D30C2 /* liballonet.a */ = {
 			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.dylib";
-			path = liballonet.dylib;
+			fileType = archive.ar;
+			path = liballonet.a;
 			remoteRef = 996ECA56237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA59237F587C004D30C2 /* cJSON_test */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = cJSON_test;
-			remoteRef = 996ECA58237F587C004D30C2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		996ECA5B237F587C004D30C2 /* libcjson.dylib */ = {
@@ -447,20 +413,6 @@
 			fileType = archive.ar;
 			path = libcjson.a;
 			remoteRef = 996ECA5C237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA5F237F587C004D30C2 /* cjson_add */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = cjson_add;
-			remoteRef = 996ECA5E237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA61237F587C004D30C2 /* compare_tests */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = compare_tests;
-			remoteRef = 996ECA60237F587C004D30C2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		996ECA63237F587C004D30C2 /* libenet.a */ = {
@@ -498,116 +450,89 @@
 			remoteRef = 996ECA6A237F587C004D30C2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		996ECA6D237F587C004D30C2 /* misc_tests */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = misc_tests;
-			remoteRef = 996ECA6C237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA6F237F587C004D30C2 /* parse_array */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_array;
-			remoteRef = 996ECA6E237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA71237F587C004D30C2 /* parse_examples */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_examples;
-			remoteRef = 996ECA70237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA73237F587C004D30C2 /* parse_hex4 */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_hex4;
-			remoteRef = 996ECA72237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA75237F587C004D30C2 /* parse_number */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_number;
-			remoteRef = 996ECA74237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA77237F587C004D30C2 /* parse_object */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_object;
-			remoteRef = 996ECA76237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA79237F587C004D30C2 /* parse_string */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_string;
-			remoteRef = 996ECA78237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA7B237F587C004D30C2 /* parse_value */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_value;
-			remoteRef = 996ECA7A237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA7D237F587C004D30C2 /* parse_with_opts */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = parse_with_opts;
-			remoteRef = 996ECA7C237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA7F237F587C004D30C2 /* print_array */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = print_array;
-			remoteRef = 996ECA7E237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA81237F587C004D30C2 /* print_number */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = print_number;
-			remoteRef = 996ECA80237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA83237F587C004D30C2 /* print_object */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = print_object;
-			remoteRef = 996ECA82237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA85237F587C004D30C2 /* print_string */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = print_string;
-			remoteRef = 996ECA84237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA87237F587C004D30C2 /* print_value */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = print_value;
-			remoteRef = 996ECA86237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		996ECA89237F587C004D30C2 /* readme_examples */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = readme_examples;
-			remoteRef = 996ECA88237F587C004D30C2 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		996ECA8B237F587C004D30C2 /* libunity.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = libunity.a;
 			remoteRef = 996ECA8A237F587C004D30C2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3B3256D65C200E4D7A6 /* allonet_asset_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allonet_asset_test;
+			remoteRef = 9989B3B2256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3B5256D65C200E4D7A6 /* allonet_delta_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allonet_delta_test;
+			remoteRef = 9989B3B4256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3B7256D65C200E4D7A6 /* allonet_jobs_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allonet_jobs_test;
+			remoteRef = 9989B3B6256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3B9256D65C200E4D7A6 /* allonet_math_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allonet_math_test;
+			remoteRef = 9989B3B8256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3BB256D65C200E4D7A6 /* allonet_state_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = allonet_state_test;
+			remoteRef = 9989B3BA256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3BD256D65C200E4D7A6 /* libcjson_utils.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			name = libcjson_utils.dylib;
+			path = libcjson_utils.1.7.10.dylib;
+			remoteRef = 9989B3BC256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3BF256D65C200E4D7A6 /* libcjson_utils.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libcjson_utils.a;
+			remoteRef = 9989B3BE256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3C1256D65C200E4D7A6 /* libopus.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libopus.a;
+			remoteRef = 9989B3C0256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3C3256D65C200E4D7A6 /* standalone_server */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = standalone_server;
+			remoteRef = 9989B3C2256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3C5256D65C200E4D7A6 /* test-tinycthread */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = "test-tinycthread";
+			remoteRef = 9989B3C4256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B3CB256D65C200E4D7A6 /* libtinycthread.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libtinycthread.a;
+			remoteRef = 9989B3CA256D65C200E4D7A6 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -617,8 +542,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9989B546256E633A00E4D7A6 /* allo_entity.swift in Sources */,
 				996ECA90237F5985004D30C2 /* main.swift in Sources */,
+				9989B548256E634900E4D7A6 /* allo_state.swift in Sources */,
 				996ECA28237F5835004D30C2 /* client.swift in Sources */,
+				9989B5B8256E89B800E4D7A6 /* component.swift in Sources */,
+				9989B540256E62DD00E4D7A6 /* allo_interaction.swift in Sources */,
+				9989B5B6256E6F7D00E4D7A6 /* dummycube.swift in Sources */,
+				9989B544256E631400E4D7A6 /* cJSON.swift in Sources */,
+				9989B542256E62F200E4D7A6 /* helpers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -749,10 +681,15 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R7WMBH9LHX;
 				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../allonet/include,
+					../../../lib,
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
+					"@loader_path",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -767,10 +704,15 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R7WMBH9LHX;
 				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../allonet/include,
+					../../../lib,
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
+					"@loader_path",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

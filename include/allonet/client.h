@@ -124,7 +124,7 @@ typedef struct alloclient {
     void (*alloclient_disconnect)(alloclient *client, int reason);
     bool (*alloclient_poll)(alloclient *client, int timeout_ms);
     void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
-    void (*alloclient_set_intent)(alloclient *client, allo_client_intent *intent);
+    void (*alloclient_set_intent)(alloclient *client, const allo_client_intent *intent);
     void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
     void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
     void (*alloclient_simulate)(alloclient* client);
@@ -173,7 +173,7 @@ void alloclient_send_interaction(alloclient *client, allo_interaction *interacti
 /** Change this client's movement/action intent.
  *  @see https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent
  */
-void alloclient_set_intent(alloclient *client, allo_client_intent *intent);
+void alloclient_set_intent(alloclient *client, const allo_client_intent *intent);
 
 /** Transmit audio from your avatar, e g microphone audio for
   * voice communication.

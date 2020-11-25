@@ -2,16 +2,17 @@
 import CAllonet
 import Foundation
 
-fileprivate extension Encodable {
+public extension Encodable {
     var jsonString: String {
-        let data = try! JSONEncoder().encode(self)
+        let encoder = JSONEncoder()
+        let data = try! encoder.encode(self)
         return String(data: data, encoding: .utf8)!
     }
 }
 
 public protocol ClientDelegate: class {
-    func client(_ client: Client, received state: Client.State)
-    func client(_ client: Client, received interaction: Client.Interaction)
+    func client(_ client: Client, received state: allo_state)
+    func client(_ client: Client, received interaction: allo_interaction)
     func clientDidDisconnect(_ client: Client)
 }
 
@@ -21,57 +22,38 @@ fileprivate func stateCallback(client: UnsafeMutablePointer<alloclient>!, state:
     client.delegate?.client(client, received: state)
 }
 
-fileprivate func interactionCallback(client: UnsafeMutablePointer<alloclient>!, interaction: UnsafeMutablePointer<allo_interaction>!) -> Boolean {
-    guard let interaction = interaction?.pointee else { return }
+fileprivate func interactionCallback(client: UnsafeMutablePointer<alloclient>!, interaction: UnsafeMutablePointer<allo_interaction>!) -> Bool {
+    guard let interaction = interaction?.pointee else { return false }
     let client = Unmanaged<Client>.fromOpaque(client.pointee._backref!).takeUnretainedValue()
     client.delegate?.client(client, received: interaction)
     return true
 }
 
-fileprivate func disconnectedCallback(client: UnsafeMutablePointer<alloclient>!) {
+fileprivate func disconnectedCallback(client: UnsafeMutablePointer<alloclient>!, code: alloerror, message: UnsafePointer<Int8>?) -> Void {
     let client = Unmanaged<Client>.fromOpaque(client.pointee._backref!).takeUnretainedValue()
     client.delegate?.clientDidDisconnect(client)
 }
+
 
 public class Client {
     
     public weak var delegate: ClientDelegate? = nil
     
-    public typealias State = allo_state
-    public typealias Interaction = allo_interaction
-    public typealias Intent = allo_client_intent
-    
     public struct AgentIdentity: Codable {
         public var display_name: String
     }
     
-    public struct Entity: Codable {
-        public var id: String
-        public var components: [Component.Key: Component]
-    }
-    
-    public struct Component: Codable {
-        public enum Key: String, Codable {
-            case transform
-        }
-        
-        public struct Transform: Codable {
-            public var position: Vector
-            public var rotation: Vector
-            
-            public struct Vector: Codable {
-                var x, y, z: Float
-            }
-        }
-    }
-    
-    public static func connect(url: URL, identity: AgentIdentity, avatar: Entity) -> Client? {
-        return self.connect(
-            url: url.absoluteString,
-            identity: identity.jsonString,
-            avatar: avatar.jsonString
+    public func connect(url: String, displayName: String, components: [Component]) -> Bool {
+        let json = Dictionary<String, AnyComponent>(uniqueKeysWithValues: components.map { component in
+            (component.key, AnyComponent(base: component))
+        }).jsonString
+        return connect(
+            url: url,
+            identity: ["display_name": displayName].jsonString,
+            avatar: json
         )
     }
+    
     
     /**
      Connect to an alloplace.
@@ -85,32 +67,31 @@ public class Client {
         - avatar: JSON dict describing components, as per "components" of https://github.com/alloverse/docs/blob/master/specifications/README.md#entity
      
     */
-    public static func connect(url: String, identity: String, avatar: String) -> Client? {
-    
+    public func connect(url: String, identity: String, avatar: String) -> Bool {
         return url.withCString { urlPointer in
             identity.withCString { identity in
                 avatar.withCString { avatar in
-                    return alloclient_connect(url, identity, avatar)?.pointee
+                    return alloclient_connect(client, url, identity, avatar)
                 }
             }
-        }.flatMap(Client.init)
+        }
     }
     
-    var client: alloclient
+    var client: UnsafeMutablePointer<alloclient>
     
-    private init(client: alloclient) {
-        self.client = client
-        self.client._backref = Unmanaged.passUnretained(self).toOpaque()
+    public init(threaded: Bool = false) {
         
-        self.client.state_callback = stateCallback
-        self.client.disconnected_callback = disconnectedCallback
-        self.client.interaction_callback = interactionCallback
+        self.client = alloclient_create(threaded)
+        self.client.pointee._backref = Unmanaged.passUnretained(self).toOpaque()
+        self.client.pointee.state_callback = stateCallback
+        self.client.pointee.disconnected_callback = disconnectedCallback
+        self.client.pointee.interaction_callback = interactionCallback
     }
     
     deinit {
-        client.disconnected_callback = nil
-        client.interaction_callback = nil
-        client.state_callback = nil
+        client.pointee.disconnected_callback = nil
+        client.pointee.interaction_callback = nil
+        client.pointee.state_callback = nil
         disconnect()
     }
 
@@ -123,7 +104,7 @@ public class Client {
      */
     func disconnect() {
         withUnsafeMutablePointer(to: &client) { client in
-            alloclient_disconnect(client, 0)
+            alloclient_disconnect(client.pointee, 0)
         }
     }
     
@@ -133,9 +114,7 @@ public class Client {
      Call regularly at 20hz to process incoming and outgoing network traffic.
     */
     func poll() {
-        withUnsafeMutablePointer(to: &client) { client in
-            alloclient_poll(client)
-        }
+        alloclient_poll(client, 10)
     }
     
     /**
@@ -149,11 +128,11 @@ public class Client {
      - seealso:
      [Interaction Specification]](https://github.com/alloverse/docs/blob/master/specifications/interactions.md)
     */
-    func send(interaction: Interaction) {
+    func send(interaction: allo_interaction) {
         var interaction = interaction
         withUnsafeMutablePointer(to: &client) { client in
             withUnsafeMutablePointer(to: &interaction) { interaction in
-                alloclient_send_interaction(client, interaction)
+                alloclient_send_interaction(client.pointee, interaction)
             }
         }
     }
@@ -162,9 +141,11 @@ public class Client {
     - seealso:
         [Intent Specification](https://github.com/alloverse/docs/blob/master/specifications/README.md#entity-intent)
     */
-    func set(intent: Intent) {
+    func set(intent: allo_client_intent) {
         withUnsafeMutablePointer(to: &client) { client in
-            alloclient_set_intent(client, intent)
+            withUnsafePointer(to: intent) { intent in
+                alloclient_set_intent(client.pointee, intent)
+            }
         }
     }
 }

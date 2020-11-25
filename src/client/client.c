@@ -238,7 +238,7 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
     return any_messages;
 }
 
-void alloclient_set_intent(alloclient* client, allo_client_intent *intent)
+void alloclient_set_intent(alloclient* client, const allo_client_intent *intent)
 {
     client->alloclient_set_intent(client, intent);
 }

@@ -6,6 +6,7 @@
 #include <allonet/allonet.h>
 #include "util.h"
 #include "delta.h"
+#include "_asset.h"
 
 static alloserver* serv;
 static allo_entity* place;
@@ -191,27 +192,66 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   free((void*)json);
 }
 
+typedef enum asset_mid {
+    asset_mid_request = 1,
+    asset_mid_data = 2,
+    asset_mid_failure = 3
+} asset_mid;
+
+static void handle_asset(alloserver* serv, alloserver_client* client, const uint8_t* data, size_t data_length) {
+    uint16_t mid = 0;
+    const cJSON *json = NULL;
+    assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
+    if (mid == asset_mid_request) {
+        cJSON *id = cJSON_GetObjectItem(json, "id");
+        cJSON *range = cJSON_GetObjectItem(json, "range");
+        cJSON *published_by = cJSON_GetObjectItem(json, "published_by"); //opt
+        
+        int has_file = 0;
+        if (has_file) {
+            
+        } else {
+            
+        }
+    } else if (mid == asset_mid_data) {
+        cJSON *id = cJSON_GetObjectItem(json, "id");
+        cJSON *range = cJSON_GetObjectItem(json, "range");
+        cJSON *total_length = cJSON_GetObjectItem(json, "published_by");
+    } else if (mid == asset_mid_failure) {
+        
+    }
+}
+
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)
 {
-  cJSON* cmd = cJSON_Parse((const char*)data);
   if (channel == CHANNEL_STATEDIFFS)
   {
+    cJSON* cmd = cJSON_Parse((const char*)data);
     const cJSON* ntvintent = cJSON_GetObjectItem(cmd, "intent");
     allo_client_intent *intent = allo_client_intent_parse_cjson(ntvintent);
     handle_intent(serv, client, intent);
     allo_client_intent_free(intent);
+    cJSON_Delete(cmd);
   }
   else if (channel == CHANNEL_COMMANDS)
   {
+    cJSON* cmd = cJSON_Parse((const char*)data);
     allo_interaction* interaction = allo_interaction_parse_cjson(cmd);
     handle_interaction(serv, client, interaction);
     allo_interaction_free(interaction);
+    cJSON_Delete(cmd);
   }
   else if (channel == CHANNEL_CLOCK)
   {
+    cJSON* cmd = cJSON_Parse((const char*)data);
     handle_clock(serv, client, cmd);
+    cJSON_Delete(cmd);
   }
-  cJSON_Delete(cmd);
+  else if (channel == CHANNEL_ASSETS)
+  {
+    handle_asset(serv, client, data, data_length);
+  }
+  
 }
 
 static statehistory_t hist;

@@ -15,6 +15,8 @@
     #define nonnull(x) x
 #endif
 
+void parse_asset(alloclient *client, unsigned char *data, int length);
+
 static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 
@@ -167,7 +169,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_ASSETS: {
-        //parse_asset(client, (char*)packet->data, packet->dataLength);
+        parse_asset(client, (char*)packet->data, packet->dataLength);
         } break;
     case CHANNEL_MEDIA: {
         _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);

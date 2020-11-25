@@ -39,6 +39,7 @@ void allosim_pose_movement(allo_state* state, allo_entity* avatar, const allo_cl
     if (strcmp(actuate_pose, "hand/left") == 0) new_transform = intent->poses.left_hand.matrix;
     else if (strcmp(actuate_pose, "hand/right") == 0) new_transform = intent->poses.right_hand.matrix;
     else if (strcmp(actuate_pose, "head") == 0) new_transform = intent->poses.head.matrix;
+    else if (strcmp(actuate_pose, "torso") == 0) new_transform = intent->poses.torso.matrix;
     else continue;
 
     // ignore identity transform, since it probably means nothing has been set

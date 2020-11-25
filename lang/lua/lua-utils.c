@@ -60,6 +60,7 @@ allo_client_poses get_table_poses(lua_State *L, const char *key)
     lua_pushstring(L, key);
     lua_gettable(L, -2);
     result.head = get_table_head_pose(L, "head");
+    result.torso = get_table_head_pose(L, "torso");
     result.left_hand = get_table_hand_pose(L, "hand/left");
     result.right_hand = get_table_hand_pose(L, "hand/right");
     lua_pop(L, 1);

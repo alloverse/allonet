@@ -31,6 +31,7 @@ typedef struct allo_client_head_pose
 typedef struct allo_client_poses
 {
     allo_client_head_pose head;
+    allo_client_head_pose torso;
     allo_client_hand_pose left_hand;
     allo_client_hand_pose right_hand;
 } allo_client_poses;

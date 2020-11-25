@@ -10,7 +10,10 @@
 allo_client_intent* allo_client_intent_create()
 {
   allo_client_intent* intent = calloc(1, sizeof(allo_client_intent));
-  intent->poses.head.matrix = intent->poses.left_hand.matrix = intent->poses.right_hand.matrix = allo_m4x4_identity();
+  intent->poses.head.matrix = 
+    intent->poses.torso.matrix = 
+    intent->poses.left_hand.matrix = 
+    intent->poses.right_hand.matrix = allo_m4x4_identity();
   for(int i = 0; i < ALLO_HAND_SKELETON_JOINT_COUNT; i++)
   {
     intent->poses.left_hand.skeleton[i] = allo_m4x4_identity();
@@ -92,6 +95,10 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
         "matrix", m2cjson(intent->poses.head.matrix),
         NULL
       ),
+      "torso", cjson_create_object(
+        "matrix", m2cjson(intent->poses.torso.matrix),
+        NULL
+      ),
       "hand/left", cjson_create_object(
         "matrix", m2cjson(intent->poses.left_hand.matrix),
         "skeleton", skeleton_to_cjson(intent->poses.left_hand.skeleton),
@@ -123,6 +130,9 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
   intent->poses = (allo_client_poses){
     .head = (allo_client_head_pose){
       .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "head"), "matrix")),
+    },
+    .torso = (allo_client_head_pose){
+      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "torso"), "matrix")),
     },
     .left_hand = (allo_client_hand_pose){
       .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "matrix")),

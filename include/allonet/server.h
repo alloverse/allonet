@@ -45,6 +45,10 @@ struct alloserver {
 // send 0 for any host or any port
 alloserver *allo_listen(int listenhost, int port);
 
+struct _ENetPacket;
+
+void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel channel, struct _ENetPacket *packet);
+
 // immediately shutdown the server
 void alloserv_stop(alloserver* serv);
 

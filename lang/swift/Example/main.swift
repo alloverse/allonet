@@ -47,6 +47,8 @@ guard didConnect else {
 
 print(client)
 
+client.request(asset: "hello");
+
 for _ in 0...5 {
     print("polling")
     client.poll()

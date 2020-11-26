@@ -156,6 +156,11 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
 }
 
+void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
+{
+    enet_peer_send(_clientinternal(client)->peer, channel, packet);
+}
+
 alloserver *allo_listen(int listenhost, int port)
 {
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));

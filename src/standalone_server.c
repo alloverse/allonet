@@ -6,7 +6,7 @@
 #include <allonet/allonet.h>
 #include "util.h"
 #include "delta.h"
-#include "_asset.h"
+#include <allonet/asset.h>
 
 static alloserver* serv;
 static allo_entity* place;
@@ -192,35 +192,27 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   free((void*)json);
 }
 
-typedef enum asset_mid {
-    asset_mid_request = 1,
-    asset_mid_data = 2,
-    asset_mid_failure = 3
-} asset_mid;
+static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
+    char *message = "Allo' World!";
+    size_t len = MIN(strlen(message), length);
+    memcpy(buffer, message, len);
+    *out_read_length = len;
+    *out_total_size = strlen(message);
+    return 0;
+}
+
+static int _asset_write_range(const char *id, uint8_t *buffer, size_t offset, size_t length, cJSON **out_error, void *user) {
+    return 0;
+}
+
+static void _asset_send(const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+    alloserver_client *client = (alloserver_client*)user;
+    ENetPacket *packet = asset_build_enet_packet(header, data, data_length);
+    alloserv_send_enet(serv, client, CHANNEL_ASSETS, packet);
+}
 
 static void handle_asset(alloserver* serv, alloserver_client* client, const uint8_t* data, size_t data_length) {
-    uint16_t mid = 0;
-    const cJSON *json = NULL;
-    
-    assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
-    if (mid == asset_mid_request) {
-        cJSON *id = cJSON_GetObjectItem(json, "id");
-        cJSON *range = cJSON_GetObjectItem(json, "range");
-        cJSON *published_by = cJSON_GetObjectItem(json, "published_by"); //opt
-        
-        int has_file = 0;
-        if (has_file) {
-            
-        } else {
-            
-        }
-    } else if (mid == asset_mid_data) {
-        cJSON *id = cJSON_GetObjectItem(json, "id");
-        cJSON *range = cJSON_GetObjectItem(json, "range");
-        cJSON *total_length = cJSON_GetObjectItem(json, "published_by");
-    } else if (mid == asset_mid_failure) {
-        
-    }
+    asset_handle(data, data_length, _asset_read_range, _asset_write_range, _asset_send, (void*)client);
 }
 
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)

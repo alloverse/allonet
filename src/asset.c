@@ -5,13 +5,183 @@
 #include <assert.h>
 #include <string.h>
 #include "util.h"
+#include "_asset.h"
 
 #define min(a, b) a < b ? a : b;
 
-/// Reads the asset header and adjusts the data and data_length pointers to match remaining data after the header
-/// Puts the json header in `out_json` which must then be `cJSON_free`'d
-/// returns 0 on success
-int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_mid, cJSON const **out_json) {
+///
+/// asset_id: asset id
+/// error_code: computer-reladable error code for this error
+/// error_reason: user-readable unavailability reason
+cJSON *asset_error(const char *asset_id, asset_error_code error_code, char *error_reason) {
+    assert(asset_id);
+    assert(error_reason);
+    assert(error_code);
+    cjson_create_object(
+        "id", cJSON_CreateString(asset_id),
+        "error_reason", cJSON_CreateString(error_reason),
+        "error_code", cJSON_CreateNumber((double)error_code)
+    );
+}
+
+int asset_read_request_header(const cJSON *header, const char **out_id, size_t *out_start, size_t *out_length, cJSON **out_error_response) {
+    cJSON *id = cJSON_GetObjectItem(header, "id");
+    if (cJSON_IsString(id)) {
+        *out_id = id->string;
+    } else {
+        *out_error_response = asset_error("", asset_malformed_request_error, "The 'id' field must be a string");
+        return asset_malformed_request_error;
+    }
+    
+    cJSON *range = cJSON_GetObjectItem(header, "range");
+    if (!cJSON_IsArray(range)) {
+        *out_error_response = asset_error(id->string, asset_malformed_request_error, "The 'range' field must be an array with exactly two integers");
+        return asset_malformed_request_error;
+    }
+    
+    if (cJSON_GetArraySize(range) != 2) {
+        *out_error_response = asset_error(id->string, asset_malformed_request_error, "The 'range' field must be an array with exactly two integers");
+        return asset_malformed_request_error;
+    }
+    
+    cJSON *start = cJSON_GetArrayItem(range, 0);
+    if (cJSON_IsNumber(start)) {
+        *out_start = start->valueint;
+    } else {
+        *out_error_response = asset_error(id->string, asset_malformed_request_error, "The 'range' field must be an array with exactly two integers");
+        return asset_malformed_request_error;
+    }
+    
+    cJSON *length = cJSON_GetArrayItem(range, 1);
+    if (cJSON_IsNumber(length)) {
+        *out_length = length->valueint;
+    } else {
+        *out_error_response = asset_error(id->string, asset_malformed_request_error, "The 'range' field must be an array with exactly two integers");
+        return asset_malformed_request_error;
+    }
+    return 0;
+}
+
+
+int asset_get_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error) {
+    
+    assert(id);
+    assert(out_read_length);
+    assert(out_total_size);
+    assert(out_error);
+    
+    FILE *f = fopen(id, "r");
+    if (f == 0) {
+        *out_error = asset_error(id, asset_file_read_error, "Failed to open asset for reading");
+        return asset_file_read_error;
+    }
+    
+    if (fseek(f, offset, SEEK_SET) != 0) {
+        *out_error = asset_error(id, asset_file_read_error, "Failed to find offset for reading");
+        fclose(f);
+        return asset_file_read_error;
+    }
+    
+    size_t rlen = fread(buffer, length, 1, f);
+    if (rlen == 0 && ferror(f)) {
+        *out_error = asset_error(id, asset_file_read_error, "Unknown error while reading");
+        fclose(f);
+        return asset_file_read_error;
+    }
+    
+    *out_read_length = rlen;
+    
+    fseek(f, 0, SEEK_END);
+    *out_total_size = ftell(f);
+    
+    fclose(f);
+    return 0;
+}
+
+
+/// Does all the work with a package from the asset data channel, via function pointers provided
+void asset_handle(
+    const uint8_t* data,
+    size_t data_length,
+    asset_read_range_func read_range,
+    asset_write_range_func write_range,
+    asset_send_func respond,
+    void *user
+) {
+    uint16_t mid = 0;
+    cJSON *json = NULL;
+    cJSON *error = NULL;
+    assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
+    if (mid == asset_mid_request) {
+        
+        const char *id = NULL;
+        size_t offset = 0, length = 0;
+        
+        if (asset_read_request_header(json, &id, &offset, &length, &error)) {
+            respond(error, NULL, 0, user);
+            cJSON_free(json);
+            cJSON_free(error);
+            return;
+        }
+        
+        size_t total_size = 0, read_length = 0;
+        uint8_t *read_buffer = malloc(length);
+        if (asset_get_range(id, read_buffer, offset, length, &read_length, &total_size, &error)) {
+            respond(error, NULL, 0, user);
+            free(read_buffer);
+            cJSON_free(json);
+            cJSON_free(error);
+            return;
+        }
+        
+        int response_range[2] = {offset, read_length};
+        cJSON *response = cjson_create_object(
+            "id", cJSON_CreateString(id),
+            "range", cJSON_CreateIntArray(response_range, 2),
+            "total_length", cJSON_CreateNumber((double)total_size)
+        );
+        
+        respond(response, read_buffer, read_length, user);
+        
+        free(read_buffer);
+    } else if (mid == asset_mid_data) {
+        printf("Asset: received a bunch of data: %s", cJSON_Print(json));
+    } else if (mid == asset_mid_failure) {
+        cJSON *id = cJSON_GetObjectItem(json, "id");
+        cJSON *reason = cJSON_GetObjectItem(json, "error_reason");
+        cJSON *code = cJSON_GetObjectItem(json, "error_code");
+        
+        printf("Asset: received error: %s", cJSON_Print(json));
+    }
+    
+    if (json != NULL) {
+        cJSON_free(json);
+    }
+    
+    if (error != NULL) {
+        cJSON_free(error);
+    }
+}
+
+void asset_request(
+    const char *id,
+    const char *entity_id,
+    asset_send_func send,
+    void *user
+) {
+    int range[2] = {0, 50};
+    cJSON *header = cjson_create_object(
+        "id", cJSON_CreateString(id),
+        "range", cJSON_CreateIntArray(range, 2),
+        NULL
+    );
+    if (entity_id) {
+        cJSON_AddStringToObject(header, "published_by", entity_id);
+    }
+    send(header, NULL, 0, user);
+}
+
+int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_mid, cJSON **out_json) {
     assert(data);
     assert(data_length);
     assert(out_json);
@@ -34,28 +204,20 @@ int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_m
     return 0;
 }
 
-int asset_write(cJSON *header, const uint8_t *data, size_t data_length) {
-    return 0;
-}
-
-
-void parse_asset(alloclient *client, const char *data, int length) {
+ENetPacket *asset_build_enet_packet(const cJSON *header, const uint8_t *data, size_t data_length) {
     
-}
-
-
-void asset_send_work(asset_job *job) {
-    // Network can accept more data?
-    int count_max = min(job->network_max_accept_bytes, job->buffer_size);
+    const char *json = cJSON_Print(header);
+    size_t jsonlength = strlen(json);
     
-    // Request data from host
-    int len = job->request_data(job->asset_id, job->buffer, job->offset, count_max);
+    asset_packet_header h;
+    h.mid = 1;
+    h.hlen = jsonlength;
     
-    // Send the data to the network
-    if (len > 0) {
-        job->send_data(job->buffer, len);
-    } else {
-        printf("no data read");
-    }
+    ENetPacket *packet = enet_packet_create(NULL, sizeof(asset_packet_header) + jsonlength + data_length, ENET_PACKET_FLAG_RELIABLE);
+    memcpy(packet->data, &h, sizeof(asset_packet_header));
+    memcpy(packet->data + sizeof(asset_packet_header), json, jsonlength);
+    
+    free((void*)json);
+    return packet;
 }
 

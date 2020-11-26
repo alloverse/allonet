@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.10.0)
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(BUILD_SHARED_LIBS OFF)
 
-option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
-option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
+option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" ON)
+option(ALLONET_USE_LUA "Whether to include the Lua bridge." OFF)
 option(ALLONET_LINK_TINYCTHREAD "Whether to link with tinycthread. say off if you already have it in the process." ON)
 
 include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")

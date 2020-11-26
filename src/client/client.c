@@ -1,5 +1,6 @@
 #include "_client.h"
 #include <allonet/arr.h>
+#include <allonet/asset.h>
 #include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
@@ -519,6 +520,18 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     snprintf(buffer, bufferlen, "--");
 }
 
+static void _asset_send(const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+    alloclient *client = (alloclient*)user;
+    ENetPeer *peer = _internal(client)->peer;
+    
+    ENetPacket *packet = asset_build_enet_packet(header, data, data_length);
+    enet_peer_send(peer, CHANNEL_ASSETS, packet);
+}
+
+static void _alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
+    asset_request(asset_id, entity_id, _asset_send, (void*)client);
+}
+
 alloclient *alloclient_create(bool threaded)
 {
     if(threaded)
@@ -543,6 +556,7 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_simulate = _alloclient_simulate;
     client->alloclient_get_time = _alloclient_get_time;
     client->alloclient_get_stats = _alloclient_get_stats;
+    client->alloclient_request_asset = _alloclient_request_asset;
     
     return client;
 }

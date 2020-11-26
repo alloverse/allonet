@@ -148,4 +148,8 @@ public class Client {
             }
         }
     }
+    
+    func request(asset: String) {
+        
+    }
 }

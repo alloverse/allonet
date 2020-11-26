@@ -146,11 +146,6 @@ static void parse_clock(alloclient *client, cJSON *response)
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
-    // Stupid: protocol says "end with newline". Either way we can't guarantee that remote side
-    // null terminates for us. Payload is always JSON so far. Let's always manually replace the
-    // newline with a null and be done with it.
-    packet->data[packet->dataLength-1] = 0;
-    
     switch(channel) {
     case CHANNEL_STATEDIFFS: { 
         cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
@@ -267,9 +262,8 @@ static void send_latest_intent(alloclient *client)
     cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, 0 /* unreliable */);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength] = '\n';
     enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
     free((void*)json);
 }
@@ -284,9 +278,8 @@ static void send_clock_request(alloclient *client)
     cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, 0 /* unreliable */);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength] = '\n';
     enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
     free((void*)json);
 }
@@ -310,9 +303,8 @@ static void _alloclient_send_interaction(alloclient *client, allo_interaction *i
     cJSON_Delete(cmdrep);
 
     int jsonlength = strlen(json);
-    ENetPacket *packet = enet_packet_create(NULL, jsonlength+1, ENET_PACKET_FLAG_RELIABLE);
+    ENetPacket *packet = enet_packet_create(NULL, jsonlength, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
-    ((char*)packet->data)[jsonlength] = '\n';
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
     free((void*)json);
 }

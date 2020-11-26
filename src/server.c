@@ -72,9 +72,6 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
 
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
 {
-    // todo: stop newline terminating in protocol...
-    packet->data[packet->dataLength-1] = 0;
-    
     if(channel == CHANNEL_MEDIA)
     {
         alloserver_client *other;
@@ -156,7 +153,6 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
             0
     );
     memcpy(packet->data, buf, len);
-    packet->data[len-1] = '\n';
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
 }
 

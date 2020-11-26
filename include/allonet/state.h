@@ -1,7 +1,7 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
 #include "inlinesys/queue.h"
-#include "allonet/math.h"
+#include "math.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <cJSON/cJSON.h>

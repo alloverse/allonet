@@ -17,7 +17,7 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
   const char* json = cJSON_Print(cmdrep);
   cJSON_Delete(cmdrep);
 
-  serv->send(serv, client, CHANNEL_COMMANDS, (const uint8_t*)json, strlen(json)+1);
+  serv->send(serv, client, CHANNEL_COMMANDS, (const uint8_t*)json, strlen(json));
   free((void*)json);
 }
 
@@ -188,7 +188,7 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   cJSON_SetNumberValue(server_time, get_ts_monod());
 
   const char* json = cJSON_Print(cmd);
-  serv->send(serv, client, CHANNEL_CLOCK, (const uint8_t*)json, strlen(json)+1);
+  serv->send(serv, client, CHANNEL_CLOCK, (const uint8_t*)json, strlen(json));
   free((void*)json);
 }
 
@@ -201,6 +201,7 @@ typedef enum asset_mid {
 static void handle_asset(alloserver* serv, alloserver_client* client, const uint8_t* data, size_t data_length) {
     uint16_t mid = 0;
     const cJSON *json = NULL;
+    
     assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
     if (mid == asset_mid_request) {
         cJSON *id = cJSON_GetObjectItem(json, "id");
@@ -268,7 +269,7 @@ static void broadcast_server_state(alloserver* serv)
   LIST_FOREACH(client, &serv->clients, pointers) {
     char *json = allo_delta_compute(&hist, client->intent->ack_state_rev);
     int jsonlength = strlen(json);
-    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength + 1);
+    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength);
     free(json);
   }
 }

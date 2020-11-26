@@ -487,7 +487,7 @@ bool alloserv_poll_standalone(int allosocket)
 
 void alloserv_stop_standalone()
 {
-  alloserv_stop(serv);
+  if(serv) alloserv_stop(serv);
   place = NULL;
   serv = NULL;
 }

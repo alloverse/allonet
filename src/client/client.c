@@ -16,8 +16,6 @@
     #define nonnull(x) x
 #endif
 
-void parse_asset(alloclient *client, unsigned char *data, int length);
-
 static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 
@@ -145,6 +143,32 @@ static void parse_clock(alloclient *client, cJSON *response)
     }
 }
 
+static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
+    char *message = "Allo' World!";
+    size_t len = MIN(strlen(message), length);
+    memcpy(buffer, message, len);
+    *out_read_length = len;
+    *out_total_size = strlen(message);
+    return 0;
+}
+
+static int _asset_write_range(const char *id, uint8_t *buffer, size_t offset, size_t length, cJSON **out_error, void *user) {
+    return 0;
+}
+
+static void _asset_send(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+    alloclient *client = (alloclient*)user;
+    ENetPeer *peer = _internal(client)->peer;
+    
+    if (peer == NULL) {
+        printf("Asset: Not connected yet\n");
+        return;
+    }
+    
+    ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
+    enet_peer_send(peer, CHANNEL_ASSETS, packet);
+}
+
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
     switch(channel) {
@@ -165,7 +189,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_ASSETS: {
-        parse_asset(client, (char*)packet->data, packet->dataLength);
+        asset_handle((char*)packet->data, packet->dataLength, _asset_read_range, _asset_write_range, _asset_send, (void*)client);
         } break;
     case CHANNEL_MEDIA: {
         _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);
@@ -219,6 +243,8 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
             enet_packet_destroy (event.packet);
             break;
         
+        case ENET_EVENT_TYPE_CONNECT:
+                break;
         case ENET_EVENT_TYPE_DISCONNECT:
             fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
             if (client->disconnected_callback) {
@@ -518,14 +544,6 @@ void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
     snprintf(buffer, bufferlen, "--");
-}
-
-static void _asset_send(const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
-    alloclient *client = (alloclient*)user;
-    ENetPeer *peer = _internal(client)->peer;
-    
-    ENetPacket *packet = asset_build_enet_packet(header, data, data_length);
-    enet_peer_send(peer, CHANNEL_ASSETS, packet);
 }
 
 static void _alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {

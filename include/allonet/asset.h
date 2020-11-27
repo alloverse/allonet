@@ -12,9 +12,9 @@
 typedef int(*asset_read_range_func)(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user);
 
 /// Provide allonet a way to write a range of data
-typedef int(*asset_write_range_func)(const char *id, uint8_t *buffer, size_t offset, size_t length, cJSON **out_error, void *user);
+typedef int(*asset_write_range_func)(const char *id, const uint8_t *buffer, size_t offset, size_t length, cJSON **out_error, void *user);
 
-typedef void(*asset_send_func)(const cJSON *header, const uint8_t *data, size_t data_length, void *user);
+typedef void(*asset_send_func)(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
 
 void asset_handle(
     const uint8_t* data,
@@ -44,6 +44,6 @@ typedef struct asset_packet_header {
 
 //TODO: move to asset_enet.h?
 struct _ENetPacket;
-struct _ENetPacket *asset_build_enet_packet(const cJSON *header, const uint8_t *data, size_t data_length);
+struct _ENetPacket *asset_build_enet_packet(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length);
 
 #endif /* asset_h */

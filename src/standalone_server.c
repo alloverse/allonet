@@ -205,9 +205,9 @@ static int _asset_write_range(const char *id, uint8_t *buffer, size_t offset, si
     return 0;
 }
 
-static void _asset_send(const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+static void _asset_send(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     alloserver_client *client = (alloserver_client*)user;
-    ENetPacket *packet = asset_build_enet_packet(header, data, data_length);
+    ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     alloserv_send_enet(serv, client, CHANNEL_ASSETS, packet);
 }
 

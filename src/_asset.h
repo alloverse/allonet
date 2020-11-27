@@ -8,12 +8,7 @@
 #ifndef _asset_h
 #define _asset_h
 
-// Asset channel message types
-typedef enum asset_mid {
-    asset_mid_request = 1,
-    asset_mid_data = 2,
-    asset_mid_failure = 3
-} asset_mid;
+
 
 /// Asset error response types
 typedef enum asset_error_code {

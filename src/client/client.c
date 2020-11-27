@@ -143,7 +143,7 @@ static void parse_clock(alloclient *client, cJSON *response)
     }
 }
 
-static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
+static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
     char *message = "Allo' World!";
     size_t len = MIN(strlen(message), length);
     memcpy(buffer, message, len);
@@ -152,11 +152,11 @@ static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, siz
     return 0;
 }
 
-static int _asset_write_range(const char *id, uint8_t *buffer, size_t offset, size_t length, cJSON **out_error, void *user) {
+static int _asset_write_range(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_length, cJSON **out_error, const void *user) {
     return 0;
 }
 
-static void _asset_send(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+static void _asset_send(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
     alloclient *client = (alloclient*)user;
     ENetPeer *peer = _internal(client)->peer;
     
@@ -189,7 +189,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_ASSETS: {
-        asset_handle((char*)packet->data, packet->dataLength, _asset_read_range, _asset_write_range, _asset_send, (void*)client);
+        asset_handle((const uint8_t*)packet->data, packet->dataLength, _asset_read_range, _asset_write_range, _asset_send, (void*)client);
         } break;
     case CHANNEL_MEDIA: {
         _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);

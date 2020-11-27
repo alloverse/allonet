@@ -192,7 +192,7 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   free((void*)json);
 }
 
-static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
+static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
     char *message = "Allo' World!";
     size_t len = MIN(strlen(message), length);
     memcpy(buffer, message, len);
@@ -201,11 +201,11 @@ static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, siz
     return 0;
 }
 
-static int _asset_write_range(const char *id, uint8_t *buffer, size_t offset, size_t length, cJSON **out_error, void *user) {
+static int _asset_write_range(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_length, cJSON **out_error, const void *user) {
     return 0;
 }
 
-static void _asset_send(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+static void _asset_send(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
     alloserver_client *client = (alloserver_client*)user;
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     alloserv_send_enet(serv, client, CHANNEL_ASSETS, packet);

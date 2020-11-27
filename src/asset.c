@@ -157,8 +157,8 @@ void asset_handle(
     size_t data_length,
     asset_read_range_func read_range,
     asset_write_range_func write_range,
-    asset_send_func respond,
-    void *user
+    asset_send_func send,
+    const void *user
 ) {
     uint16_t mid = 0;
     cJSON *json = NULL;
@@ -170,7 +170,7 @@ void asset_handle(
         size_t offset = 0, length = 0;
         
         if (asset_read_request_header(json, &id, &offset, &length, &error)) {
-            respond(asset_mid_failure, error, NULL, 0, user);
+            send(asset_mid_failure, error, NULL, 0, user);
             cJSON_Delete(json);
             cJSON_Delete(error);
             return;
@@ -179,7 +179,7 @@ void asset_handle(
         size_t total_size = 0, read_length = 0;
         uint8_t *read_buffer = malloc(length);
         if (asset_get_range(id, read_buffer, offset, length, &read_length, &total_size, &error)) {
-            respond(asset_mid_failure, error, NULL, 0, user);
+            send(asset_mid_failure, error, NULL, 0, user);
             free(read_buffer);
             cJSON_Delete(json);
             cJSON_Delete(error);
@@ -194,7 +194,7 @@ void asset_handle(
             NULL
         );
         
-        respond(asset_mid_data, response, read_buffer, read_length, user);
+        send(asset_mid_data, response, read_buffer, read_length, user);
         
         free(read_buffer);
     } else if (mid == asset_mid_data) {
@@ -207,7 +207,7 @@ void asset_handle(
             return;
         }
         
-        write_range(id, data, offset, length, &error, user);
+        write_range(id, data, offset, length, total_length, &error, user);
     } else if (mid == asset_mid_failure) {
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
         cJSON *id = cJSON_GetObjectItem(json, "id");

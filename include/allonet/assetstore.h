@@ -44,9 +44,10 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
 size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t start, size_t count, size_t **out_ranges);
 
 /// Write some data to an asset
+/// @returns Negative error code, or positive number of bytes written
 int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length);
 
 /// Read some data from an asset
-int assetstore_read(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *buffer, size_t length);
+int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_int8_t *buffer, size_t length);
 
 #endif /* asset_store_h */

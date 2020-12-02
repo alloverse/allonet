@@ -5,12 +5,16 @@
 //  Created by Patrik on 2020-11-27.
 //
 
-#include "asset_store.h"
+#include <allonet/assetstore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
 #include <assert.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <limits.h>
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
@@ -24,14 +28,40 @@ _a < _b ? _a : _b; })
 
 #define log(f_, ...) printf((f_), ##__VA_ARGS__)
 
+void rek_mkdir(char *path) {
+    char *sep = strrchr(path, '/');
+    if(sep != NULL) {
+        *sep = 0;
+        rek_mkdir(path);
+        *sep = '/';
+    }
+    if(mkdir(path, 0777) && errno != EEXIST) {
+        printf("error while trying to create '%s'\n%m\n", path);
+    }
+}
+
+FILE *fopen_mkdir(char *path, char *mode) {
+    char *sep = strrchr(path, '/');
+    if(sep) {
+        char *path0 = strdup(path);
+        path0[ sep - path ] = 0;
+        rek_mkdir(path0);
+        free(path0);
+    }
+    return fopen(path,mode);
+}
+
+
 assetstore *assetstore_open(const char *disk_path) {
-    assetstore *store = cJSON_malloc(sizeof(assetstore));
+    assetstore *store = malloc(sizeof(assetstore));
     
-    store->disk_path = strdup(disk_path);
+    store->disk_path = malloc(PATH_MAX);
+    realpath(disk_path, (char*)store->disk_path);
     
     char *statefile = NULL;
     asprintf(&statefile, "%s/%s", disk_path, "state.json");
     FILE *f = fopen(statefile, "r");
+    free(statefile);
     if (f) {
         if (fseek(f, 0, SEEK_END) != 0) {
             fclose(f);
@@ -72,8 +102,16 @@ assetstore *assetstore_open(const char *disk_path) {
         
         free(contents);
     } else {
+        char *wd = getwd(NULL);
+        log("assetstore: CWD: %s\n", wd);
+        free(wd);
+        log("assetstore: Initializing store at %s\n", disk_path);
+        f = fopen_mkdir(statefile, "w");
+        if (f) fclose(f);
         store->state = cJSON_CreateObject();
     }
+    
+    return store;
 }
 
 void assetstore_close(assetstore *store) {
@@ -150,10 +188,11 @@ size_t _last(cJSON *range) {
 }
 
 cJSON *_range(cJSON *ranges, int index) {
-    return cJSON_GetArrayItem(ranges, index);
+    return cJSON_GetArrayItem(ranges, index); 
 }
 
 void _merge_range(cJSON *ranges, size_t start, size_t end) {
+    assert(start <= end);
     int ranges_count = cJSON_GetArraySize(ranges);
     if (ranges_count == 0) {
         int numbers[2] = {(int)start, (int)end };
@@ -162,7 +201,7 @@ void _merge_range(cJSON *ranges, size_t start, size_t end) {
         return;
     }
     
-    int i = 0, low = 0, high = 0;
+    int i = 0, low = 0, high = cJSON_GetArraySize(ranges) - 1;
     size_t value;
     cJSON *range;
     // find the index `i` where to insert the new range, based on start value
@@ -191,6 +230,7 @@ void _merge_range(cJSON *ranges, size_t start, size_t end) {
         start = min(start, _first(range));
         end = max(end, _last(range));
         cJSON_DeleteItemFromArray(ranges, i);
+        range = cJSON_GetArrayItem(ranges, i);
     }
     
     // Merge all intersecting to the left
@@ -206,26 +246,61 @@ void _merge_range(cJSON *ranges, size_t start, size_t end) {
     // Insert the new range
     int numbers[2] = {(int)start, (int)end };
     cJSON *r = cJSON_CreateIntArray(numbers, 2);
-    cJSON_AddItemToArray(ranges, r);
+    cJSON_InsertItemInArray(ranges, i, r);
     return;
 }
 
+int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length) {
+    assert(asset_id);
+    assert(buffer);
+    
+    char *fpath = _asset_path(store, asset_id);
+    
+    int res = 0;
+    FILE *f = fopen(fpath, "r");
+    res = fseek(f, offset, SEEK_SET);
+    res = fread(buffer, 1, length, f);
+    return res;
+}
+
+void _write_state(assetstore *store) {
+    char *statefile = NULL;
+    asprintf(&statefile, "%s/%s", store->disk_path, "state.json");
+    FILE *f = fopen(statefile, "w");
+    free(statefile);
+    char *data = cJSON_Print(store->state);
+    int res = 0;
+    res = fwrite(data, strlen(data), 1, f);
+    free(data),
+    fclose(f);
+}
+
 int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length) {
+    assert(store);
     assert(asset_id);
     assert(data);
     
     char *fpath = _asset_path(store, asset_id);
+    int res = 0;
+    FILE *f = fopen(fpath, "a");
+    res = fseek(f, offset, SEEK_SET);
+    res = fwrite(data, 1, length, f);
     
+    // get or create the ranges from asset state in the store state
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *ranges = NULL;
-    if (!state) {
-        state = cJSON_CreateObject();
-        ranges = cJSON_AddArrayToObject(state, "ranges");
-    } else {
+    if (state) {
         ranges = cJSON_GetObjectItem(state, "ranges");
         // if there is a state then there is a "ranges"
         assert(ranges);
+    } else {
+        state = cJSON_AddObjectToObject(store->state, asset_id);
+        ranges = cJSON_AddArrayToObject(state, "ranges");
     }
     
     _merge_range(ranges, offset, offset + length);
+    
+    _write_state(store);
+    
+    return res;
 }

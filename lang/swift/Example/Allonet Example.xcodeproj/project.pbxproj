@@ -9,10 +9,10 @@
 /* Begin PBXBuildFile section */
 		996ECA28237F5835004D30C2 /* client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA25237F5831004D30C2 /* client.swift */; };
 		996ECA90237F5985004D30C2 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996ECA8F237F5985004D30C2 /* main.swift */; };
-		9989B45B256D707A00E4D7A6 /* libopus.a in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9989B3C1256D65C200E4D7A6 /* libopus.a */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9989B45B256D707A00E4D7A6 /* libopus.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9989B3C1256D65C200E4D7A6 /* libopus.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9989B539256D73C800E4D7A6 /* libcjson_utils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3BF256D65C200E4D7A6 /* libcjson_utils.a */; };
 		9989B53A256D73C800E4D7A6 /* libcjson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA5D237F587C004D30C2 /* libcjson.a */; };
-		9989B53B256D73CD00E4D7A6 /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3C1256D65C200E4D7A6 /* libopus.a */; };
+		9989B53B256D73CD00E4D7A6 /* libopus.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3C1256D65C200E4D7A6 /* libopus.dylib */; };
 		9989B53C256D73D300E4D7A6 /* liballonet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA57237F587C004D30C2 /* liballonet.a */; };
 		9989B53D256D73DC00E4D7A6 /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 996ECA63237F587C004D30C2 /* libenet.a */; };
 		9989B53E256D73E100E4D7A6 /* libtinycthread.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9989B3CB256D65C200E4D7A6 /* libtinycthread.a */; };
@@ -180,6 +180,34 @@
 			remoteGlobalIDString = 6D55F5E8B4AD46C19520AE96;
 			remoteInfo = tinycthread;
 		};
+		9989B891257157EE00E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5284C5400F64435DBC4958F1;
+			remoteInfo = test_opus_api;
+		};
+		9989B893257157EE00E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0DB1AF5867424B13BA9721D6;
+			remoteInfo = test_opus_decode;
+		};
+		9989B895257157EE00E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 4C2237BF84BA473A804FA2F5;
+			remoteInfo = test_opus_encode;
+		};
+		9989B897257157EE00E4D7A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 996ECA29237F587C004D30C2 /* allonet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F3DB668FA9AD4027885F6CB5;
+			remoteInfo = test_opus_padding;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -189,7 +217,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				9989B45B256D707A00E4D7A6 /* libopus.a in Embed Libraries */,
+				9989B45B256D707A00E4D7A6 /* libopus.dylib in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -229,7 +257,7 @@
 				9989B53C256D73D300E4D7A6 /* liballonet.a in Frameworks */,
 				9989B53A256D73C800E4D7A6 /* libcjson.a in Frameworks */,
 				9989B53D256D73DC00E4D7A6 /* libenet.a in Frameworks */,
-				9989B53B256D73CD00E4D7A6 /* libopus.a in Frameworks */,
+				9989B53B256D73CD00E4D7A6 /* libopus.dylib in Frameworks */,
 				9989B53E256D73E100E4D7A6 /* libtinycthread.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -288,9 +316,13 @@
 				996ECA67237F587C004D30C2 /* libliblua_static.a */,
 				996ECA69237F587C004D30C2 /* lua */,
 				996ECA6B237F587C004D30C2 /* luac */,
-				9989B3C1256D65C200E4D7A6 /* libopus.a */,
+				9989B3C1256D65C200E4D7A6 /* libopus.dylib */,
 				9989B3C3256D65C200E4D7A6 /* standalone_server */,
 				9989B3C5256D65C200E4D7A6 /* test-tinycthread */,
+				9989B892257157EE00E4D7A6 /* test_opus_api */,
+				9989B894257157EE00E4D7A6 /* test_opus_decode */,
+				9989B896257157EE00E4D7A6 /* test_opus_encode */,
+				9989B898257157EE00E4D7A6 /* test_opus_padding */,
 				9989B3CB256D65C200E4D7A6 /* libtinycthread.a */,
 				996ECA8B237F587C004D30C2 /* libunity.a */,
 			);
@@ -350,7 +382,7 @@
 				TargetAttributes = {
 					999EA60E237F2E0900A68797 = {
 						CreatedOnToolsVersion = 11.1;
-						LastSwiftMigration = 1110;
+						LastSwiftMigration = 1220;
 					};
 				};
 			};
@@ -507,10 +539,11 @@
 			remoteRef = 9989B3BE256D65C200E4D7A6 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		9989B3C1256D65C200E4D7A6 /* libopus.a */ = {
+		9989B3C1256D65C200E4D7A6 /* libopus.dylib */ = {
 			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libopus.a;
+			fileType = "compiled.mach-o.dylib";
+			name = libopus.dylib;
+			path = libopus.0.8.0.dylib;
 			remoteRef = 9989B3C0256D65C200E4D7A6 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -533,6 +566,34 @@
 			fileType = archive.ar;
 			path = libtinycthread.a;
 			remoteRef = 9989B3CA256D65C200E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B892257157EE00E4D7A6 /* test_opus_api */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = test_opus_api;
+			remoteRef = 9989B891257157EE00E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B894257157EE00E4D7A6 /* test_opus_decode */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = test_opus_decode;
+			remoteRef = 9989B893257157EE00E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B896257157EE00E4D7A6 /* test_opus_encode */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = test_opus_encode;
+			remoteRef = 9989B895257157EE00E4D7A6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9989B898257157EE00E4D7A6 /* test_opus_padding */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = test_opus_padding;
+			remoteRef = 9989B897257157EE00E4D7A6 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */

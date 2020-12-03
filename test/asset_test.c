@@ -9,12 +9,81 @@
 #include <stdbool.h>
 #include <memory.h>
 #include <stdarg.h>
+#include <ftw.h>
+#include <assert.h>
 
 static assetstore *store;
 
-void test_(void) {
+static const char *relative_path = "asset_test_cache";
 
-    TEST_ASSERT_EQUAL_INT(12, assetstore_write(store, "1", 0, (uint8_t*)"Hello World", 12));
+void setUp() {
+    store = assetstore_open(relative_path);
+}
+
+
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+    int rv = remove(fpath);
+    if (rv) perror(fpath);
+    return rv;
+}
+
+int rmrf(const char *path) {
+    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
+}
+
+void tearDown() {
+    assetstore_close(store);
+    assert(rmrf(relative_path) == 0);
+}
+
+void test_assetstore_read_write(void) {
+
+    int exists = 0, complete = 0;
+    size_t regions = 0;
+    assetstore_state(store, "1", &exists, &complete, &regions);
+    TEST_ASSERT_EQUAL_INT(0, exists);
+    TEST_ASSERT_EQUAL_INT(0, complete);
+    TEST_ASSERT_EQUAL_INT(0, regions);
+    TEST_ASSERT_EQUAL_INT(12, assetstore_write(store, "1", 0, (uint8_t*)"Hello World", 12, 12));
+    TEST_ASSERT_EQUAL_STRING("{\"1\":{\"complete\":true,\"total_size\":12,\"ranges\":[[0,12]]}}", cJSON_PrintUnformatted(store->state));
+    
+    assetstore_state(store, "1", &exists, &complete, &regions);
+    TEST_ASSERT_EQUAL_INT(1, exists);
+    TEST_ASSERT_EQUAL_INT(1, complete);
+    TEST_ASSERT_EQUAL_INT(0, regions);
+    
+    size_t ranges[regions*2];
+    TEST_ASSERT_EQUAL_INT(0, assetstore_get_missing_ranges(store, "1", 0, regions, ranges));
+    
+    char buff[100];
+    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12));
+    TEST_ASSERT_EQUAL_STRING("Hello World", buff);
+    
+    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6));
+    TEST_ASSERT_EQUAL_STRING("World", buff);
+}
+
+void test_assetstore_partial_read_write(void) {
+    
+    int exists = 0, complete = 0;
+    size_t regions = 0;
+    assetstore_state(store, "1", &exists, &complete, &regions);
+    TEST_ASSERT_EQUAL_INT(0, exists);
+    TEST_ASSERT_EQUAL_INT(0, complete);
+    TEST_ASSERT_EQUAL_INT(0, regions);
+    TEST_ASSERT_EQUAL_INT(5, assetstore_write(store, "1", 0, (uint8_t*)"Hello", 5, 12));
+    TEST_ASSERT_EQUAL_STRING("{\"1\":{\"complete\":false,\"total_size\":12,\"ranges\":[[0,5]]}}", cJSON_PrintUnformatted(store->state));
+    
+    assetstore_state(store, "1", &exists, &complete, &regions);
+    TEST_ASSERT_EQUAL_INT(1, exists);
+    TEST_ASSERT_EQUAL_INT(0, complete);
+    TEST_ASSERT_EQUAL_INT(0, regions);
+    
+    size_t ranges[regions*2];
+    TEST_ASSERT_EQUAL_INT(1, assetstore_get_missing_ranges(store, "1", 0, regions, ranges));
+    TEST_ASSERT_EQUAL_INT(6, ranges[0]);
+    TEST_ASSERT_EQUAL_INT(12, ranges[1]);
+    
     char buff[100];
     TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12));
     TEST_ASSERT_EQUAL_STRING("Hello World", buff);
@@ -100,19 +169,13 @@ void test_merge_range() {
     _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 22, _ranges(1, 22, 40, 45, NULL));
 }
 
-void setUp() {
-    store = assetstore_open("asset_test_cache");
-}
-
-void tearDown() {
-    assetstore_close(store);
-}
 
 int main(void) {
     UNITY_BEGIN();
 
-    RUN_TEST(test_);
-    RUN_TEST(test_merge_range);
+//    RUN_TEST(test_assetstore_read_write);
+//    RUN_TEST(test_merge_range);
+    RUN_TEST(test_assetstore_partial_read_write);
 
     return UNITY_END();
 }

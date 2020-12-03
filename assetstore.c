@@ -131,6 +131,8 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
         if (out_exists) *out_exists = 0;
         if (out_complete) *out_complete = 0;
         return 0;
+    } else {
+        *out_exists = 1;
     }
     assert(cJSON_IsObject(state));
     if (!cJSON_IsObject(state)) {
@@ -144,40 +146,12 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
             *out_complete = 0;
         } else {
             assert(cJSON_IsBool(complete));
-            *out_complete = complete->valueint;
+            *out_complete = cJSON_IsTrue(complete);
         }
     }
     
 }
 
-size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t start, size_t count, size_t **out_ranges) {
-    assert(out_ranges);
-    
-    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
-    // check existance
-    if (state == NULL) {
-        return 0;
-    }
-    
-    cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
-    assert(cJSON_IsArray(ranges));
-    int end = max(start + count, cJSON_GetArraySize(ranges));
-    
-    for (int i = start; i < end; i++) {
-        cJSON *range = cJSON_GetArrayItem(ranges, i);
-        assert(cJSON_IsArray(range));
-        *out_ranges[i++] = (size_t)cJSON_GetArrayItem(range, 0)->valueint;
-        *out_ranges[i++] = (size_t)cJSON_GetArrayItem(range, 1)->valueint;
-    }
-    
-    return end - start;
-}
-
-char *_asset_path(assetstore *store, const char *id) {
-    char *path = NULL;
-    asprintf(&path, "%s/%s", store->disk_path, id);
-    return path;
-}
 
 size_t _first(cJSON *range) {
     return (size_t)cJSON_GetArrayItem(range, 0)->valueint;
@@ -188,8 +162,52 @@ size_t _last(cJSON *range) {
 }
 
 cJSON *_range(cJSON *ranges, int index) {
-    return cJSON_GetArrayItem(ranges, index); 
+    return cJSON_GetArrayItem(ranges, index);
 }
+
+size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t start, size_t count, size_t *out_ranges) {
+    assert(out_ranges);
+    
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    // check existance
+    if (state == NULL) {
+        return 0;
+    }
+    cJSON *_total_size = cJSON_GetObjectItem(state, "total_size");
+    assert(cJSON_IsNumber(_total_size));
+    size_t total_size = (size_t)_total_size->valueint;
+    
+    cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
+    assert(cJSON_IsArray(ranges));
+    
+    cJSON *range;
+    int i = 0;
+    
+    int low = 0;
+    int high = total_size;
+    cJSON_ArrayForEach(range, ranges) {
+        if (i >= count) break;
+        
+        if (low < _first(range)) {
+            out_ranges[i  ] = low;
+            out_ranges[i+1] = _first(range) - 1;
+            low = _last(range) + 1;
+        }
+        
+        if (low >= high) break;
+        
+        i += 2;
+    }
+    
+    return i / 2;
+}
+
+char *_asset_path(assetstore *store, const char *id) {
+    char *path = NULL;
+    asprintf(&path, "%s/%s", store->disk_path, id);
+    return path;
+}
+
 
 void _merge_range(cJSON *ranges, size_t start, size_t end) {
     assert(start <= end);
@@ -275,7 +293,28 @@ void _write_state(assetstore *store) {
     fclose(f);
 }
 
-int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length) {
+void _update_asset_state(assetstore *store, const char *asset_id) {
+    
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
+    
+    // if we have exactly 1 range that is 0...total_size:
+    // TODO: confirm that the file sha is equal to the asset_id
+    // then we have the complete file
+    cJSON *total_size = cJSON_GetObjectItem(state, "total_size");
+    if (cJSON_GetArraySize(ranges) == 1) {
+        log("assetstore: Asset %s is complete\n", asset_id);
+        cJSON *range = _range(ranges, 0);
+        if (_first(range) == 0 && _last(range) == total_size->valueint) {
+            cJSON_ReplaceItemInObject(state, "complete", cJSON_CreateBool(1));
+        }
+    }
+    
+    
+    _write_state(store);
+}
+
+int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
     assert(store);
     assert(asset_id);
     assert(data);
@@ -284,7 +323,10 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
     int res = 0;
     FILE *f = fopen(fpath, "a");
     res = fseek(f, offset, SEEK_SET);
+    assert(ftell(f) == offset);
     res = fwrite(data, 1, length, f);
+    fclose(f);
+    
     
     // get or create the ranges from asset state in the store state
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
@@ -295,12 +337,13 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
         assert(ranges);
     } else {
         state = cJSON_AddObjectToObject(store->state, asset_id);
+        cJSON_AddBoolToObject(state, "complete", 0);
+        cJSON_AddItemToObject(state, "total_size", cJSON_CreateNumber((double)total_size));
         ranges = cJSON_AddArrayToObject(state, "ranges");
     }
     
     _merge_range(ranges, offset, offset + length);
-    
-    _write_state(store);
+    _update_asset_state(store, asset_id);
     
     return res;
 }

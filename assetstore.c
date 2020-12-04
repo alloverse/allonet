@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
+#include <fcntl.h>
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
@@ -76,20 +77,23 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
     char *fpath = _asset_path(store, asset_id);
     
     int res = 0;
-    FILE *f = fopen(fpath, "r");
-    res = fseek(f, offset, SEEK_SET);
-    res = fread(buffer, 1, length, f);
+    int f = open(fpath, "r");
+    res = pread(f, buffer, length, offset);
+    if (res != length) {
+        log("assetstore: Could only read %d of %ld bytes of %s", res, length, asset_id);
+    }
     return res;
 }
 
 int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
     char *fpath = _asset_path(store, asset_id);
     int res = 0;
-    FILE *f = fopen(fpath, "a");
-    res = fseek(f, offset, SEEK_SET);
-    assert(ftell(f) == offset);
-    res = fwrite(data, 1, length, f);
-    fclose(f);
+    int f = open(fpath, O_WRONLY | O_APPEND | O_CREAT, 0600);
+    res = pwrite(f, data, length, offset);
+    if (res != length) {
+        log("assetstore: Could only write %d of %ld bytes of %s", res, length, asset_id);
+    }
+    close(f);
     return res;
 }
 

@@ -52,6 +52,22 @@ void _resetTestDiskSpace() {
     }
 }
 
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+    int rv = remove(fpath);
+    if (rv) perror(fpath);
+    return rv;
+}
+int rmrf(const char *path) {
+    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
+}
+
+void _reset_disk() {
+    assetstore_close(store);
+    assert(rmrf(relative_path) == 0);
+    
+    store = assetstore_open(relative_path);
+}
+
 void setUp() {
     _resetTestDiskSpace();
     store = assetstore_open(relative_path);
@@ -59,22 +75,44 @@ void setUp() {
     store->write = __test_write;
 }
 
-int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
-    int rv = remove(fpath);
-    if (rv) perror(fpath);
-    return rv;
-}
-
-int rmrf(const char *path) {
-    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
-}
-
 void tearDown() {
     assetstore_close(store);
     assert(rmrf(relative_path) == 0);
 }
 
-void test_assetstore_read_write(void) {
+
+///Private assetstore.c declares
+char *_asset_path(assetstore *store, const char *id);
+int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length);
+int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size);
+
+void test_assetstore_basic_disk_io() {
+    char *path = _asset_path(store, "1");
+    FILE *f;
+    uint8_t buff[100];
+    
+    __disk_write(store, "1", 0, (uint8_t *)"Hello Alloverse!", 17, 17);
+    f = fopen(path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+    fread(buff, 1, 17, f);
+    fclose(f);
+    TEST_ASSERT_EQUAL_STRING("Hello Alloverse!", buff);
+
+    _reset_disk();
+    
+    // write the last 17/27 bytes
+    __disk_write(store, "1", 10, (uint8_t *)"Hello Alloverse!", 17, 27);
+    f = fopen(path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+    // should find the 17 bytes on the correct offset
+    fread(buff, 1, 27, f);
+    fclose(f);
+    TEST_ASSERT_EQUAL_STRING("Hello Alloverse!", &buff[10]);
+    
+    free(path);
+}
+
+void test_assetstore_read_write() {
 
     int exists = 0, complete = 0;
     size_t region_count = 0;
@@ -256,6 +294,7 @@ void test_merge_range() {
 int main(void) {
     UNITY_BEGIN();
 
+    RUN_TEST(test_assetstore_basic_disk_io);
     RUN_TEST(test_assetstore_range_reads);
     RUN_TEST(test_assetstore_read_write);
     RUN_TEST(test_merge_range);

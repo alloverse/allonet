@@ -51,9 +51,53 @@ FILE *fopen_mkdir(char *path, char *mode) {
     return fopen(path,mode);
 }
 
+size_t _first(cJSON *range) {
+    return (size_t)cJSON_GetArrayItem(range, 0)->valueint;
+}
+
+size_t _last(cJSON *range) {
+    return (size_t)cJSON_GetArrayItem(range, 1)->valueint;
+}
+
+cJSON *_range(cJSON *ranges, int index) {
+    return cJSON_GetArrayItem(ranges, index);
+}
+
+char *_asset_path(assetstore *store, const char *id) {
+    char *path = NULL;
+    asprintf(&path, "%s/%s", store->disk_path, id);
+    return path;
+}
+
+int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length) {
+    assert(asset_id);
+    assert(buffer);
+    
+    char *fpath = _asset_path(store, asset_id);
+    
+    int res = 0;
+    FILE *f = fopen(fpath, "r");
+    res = fseek(f, offset, SEEK_SET);
+    res = fread(buffer, 1, length, f);
+    return res;
+}
+
+int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
+    char *fpath = _asset_path(store, asset_id);
+    int res = 0;
+    FILE *f = fopen(fpath, "a");
+    res = fseek(f, offset, SEEK_SET);
+    assert(ftell(f) == offset);
+    res = fwrite(data, 1, length, f);
+    fclose(f);
+    return res;
+}
 
 assetstore *assetstore_open(const char *disk_path) {
     assetstore *store = malloc(sizeof(assetstore));
+    
+    store->read = __disk_read;
+    store->write = __disk_write;
     
     store->disk_path = malloc(PATH_MAX);
     realpath(disk_path, (char*)store->disk_path);
@@ -121,6 +165,53 @@ void assetstore_close(assetstore *store) {
     store->state = NULL;
 }
 
+/// Returns missing ranges
+/// @param ranges The ranges
+/// @param total_size The total size of the asset
+/// @param count_max Stop counting after this many hits
+/// @param out_ranges To store found ranges on the format [start, end]. Must be at least `size_t * count_max * 2` large
+int _missing_ranges(cJSON *ranges, size_t total_size, size_t *out_ranges, size_t count_max) {
+    if (count_max == 0) return 0;
+    
+    cJSON *range;
+    int low = 0;
+    int count = 0;
+    int i = 0;
+    cJSON_ArrayForEach(range, ranges) {
+        if (count >= count_max) return count;
+        if (low < _first(range)) {
+            if (out_ranges) {
+                out_ranges[i++] = low;
+                out_ranges[i++] = _first(range) - 1;
+            }
+            ++count;
+        }
+        low = _last(range) + 1;
+    }
+    if (low < total_size && count < count_max) {
+        if (out_ranges) {
+            out_ranges[i++] = low;
+            out_ranges[i++] = total_size;
+        }
+        ++count;
+    }
+    return count;
+}
+
+size_t __missing_ranges_count(cJSON *ranges, size_t total_size) {
+    return _missing_ranges(ranges, total_size, NULL, SIZE_T_MAX);
+}
+
+size_t _missing_ranges_count(assetstore *store, const char *asset_id) {
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    assert(cJSON_IsObject(state));
+    cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
+    assert(cJSON_IsArray(ranges));
+    cJSON *j_top = cJSON_GetObjectItem(state, "total_size");
+    assert(cJSON_IsNumber(j_top));
+    return __missing_ranges_count(ranges, j_top->valueint);
+}
+
 int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count) {
     assert(store);
     assert(asset_id);
@@ -140,6 +231,10 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
         return 1;
     }
     
+    if (out_regions_count) {
+        *out_regions_count = _missing_ranges_count(store, asset_id);
+    }
+    
     if (out_complete) {
         cJSON *complete = cJSON_GetObjectItem(state, "complete");
         if (complete == NULL) {
@@ -149,24 +244,15 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
             *out_complete = cJSON_IsTrue(complete);
         }
     }
-    
+    return 0;
 }
 
-
-size_t _first(cJSON *range) {
-    return (size_t)cJSON_GetArrayItem(range, 0)->valueint;
-}
-
-size_t _last(cJSON *range) {
-    return (size_t)cJSON_GetArrayItem(range, 1)->valueint;
-}
-
-cJSON *_range(cJSON *ranges, int index) {
-    return cJSON_GetArrayItem(ranges, index);
-}
-
-size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t start, size_t count, size_t *out_ranges) {
+size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t *out_ranges, size_t count) {
+    assert(store);
+    assert(asset_id);
     assert(out_ranges);
+    
+    if (count == 0) { return 0; }
     
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     // check existance
@@ -180,37 +266,22 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
     cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
     assert(cJSON_IsArray(ranges));
     
-    cJSON *range;
-    int i = 0;
-    
-    int low = 0;
-    int high = total_size;
-    cJSON_ArrayForEach(range, ranges) {
-        if (i >= count) break;
-        
-        if (low < _first(range)) {
-            out_ranges[i  ] = low;
-            out_ranges[i+1] = _first(range) - 1;
-            low = _last(range) + 1;
-        }
-        
-        if (low >= high) break;
-        
-        i += 2;
+    size_t result = _missing_ranges(ranges, total_size, out_ranges, count);
+    if (out_ranges == NULL) {
+        return result;
     }
     
-    return i / 2;
+    // Adjust internal [start,end] to public [offset, length] format.
+    for (size_t i = 0; i < result; i++) {
+        out_ranges[i+1] = out_ranges[i+1] - out_ranges[i];
+    }
+    return result;
 }
 
-char *_asset_path(assetstore *store, const char *id) {
-    char *path = NULL;
-    asprintf(&path, "%s/%s", store->disk_path, id);
-    return path;
-}
-
-
+/// Note that rages are inclusive; easier to reason about and there's no point storing a zero range.
 void _merge_range(cJSON *ranges, size_t start, size_t end) {
     assert(start <= end);
+    
     int ranges_count = cJSON_GetArraySize(ranges);
     if (ranges_count == 0) {
         int numbers[2] = {(int)start, (int)end };
@@ -272,13 +343,7 @@ int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint
     assert(asset_id);
     assert(buffer);
     
-    char *fpath = _asset_path(store, asset_id);
-    
-    int res = 0;
-    FILE *f = fopen(fpath, "r");
-    res = fseek(f, offset, SEEK_SET);
-    res = fread(buffer, 1, length, f);
-    return res;
+    return store->read(store, asset_id, offset, buffer, length);
 }
 
 void _write_state(assetstore *store) {
@@ -319,14 +384,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
     assert(asset_id);
     assert(data);
     
-    char *fpath = _asset_path(store, asset_id);
-    int res = 0;
-    FILE *f = fopen(fpath, "a");
-    res = fseek(f, offset, SEEK_SET);
-    assert(ftell(f) == offset);
-    res = fwrite(data, 1, length, f);
-    fclose(f);
-    
+    int bytes_written = store->write(store, asset_id, offset, data, length, total_size);
     
     // get or create the ranges from asset state in the store state
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
@@ -342,8 +400,10 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
         ranges = cJSON_AddArrayToObject(state, "ranges");
     }
     
-    _merge_range(ranges, offset, offset + length);
-    _update_asset_state(store, asset_id);
+    if (bytes_written > 0) {
+        _merge_range(ranges, offset, offset + bytes_written);
+        _update_asset_state(store, asset_id);
+    }
     
-    return res;
+    return bytes_written;
 }

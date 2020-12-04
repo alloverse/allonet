@@ -8,8 +8,8 @@
 #ifndef asset_store_h
 #define asset_store_h
 
-#include "inlinesys/queue.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <cJSON/cJSON.h>
 
 typedef struct assetstore {
@@ -18,6 +18,10 @@ typedef struct assetstore {
     const char *disk_path;
     /// State tracking, completed ranges etc
     cJSON *state;
+    
+    
+    int (*read)(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length);
+    int (*write)(struct assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
     
 } assetstore;
 
@@ -38,11 +42,12 @@ void assetstore_close(assetstore *store);
 int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count);
 
 /// Get missing ranges for an asset
-/// @param start The range index to get
-/// @param count The number of ranges from `start` to get, or 1 for only one.
-/// @param out_ranges Where to put the ranges. Must fit `size_t * count * 2`
+/// @param store The store
+/// @param asset_id The asset
+/// @param out_ranges Where to put the ranges on the format [offset, length]. Must fit `size_t * count * 2`
+/// @param count The number of ranges that fits in `out_ranges`
 /// @returns The number of ranges added to `out_ranges`
-size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t start, size_t count, size_t *out_ranges);
+size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t out_ranges[], size_t count);
 
 /// Read some data from an asset
 /// @param store The asset store
@@ -51,6 +56,7 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
 /// @param data The data buffer to read into
 /// @param length The size of the data buffer and max length to read
 /// @returns The number of bytes read, or a negative value on error.
+/// @note Trying to read bytes from an incomplete asset may return ininitialized data. Check with `assetstore_state`.
 int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_int8_t *buffer, size_t length);
 
 /// Write some data to an asset

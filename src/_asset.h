@@ -15,6 +15,7 @@ typedef enum asset_error_code {
     asset_not_available_error = 1,
     asset_malformed_request_error = 2,
     asset_file_read_error = 3,
+    asset_file_write_error = 3,
 } asset_error_code;
 
 /// Safe parsing of the request message header

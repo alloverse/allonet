@@ -70,6 +70,31 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
     }
 }
 
+#include <allonet/asset.h>
+#include <allonet/assetstore.h>
+
+static assetstore *asset_storage = NULL;
+
+void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
+    alloserver_client *client = (alloserver_client *)user;
+    
+    asset_packet_header packet_header;
+    char *cheader = cJSON_Print(header);
+    packet_header.mid = mid;
+    packet_header.hlen = strlen(cheader);
+    
+    ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
+    enet_peer_send(_clientinternal(client)->peer, CHANNEL_ASSETS, packet);
+}
+
+static void handle_assets(const uint8_t *data, size_t data_length, alloserver *server, alloserver_client *client) {
+    if (asset_storage == NULL) {
+        asset_storage = assetstore_open("asset_cache");
+    }
+    
+    asset_handle(data, data_length, asset_storage, _asset_send_func, (void*)client);
+}
+
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
 {
     if(channel == CHANNEL_MEDIA)
@@ -81,6 +106,9 @@ static void handle_incoming_data(alloserver *serv, alloserver_client *client, al
 
             allo_send(serv, other, CHANNEL_MEDIA, packet->data, packet->dataLength);
         }
+        return;
+    } else if (channel == CHANNEL_ASSETS) {
+        handle_assets(packet->data, packet->dataLength, serv, client);
         return;
     }
     

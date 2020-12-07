@@ -1,6 +1,7 @@
 #include "_client.h"
 #include <allonet/arr.h>
 #include <allonet/asset.h>
+#include <allonet/assetstore.h>
 #include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
@@ -143,20 +144,17 @@ static void parse_clock(alloclient *client, cJSON *response)
     }
 }
 
-static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
-    char *message = "Allo' World!";
-    size_t len = MIN(strlen(message), length);
-    memcpy(buffer, message, len);
-    *out_read_length = len;
-    *out_total_size = strlen(message);
-    return 0;
+static assetstore *asset_storage = NULL;
+
+int _asset_read_range_func(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
+    return assetstore_read(asset_storage, id, offset, buffer, length);
 }
 
-static int _asset_write_range(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_length, cJSON **out_error, const void *user) {
-    return 0;
+int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, cJSON **out_error, const void *user) {
+    return assetstore_write(asset_storage, id, offset, buffer, length, total_size);
 }
 
-static void _asset_send(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
+void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
     alloclient *client = (alloclient*)user;
     ENetPeer *peer = _internal(client)->peer;
     
@@ -167,6 +165,14 @@ static void _asset_send(asset_mid mid, const cJSON *header, const uint8_t *data,
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
+}
+
+static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
+    if (asset_storage == NULL) {
+        asset_storage = assetstore_open("asset_cache");
+    }
+    
+    asset_handle(data, data_length, asset_storage, _asset_send_func, (void*)client);
 }
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
@@ -189,7 +195,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_ASSETS: {
-        asset_handle((const uint8_t*)packet->data, packet->dataLength, _asset_read_range, _asset_write_range, _asset_send, (void*)client);
+        handle_assets(packet->data, packet->dataLength, client);
         } break;
     case CHANNEL_MEDIA: {
         _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);
@@ -547,7 +553,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
 }
 
 static void _alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
-    asset_request(asset_id, entity_id, _asset_send, (void*)client);
+    asset_request(asset_id, entity_id, _asset_send_func, (void*)client);
 }
 
 alloclient *alloclient_create(bool threaded)

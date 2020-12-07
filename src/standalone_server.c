@@ -6,7 +6,6 @@
 #include <allonet/allonet.h>
 #include "util.h"
 #include "delta.h"
-#include <allonet/asset.h>
 
 static alloserver* serv;
 static allo_entity* place;
@@ -192,29 +191,6 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   free((void*)json);
 }
 
-static int _asset_read_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
-    char *message = "Allo' World!";
-    size_t len = MIN(strlen(message), length);
-    memcpy(buffer, message, len);
-    *out_read_length = len;
-    *out_total_size = strlen(message);
-    return 0;
-}
-
-static int _asset_write_range(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_length, cJSON **out_error, const void *user) {
-    return 0;
-}
-
-static void _asset_send(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
-    alloserver_client *client = (alloserver_client*)user;
-    ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
-    alloserv_send_enet(serv, client, CHANNEL_ASSETS, packet);
-}
-
-static void handle_asset(alloserver* serv, alloserver_client* client, const uint8_t* data, size_t data_length) {
-    asset_handle(data, data_length, _asset_read_range, _asset_write_range, _asset_send, (void*)client);
-}
-
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)
 {
   if (channel == CHANNEL_STATEDIFFS)
@@ -239,10 +215,6 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
     cJSON* cmd = cJSON_Parse((const char*)data);
     handle_clock(serv, client, cmd);
     cJSON_Delete(cmd);
-  }
-  else if (channel == CHANNEL_ASSETS)
-  {
-    handle_asset(serv, client, data, data_length);
   }
   
 }

@@ -76,13 +76,19 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
     
     char *fpath = _asset_path(store, asset_id);
     
-    int res = 0;
-    int f = open(fpath, "r");
-    res = pread(f, buffer, length, offset);
-    if (res != length) {
-        log("assetstore: Could only read %d of %ld bytes of %s", res, length, asset_id);
+    
+    int f = open(fpath, O_RDONLY);
+    if (f <= 0) {
+        log("assetstore: Could not open %s for reading: %s", fpath, strerror(errno));
+        return -1;
     }
-    return res;
+    
+    ssize_t rlen = pread(f, buffer, length, offset);
+    close(f);
+    if (rlen < 0) {
+        log("assetstore: Could only read %ld of %ld bytes of %s. %s\n", rlen, length, asset_id, strerror(errno));
+    }
+    return (int)rlen;
 }
 
 int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
@@ -117,6 +123,8 @@ assetstore *assetstore_open(const char *disk_path) {
             return NULL;
         }
         size_t size = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        
         if(size == 0) {
             log("assetstore: statefile is empty\n");
             store->state = cJSON_CreateObject();
@@ -396,7 +404,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
     if (state) {
         ranges = cJSON_GetObjectItem(state, "ranges");
         // if there is a state then there is a "ranges"
-        assert(ranges);
+        assert(ranges || (cJSON_IsTrue(cJSON_GetObjectItem(state, "complete"))));
     } else {
         state = cJSON_AddObjectToObject(store->state, asset_id);
         cJSON_AddBoolToObject(state, "complete", 0);

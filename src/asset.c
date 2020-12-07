@@ -1,6 +1,7 @@
 #include "client/_client.h"
 #include <stdio.h>
 #include <allonet/asset.h>
+#include <allonet/assetstore.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -114,49 +115,11 @@ int asset_read_data_header(const cJSON *header, const char **out_id, size_t *out
     return 0;
 }
 
-
-int asset_get_range(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error) {
-    
-    assert(id);
-    assert(out_read_length);
-    assert(out_total_size);
-    assert(out_error);
-    
-    FILE *f = fopen(id, "r");
-    if (f == 0) {
-        *out_error = asset_error(id, asset_file_read_error, "Failed to open asset for reading");
-        return asset_file_read_error;
-    }
-    
-    if (fseek(f, offset, SEEK_SET) != 0) {
-        *out_error = asset_error(id, asset_file_read_error, "Failed to find offset for reading");
-        fclose(f);
-        return asset_file_read_error;
-    }
-
-    size_t rlen = fread(buffer, 1, length, f);
-    if (rlen == 0 && ferror(f)) {
-        *out_error = asset_error(id, asset_file_read_error, "Unknown error while reading");
-        fclose(f);
-        return asset_file_read_error;
-    }
-    
-    *out_read_length = rlen;
-    
-    fseek(f, 0, SEEK_END);
-    *out_total_size = ftell(f);
-    
-    fclose(f);
-    return 0;
-}
-
-
 /// Does all the work with a package from the asset data channel, via function pointers provided
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
-    asset_read_range_func read_range,
-    asset_write_range_func write_range,
+    assetstore *store,
     asset_send_func send,
     const void *user
 ) {
@@ -176,11 +139,15 @@ void asset_handle(
             return;
         }
         
-        size_t total_size = 0, read_length = 0;
+        size_t total_size = 0;
+        int read_length = 0;
         uint8_t *read_buffer = malloc(length);
-        if (asset_get_range(id, read_buffer, offset, length, &read_length, &total_size, &error)) {
+        
+        read_length = assetstore_read(store, id, offset, read_buffer, length);
+        
+        if (read_length < 0) {
+            error = asset_error(id, read_length, "Failed to read");
             send(asset_mid_failure, error, NULL, 0, user);
-            free(read_buffer);
             cJSON_Delete(json);
             cJSON_Delete(error);
             return;
@@ -207,7 +174,8 @@ void asset_handle(
             return;
         }
         
-        write_range(id, data, offset, length, total_length, &error, user);
+        assetstore_write(store, id, offset, data, length, total_length);
+        
     } else if (mid == asset_mid_failure) {
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
         cJSON *id = cJSON_GetObjectItem(json, "id");

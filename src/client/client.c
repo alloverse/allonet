@@ -147,7 +147,7 @@ static void parse_clock(alloclient *client, cJSON *response)
 static assetstore *asset_storage = NULL;
 
 int _asset_read_range_func(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
-    return assetstore_read(asset_storage, id, offset, buffer, length);
+    return assetstore_read(asset_storage, id, offset, buffer, length, out_total_size);
 }
 
 int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, cJSON **out_error, const void *user) {

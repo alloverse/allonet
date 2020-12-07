@@ -43,7 +43,7 @@ void asset_request(
     const char *id,
     const char *entity_id,
     asset_send_func send,
-    void *user
+    const void *user
 );
 
 

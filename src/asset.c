@@ -10,6 +10,15 @@
 
 #define min(a, b) a < b ? a : b;
 
+void _asset_request(
+    const char *id,
+    const char *entity_id,
+    size_t offset,
+    size_t length,
+    asset_send_func send,
+    const void *user
+);
+
 ///
 /// asset_id: asset id
 /// error_code: computer-reladable error code for this error
@@ -143,7 +152,7 @@ void asset_handle(
         int read_length = 0;
         uint8_t *read_buffer = malloc(length);
         
-        read_length = assetstore_read(store, id, offset, read_buffer, length);
+        read_length = assetstore_read(store, id, offset, read_buffer, length, &total_size);
         
         if (read_length < 0) {
             error = asset_error(id, read_length, "Failed to read");
@@ -176,6 +185,11 @@ void asset_handle(
         
         assetstore_write(store, id, offset, data, length, total_length);
         
+        // request more?
+        if (offset + length < total_length) {
+            _asset_request(id, NULL, offset + length, length, send, user);
+        }
+        assert(offset + length <= total_length);
     } else if (mid == asset_mid_failure) {
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
         cJSON *id = cJSON_GetObjectItem(json, "id");
@@ -194,13 +208,16 @@ void asset_handle(
     }
 }
 
-void asset_request(
-    const char *id,
-    const char *entity_id,
-    asset_send_func send,
-    void *user
+
+void _asset_request(
+   const char *id,
+   const char *entity_id,
+   size_t offset,
+   size_t length,
+   asset_send_func send,
+   const void *user
 ) {
-    int range[2] = {0, 50};
+    int range[2] = {offset, length};
     cJSON *header = cjson_create_object(
         "id", cJSON_CreateString(id),
         "range", cJSON_CreateIntArray(range, 2),
@@ -210,6 +227,16 @@ void asset_request(
         cJSON_AddStringToObject(header, "published_by", entity_id);
     }
     send(asset_mid_request, header, NULL, 0, user);
+}
+
+
+void asset_request(
+    const char *id,
+    const char *entity_id,
+    asset_send_func send,
+    const void *user
+) {
+    _asset_request(id, entity_id, 0, 50, send, user);
 }
 
 int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_mid, cJSON **out_json) {

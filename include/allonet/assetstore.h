@@ -20,7 +20,7 @@ typedef struct assetstore {
     cJSON *state;
     
     
-    int (*read)(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length);
+    int (*read)(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size);
     int (*write)(struct assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
     
 } assetstore;
@@ -55,9 +55,10 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
 /// @param offset Byte offset to start reading from
 /// @param data The data buffer to read into
 /// @param length The size of the data buffer and max length to read
+/// @param out_total_size Is set to the total size of the asset.
 /// @returns The number of bytes read, or a negative value on error.
 /// @note Trying to read bytes from an incomplete asset may return ininitialized data. Check with `assetstore_state`.
-int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_int8_t *buffer, size_t length);
+int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_int8_t *buffer, size_t length, size_t *out_total_size);
 
 /// Write some data to an asset
 /// @param store The asset store

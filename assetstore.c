@@ -77,12 +77,17 @@ char *_asset_path(assetstore *store, const char *id) {
     return __asset_path;
 }
 
-int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length) {
+int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
     assert(asset_id);
     assert(buffer);
+    assert(out_total_size);
     
     char *fpath = _asset_path(store, asset_id);
     
+    struct stat st;
+    if (stat(fpath, &st) == 0) {
+        *out_total_size = st.st_size;
+    }
     
     int f = open(fpath, O_RDONLY);
     if (f <= 0) {
@@ -358,11 +363,11 @@ void _merge_range(cJSON *ranges, size_t start, size_t end) {
     return;
 }
 
-int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length) {
+int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
     assert(asset_id);
     assert(buffer);
-    
-    return store->read(store, asset_id, offset, buffer, length);
+    assert(out_total_size);
+    return store->read(store, asset_id, offset, buffer, length, out_total_size);
 }
 
 void _write_state(assetstore *store) {

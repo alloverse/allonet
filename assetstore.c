@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <ftw.h>
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
@@ -64,10 +65,16 @@ cJSON *_range(cJSON *ranges, int index) {
     return cJSON_GetArrayItem(ranges, index);
 }
 
+
+char __asset_path[PATH_MAX];
 char *_asset_path(assetstore *store, const char *id) {
-    char *path = NULL;
-    asprintf(&path, "%s/%s", store->disk_path, id);
-    return path;
+    cJSON *state = cJSON_GetObjectItem(store->state, id);
+    cJSON *path = cJSON_GetObjectItem(state, "path");
+    if (cJSON_IsString(path)) {
+        return cJSON_GetStringValue(path);
+    }
+    sprintf(__asset_path, "%s/%s", store->disk_path, id);
+    return __asset_path;
 }
 
 int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length) {
@@ -418,4 +425,58 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
     }
     
     return bytes_written;
+}
+
+
+#include "src/sha1.h"
+
+
+cJSON *ass_state = 0;
+
+int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+    static const size_t buffsize = 1024*1024*10;
+    uint8_t *buffer = malloc(buffsize);
+    
+    FILE *f = fopen(path, "rb");
+    size_t rd;
+    SHA1_CTX ctx;
+    SHA1Init(&ctx);
+    while(1) {
+        rd = fread(buffer, 1, buffsize, f);
+        if(rd == 0) {
+            break;
+        }
+        SHA1Update(&ctx, buffer, rd);
+    }
+    free(buffer);
+    fclose(f);
+    
+    unsigned char sha[20] = {0};
+    SHA1Final(sha, &ctx);
+    
+    char *xsha;
+    asprintf(&xsha, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
+    
+    cJSON *state = cJSON_AddObjectToObject(ass_state, xsha);
+    free(xsha);
+    cJSON_AddBoolToObject(state, "complete", 1);
+    cJSON_AddStringToObject(state, "path", path);
+    
+    log("assetstore: Assimilated %s", cJSON_Print(state));
+    return 0;
+}
+
+int assetstore_assimilate(assetstore *store, const char *folder) {
+    assert(ass_state == NULL);
+    
+    char full_path[PATH_MAX];
+    realpath(folder, full_path);
+    
+    ass_state = store->state;
+    nftw(full_path, _assimilate, 64, FTW_DEPTH | FTW_PHYS);
+    ass_state = NULL;
+    
+    _write_state(store);
+    
+    return 0;
 }

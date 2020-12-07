@@ -69,4 +69,7 @@ int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_in
 /// @returns Negative error code, or positive number of bytes written
 int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size);
 
+/// Imports and publishes files in folder
+int assetstore_assimilate(assetstore *store, const char *folder);
+
 #endif /* asset_store_h */

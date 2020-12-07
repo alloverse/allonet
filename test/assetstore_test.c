@@ -25,6 +25,7 @@ _a < _b ? _a : _b; })
 static assetstore *store;
 
 static const char *relative_path = "asset_test_cache";
+static const char *import_files_folder = "asset_test_files";
 
 #define TEST_DISK_SPACE 100
 static uint8_t __test_disk[TEST_DISK_SPACE];
@@ -108,8 +109,6 @@ void test_assetstore_basic_disk_io() {
     fread(buff, 1, 27, f);
     fclose(f);
     TEST_ASSERT_EQUAL_STRING("Hello Alloverse!", &buff[10]);
-    
-    free(path);
 }
 
 void test_assetstore_read_write() {
@@ -290,16 +289,19 @@ void test_merge_range() {
     _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 22, _ranges(1, 22, 40, 45, NULL));
 }
 
+void test_assimilation() {
+    assetstore_assimilate(store, import_files_folder);
+}
 
 int main(void) {
     UNITY_BEGIN();
 
-    RUN_TEST(test_assetstore_basic_disk_io);
-    RUN_TEST(test_assetstore_range_reads);
-    RUN_TEST(test_assetstore_read_write);
-    RUN_TEST(test_merge_range);
-    RUN_TEST(test_assetstore_partial_read_write);
-    RUN_TEST(test_missing_ranges);
-
+//    RUN_TEST(test_assetstore_basic_disk_io);
+//    RUN_TEST(test_assetstore_range_reads);
+//    RUN_TEST(test_assetstore_read_write);
+//    RUN_TEST(test_merge_range);
+//    RUN_TEST(test_assetstore_partial_read_write);
+//    RUN_TEST(test_missing_ranges);
+    RUN_TEST(test_assimilation);
     return UNITY_END();
 }

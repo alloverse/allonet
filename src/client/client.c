@@ -169,7 +169,8 @@ void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, s
 
 static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
     if (asset_storage == NULL) {
-        asset_storage = assetstore_open("asset_cache");
+        asset_storage = assetstore_open("client_asset_cache");
+        assetstore_assimilate(asset_storage, "client_asset_files");
     }
     
     asset_handle(data, data_length, asset_storage, _asset_send_func, (void*)client);

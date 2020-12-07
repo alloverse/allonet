@@ -10,6 +10,9 @@
 
 #define min(a, b) a < b ? a : b;
 
+// try to use a decent size. enets default max waiting data is 32Mb (ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA)
+#define ASSET_CHUNK_SIZE 1024*1024
+
 void _asset_request(
     const char *id,
     const char *entity_id,
@@ -236,7 +239,7 @@ void asset_request(
     asset_send_func send,
     const void *user
 ) {
-    _asset_request(id, entity_id, 0, 50, send, user);
+    _asset_request(id, entity_id, 0, ASSET_CHUNK_SIZE, send, user);
 }
 
 int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_mid, cJSON **out_json) {

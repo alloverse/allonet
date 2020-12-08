@@ -19,6 +19,8 @@ typedef struct assetstore {
     /// State tracking, completed ranges etc
     cJSON *state;
     
+    /// Called when an asset has become available
+    void (*asset_completed_callback)(struct assetstore *store, const char *asset_id);
     
     int (*read)(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size);
     int (*write)(struct assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);

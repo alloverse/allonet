@@ -156,6 +156,8 @@ int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u
 assetstore *assetstore_open(const char *disk_path) {
     assetstore *store = malloc(sizeof(assetstore));
     
+    store->asset_completed_callback = NULL;
+    
     store->read = __disk_read;
     store->write = __disk_write;
     
@@ -221,6 +223,7 @@ assetstore *assetstore_open(const char *disk_path) {
 }
 
 void assetstore_close(assetstore *store) {
+    store->asset_completed_callback = NULL;
     free((void*)store->disk_path);
     cJSON_Delete(store->state);
     store->disk_path = NULL;
@@ -267,6 +270,10 @@ size_t __missing_ranges_count(cJSON *ranges, size_t total_size) {
 size_t _missing_ranges_count(assetstore *store, const char *asset_id) {
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     assert(cJSON_IsObject(state));
+    // No missing ranges if asset is complete
+    if (cJSON_IsTrue(cJSON_GetObjectItem(state, "complete"))) {
+        return 0;
+    }
     cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
     assert(cJSON_IsArray(ranges));
     cJSON *j_top = cJSON_GetObjectItem(state, "total_size");
@@ -430,13 +437,17 @@ void _update_asset_state(assetstore *store, const char *asset_id) {
     // then we have the complete file
     cJSON *total_size = cJSON_GetObjectItem(state, "total_size");
     if (cJSON_GetArraySize(ranges) == 1) {
-        log("assetstore: Asset %s is complete\n", asset_id);
         cJSON *range = _range(ranges, 0);
         if (_first(range) == 0 && _last(range) == total_size->valueint) {
             cJSON_ReplaceItemInObject(state, "complete", cJSON_CreateBool(1));
+            cJSON_DeleteItemFromObject(state, "ranges");
+            
+            log("assetstore: Asset %s is complete\n", asset_id);
+            if (store->asset_completed_callback) {
+                store->asset_completed_callback(store, asset_id);
+            }
         }
     }
-    
     
     _write_state(store);
 }

@@ -83,6 +83,11 @@ void tearDown() {
 }
 
 
+static char _last_completed_asset[PATH_MAX];
+static void _asset_complete_cb(assetstore *store, const char *asset_id) {
+    strcpy(_last_completed_asset, asset_id);
+}
+
 ///Private assetstore.c declares
 char *_asset_path(assetstore *store, const char *id);
 int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length);
@@ -121,7 +126,7 @@ void test_assetstore_read_write() {
     TEST_ASSERT_EQUAL_INT(0, complete);
     TEST_ASSERT_EQUAL_INT(0, region_count);
     TEST_ASSERT_EQUAL_INT(12, assetstore_write(store, "1", 0, (uint8_t*)"Hello World", 12, 12));
-    TEST_ASSERT_EQUAL_STRING("{\"1\":{\"complete\":true,\"total_size\":12,\"ranges\":[[0,12]]}}", cJSON_PrintUnformatted(store->state));
+    TEST_ASSERT_EQUAL_STRING("{\"1\":{\"complete\":true,\"total_size\":12}}", cJSON_PrintUnformatted(store->state));
     
     assetstore_state(store, "1", &exists, &complete, &region_count);
     TEST_ASSERT_EQUAL_INT(1, exists);

@@ -67,14 +67,52 @@ cJSON *_range(cJSON *ranges, int index) {
 
 
 char __asset_path[PATH_MAX];
-char *_asset_path(assetstore *store, const char *id) {
-    cJSON *state = cJSON_GetObjectItem(store->state, id);
+char *_asset_path(assetstore *store, const char *asset_id) {
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *path = cJSON_GetObjectItem(state, "path");
     if (cJSON_IsString(path)) {
         return cJSON_GetStringValue(path);
     }
-    sprintf(__asset_path, "%s/%s", store->disk_path, id);
+    sprintf(__asset_path, "%s/%s", store->disk_path, asset_id);
     return __asset_path;
+}
+
+int assetstore_asset_path(const assetstore *store, const char *asset_id, char *out_path, size_t path_size) {
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    cJSON *complete = cJSON_GetObjectItem(state, "complete");
+    // check that it exists and is complete
+    if (!cJSON_IsObject(state) || !cJSON_IsTrue(complete)) {
+        log("assetstore: Asset %s does not exist or is incomplete\n", asset_id);
+        return 1;
+    }
+    
+    char *value = NULL;
+    // check if it's in cache or on path
+    cJSON *path = cJSON_GetObjectItem(state, "path");
+    if (cJSON_IsString(path)) {
+        value = cJSON_GetStringValue(path);
+    } else {
+        asprintf(&value, "%s/%s", store->disk_path, asset_id);
+    }
+    
+    if (value == NULL) {
+        log("assetstore: Asset %s not found\n", asset_id);
+        return 1;
+    }
+    
+    if (path_size < strlen(value)+1) {
+        log("assetstore: out_path is too small to contain %s\n", value);
+        return 1;
+    }
+    
+    strcpy(out_path, value);
+    
+    if (!cJSON_IsString(path)) {
+        // if no path then we asprintf'd the value.
+        free(value);
+    }
+    
+    return 0;
 }
 
 int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
@@ -91,7 +129,7 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
     
     int f = open(fpath, O_RDONLY);
     if (f <= 0) {
-        log("assetstore: Could not open %s for reading: %s", fpath, strerror(errno));
+        log("assetstore: Could not open %s for reading: %s\n", fpath, strerror(errno));
         return -1;
     }
     
@@ -109,7 +147,7 @@ int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u
     int f = open(fpath, O_WRONLY | O_APPEND | O_CREAT, 0600);
     res = pwrite(f, data, length, offset);
     if (res != length) {
-        log("assetstore: Could only write %d of %ld bytes of %s", res, length, asset_id);
+        log("assetstore: Could only write %d of %ld bytes of %s\n", res, length, asset_id);
     }
     close(f);
     return res;
@@ -332,7 +370,7 @@ void _merge_range(cJSON *ranges, size_t start, size_t end) {
         }
     }
     // We want to end at the range that is bigger, or at end of list
-    if (start > value) {
+    if (start >= value) {
         ++i;
     }
     
@@ -433,6 +471,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
 }
 
 
+// Temp hashing func
 #include "src/sha1.h"
 
 
@@ -467,7 +506,7 @@ int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FT
     cJSON_AddBoolToObject(state, "complete", 1);
     cJSON_AddStringToObject(state, "path", path);
     
-    log("assetstore: Assimilated %s", cJSON_Print(state));
+    log("assetstore: Assimilated %s\n", cJSON_Print(state));
     return 0;
 }
 

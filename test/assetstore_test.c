@@ -31,10 +31,11 @@ static const char *import_files_folder = "asset_test_files";
 static uint8_t __test_disk[TEST_DISK_SPACE];
 static size_t __test_disk_eof = TEST_DISK_SPACE;
 
-int __test_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length) {
+int __test_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *total_size) {
     assert(buffer);
     assert((offset + length) < TEST_DISK_SPACE);
     memcpy(buffer, &__test_disk[offset], length);
+    *total_size = TEST_DISK_SPACE;
     return length;
 }
 
@@ -131,10 +132,11 @@ void test_assetstore_read_write() {
     TEST_ASSERT_EQUAL_INT(0, assetstore_get_missing_ranges(store, "1", ranges, region_count));
     
     char buff[100];
-    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12));
+    size_t total_size;
+    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
     TEST_ASSERT_EQUAL_STRING("Hello World", buff);
     
-    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6));
+    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6, &total_size));
     TEST_ASSERT_EQUAL_STRING("World", buff);
 }
 
@@ -158,9 +160,10 @@ void test_assetstore_partial_read_write(void) {
     TEST_ASSERT_EQUAL_INT(6, ranges[0]);
     TEST_ASSERT_EQUAL_INT(6, ranges[1]);
     
+    size_t total_size;
     char buff[100];
     // reading the available bytes
-    TEST_ASSERT_GREATER_OR_EQUAL(5, assetstore_read(store, "1", 0, (uint8_t*)buff, 12));
+    TEST_ASSERT_GREATER_OR_EQUAL(5, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
     TEST_ASSERT_EQUAL_CHAR_ARRAY("Hello\5\6\7", buff, 8); //567 is the default data from __test_disk, for verifying read and write position.
     
     // trying to read the unavailable bytes
@@ -171,34 +174,36 @@ void test_assetstore_partial_read_write(void) {
     
     
     assetstore_write(store, "1", 6, (uint8_t*)"Allo", 5, 12);
-    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6));
+    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6, &total_size));
     TEST_ASSERT_EQUAL_STRING("Allo", buff);
     
-    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12));
+    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
     TEST_ASSERT_EQUAL_STRING("Hello\5Allo", buff);
     
     assetstore_write(store, "1", 5, (uint8_t*)" ", 1, 12);
-    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12));
+    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
     TEST_ASSERT_EQUAL_STRING("Hello Allo", buff);
 }
 
 void test_assetstore_range_reads(void) {
     // Needs the _test_disk to contain sequential bytes
     uint8_t buff[20];
+    size_t total_size;
     
-    assetstore_read(store, "1", 0, buff, 5);
+    assetstore_read(store, "1", 0, buff, 5, &total_size);
     uint8_t e1[5] = { 0, 1, 2, 3, 4 };
     TEST_ASSERT_EQUAL_UINT8_ARRAY(e1, buff, 5);
     
-    assetstore_read(store, "1", 10, buff, 5);
+    assetstore_read(store, "1", 10, buff, 5, &total_size);
     uint8_t e2[5] = { 10, 11, 12, 13, 14 };
     TEST_ASSERT_EQUAL_CHAR_ARRAY(e2, buff, 5);
     
-    assetstore_read(store, "1", 57, buff, 5);
+    assetstore_read(store, "1", 57, buff, 5, &total_size);
     uint8_t e3[5] = { 57, 58, 59, 60, 61 };
     TEST_ASSERT_EQUAL_CHAR_ARRAY(e3, buff, 5);
 }
 
+/// end with SIZE_T_MAX
 cJSON *_ranges(size_t start, size_t end, ...) {
     cJSON *ranges = cJSON_CreateArray();
     int numbers[2] = {(int)start, (int)end};
@@ -207,7 +212,7 @@ cJSON *_ranges(size_t start, size_t end, ...) {
     va_start(args, end);
     while(1) {
         numbers[0] = va_arg(args, int);
-        if (numbers[0] == 0) break;
+        if (numbers[0] == SIZE_T_MAX) break;
         numbers[1] = va_arg(args, int);
         cJSON_AddItemToArray(ranges, cJSON_CreateIntArray(numbers, 2));
     }
@@ -218,7 +223,7 @@ cJSON *_ranges(size_t start, size_t end, ...) {
 
 size_t __missing_ranges_count(cJSON *ranges, size_t total_size);
 void test_missing_ranges() {
-    TEST_ASSERT_EQUAL_INT(4, __missing_ranges_count(_ranges(5, 6,  10, 15,  100, 200, NULL), 300));
+    TEST_ASSERT_EQUAL_INT(4, __missing_ranges_count(_ranges(5, 6,  10, 15,  100, 200, SIZE_T_MAX), 300));
 }
 
 void _merge_range(cJSON *ranges, size_t start, size_t end);
@@ -230,78 +235,108 @@ void _test_merge(cJSON *ranges, size_t start, size_t end, cJSON *expected) {
 void test_merge_range() {
     
     // ranges are inclusive
-    _test_merge(cJSON_CreateArray(), 0, 0, _ranges(0, 0, NULL));
-    _test_merge(_ranges(5, 7, NULL), 4, 4, _ranges(4, 7, NULL));
-    _test_merge(_ranges(5, 7, NULL), 5, 5, _ranges(5, 7, NULL));
-    _test_merge(_ranges(5, 7, NULL), 6, 6, _ranges(5, 7, NULL));
-    _test_merge(_ranges(5, 7, NULL), 7, 7, _ranges(5, 7, NULL));
-    _test_merge(_ranges(5, 7, NULL), 8, 8, _ranges(5, 8, NULL));
+    _test_merge(cJSON_CreateArray(), 0, 0, _ranges(0, 0, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 4, 4, _ranges(4, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 5, 5, _ranges(5, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 6, 6, _ranges(5, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 7, 7, _ranges(5, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 8, 8, _ranges(5, 8, SIZE_T_MAX));
 
     // Insert before
-    _test_merge(_ranges(5, 7, NULL), 1, 2, _ranges(1, 2, 5, 7, NULL));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 1, 2, _ranges(1, 2, 5, 7, SIZE_T_MAX));
     // Merge before
-    _test_merge(_ranges(5, 7, NULL), 1, 6, _ranges(1, 7, NULL));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 1, 6, _ranges(1, 7, SIZE_T_MAX));
     // Merge inside
-    _test_merge(_ranges(5, 7, NULL), 6, 6, _ranges(5, 7, NULL));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 6, 6, _ranges(5, 7, SIZE_T_MAX));
     // Merge around
-    _test_merge(_ranges(5, 7, NULL), 1, 9, _ranges(1, 9, NULL));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 1, 9, _ranges(1, 9, SIZE_T_MAX));
     // Merge after
-    _test_merge(_ranges(5, 7, NULL), 6, 8, _ranges(5, 8, NULL));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 6, 8, _ranges(5, 8, SIZE_T_MAX));
     // Insert after
-    _test_merge(_ranges(5, 7, NULL), 9, 9, _ranges(5, 7, 9, 9, NULL));
+    _test_merge(_ranges(5, 7, SIZE_T_MAX), 9, 9, _ranges(5, 7, 9, 9, SIZE_T_MAX));
     // Insert between
-    _test_merge(_ranges(1, 3, 5, 7, NULL), 4, 4, _ranges(1, 7, NULL));
+    _test_merge(_ranges(1, 3, 5, 7, SIZE_T_MAX), 4, 4, _ranges(1, 7, SIZE_T_MAX));
     // merge before between
-    _test_merge(_ranges(1, 3, 5, 7, NULL), 3, 4, _ranges(1, 7, NULL));
+    _test_merge(_ranges(1, 3, 5, 7, SIZE_T_MAX), 3, 4, _ranges(1, 7, SIZE_T_MAX));
     
-    _test_merge(_ranges(1, 3, 5, 7, NULL), 4, 5, _ranges(1, 7, NULL));
-    _test_merge(cJSON_CreateArray(), 1, 2, _ranges(1, 2, NULL));
-    _test_merge(_ranges(1, 2, 100, 200, NULL), 40, 60, _ranges(1, 2, 40, 60, 100, 200, NULL));
-    _test_merge(_ranges(1, 2, NULL), 2, 3, _ranges(1, 3, NULL));
-    _test_merge(_ranges(1, 3, NULL), 6, 9, _ranges(1, 3, 6, 9, NULL));
-    _test_merge(_ranges(1, 3, 6, 9, NULL), 2, 7, _ranges(1, 9, NULL));
-    _test_merge(_ranges(5, 8, NULL), 1, 3, _ranges(1, 3, 5, 8, NULL));
-    _test_merge(_ranges(5, 8, NULL), 10, 30, _ranges(5, 8, 10, 30, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 9, 11, _ranges(1, 2, 5, 15, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 9, 10, _ranges(1, 2, 5, 10, 12, 15, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 6, 8, 12, 15, 20, 21, NULL), 4, 4, _ranges(1, 2, 4, 4, 6, 8, 12, 15, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 4, 4, _ranges(1, 2, 4, 8, 12, 15, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 4, 18, _ranges(1, 2, 4, 18, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 9, 30, _ranges(1, 2, 5, 30, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 1, 9999, _ranges(1, 9999, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 4, 22, _ranges(1, 2, 4, 22, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, NULL), 4, 20, _ranges(1, 2, 4, 21, NULL));
+    _test_merge(_ranges(1, 3, 5, 7, SIZE_T_MAX), 4, 5, _ranges(1, 7, SIZE_T_MAX));
+    _test_merge(cJSON_CreateArray(), 1, 2, _ranges(1, 2, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 100, 200, SIZE_T_MAX), 40, 60, _ranges(1, 2, 40, 60, 100, 200, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, SIZE_T_MAX), 2, 3, _ranges(1, 3, SIZE_T_MAX));
+    _test_merge(_ranges(1, 3, SIZE_T_MAX), 6, 9, _ranges(1, 3, 6, 9, SIZE_T_MAX));
+    _test_merge(_ranges(1, 3, 6, 9, SIZE_T_MAX), 2, 7, _ranges(1, 9, SIZE_T_MAX));
+    _test_merge(_ranges(5, 8, SIZE_T_MAX), 1, 3, _ranges(1, 3, 5, 8, SIZE_T_MAX));
+    _test_merge(_ranges(5, 8, SIZE_T_MAX), 10, 30, _ranges(5, 8, 10, 30, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 9, 11, _ranges(1, 2, 5, 15, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 9, 10, _ranges(1, 2, 5, 10, 12, 15, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 6, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 4, _ranges(1, 2, 4, 4, 6, 8, 12, 15, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 4, _ranges(1, 2, 4, 8, 12, 15, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 18, _ranges(1, 2, 4, 18, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 9, 30, _ranges(1, 2, 5, 30, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 1, 9999, _ranges(1, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 22, _ranges(1, 2, 4, 22, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 20, _ranges(1, 2, 4, 21, SIZE_T_MAX));
     
     
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 5, 9999, _ranges(1, 2, 5, 9999, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 6, 9999, _ranges(1, 2, 5, 9999, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 7, 9999, _ranges(1, 2, 5, 9999, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 8, 9999, _ranges(1, 2, 5, 9999, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 9, 9999, _ranges(1, 2, 5, 9999, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 10, 9999, _ranges(1, 2, 5, 8, 10, 9999, NULL));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 5, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 6, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 7, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 8, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 9, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 10, 9999, _ranges(1, 2, 5, 8, 10, 9999, SIZE_T_MAX));
     
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 18, _ranges(1, 18, 20, 21, 40, 45, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 19, _ranges(1, 21, 40, 45, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 20, _ranges(1, 21, 40, 45, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 21, _ranges(1, 21, 40, 45, NULL));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, NULL), 1, 22, _ranges(1, 22, 40, 45, NULL));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 18, _ranges(1, 18, 20, 21, 40, 45, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 19, _ranges(1, 21, 40, 45, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 20, _ranges(1, 21, 40, 45, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 21, _ranges(1, 21, 40, 45, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 22, _ranges(1, 22, 40, 45, SIZE_T_MAX));
+    
+    // is there an edge when it starts with 0?
+    _test_merge(_ranges(0, 92258, SIZE_T_MAX), 0, 92258, _ranges(0, 92258, SIZE_T_MAX));
 }
 
 void test_assimilation() {
     assetstore_assimilate(store, import_files_folder);
 }
 
+
+void test_asset_path() {
+    char path[PATH_MAX];
+    char expected_path[PATH_MAX];
+    
+    cJSON *cached = cJSON_AddObjectToObject(store->state, "cached");
+    cJSON_AddBoolToObject(cached, "complete", 1);
+    
+    cJSON *imported = cJSON_AddObjectToObject(store->state, "imported");
+    cJSON_AddBoolToObject(imported, "complete", 1);
+    cJSON_AddStringToObject(imported, "path", "imported_path/file");
+    
+    cJSON *incomplete = cJSON_AddObjectToObject(store->state, "incomplete");
+    
+    TEST_ASSERT_EQUAL_INT(1, assetstore_asset_path(store, "nothing", path, PATH_MAX));
+    TEST_ASSERT_EQUAL_INT(1, assetstore_asset_path(store, "incomplete", path, PATH_MAX));
+    
+    realpath("asset_test_cache/cached", expected_path);
+    TEST_ASSERT_EQUAL_INT(0, assetstore_asset_path(store, "cached", path, PATH_MAX));
+    TEST_ASSERT_EQUAL_STRING(expected_path, path);
+    
+    TEST_ASSERT_EQUAL_INT(0, assetstore_asset_path(store, "imported", path, PATH_MAX));
+    TEST_ASSERT_EQUAL_STRING("imported_path/file", path);
+}
+
 int main(void) {
     UNITY_BEGIN();
 
-//    RUN_TEST(test_assetstore_basic_disk_io);
-//    RUN_TEST(test_assetstore_range_reads);
-//    RUN_TEST(test_assetstore_read_write);
-//    RUN_TEST(test_merge_range);
-//    RUN_TEST(test_assetstore_partial_read_write);
-//    RUN_TEST(test_missing_ranges);
+    RUN_TEST(test_assetstore_basic_disk_io);
+    RUN_TEST(test_assetstore_range_reads);
+    RUN_TEST(test_assetstore_read_write);
+    RUN_TEST(test_merge_range);
+    RUN_TEST(test_assetstore_partial_read_write);
+    RUN_TEST(test_missing_ranges);
     RUN_TEST(test_assimilation);
+    RUN_TEST(test_asset_path);
+    
     return UNITY_END();
 }

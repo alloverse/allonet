@@ -553,11 +553,11 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     snprintf(buffer, bufferlen, "--");
 }
 
-int alloclient_path_for_asset(alloclient *client, const char *asset_id, char *buffer, size_t buffer_size) {
-    return client->alloclient_path_for_asset(client, asset_id, buffer, buffer_size);
+char *alloclient_path_for_asset(alloclient *client, const char *asset_id) {
+    return client->alloclient_path_for_asset(client, asset_id);
 }
-static int _alloclient_path_for_asset(alloclient *client, const char *asset_id, char *buffer, size_t buffer_size) {
-    return assetstore_asset_path(_internal(client)->assetstore, asset_id, buffer, buffer_size);
+static char *_alloclient_path_for_asset(alloclient *client, const char *asset_id) {
+    return assetstore_asset_path(_internal(client)->assetstore, asset_id);
 }
 
 void alloclient_add_asset(alloclient *client, const char *folder) {

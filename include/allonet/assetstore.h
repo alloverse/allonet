@@ -84,7 +84,7 @@ int assetstore_assimilate(assetstore *store, const char *folder);
 
 /// Get a file path for an asset, if it exists.
 /// Stores not backed by disk should write to a temp file and provide a path to it.
-/// @returns 0 on success, or an error code
-int assetstore_asset_path(assetstore *store, const char *asset_id, char *out_path, size_t path_size);
+/// @returns the path on success, otherwise NULL
+char *assetstore_asset_path(assetstore *store, const char *asset_id);
 
 #endif /* asset_store_h */

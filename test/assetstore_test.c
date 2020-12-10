@@ -308,7 +308,7 @@ void test_assimilation() {
 
 
 void test_asset_path() {
-    char path[PATH_MAX];
+    char *path;
     char expected_path[PATH_MAX];
     
     cJSON *cached = cJSON_AddObjectToObject(store->state, "cached");
@@ -320,15 +320,22 @@ void test_asset_path() {
     
     cJSON *incomplete = cJSON_AddObjectToObject(store->state, "incomplete");
     
-    TEST_ASSERT_EQUAL_INT(1, assetstore_asset_path(store, "nothing", path, PATH_MAX));
-    TEST_ASSERT_EQUAL_INT(1, assetstore_asset_path(store, "incomplete", path, PATH_MAX));
+    path = assetstore_asset_path(store, "nothing");
+    TEST_ASSERT_NULL(path);
+    free(path);
+    
+    path = assetstore_asset_path(store, "incomplete");
+    TEST_ASSERT_NULL(path);
+    free(path);
     
     realpath("asset_test_cache/cached", expected_path);
-    TEST_ASSERT_EQUAL_INT(0, assetstore_asset_path(store, "cached", path, PATH_MAX));
+    path = assetstore_asset_path(store, "cached");
     TEST_ASSERT_EQUAL_STRING(expected_path, path);
+    free(path);
     
-    TEST_ASSERT_EQUAL_INT(0, assetstore_asset_path(store, "imported", path, PATH_MAX));
+    path = assetstore_asset_path(store, "imported");
     TEST_ASSERT_EQUAL_STRING("imported_path/file", path);
+    free(path);
 }
 
 void test_open_same_path_yields_same_store() {
@@ -338,13 +345,13 @@ void test_open_same_path_yields_same_store() {
     
     TEST_ASSERT(a1 == a1);
     TEST_ASSERT(a2 != b);
-    TEST_ASSERT_EQUAL_INT(a1->refcount, 2);
-    TEST_ASSERT_EQUAL_INT(b->refcount, 1);
+    TEST_ASSERT_EQUAL_INT(2, a1->refcount);
+    TEST_ASSERT_EQUAL_INT(1, b->refcount);
     
     assetstore_close(a2);
     
-    TEST_ASSERT_EQUAL_INT(a1->refcount, 1);
-    TEST_ASSERT_EQUAL_INT(b->refcount, 1);
+    TEST_ASSERT_EQUAL_INT(1, a1->refcount);
+    TEST_ASSERT_EQUAL_INT(1, b->refcount);
 }
 
 int main(void) {

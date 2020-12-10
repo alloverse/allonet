@@ -255,8 +255,8 @@ static void bridge_alloclient_request_asset(alloclient *bridgeclient, proxy_mess
     }
 }
 
-static int proxy_alloclient_path_for_asset(alloclient *proxyclient, const char *asset_id, char *buffer, size_t buffer_size) {
-    return alloclient_path_for_asset(_internal(proxyclient)->bridgeclient, asset_id, buffer, buffer_size);
+static char *proxy_alloclient_path_for_asset(alloclient *proxyclient, const char *asset_id) {
+    return alloclient_path_for_asset(_internal(proxyclient)->bridgeclient, asset_id);
 }
 
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {

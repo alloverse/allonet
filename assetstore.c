@@ -78,7 +78,7 @@ char *_asset_path(assetstore *store, const char *asset_id) {
     return __asset_path;
 }
 
-int assetstore_asset_path(assetstore *store, const char *asset_id, char *out_path, size_t path_size) {
+char *assetstore_asset_path(assetstore *store, const char *asset_id) {
     mtx_lock(&store->lock);
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *complete = cJSON_GetObjectItem(state, "complete");
@@ -86,39 +86,20 @@ int assetstore_asset_path(assetstore *store, const char *asset_id, char *out_pat
     if (!cJSON_IsObject(state) || !cJSON_IsTrue(complete)) {
         log("assetstore: Asset %s does not exist or is incomplete\n", asset_id);
         mtx_unlock(&store->lock);
-        return 1;
+        return NULL;
     }
     
     char *value = NULL;
     // check if it's in cache or on path
     cJSON *path = cJSON_GetObjectItem(state, "path");
     if (cJSON_IsString(path)) {
-        value = cJSON_GetStringValue(path);
+        value = strdup(cJSON_GetStringValue(path));
     } else {
         asprintf(&value, "%s/%s", store->disk_path, asset_id);
     }
     
-    if (value == NULL) {
-        log("assetstore: Asset %s not found\n", asset_id);
-        mtx_unlock(&store->lock);
-        return 1;
-    }
-    
-    if (path_size < strlen(value)+1) {
-        log("assetstore: out_path is too small to contain %s\n", value);
-        mtx_unlock(&store->lock);
-        return 1;
-    }
-    
-    strcpy(out_path, value);
-    
-    if (!cJSON_IsString(path)) {
-        // if no path then we asprintf'd the value.
-        free(value);
-    }
-    
     mtx_unlock(&store->lock);
-    return 0;
+    return value;
 }
 
 int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
@@ -210,6 +191,9 @@ assetstore *assetstore_open(const char *disk_path) {
     store->read = __disk_read;
     store->write = __disk_write;
     
+    mtx_lock(&_global_lock);
+    arr_push(&_global_stores, store);
+    mtx_unlock(&_global_lock);
     
     char *statefile = NULL;
     asprintf(&statefile, "%s/%s", disk_path, "state.json");
@@ -265,10 +249,6 @@ assetstore *assetstore_open(const char *disk_path) {
         if (f) fclose(f);
         store->state = cJSON_CreateObject();
     }
-    
-    mtx_lock(&_global_lock);
-    arr_push(&_global_stores, store);
-    mtx_unlock(&_global_lock);
     
     return store;
 }

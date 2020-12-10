@@ -126,10 +126,29 @@ typedef struct alloclient {
     void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
     void (*alloclient_set_intent)(alloclient *client, const allo_client_intent *intent);
     void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
-    void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
     void (*alloclient_simulate)(alloclient* client);
     double (*alloclient_get_time)(alloclient* client);
     void (*alloclient_get_stats)(alloclient* client, char *buffer, size_t bufferlen);
+    // -- Assets
+    /// Get the absolute path to an asset
+    /// @param asset_id The asset id
+    /// @param buffer A buffer to write the path to
+    /// @param buffer_size The size of `buffer`
+    /// @returns 0 if the asset is exists and is complete, otherwise an error code
+    int (*alloclient_path_for_asset)(alloclient *client, const char *asset_id, char *buffer, size_t buffer_size);
+    /// Add a path to scan for assets
+    /// @param folder A path to scan for assets
+    void (*alloclient_add_asset)(alloclient *client, const char *folder);
+    /// Let client know an asset is needed
+    /// @param asset_id The asset
+    /// @param entity_id Optional entity that needs the asset.
+    void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
+    
+    // FUTURE: Let client know an asset is no longer needed
+    // -- Asset callbacks
+    // Let app know an asset has become available
+    // Let app know an asset failed to load
+    
 } alloclient;
 
 /**
@@ -207,5 +226,10 @@ void alloclient_simulate(alloclient* client);
 double alloclient_get_time(alloclient* client);
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
+
+int alloclient_path_for_asset(alloclient *client, const char *asset_id, char *buffer, size_t buffer_size);
+void alloclient_add_asset(alloclient *client, const char *folder);
+void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id);
+
 
 #endif

@@ -1,5 +1,6 @@
 #include <allonet/client.h>
 #include <allonet/jobs.h>
+#include <allonet/assetstore.h>
 #include <opus.h>
 #include <enet/enet.h>
 #include "../delta.h"
@@ -21,6 +22,7 @@ typedef struct {
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     scheduler jobs;
+    assetstore *assetstore;
 } alloclient_internal;
 
 typedef struct decoder_track decoder_track;

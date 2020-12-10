@@ -553,9 +553,27 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     snprintf(buffer, bufferlen, "--");
 }
 
+int alloclient_path_for_asset(alloclient *client, const char *asset_id, char *buffer, size_t buffer_size) {
+    return client->alloclient_path_for_asset(client, asset_id, buffer, buffer_size);
+}
+static int _alloclient_path_for_asset(alloclient *client, const char *asset_id, char *buffer, size_t buffer_size) {
+    return assetstore_asset_path(_internal(client)->assetstore, asset_id, buffer, buffer_size);
+}
+
+void alloclient_add_asset(alloclient *client, const char *folder) {
+    client->alloclient_add_asset(client, folder);
+}
+static void _alloclient_add_asset(alloclient *client, const char *folder) {
+    assetstore_assimilate(_internal(client)->assetstore, folder);
+}
+
+void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
+    client->alloclient_request_asset(client, asset_id, entity_id);
+}
 static void _alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
     asset_request(asset_id, entity_id, _asset_send_func, (void*)client);
 }
+
 
 alloclient *alloclient_create(bool threaded)
 {
@@ -581,6 +599,10 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_simulate = _alloclient_simulate;
     client->alloclient_get_time = _alloclient_get_time;
     client->alloclient_get_stats = _alloclient_get_stats;
+    
+    // assets
+    client->alloclient_path_for_asset = _alloclient_path_for_asset;
+    client->alloclient_add_asset = _alloclient_add_asset;
     client->alloclient_request_asset = _alloclient_request_asset;
     
     return client;

@@ -32,6 +32,9 @@ typedef enum
     msg_disconnect,
     msg_audio,
     msg_clock,
+    
+    msg_asset_request,
+    msg_asset_assimilate,
 
     msg_count
 } proxy_message_type;
@@ -66,6 +69,15 @@ typedef struct proxy_message
             double latency;
             double delta;
         } clock;
+        
+        struct {
+            char *asset_id;
+            char *entity_id;
+        } asset_request;
+        
+        struct {
+            char *folder;
+        } asset_assimilate;
         
     } value;
     STAILQ_ENTRY(proxy_message) entries;
@@ -218,14 +230,40 @@ static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, si
     snprintf(buffer, bufferlen, "p2b %d\nb2p %d", p2b, b2p);
 }
 
+static void proxy_alloclient_add_asset(alloclient *proxyclient, const char *folder) {
+    proxy_message *msg = proxy_message_create(msg_asset_assimilate);
+    msg->value.asset_assimilate.folder = strdup(folder);
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
+}
+static void bridge_alloclient_add_asset(alloclient *bridgeclient, proxy_message *msg) {
+    alloclient_add_asset(bridgeclient, msg->value.asset_assimilate.folder);
+    free(msg->value.asset_assimilate.folder);
+}
+
+static void proxy_alloclient_request_asset(alloclient *proxyclient, const char *asset_id, const char *entity_id) {
+    proxy_message *msg = proxy_message_create(msg_asset_request);
+    msg->value.asset_request.asset_id = strdup(asset_id);
+    msg->value.asset_request.entity_id = entity_id == NULL ? NULL : strdup(entity_id);
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
+}
+static void bridge_alloclient_request_asset(alloclient *bridgeclient, proxy_message *msg) {
+    alloclient_request_asset(bridgeclient, msg->value.asset_request.asset_id, msg->value.asset_request.entity_id);
+    
+    free(msg->value.asset_request.asset_id);
+    if (msg->value.asset_request.entity_id) {
+        free(msg->value.asset_request.entity_id);
+    }
+}
+
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_connect] = bridge_alloclient_connect,
     [msg_disconnect] = bridge_alloclient_disconnect,
     [msg_interaction] = bridge_alloclient_send_interaction,
     [msg_intent] = bridge_alloclient_set_intent,
-    [msg_audio] = bridge_alloclient_send_audio
+    [msg_audio] = bridge_alloclient_send_audio,
+    [msg_asset_assimilate] = bridge_alloclient_add_asset,
+    [msg_asset_request] = bridge_alloclient_request_asset,
 };
-
 
 //////// Callbacks
 

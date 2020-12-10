@@ -187,7 +187,6 @@ assetstore *assetstore_open(const char *disk_path) {
     mtx_init(&store->lock, mtx_plain);
     store->refcount = 1;
     store->disk_path = strdup(absolute_disk_path);
-    store->asset_completed_callback = NULL;
     store->read = __disk_read;
     store->write = __disk_write;
     
@@ -254,7 +253,6 @@ assetstore *assetstore_open(const char *disk_path) {
 }
 
 void _assetstore_close(assetstore *store) {
-    store->asset_completed_callback = NULL;
     free((void*)store->disk_path);
     cJSON_Delete(store->state);
     store->disk_path = NULL;
@@ -369,6 +367,18 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
     }
     mtx_unlock(&store->lock);
     return 0;
+}
+
+int assetstore_asset_is_complete(assetstore *store, const char *asset_id) {
+    assert(asset_id);
+    
+    mtx_lock(&store->lock);
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    cJSON *complete = cJSON_GetObjectItem(state, "complete");
+    int result = cJSON_IsTrue(complete);
+    mtx_unlock(&store->lock);
+    
+    return result;
 }
 
 size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t *out_ranges, size_t count) {
@@ -501,11 +511,7 @@ void _update_asset_state(assetstore *store, const char *asset_id) {
         if (_first(range) == 0 && _last(range) == total_size->valueint) {
             cJSON_ReplaceItemInObject(state, "complete", cJSON_CreateBool(1));
             cJSON_DeleteItemFromObject(state, "ranges");
-            
             log("assetstore: Asset %s is complete\n", asset_id);
-            if (store->asset_completed_callback) {
-                store->asset_completed_callback(store, asset_id);
-            }
         }
     }
     
@@ -574,6 +580,7 @@ int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FT
     char *xsha;
     asprintf(&xsha, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
     
+    cJSON_DeleteItemFromObject(ass_state, xsha);
     cJSON *state = cJSON_AddObjectToObject(ass_state, xsha);
     free(xsha);
     cJSON_AddBoolToObject(state, "complete", 1);

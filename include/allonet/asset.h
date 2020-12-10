@@ -17,21 +17,24 @@ typedef enum asset_mid asset_mid;
 /// @param data The data to send
 /// @param data_length The length of `data`
 /// @param user The same pointer as sent to a method that also takes this function
-typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user);
+typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
+
+/// A callback for when the state of an asset changes, for example when asset availability changes.
+typedef void(*asset_state_func)(const char *asset_id, int state, void *user);
 
 /// Provide assets a way to process infoming data
 /// @param data The received data to be processed
 /// @param data_length The size of the `data` buffer
-/// @param read_range A function to read asset data from storage
-/// @param write_range A function to write asset data to storage
 /// @param send A function to send data over the network
+/// @param callback A function that gets called when the state of an asset changes.
 /// @param user Passed to the `read_range`, `write_range` and `send` methods.
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
     assetstore *store,
     asset_send_func send,
-    const void *user
+    asset_state_func callback,
+    void *user
 );
 
 /// Make an asset request
@@ -43,7 +46,7 @@ void asset_request(
     const char *id,
     const char *entity_id,
     asset_send_func send,
-    const void *user
+    void *user
 );
 
 

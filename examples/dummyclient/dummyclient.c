@@ -64,6 +64,10 @@ static int32_t track_id = 0;
 
 allo_client_intent* intent;
 
+static void asset_state(alloclient *client, const char *asset_id, int state) {
+    printf("Asset %s changed state %d\n", asset_id, state);
+}
+
 static bool interaction(
     alloclient *client, 
     allo_interaction *inter
@@ -288,6 +292,7 @@ int main(int argc, char **argv)
 #endif
     client->interaction_callback = interaction;
     client->disconnected_callback = disconnected;
+    client->asset_state_callback = asset_state;
     
     int i = 0;
     

@@ -97,8 +97,6 @@ typedef struct alloclient {
     /*!
      * You have received data for an asset; write it to your cache or whatever.
      * `chunk_length` is the number of bytes available in `buf`.
-     * When `offset+chunk_length == total_length`, this is your last callback 
-     * for this asset.
      */
     void (*asset_receive_callback)(
       alloclient* client,
@@ -108,7 +106,16 @@ typedef struct alloclient {
       size_t chunk_length,
       size_t total_length
     );
-
+    
+    /*!
+     * The state of an asset has changed
+     */
+    void (*asset_state_callback)(
+      alloclient *client,
+      const char *asset_id,
+      int state
+    );
+    
     // internal
     allo_state _state;
     void *_internal;

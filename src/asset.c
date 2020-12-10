@@ -19,7 +19,7 @@ void _asset_request(
     size_t offset,
     size_t length,
     asset_send_func send,
-    const void *user
+    void *user
 );
 
 ///
@@ -133,7 +133,8 @@ void asset_handle(
     size_t data_length,
     assetstore *store,
     asset_send_func send,
-    const void *user
+    asset_state_func callback,
+    void *user
 ) {
     uint16_t mid = 0;
     cJSON *json = NULL;
@@ -187,10 +188,12 @@ void asset_handle(
         }
         
         assetstore_write(store, id, offset, data, length, total_length);
-        
         // request more?
+        // TODO: check missing ranges instead
         if (offset + length < total_length) {
             _asset_request(id, NULL, offset + length, length, send, user);
+        } else {
+            callback(id, 1, user);
         }
         assert(offset + length <= total_length);
     } else if (mid == asset_mid_failure) {
@@ -218,7 +221,7 @@ void _asset_request(
    size_t offset,
    size_t length,
    asset_send_func send,
-   const void *user
+   void *user
 ) {
     int range[2] = {offset, length};
     cJSON *header = cjson_create_object(
@@ -237,7 +240,7 @@ void asset_request(
     const char *id,
     const char *entity_id,
     asset_send_func send,
-    const void *user
+    void *user
 ) {
     _asset_request(id, entity_id, 0, ASSET_CHUNK_SIZE, send, user);
 }

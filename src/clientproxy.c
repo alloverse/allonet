@@ -35,6 +35,7 @@ typedef enum
     
     msg_asset_request,
     msg_asset_assimilate,
+    msg_asset_state_callback,
 
     msg_count
 } proxy_message_type;
@@ -79,6 +80,10 @@ typedef struct proxy_message
             char *folder;
         } asset_assimilate;
         
+        struct {
+            char *asset_id;
+            int state;
+        } asset_state_callback;
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
@@ -182,8 +187,8 @@ static void bridge_alloclient_send_interaction(alloclient *bridgeclient, proxy_m
     allo_interaction_free(msg->value.interaction);
 }
 
-static void (*original_alloclient_set_intent)(alloclient *proxyclient, allo_client_intent *intent);
-static void proxy_alloclient_set_intent(alloclient *proxyclient, allo_client_intent *intent)
+static void (*original_alloclient_set_intent)(alloclient *proxyclient, const allo_client_intent *intent);
+static void proxy_alloclient_set_intent(alloclient *proxyclient, const allo_client_intent *intent)
 {
     original_alloclient_set_intent(proxyclient, intent);
     proxy_message *msg = proxy_message_create(msg_intent);
@@ -270,6 +275,19 @@ static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
 };
 
 //////// Callbacks
+
+static void bridge_asset_state_callback(alloclient *bridgeclient, const char *asset_id, int state) {
+    proxy_message *msg = proxy_message_create(msg_asset_state_callback);
+    msg->value.asset_state_callback.asset_id = strdup(asset_id);
+    msg->value.asset_state_callback.state = state;
+    enqueue_bridge_to_proxy(_internal(bridgeclient->_backref), msg);
+}
+static void proxy_asset_state_callback(alloclient *proxyclient, proxy_message *msg) {
+    if (proxyclient->asset_state_callback) {
+        proxyclient->asset_state_callback(proxyclient, msg->value.asset_state_callback.asset_id, msg->value.asset_state_callback.state);
+    }
+    free(msg->value.asset_state_callback.asset_id);
+}
 
 static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd)
 {
@@ -364,6 +382,7 @@ static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_audio] = proxy_audio_callback,
     [msg_disconnect] = proxy_disconnected_callback,
     [msg_clock] = proxy_clock_callback,
+    [msg_asset_state_callback] = proxy_asset_state_callback,
 };
 
 
@@ -439,6 +458,7 @@ alloclient *clientproxy_create(void)
     _internal(proxyclient)->bridgeclient->audio_callback = bridge_audio_callback;
     _internal(proxyclient)->bridgeclient->disconnected_callback = bridge_disconnected_callback;
     _internal(proxyclient)->bridgeclient->clock_callback = bridge_clock_callback;
+    _internal(proxyclient)->bridgeclient->asset_state_callback = bridge_asset_state_callback;
     _internal(proxyclient)->running = true;
 
     STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);

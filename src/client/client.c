@@ -32,7 +32,7 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
     cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
     if(staterep == NULL)
     {
-        fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %zd (I'm %zd), requesting full state\n",
+        fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state\n",
             _internal(client)->avatar_id,
             patch_from,
             _internal(client)->history.latest_revision
@@ -144,17 +144,17 @@ static void parse_clock(alloclient *client, cJSON *response)
     }
 }
 
-static assetstore *asset_storage = NULL;
-
-int _asset_read_range_func(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, const void *user) {
-    return assetstore_read(asset_storage, id, offset, buffer, length, out_total_size);
+int _asset_read_range_func(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
+    alloclient *client = (alloclient *)user;
+    return assetstore_read(_internal(client)->assetstore, id, offset, buffer, length, out_total_size);
 }
 
-int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, cJSON **out_error, const void *user) {
-    return assetstore_write(asset_storage, id, offset, buffer, length, total_size);
+int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, cJSON **out_error, void *user) {
+    alloclient *client = (alloclient *)user;
+    return assetstore_write(_internal(client)->assetstore, id, offset, buffer, length, total_size);
 }
 
-void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, const void *user) {
+void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     alloclient *client = (alloclient*)user;
     ENetPeer *peer = _internal(client)->peer;
     
@@ -167,13 +167,16 @@ void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, s
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
 }
 
-static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
-    if (asset_storage == NULL) {
-        asset_storage = assetstore_open("client_asset_cache");
-        assetstore_assimilate(asset_storage, "client_asset_files");
+void _asset_state_callback_func(const char *asset_id, int state, void *user) {
+    alloclient *client = (alloclient *)user;
+    if (client->asset_state_callback) {
+        client->asset_state_callback(client, asset_id, state);
     }
-    
-    asset_handle(data, data_length, asset_storage, _asset_send_func, (void*)client);
+}
+
+static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
+    assert(_internal(client)->assetstore);
+    asset_handle(data, data_length, _internal(client)->assetstore, _asset_send_func, _asset_state_callback_func, (void*)client);
 }
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
@@ -273,7 +276,7 @@ void alloclient_set_intent(alloclient* client, const allo_client_intent *intent)
 {
     client->alloclient_set_intent(client, intent);
 }
-static void _alloclient_set_intent(alloclient* client, allo_client_intent *intent)
+static void _alloclient_set_intent(alloclient* client, const allo_client_intent *intent)
 {
     // this one is set internally, so don't overwrite it
     int64_t ack_state_rev = _internal(client)->latest_intent->ack_state_rev;
@@ -589,6 +592,10 @@ alloclient *alloclient_create(bool threaded)
     scheduler_init(&_internal(client)->jobs);
     
     LIST_INIT(&client->_state.entities);
+    
+    _internal(client)->assetstore = assetstore_open("client_asset_cache");
+    
+    assetstore_assimilate(_internal(client)->assetstore, "client_asset_files"); // Note<voxar>: for testing, remove.
 
     client->alloclient_connect = _alloclient_connect;
     client->alloclient_disconnect = _alloclient_disconnect;

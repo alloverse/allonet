@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cJSON/cJSON.h>
+#include <tinycthread.h>
 
 typedef struct assetstore {
     
@@ -25,7 +26,13 @@ typedef struct assetstore {
     int (*read)(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size);
     int (*write)(struct assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
     
+    mtx_t lock;
+    int refcount;
+    
 } assetstore;
+
+void assetstore_init();
+void assetstore_deinit();
 
 /// Open an assetstore
 assetstore *assetstore_open(const char *disk_path);
@@ -34,7 +41,7 @@ assetstore *assetstore_open(const char *disk_path);
 void assetstore_close(assetstore *store);
 
 
-/// Get state of an asset in the store
+/// Get state of an asset
 /// @param store The store
 /// @param asset_id The asset
 /// @param out_exists Optional. Will be set to 1 if the asset exists
@@ -78,6 +85,6 @@ int assetstore_assimilate(assetstore *store, const char *folder);
 /// Get a file path for an asset, if it exists.
 /// Stores not backed by disk should write to a temp file and provide a path to it.
 /// @returns 0 on success, or an error code
-int assetstore_asset_path(const assetstore *store, const char *asset_id, char *out_path, size_t path_size);
+int assetstore_asset_path(assetstore *store, const char *asset_id, char *out_path, size_t path_size);
 
 #endif /* asset_store_h */

@@ -6,6 +6,7 @@
 //
 
 #include <allonet/assetstore.h>
+#include <allonet/arr.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,12 +78,14 @@ char *_asset_path(assetstore *store, const char *asset_id) {
     return __asset_path;
 }
 
-int assetstore_asset_path(const assetstore *store, const char *asset_id, char *out_path, size_t path_size) {
+int assetstore_asset_path(assetstore *store, const char *asset_id, char *out_path, size_t path_size) {
+    mtx_lock(&store->lock);
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *complete = cJSON_GetObjectItem(state, "complete");
     // check that it exists and is complete
     if (!cJSON_IsObject(state) || !cJSON_IsTrue(complete)) {
         log("assetstore: Asset %s does not exist or is incomplete\n", asset_id);
+        mtx_unlock(&store->lock);
         return 1;
     }
     
@@ -97,11 +100,13 @@ int assetstore_asset_path(const assetstore *store, const char *asset_id, char *o
     
     if (value == NULL) {
         log("assetstore: Asset %s not found\n", asset_id);
+        mtx_unlock(&store->lock);
         return 1;
     }
     
     if (path_size < strlen(value)+1) {
         log("assetstore: out_path is too small to contain %s\n", value);
+        mtx_unlock(&store->lock);
         return 1;
     }
     
@@ -112,6 +117,7 @@ int assetstore_asset_path(const assetstore *store, const char *asset_id, char *o
         free(value);
     }
     
+    mtx_unlock(&store->lock);
     return 0;
 }
 
@@ -145,24 +151,65 @@ int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u
     char *fpath = _asset_path(store, asset_id);
     int res = 0;
     int f = open(fpath, O_WRONLY | O_APPEND | O_CREAT, 0600);
+    if (f ==  0) {
+        log("assetstore: Failed to open file for writing: %s", fpath);
+        return 0;
+    }
     res = pwrite(f, data, length, offset);
+    close(f);
     if (res != length) {
         log("assetstore: Could only write %d of %ld bytes of %s\n", res, length, asset_id);
     }
-    close(f);
     return res;
 }
 
+static mtx_t _global_lock;
+arr_t(assetstore *) _global_stores = {0xdead};
+void _assetstore_close(assetstore *store);
+
+void assetstore_init() {
+    mtx_init(&_global_lock, mtx_plain);
+    arr_init(&_global_stores);
+}
+
+void assetstore_deinit() {
+    for (int i = 0; i < _global_stores.length; i++) {
+        _assetstore_close(_global_stores.data[i]);
+    }
+    
+    arr_free(&_global_stores);
+    mtx_destroy(&_global_lock);
+}
+
 assetstore *assetstore_open(const char *disk_path) {
-    assetstore *store = malloc(sizeof(assetstore));
+    if (_global_stores.data == (assetstore**)0xdead) {
+        log("assetstore: Not initialized yet\n");
+        exit(555);
+    }
+    assetstore *store = NULL;
     
+    char absolute_disk_path[PATH_MAX];
+    realpath(disk_path, absolute_disk_path);
+    
+    mtx_lock(&_global_lock);
+    for (int i = 0; i < _global_stores.length; i++) {
+        if (strcmp(_global_stores.data[i]->disk_path, absolute_disk_path) == 0) {
+            store = _global_stores.data[i];
+            ++store->refcount;
+            mtx_unlock(&_global_lock);
+            return store;
+        }
+    }
+    mtx_unlock(&_global_lock);
+    
+    store = malloc(sizeof(assetstore));
+    mtx_init(&store->lock, mtx_plain);
+    store->refcount = 1;
+    store->disk_path = strdup(absolute_disk_path);
     store->asset_completed_callback = NULL;
-    
     store->read = __disk_read;
     store->write = __disk_write;
     
-    store->disk_path = malloc(PATH_MAX);
-    realpath(disk_path, (char*)store->disk_path);
     
     char *statefile = NULL;
     asprintf(&statefile, "%s/%s", disk_path, "state.json");
@@ -172,7 +219,7 @@ assetstore *assetstore_open(const char *disk_path) {
         if (fseek(f, 0, SEEK_END) != 0) {
             fclose(f);
             log("assetstore: Unable to seek state file\n");
-            return NULL;
+            return store;
         }
         size_t size = ftell(f);
         fseek(f, 0, SEEK_SET);
@@ -219,15 +266,39 @@ assetstore *assetstore_open(const char *disk_path) {
         store->state = cJSON_CreateObject();
     }
     
+    mtx_lock(&_global_lock);
+    arr_push(&_global_stores, store);
+    mtx_unlock(&_global_lock);
+    
     return store;
 }
 
-void assetstore_close(assetstore *store) {
+void _assetstore_close(assetstore *store) {
     store->asset_completed_callback = NULL;
     free((void*)store->disk_path);
     cJSON_Delete(store->state);
     store->disk_path = NULL;
     store->state = NULL;
+    free(store);
+}
+
+void assetstore_close(assetstore *store) {
+    mtx_lock(&_global_lock);
+    if (--store->refcount > 0) {
+        mtx_unlock(&_global_lock);
+        return;
+    }
+    
+    for (int i = 0; i < _global_stores.length; i++) {
+        if (_global_stores.data[i] == store) {
+            arr_splice(&_global_stores, i, 1);
+            break;
+        }
+    }
+    
+    _assetstore_close(store);
+    
+    mtx_unlock(&_global_lock);
 }
 
 /// Returns missing ranges
@@ -264,7 +335,7 @@ int _missing_ranges(cJSON *ranges, size_t total_size, size_t *out_ranges, size_t
 }
 
 size_t __missing_ranges_count(cJSON *ranges, size_t total_size) {
-    return _missing_ranges(ranges, total_size, NULL, SIZE_T_MAX);
+    return _missing_ranges(ranges, total_size, NULL, ULONG_MAX);
 }
 
 size_t _missing_ranges_count(assetstore *store, const char *asset_id) {
@@ -285,11 +356,13 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
     assert(store);
     assert(asset_id);
     
+    mtx_lock(&store->lock);
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     // check existance
     if (state == NULL) {
         if (out_exists) *out_exists = 0;
         if (out_complete) *out_complete = 0;
+        mtx_unlock(&store->lock);
         return 0;
     } else {
         *out_exists = 1;
@@ -297,6 +370,7 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
     assert(cJSON_IsObject(state));
     if (!cJSON_IsObject(state)) {
         cJSON_DeleteItemFromObject(store->state, asset_id);
+        mtx_unlock(&store->lock);
         return 1;
     }
     
@@ -313,6 +387,7 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
             *out_complete = cJSON_IsTrue(complete);
         }
     }
+    mtx_unlock(&store->lock);
     return 0;
 }
 
@@ -323,9 +398,12 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
     
     if (count == 0) { return 0; }
     
+    mtx_lock(&store->lock);
+    
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     // check existance
     if (state == NULL) {
+        mtx_unlock(&store->lock);
         return 0;
     }
     cJSON *_total_size = cJSON_GetObjectItem(state, "total_size");
@@ -337,6 +415,7 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
     
     size_t result = _missing_ranges(ranges, total_size, out_ranges, count);
     if (out_ranges == NULL) {
+        mtx_unlock(&store->lock);
         return result;
     }
     
@@ -344,6 +423,7 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
     for (size_t i = 0; i < result; i++) {
         out_ranges[i+1] = out_ranges[i+1] - out_ranges[i];
     }
+    mtx_unlock(&store->lock);
     return result;
 }
 
@@ -459,6 +539,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
     
     int bytes_written = store->write(store, asset_id, offset, data, length, total_size);
     
+    mtx_lock(&store->lock);
     // get or create the ranges from asset state in the store state
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *ranges = NULL;
@@ -477,6 +558,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
         _merge_range(ranges, offset, offset + bytes_written);
         _update_asset_state(store, asset_id);
     }
+    mtx_unlock(&store->lock);
     
     return bytes_written;
 }
@@ -486,7 +568,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
 #include "src/sha1.h"
 
 
-cJSON *ass_state = 0;
+__thread cJSON *ass_state = 0;
 
 int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
     static const size_t buffsize = 1024*1024*10;
@@ -527,11 +609,13 @@ int assetstore_assimilate(assetstore *store, const char *folder) {
     char full_path[PATH_MAX];
     realpath(folder, full_path);
     
+    mtx_lock(&store->lock);
     ass_state = store->state;
     nftw(full_path, _assimilate, 64, FTW_DEPTH | FTW_PHYS);
     ass_state = NULL;
     
     _write_state(store);
+    mtx_unlock(&store->lock);
     
     return 0;
 }

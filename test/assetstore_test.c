@@ -331,7 +331,24 @@ void test_asset_path() {
     TEST_ASSERT_EQUAL_STRING("imported_path/file", path);
 }
 
+void test_open_same_path_yields_same_store() {
+    assetstore *a1 = assetstore_open("a");
+    assetstore *a2 = assetstore_open("a");
+    assetstore *b = assetstore_open("b");
+    
+    TEST_ASSERT(a1 == a1);
+    TEST_ASSERT(a2 != b);
+    TEST_ASSERT_EQUAL_INT(a1->refcount, 2);
+    TEST_ASSERT_EQUAL_INT(b->refcount, 1);
+    
+    assetstore_close(a2);
+    
+    TEST_ASSERT_EQUAL_INT(a1->refcount, 1);
+    TEST_ASSERT_EQUAL_INT(b->refcount, 1);
+}
+
 int main(void) {
+    assetstore_init();
     UNITY_BEGIN();
 
     RUN_TEST(test_assetstore_basic_disk_io);
@@ -342,6 +359,8 @@ int main(void) {
     RUN_TEST(test_missing_ranges);
     RUN_TEST(test_assimilation);
     RUN_TEST(test_asset_path);
+    RUN_TEST(test_open_same_path_yields_same_store);
     
+    assetstore_deinit();
     return UNITY_END();
 }

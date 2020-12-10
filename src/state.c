@@ -1,4 +1,5 @@
 #include <allonet/state.h>
+#include <allonet/assetstore.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -393,6 +394,8 @@ extern bool allo_initialize(bool redirect_stdout)
         fprintf (stderr, "An error occurred while initializing ENet.\n");
         return false;
     }
+    assetstore_init();
+    atexit(assetstore_deinit);
     atexit (enet_deinitialize);
 
     return true;

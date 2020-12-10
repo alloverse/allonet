@@ -255,6 +255,10 @@ static void bridge_alloclient_request_asset(alloclient *bridgeclient, proxy_mess
     }
 }
 
+static int proxy_alloclient_path_for_asset(alloclient *proxyclient, const char *asset_id, char *buffer, size_t buffer_size) {
+    return alloclient_path_for_asset(_internal(proxyclient)->bridgeclient, asset_id, buffer, buffer_size);
+}
+
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_connect] = bridge_alloclient_connect,
     [msg_disconnect] = bridge_alloclient_disconnect,
@@ -450,6 +454,9 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
     proxyclient->alloclient_get_time = proxy_alloclient_get_time;
     proxyclient->alloclient_get_stats = proxy_alloclient_get_stats;
+    proxyclient->alloclient_request_asset = proxy_alloclient_request_asset;
+    proxyclient->alloclient_add_asset = proxy_alloclient_add_asset;
+    proxyclient->alloclient_path_for_asset = proxy_alloclient_path_for_asset;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

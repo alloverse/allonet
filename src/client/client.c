@@ -553,10 +553,10 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     snprintf(buffer, bufferlen, "--");
 }
 
-char *alloclient_path_for_asset(alloclient *client, const char *asset_id) {
-    return client->alloclient_path_for_asset(client, asset_id);
+char *alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {
+    return client->alloclient_get_path_for_asset(client, asset_id);
 }
-static char *_alloclient_path_for_asset(alloclient *client, const char *asset_id) {
+static char *_alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {
     return assetstore_asset_path(_internal(client)->assetstore, asset_id);
 }
 
@@ -601,7 +601,7 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_get_stats = _alloclient_get_stats;
     
     // assets
-    client->alloclient_path_for_asset = _alloclient_path_for_asset;
+    client->alloclient_get_path_for_asset = _alloclient_get_path_for_asset;
     client->alloclient_add_asset = _alloclient_add_asset;
     client->alloclient_request_asset = _alloclient_request_asset;
     

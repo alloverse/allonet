@@ -255,8 +255,8 @@ static void bridge_alloclient_request_asset(alloclient *bridgeclient, proxy_mess
     }
 }
 
-static char *proxy_alloclient_path_for_asset(alloclient *proxyclient, const char *asset_id) {
-    return alloclient_path_for_asset(_internal(proxyclient)->bridgeclient, asset_id);
+static char *proxy_alloclient_get_path_for_asset(alloclient *proxyclient, const char *asset_id) {
+    return alloclient_get_path_for_asset(_internal(proxyclient)->bridgeclient, asset_id);
 }
 
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
@@ -456,7 +456,7 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_get_stats = proxy_alloclient_get_stats;
     proxyclient->alloclient_request_asset = proxy_alloclient_request_asset;
     proxyclient->alloclient_add_asset = proxy_alloclient_add_asset;
-    proxyclient->alloclient_path_for_asset = proxy_alloclient_path_for_asset;
+    proxyclient->alloclient_get_path_for_asset = proxy_alloclient_get_path_for_asset;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

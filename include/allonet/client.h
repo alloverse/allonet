@@ -133,7 +133,7 @@ typedef struct alloclient {
     /// Get the absolute path to an asset
     /// @param asset_id The asset id
     /// @returns The full path for the asset if it exists and is complete, otherwise NULL.
-    char *(*alloclient_path_for_asset)(alloclient *client, const char *asset_id);
+    char *(*alloclient_get_path_for_asset)(alloclient *client, const char *asset_id);
     /// Add a path to scan for assets
     /// @param folder A path to scan for assets
     void (*alloclient_add_asset)(alloclient *client, const char *folder);
@@ -225,7 +225,7 @@ double alloclient_get_time(alloclient* client);
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
 
-char * alloclient_path_for_asset(alloclient *client, const char *asset_id);
+char *alloclient_get_path_for_asset(alloclient *client, const char *asset_id);
 void alloclient_add_asset(alloclient *client, const char *folder);
 void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id);
 

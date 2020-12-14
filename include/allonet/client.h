@@ -12,6 +12,15 @@ typedef enum alloerror
     alloerror_failed_to_connect = 1004,
 } alloerror;
 
+typedef enum {
+    /// Asset became available
+    client_asset_state_now_available,
+    /// Asset became unavailable
+    client_asset_state_now_unavailable,
+    /// Asset was requested but was not available
+    client_asset_state_requested_unavailable,
+} client_asset_state;
+
 typedef struct alloclient alloclient;
 typedef struct alloclient {
     /** set this to get a callback when state changes. 
@@ -113,7 +122,7 @@ typedef struct alloclient {
     void (*asset_state_callback)(
       alloclient *client,
       const char *asset_id,
-      int state
+      client_asset_state state
     );
     
     // internal

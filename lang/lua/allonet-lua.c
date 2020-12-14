@@ -171,6 +171,7 @@ static void state_callback(alloclient *client, allo_state *state);
 static bool interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client, alloerror code, const char* message );
 static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
+static void asset_state_callback(alloclient *client, const char *asset_id, client_asset_state state);
 
 static int l_alloclient_set_state_callback (lua_State *L)
 {
@@ -187,9 +188,9 @@ static int l_alloclient_set_asset_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
     if(store_function(L, &lclient->asset_callback_index)) {
-        lclient->client->asset_callback = asset_callback;
+        lclient->client->asset_state_callback = asset_state_callback;
     } else {
-        lclient->client->asset_callback = NULL;
+        lclient->client->asset_state_callback = NULL;
     }
     return 0;
 }
@@ -289,7 +290,7 @@ static int l_alloclient_get_stats(lua_State *L)
 
 static int l_alloclient_request_asset(lua_State *L)
 {
-    l_alloclient *lclient = check_alloclient(L, 1);
+    l_alloclient_t *lclient = check_alloclient(L, 1);
     
     const char *asset_id  = luaL_checkstring(L, 2);
     const char *entity_id = luaL_optstring(L, 3, NULL);
@@ -299,7 +300,7 @@ static int l_alloclient_request_asset(lua_State *L)
 
 static int l_alloclient_get_path_for_asset(lua_State *L)
 {
-    l_alloclient *lclient = check_alloclient(L, 1);
+    l_alloclient_t *lclient = check_alloclient(L, 1);
     const char *asset_id = luaL_checkstring(L, 2);
     char *path = alloclient_get_path_for_asset(lclient->client, asset_id);
     lua_pushstring(lclient->L, path);
@@ -357,6 +358,17 @@ static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
     return true;
 }
 
+static void asset_state_callback(alloclient *client, const char *asset_id, client_asset_state state) {
+    l_alloclient_t *lclient = (l_alloclient_t *)client;
+    
+    if (get_function(lclient->L, lclient->asset_callback_index)) {
+        lua_pushstring(lclient->L, asset_id);
+        lua_pushnumber(lclient->L, state);
+        lua_call(lclient->L, 2, 0);
+    }
+    return true;
+}
+
 
 ////// library initialization
 
@@ -379,7 +391,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"get_clock_delta", l_alloclient_get_clock_delta},
     {"get_stats", l_alloclient_get_stats},
     {"get_path_for_asset", l_alloclient_get_path_for_asset},
-    {"request_asset", alloclient_request_asset},
+    {"request_asset", l_alloclient_request_asset},
     {NULL, NULL}
 };
 

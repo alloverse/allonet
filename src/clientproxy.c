@@ -276,7 +276,7 @@ static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
 
 //////// Callbacks
 
-static void bridge_asset_state_callback(alloclient *bridgeclient, const char *asset_id, int state) {
+static void bridge_asset_state_callback(alloclient *bridgeclient, const char *asset_id, client_asset_state state) {
     proxy_message *msg = proxy_message_create(msg_asset_state_callback);
     msg->value.asset_state_callback.asset_id = strdup(asset_id);
     msg->value.asset_state_callback.state = state;

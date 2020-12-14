@@ -154,7 +154,7 @@ int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset
     return assetstore_write(_internal(client)->assetstore, id, offset, buffer, length, total_size);
 }
 
-void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     alloclient *client = (alloclient*)user;
     ENetPeer *peer = _internal(client)->peer;
     
@@ -167,7 +167,7 @@ void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, s
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
 }
 
-void _asset_state_callback_func(const char *asset_id, int state, void *user) {
+static void _asset_state_callback_func(const char *asset_id, int state, void *user) {
     alloclient *client = (alloclient *)user;
     if (client->asset_state_callback) {
         client->asset_state_callback(client, asset_id, state);

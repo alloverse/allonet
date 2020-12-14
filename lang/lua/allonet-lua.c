@@ -235,6 +235,14 @@ static int l_alloclient_simulate(lua_State* L)
     return 0;
 }
 
+static int l_alloclient_get_state (lua_State *L)
+{
+    l_alloclient_t *lclient = check_alloclient(L, 1);
+    push_state_table(L, &lclient->client->_state);
+    return 1;
+}
+
+
 static int l_alloclient_get_time(lua_State *L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
@@ -364,6 +372,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
     {"set_audio_callback", l_alloclient_set_audio_callback},
     {"simulate", l_alloclient_simulate},
+    {"get_state", l_alloclient_get_state},
     {"get_time", l_alloclient_get_time},
     {"get_server_time", l_alloclient_get_server_time},
     {"get_latency", l_alloclient_get_latency},

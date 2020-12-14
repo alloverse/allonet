@@ -10,6 +10,7 @@
 
 static alloserver* serv;
 static allo_entity* place;
+static double last_simulate_at = 0;
 
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
@@ -274,11 +275,16 @@ static void broadcast_server_state(alloserver* serv)
   }
 }
 
-static void step(double dt)
+static void step(double goalDt)
 {
   while (serv->interbeat(serv, 1)) {}
 
   double now = get_ts_monod();
+
+  if (last_simulate_at + goalDt > now) {
+    return;
+  }
+  last_simulate_at = now;
 
   allo_client_intent *intents[32];
   int count = 0;
@@ -474,14 +480,18 @@ bool alloserv_poll_standalone(int allosocket)
   ENET_SOCKETSET_EMPTY(set);
   ENET_SOCKETSET_ADD(set, allosocket);
 
-  int selectr = enet_socketset_select(allosocket, &set, NULL, 10);
+  int hz = 20;
+  double dt = 1.0/hz;
+  int dtmillis = dt*1000;
+
+  int selectr = enet_socketset_select(allosocket, &set, NULL, dtmillis);
   if (selectr < 0) {
     perror("select failed, terminating");
     return false;
   }
   else
   {
-    step(0.01);
+    step(dt);
   }
   return true;
 }

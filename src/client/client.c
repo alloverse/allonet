@@ -176,7 +176,13 @@ void _asset_state_callback_func(const char *asset_id, int state, void *user) {
 
 static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
     assert(_internal(client)->assetstore);
-    asset_handle(data, data_length, _internal(client)->assetstore, _asset_send_func, _asset_state_callback_func, (void*)client);
+    asset_handle(
+        data, data_length,
+        _internal(client)->assetstore,
+        _asset_send_func,
+        _asset_state_callback_func,
+        (void*)client
+    );
 }
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)

@@ -19,8 +19,18 @@ typedef enum asset_mid asset_mid;
 /// @param user The same pointer as sent to a method that also takes this function
 typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
 
+
+typedef enum {
+    /// Asset became available
+    asset_state_now_available,
+    /// Asset became unavailable
+    asset_state_now_unavailable,
+    /// Asset was requested but was not available
+    asset_state_requested_unavailable,
+} asset_state;
+
 /// A callback for when the state of an asset changes, for example when asset availability changes.
-typedef void(*asset_state_func)(const char *asset_id, int state, void *user);
+typedef void(*asset_state_func)(const char *asset_id, asset_state state, void *user);
 
 /// Provide assets a way to process infoming data
 /// @param data The received data to be processed
@@ -41,7 +51,7 @@ void asset_handle(
 /// @param id The asset id to request
 /// @param entity_id Optional id of the entity that needs the asset
 /// @param send A function to send data over the network
-/// @param user Passed to the `read_range`, `write_range` and `send` methods.
+/// @param user Passed to `send`.
 void asset_request(
     const char *id,
     const char *entity_id,
@@ -49,7 +59,12 @@ void asset_request(
     void *user
 );
 
-
+/// Start delivering an asset.
+/// @param id The asset to deliver
+/// @param store The asset store
+/// @param send A function to send data over the network
+/// @param user User data passed as last argument to `send`
+void asset_deliver(const char *id, assetstore *store, asset_send_func send, void *user);
 
 
 // Protocol details

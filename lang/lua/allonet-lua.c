@@ -15,6 +15,7 @@ typedef struct l_alloclient
     int interaction_callback_index;
     int disconnected_callback_index;
     int audio_callback_index;
+    int asset_callback_index;
 } l_alloclient_t;
 
 static int l_alloclient_create (lua_State *L)
@@ -178,6 +179,17 @@ static int l_alloclient_set_state_callback (lua_State *L)
         lclient->client->state_callback = state_callback;
     } else {
         lclient->client->state_callback = NULL;
+    }
+    return 0;
+}
+
+static int l_alloclient_set_asset_callback (lua_State *L)
+{
+    l_alloclient_t *lclient = check_alloclient(L, 1);
+    if(store_function(L, &lclient->asset_callback_index)) {
+        lclient->client->asset_callback = asset_callback;
+    } else {
+        lclient->client->asset_callback = NULL;
     }
     return 0;
 }

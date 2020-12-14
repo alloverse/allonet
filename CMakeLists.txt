@@ -53,7 +53,6 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
     ${INCLUDE_FILES_PREFIX}/jobs.h
-    ${INCLUDE_FILES_PREFIX}/asset.h
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
@@ -71,11 +70,16 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/math.c
     ${SOURCE_FILES_PREFIX}/jobs.c
+    ${SOURCE_FILES_PREFIX}/asset.h
     ${SOURCE_FILES_PREFIX}/asset.c
+    ${SOURCE_FILES_PREFIX}/assetstore.h
+    ${SOURCE_FILES_PREFIX}/assetstore.c
     ${SOURCE_FILES_PREFIX}/delta.h
     ${SOURCE_FILES_PREFIX}/delta.c
     ${SOURCE_FILES_PREFIX}/clientproxy.h
     ${SOURCE_FILES_PREFIX}/clientproxy.c
+    ${SOURCE_FILES_PREFIX}/sha1.h
+    ${SOURCE_FILES_PREFIX}/sha1.c
     lib/mathc/mathc.c
 )
 
@@ -152,9 +156,9 @@ add_executable(allonet_jobs_test test/jobs_test.c)
 target_link_libraries(allonet_jobs_test allonet unity)
 add_test(NAME allonet_jobs_test COMMAND allonet_jobs_test)
 
-add_executable(allonet_asset_test test/asset_test.c)
-target_link_libraries(allonet_asset_test allonet unity)
-add_test(NAME allonet_asset_test COMMAND allonet_asset_test)
+add_executable(allonet_assetstore_test test/assetstore_test.c)
+target_link_libraries(allonet_assetstore_test allonet unity)
+add_test(NAME allonet_assetstore_test COMMAND allonet_assetstore_test)
 
 add_executable(allonet_delta_test test/delta_test.c)
 target_link_libraries(allonet_delta_test allonet unity cjson)

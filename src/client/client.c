@@ -1,7 +1,5 @@
 #include "_client.h"
 #include <allonet/arr.h>
-#include <allonet/asset.h>
-#include <allonet/assetstore.h>
 #include <cJSON/cJSON.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +7,8 @@
 #include <math.h>
 #include "../util.h"
 #include "../clientproxy.h"
+#include "../asset.h"
+#include "../assetstore.h"
 
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))

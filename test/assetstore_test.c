@@ -2,8 +2,6 @@
 #include <cJSON/cJSON.h>
 #include <unity.h>
 #include <allonet/jobs.h>
-#include <allonet/asset.h>
-#include <allonet/assetstore.h>
 #include <stdlib.h>
 #include <allonet/arr.h>
 #include <stdbool.h>
@@ -11,6 +9,8 @@
 #include <stdarg.h>
 #include <ftw.h>
 #include <assert.h>
+#include "../src/asset.h"
+#include "../src/assetstore.h"
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \

@@ -1,9 +1,9 @@
 #include <allonet/client.h>
 #include <allonet/jobs.h>
-#include <allonet/assetstore.h>
 #include <opus.h>
 #include <enet/enet.h>
 #include "../delta.h"
+#include "../assetstore.h"
 
 typedef struct interaction_queue {
     allo_interaction *interaction;

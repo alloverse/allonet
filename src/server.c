@@ -6,7 +6,8 @@
 #include <cJSON/cJSON.h>
 #include "util.h"
 #include <allonet/arr.h>
-#include <allonet/assetstore.h>
+#include "asset.h"
+#include "assetstore.h"
 
 void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len);
 
@@ -81,9 +82,6 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
         serv->clients_callback(serv, new_client, NULL);
     }
 }
-
-#include <allonet/asset.h>
-#include <allonet/assetstore.h>
 
 void _add_asset_to_wanted(char *asset_id, alloserver *server, alloserver_client *client);
 void _remove_asset_from_wanted(char *asset_id, alloserver *server, alloserver_client *client);

@@ -5,7 +5,6 @@
 //  Created by Patrik on 2020-11-27.
 //
 
-#include <allonet/assetstore.h>
 #include <allonet/arr.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +17,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <ftw.h>
+#include "assetstore.h"
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
@@ -551,7 +551,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
 
 
 // Temp hashing func
-#include "src/sha1.h"
+#include "sha1.h"
 
 
 __thread cJSON *ass_state = 0;

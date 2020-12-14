@@ -1,12 +1,11 @@
 #include "client/_client.h"
 #include <stdio.h>
-#include <allonet/asset.h>
-#include <allonet/assetstore.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include "util.h"
-#include "_asset.h"
+#include "asset.h"
+#include "assetstore.h"
 
 #define min(a, b) a < b ? a : b;
 

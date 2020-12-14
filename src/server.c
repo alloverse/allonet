@@ -268,7 +268,6 @@ alloserver *allo_listen(int listenhost, int port)
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     arr_init(&_servinternal(serv)->wanted_assets);
     _servinternal(serv)->assetstore = assetstore_open("server_asset_cache");
-    assetstore_assimilate(_servinternal(serv)->assetstore, "server_asset_files");
     
     srand((unsigned int)time(NULL));
 

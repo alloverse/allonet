@@ -600,8 +600,6 @@ alloclient *alloclient_create(bool threaded)
     LIST_INIT(&client->_state.entities);
     
     _internal(client)->assetstore = assetstore_open("client_asset_cache");
-    
-    assetstore_assimilate(_internal(client)->assetstore, "client_asset_files"); // Note<voxar>: for testing, remove.
 
     client->alloclient_connect = _alloclient_connect;
     client->alloclient_disconnect = _alloclient_disconnect;

@@ -153,6 +153,10 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
   {
     handle_place_remove_entity_interaction(serv, client, interaction, body);
   }
+
+  // force sending delta, since the above was likely an important change
+  last_simulate_at = 0;
+
   cJSON_Delete(body);
 }
 
@@ -480,7 +484,7 @@ bool alloserv_poll_standalone(int allosocket)
   ENET_SOCKETSET_EMPTY(set);
   ENET_SOCKETSET_ADD(set, allosocket);
 
-  int hz = 20;
+  int hz = 5;
   double dt = 1.0/hz;
   int dtmillis = dt*1000;
 

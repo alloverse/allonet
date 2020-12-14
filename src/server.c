@@ -83,9 +83,9 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
     }
 }
 
-void _add_asset_to_wanted(char *asset_id, alloserver *server, alloserver_client *client);
-void _remove_asset_from_wanted(char *asset_id, alloserver *server, alloserver_client *client);
-void _forward_wanted_asset(char *asset_id, alloserver *server, alloserver_client *client);
+void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
+void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
+void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client);
 void _remove_client_from_wanted(alloserver *server, alloserver_client *client);
 
 typedef struct asset_user {
@@ -95,7 +95,7 @@ typedef struct asset_user {
 
 
 /// @param user must be an asset_user
-void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     // Build packet and send to everyone except the client in user
     
     alloserver *server = ((asset_user *)user)->server;
@@ -134,7 +134,7 @@ void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, s
     _asset_send_func_peer(mid, header, data, data_length, (void*)peer);
 }
 
-void _asset_state_callback_func(const char *asset_id, int state, void *user) {
+static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
     alloserver *server = ((asset_user *)user)->server;
     alloserver_client *client = ((asset_user *)user)->client;
     alloserv_client_internal *cl = _clientinternal(client);
@@ -324,7 +324,7 @@ int allo_socket_for_select(alloserver *serv)
 
 
 
-void _add_asset_to_wanted(char *asset_id, alloserver *server, alloserver_client *client) {
+void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     
     wanted_asset *wanted = malloc(sizeof(wanted_asset));
@@ -333,7 +333,7 @@ void _add_asset_to_wanted(char *asset_id, alloserver *server, alloserver_client 
     arr_push(&sv->wanted_assets, wanted);
 }
 
-void _remove_asset_from_wanted(char *asset_id, alloserver *server, alloserver_client *client) {
+void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     ENetPeer *peer = _clientinternal(client)->peer;
     
@@ -347,7 +347,7 @@ void _remove_asset_from_wanted(char *asset_id, alloserver *server, alloserver_cl
     }
 }
 
-void _forward_wanted_asset(char *asset_id, alloserver *server, alloserver_client *client) {
+void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     
     for (int i = 0; i < sv->wanted_assets.length; i++) {

@@ -182,7 +182,7 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
 
 static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd)
 {
-  cJSON *server_time = cJSON_GetObjectItem(cmd, "server_time");
+  cJSON *server_time = cJSON_GetObjectItemCaseSensitive(cmd, "server_time");
   if(server_time == NULL)
     server_time = cJSON_AddNumberToObject(cmd, "server_time", 0.0);
   cJSON_SetNumberValue(server_time, get_ts_monod());
@@ -204,9 +204,9 @@ static void handle_asset(alloserver* serv, alloserver_client* client, const uint
     
     assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
     if (mid == asset_mid_request) {
-        cJSON *id = cJSON_GetObjectItem(json, "id");
-        cJSON *range = cJSON_GetObjectItem(json, "range");
-        cJSON *published_by = cJSON_GetObjectItem(json, "published_by"); //opt
+        cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "id");
+        cJSON *range = cJSON_GetObjectItemCaseSensitive(json, "range");
+        cJSON *published_by = cJSON_GetObjectItemCaseSensitive(json, "published_by"); //opt
         
         int has_file = 0;
         if (has_file) {
@@ -215,9 +215,9 @@ static void handle_asset(alloserver* serv, alloserver_client* client, const uint
             
         }
     } else if (mid == asset_mid_data) {
-        cJSON *id = cJSON_GetObjectItem(json, "id");
-        cJSON *range = cJSON_GetObjectItem(json, "range");
-        cJSON *total_length = cJSON_GetObjectItem(json, "published_by");
+        cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "id");
+        cJSON *range = cJSON_GetObjectItemCaseSensitive(json, "range");
+        cJSON *total_length = cJSON_GetObjectItemCaseSensitive(json, "published_by");
     } else if (mid == asset_mid_failure) {
         
     }
@@ -228,7 +228,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
   if (channel == CHANNEL_STATEDIFFS)
   {
     cJSON* cmd = cJSON_Parse((const char*)data);
-    const cJSON* ntvintent = cJSON_GetObjectItem(cmd, "intent");
+    const cJSON* ntvintent = cJSON_GetObjectItemCaseSensitive(cmd, "intent");
     allo_client_intent *intent = allo_client_intent_parse_cjson(ntvintent);
     handle_intent(serv, client, intent);
     allo_client_intent_free(intent);
@@ -321,7 +321,7 @@ static cJSON* spec_located_at(float x, float y, float z, float sz)
 }
 static cJSON* spec_add_child(cJSON* spec, cJSON* childspec)
 {
-  cJSON* children = cJSON_GetObjectItem(spec, "children");
+  cJSON* children = cJSON_GetObjectItemCaseSensitive(spec, "children");
   if (children == NULL) {
     children = cJSON_CreateArray();
     cJSON_AddItemToObject(spec, "children", children);

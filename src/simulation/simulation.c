@@ -6,12 +6,12 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   allo_entity *place = state_get_entity(state, "place");
   double old_time = 0.0;
   if(place) {
-    cJSON *clock = cJSON_GetObjectItem(place->components, "clock");
+    cJSON *clock = cJSON_GetObjectItemCaseSensitive(place->components, "clock");
     if(!clock) {
       clock = cjson_create_object("time", cJSON_CreateNumber(server_time));
       cJSON_AddItemToObject(place->components, "clock", clock);
     }
-    cJSON *time =cJSON_GetObjectItem(clock, "time");
+    cJSON *time =cJSON_GetObjectItemCaseSensitive(clock, "time");
     old_time = time->valuedouble;
     cJSON_SetNumberValue(time, server_time);
   }
@@ -47,10 +47,10 @@ allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar,
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
   {
-    cJSON* relationships = cJSON_GetObjectItem(entity->components, "relationships");
-    cJSON* parent = cJSON_GetObjectItem(relationships, "parent");
-    cJSON* intent = cJSON_GetObjectItem(entity->components, "intent");
-    cJSON* actuate_pose = cJSON_GetObjectItem(intent, "actuate_pose");
+    cJSON* relationships = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
+    cJSON* parent = cJSON_GetObjectItemCaseSensitive(relationships, "parent");
+    cJSON* intent = cJSON_GetObjectItemCaseSensitive(entity->components, "intent");
+    cJSON* actuate_pose = cJSON_GetObjectItemCaseSensitive(intent, "actuate_pose");
 
     if (parent && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
     {

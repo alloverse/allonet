@@ -6,7 +6,7 @@
 
 void allo_delta_insert(statehistory_t *history, cJSON *next_state)
 {
-    cJSON *revj = cJSON_GetObjectItem(next_state, "revision");
+    cJSON *revj = cJSON_GetObjectItemCaseSensitive(next_state, "revision");
     assert(revj);
     int64_t rev = cjson_get_int64_value(revj);
     cJSON *existing = history->history[rev%allo_statehistory_length];
@@ -27,7 +27,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     cJSON *latest = history->history[history->latest_revision%allo_statehistory_length];
     assert(latest);
     cJSON *old = history->history[old_revision%allo_statehistory_length];
-    int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItem(old, "revision"));
+    int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(old, "revision"));
     if(!old || old_history_rev != old_revision)
     {
         cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
@@ -69,7 +69,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     }
 
     cJSON *current = history->history[patch_from%allo_statehistory_length];
-    int64_t current_rev = cjson_get_int64_value(cJSON_GetObjectItem(current, "revision"));
+    int64_t current_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(current, "revision"));
 
     if(patch_fromj && (patch_from != current_rev || current == NULL))
     {
@@ -85,7 +85,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
             break;
         case Apply:
             result = cJSON_Duplicate(current, 1);
-            if(cJSONUtils_ApplyPatches(current, cJSON_GetObjectItem(delta, "patches")) != 0)
+            if(cJSONUtils_ApplyPatches(current, cJSON_GetObjectItemCaseSensitive(delta, "patches")) != 0)
             {
                 cJSON_Delete(result);
                 return NULL;

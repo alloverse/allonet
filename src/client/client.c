@@ -28,7 +28,7 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         return;
     }
 
-    int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItem(cmd, "patch_from"));
+    int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
     cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
     if(staterep == NULL)
     {
@@ -41,10 +41,10 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         return;
     }
 
-    int64_t rev = nonnull(cJSON_GetObjectItem(staterep, "revision"))->valueint;
+    int64_t rev = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "revision"))->valueint;
     _internal(client)->latest_intent->ack_state_rev = client->_state.revision = rev;
 
-    const cJSON *entities = nonnull(cJSON_GetObjectItem(staterep, "entities"));
+    const cJSON *entities = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "entities"));
     
     // keep track of entities that aren't mentioned in the incoming list
     cJSON *deletes = cJSON_CreateArray();
@@ -57,10 +57,10 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
     // update or create entities
     cJSON *edesc = NULL;
     cJSON_ArrayForEach(edesc, entities) {
-        const char *entity_id = nonnull(cJSON_GetObjectItem(edesc, "id"))->valuestring;
+        const char *entity_id = nonnull(cJSON_GetObjectItemCaseSensitive(edesc, "id"))->valuestring;
         cjson_delete_from_array(deletes, entity_id);
         
-        cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItem(edesc, "components"), 1));
+        cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(edesc, "components"), 1));
         allo_entity *entity = state_get_entity(&client->_state, entity_id);
         if(!entity) {
             entity = entity_create(entity_id);
@@ -81,8 +81,8 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
             LIST_REMOVE(to_delete, pointers);
             
             // if we find a decoder linked to the entity we remove it
-            cJSON *media = cJSON_GetObjectItem(to_delete->components, "live_media");
-            cJSON *track_id = cJSON_GetObjectItem(media, "track_id");
+            cJSON *media = cJSON_GetObjectItemCaseSensitive(to_delete->components, "live_media");
+            cJSON *track_id = cJSON_GetObjectItemCaseSensitive(media, "track_id");
             if (media && track_id) {
                 fprintf(stderr, "Destroying a linked decoder\n");
                 _alloclient_decoder_destroy_for_track(client, track_id->valueint);
@@ -133,8 +133,8 @@ static void parse_command(alloclient *client, cJSON *cmdrep)
 static void parse_clock(alloclient *client, cJSON *response)
 {
     double now = get_ts_monod();
-    double then = cJSON_GetObjectItem(response, "client_time")->valuedouble;
-    double server_time = cJSON_GetObjectItem(response, "server_time")->valuedouble;
+    double then = cJSON_GetObjectItemCaseSensitive(response, "client_time")->valuedouble;
+    double server_time = cJSON_GetObjectItemCaseSensitive(response, "server_time")->valuedouble;
     double roundtrip = now - then;
     double latency = client->clock_latency = roundtrip / 2.0;
     double delta = client->clock_deltaToServer = server_time + roundtrip - now;

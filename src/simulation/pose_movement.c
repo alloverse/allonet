@@ -5,11 +5,11 @@ void allosim_pose_movement(allo_state* state, allo_entity* avatar, const allo_cl
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
   {
-    cJSON* rels = cJSON_GetObjectItem(entity->components, "relationships");
-    const char* parent = cJSON_GetStringValue(cJSON_GetObjectItem(rels, "parent"));
-    cJSON* intents = cJSON_GetObjectItem(entity->components, "intent");
-    const char* actuate_pose = cJSON_GetStringValue(cJSON_GetObjectItem(intents, "actuate_pose"));
-    const char* from_avatar = cJSON_GetStringValue(cJSON_GetObjectItem(intents, "from_avatar"));
+    cJSON* rels = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
+    const char* parent = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(rels, "parent"));
+    cJSON* intents = cJSON_GetObjectItemCaseSensitive(entity->components, "intent");
+    const char* actuate_pose = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(intents, "actuate_pose"));
+    const char* from_avatar = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(intents, "from_avatar"));
 
     // don't care about entities that don't try to pose
     if (!actuate_pose)

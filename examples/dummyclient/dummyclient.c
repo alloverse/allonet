@@ -93,6 +93,9 @@ static bool interaction(
         request = allo_interaction_create("request", me, "place", "124", "[\"allocate_track\", \"audio\", 4800, 1, \"opus\"]");
         alloclient_send_interaction(client, request);
         allo_interaction_free(request);
+        
+//        alloclient_request_asset(client, "f03660c3844041df50a9189bf9b231aed3b1aff5", "anyone");
+        alloclient_request_asset(client, "803d5bab08a8a0758222cd4dff9793bd16add262", "anyone");
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {

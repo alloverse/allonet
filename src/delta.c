@@ -46,7 +46,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     return patchs;
 }
 
-typedef enum { Set, Apply, Merge } PatchStyle;
+typedef enum { Set, Merge } PatchStyle;
 
 cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
 {
@@ -54,7 +54,6 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     const char *patch_styles = cJSON_GetStringValue(patch_stylej);
     assert(patch_styles);
     PatchStyle patch_style = Set;
-    if(strcmp(patch_styles, "apply") == 0) patch_style = Apply;
     if(strcmp(patch_styles, "merge") == 0) patch_style = Merge;
     cJSON_Delete(patch_stylej);
 
@@ -82,15 +81,6 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     switch(patch_style) {
         case Set:
             result = delta;
-            break;
-        case Apply:
-            result = cJSON_Duplicate(current, 1);
-            if(cJSONUtils_ApplyPatches(current, cJSON_GetObjectItemCaseSensitive(delta, "patches")) != 0)
-            {
-                cJSON_Delete(result);
-                return NULL;
-            }
-            cJSON_Delete(delta);
             break;
         case Merge:
             result = cJSON_Duplicate(current, 1);

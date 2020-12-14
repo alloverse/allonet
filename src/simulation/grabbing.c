@@ -29,8 +29,8 @@ void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, co
     allo_entity *const grabber = grabbers[i];
     allo_entity *const grabbed = state_get_entity(state, grab->entity);
     allo_entity * actuated = grabbed;
-    cJSON *const grabbable = cJSON_GetObjectItem(grabbed ? grabbed->components : NULL, "grabbable");
-    const char* actuate_on = cJSON_GetStringValue(cJSON_GetObjectItem(grabbable, "actuate_on"));
+    cJSON *const grabbable = cJSON_GetObjectItemCaseSensitive(grabbed ? grabbed->components : NULL, "grabbable");
+    const char* actuate_on = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(grabbable, "actuate_on"));
     if (actuate_on && strlen(actuate_on) > 0) {
       if (strcmp(actuate_on, "$parent") == 0) {
         actuated = entity_get_parent(state, grabbed);
@@ -40,11 +40,11 @@ void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, co
     }
     if (!grab || !grabber || !grabbed || !actuated || !grabbable) { continue; }
 
-    cJSON* const trcj = cJSON_GetObjectItem(grabbable, "translation_constraint");
+    cJSON* const trcj = cJSON_GetObjectItemCaseSensitive(grabbable, "translation_constraint");
     allo_vector translation_constraint = {{ 1,1,1 }};
     if (cJSON_GetArraySize(trcj) == 3)
       translation_constraint = (allo_vector){{ cJSON_GetArrayItem(trcj, 0)->valuedouble, cJSON_GetArrayItem(trcj, 1)->valuedouble , cJSON_GetArrayItem(trcj, 2)->valuedouble }};
-    cJSON* const rcj = cJSON_GetObjectItem(grabbable, "rotation_constraint");
+    cJSON* const rcj = cJSON_GetObjectItemCaseSensitive(grabbable, "rotation_constraint");
     allo_vector rotation_constraint = {{ 1, 1, 1 }};
     if(cJSON_GetArraySize(rcj) == 3)
       rotation_constraint = (allo_vector) {{cJSON_GetArrayItem(rcj, 0)->valuedouble, cJSON_GetArrayItem(rcj, 1)->valuedouble, cJSON_GetArrayItem(rcj, 2)->valuedouble }};

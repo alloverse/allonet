@@ -45,7 +45,7 @@ static cJSON* spec_located_at(float x, float y, float z)
 }
 static cJSON* spec_add_child(cJSON* spec, cJSON* childspec)
 {
-  cJSON *children = cJSON_GetObjectItem(spec, "children");
+  cJSON *children = cJSON_GetObjectItemCaseSensitive(spec, "children");
   if (children == NULL) {
     children = cJSON_CreateArray();
     cJSON_AddItemToObject(spec, "children", children);
@@ -59,8 +59,8 @@ static allo_entity* get_first_child(allo_state* state, allo_entity* ofParent)
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
   {
-    cJSON* relationships = cJSON_GetObjectItem(entity->components, "relationships");
-    cJSON* parent = cJSON_GetObjectItem(relationships, "parent");
+    cJSON* relationships = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
+    cJSON* parent = cJSON_GetObjectItemCaseSensitive(relationships, "parent");
     if (parent && parent->valuestring && strcmp(parent->valuestring, ofParent->id) == 0)
     {
       return entity;

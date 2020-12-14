@@ -73,11 +73,11 @@ void test_basic(void)
   TEST_ASSERT_TRUE_MESSAGE(cJSON_Compare(second, merged, true), "expected patch to bring state up to speed");
 
   // and make sure the change is propagated to the actual entity rep
-  cJSON *entsj = cJSON_GetObjectItem(merged, "entities");
-  cJSON *fooj = cJSON_GetObjectItem(entsj, foo->id);
-  cJSON *componentsj = cJSON_GetObjectItem(fooj, "components");
-  cJSON *transformj = cJSON_GetObjectItem(componentsj, "transform");
-  cJSON *matrix = cJSON_GetObjectItem(transformj, "matrix");
+  cJSON *entsj = cJSON_GetObjectItemCaseSensitive(merged, "entities");
+  cJSON *fooj = cJSON_GetObjectItemCaseSensitive(entsj, foo->id);
+  cJSON *componentsj = cJSON_GetObjectItemCaseSensitive(fooj, "components");
+  cJSON *transformj = cJSON_GetObjectItemCaseSensitive(componentsj, "transform");
+  cJSON *matrix = cJSON_GetObjectItemCaseSensitive(transformj, "matrix");
   allo_m4x4 moved2 = cjson2m(matrix);
   test_matrices_equal(moved, moved2);
 }

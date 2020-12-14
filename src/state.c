@@ -79,8 +79,8 @@ static cJSON* grab_to_cjson(allo_client_pose_grab grab)
 static allo_client_pose_grab grab_parse_cjson(cJSON* cjson)
 {
   return (allo_client_pose_grab) {
-    .entity = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItem(cjson, "entity"))),
-    .grabber_from_entity_transform = cjson2m(cJSON_GetObjectItem(cjson, "grabber_from_entity_transform"))
+    .entity = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(cjson, "entity"))),
+    .grabber_from_entity_transform = cjson2m(cJSON_GetObjectItemCaseSensitive(cjson, "grabber_from_entity_transform"))
   };
 }
 
@@ -122,32 +122,34 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
 allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
 {
   allo_client_intent* intent = allo_client_intent_create();
-  cJSON* poses = cJSON_GetObjectItem(from, "poses");
-  intent->entity_id = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItem(from, "entity_id")));
-  intent->zmovement = cJSON_GetObjectItem(from, "zmovement")->valuedouble;
-  intent->xmovement = cJSON_GetObjectItem(from, "xmovement")->valuedouble;
-  intent->yaw = cJSON_GetObjectItem(from, "yaw")->valuedouble;
-  intent->pitch = cJSON_GetObjectItem(from, "pitch")->valuedouble;
+  cJSON* poses = cJSON_GetObjectItemCaseSensitive(from, "poses");
+  intent->entity_id = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(from, "entity_id")));
+  intent->zmovement = cJSON_GetObjectItemCaseSensitive(from, "zmovement")->valuedouble;
+  intent->xmovement = cJSON_GetObjectItemCaseSensitive(from, "xmovement")->valuedouble;
+  intent->yaw = cJSON_GetObjectItemCaseSensitive(from, "yaw")->valuedouble;
+  intent->pitch = cJSON_GetObjectItemCaseSensitive(from, "pitch")->valuedouble;
+  cJSON *hand_left = cJSON_GetObjectItemCaseSensitive(poses, "hand/left");
+  cJSON *hand_right = cJSON_GetObjectItemCaseSensitive(poses, "hand/right");
   intent->poses = (allo_client_poses){
     .head = (allo_client_head_pose){
-      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "head"), "matrix")),
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "head"), "matrix")),
     },
     .torso = (allo_client_head_pose){
-      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "torso"), "matrix")),
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "torso"), "matrix")),
     },
     .left_hand = (allo_client_hand_pose){
-      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "matrix")),
-      .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "grab"))
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(hand_left, "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItemCaseSensitive(hand_left, "grab"))
     },
     .right_hand = (allo_client_hand_pose){
-      .matrix = cjson2m(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "matrix")),
-      .grab = grab_parse_cjson(cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "grab"))
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(hand_right, "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItemCaseSensitive(hand_right, "grab"))
     },
   };
-  cjson_to_skeleton(intent->poses.left_hand.skeleton, cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/left"), "skeleton"));
-  cjson_to_skeleton(intent->poses.right_hand.skeleton, cJSON_GetObjectItem(cJSON_GetObjectItem(poses, "hand/right"), "skeleton"));
+  cjson_to_skeleton(intent->poses.left_hand.skeleton, cJSON_GetObjectItemCaseSensitive(hand_left, "skeleton"));
+  cjson_to_skeleton(intent->poses.right_hand.skeleton, cJSON_GetObjectItemCaseSensitive(hand_right, "skeleton"));
 
-  intent->ack_state_rev = cjson_get_int64_value(cJSON_GetObjectItem(from, "ack_state_rev"));
+  intent->ack_state_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(from, "ack_state_rev"));
   return intent;
 }
 
@@ -168,8 +170,8 @@ void entity_destroy(allo_entity *entity)
 
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity)
 {
-  cJSON* relationships = cJSON_GetObjectItem(entity->components, "relationships");
-  cJSON* parentIdJ = cJSON_GetObjectItem(relationships, "parent");
+  cJSON* relationships = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
+  cJSON* parentIdJ = cJSON_GetObjectItemCaseSensitive(relationships, "parent");
   if (!parentIdJ) return NULL;
   return state_get_entity(state, cJSON_GetStringValue(parentIdJ));
 }
@@ -178,8 +180,8 @@ extern allo_m4x4 entity_get_transform(allo_entity* entity)
 {
   if(!entity)
     return allo_m4x4_identity();
-  cJSON* transform = cJSON_GetObjectItem(entity->components, "transform");
-  cJSON* matrix = cJSON_GetObjectItem(transform, "matrix");
+  cJSON* transform = cJSON_GetObjectItemCaseSensitive(entity->components, "transform");
+  cJSON* matrix = cJSON_GetObjectItemCaseSensitive(transform, "matrix");
   if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16)
     return allo_m4x4_identity();
 
@@ -258,8 +260,8 @@ void entity_set_transform(allo_entity* entity, allo_m4x4 m)
   {
     assert(isnan(m.v[i]) == false);
   }
-  cJSON* transform = cJSON_GetObjectItem(entity->components, "transform");
-  cJSON* matrix = cJSON_GetObjectItem(transform, "matrix");
+  cJSON* transform = cJSON_GetObjectItemCaseSensitive(entity->components, "transform");
+  cJSON* matrix = cJSON_GetObjectItemCaseSensitive(transform, "matrix");
   if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16) 
   {
     matrix = cJSON_CreateDoubleArray(m.v, 16);
@@ -331,8 +333,8 @@ bool allo_state_remove_entity(allo_state *state, const char *eid, allo_removal_m
   {
     allo_entity *potential_child = entity;
     entity = entity->pointers.le_next;
-    cJSON *relationships = cJSON_GetObjectItem(potential_child->components, "relationships");
-    const char *parent = cJSON_GetStringValue(cJSON_GetObjectItem(relationships, "parent"));
+    cJSON *relationships = cJSON_GetObjectItemCaseSensitive(potential_child->components, "relationships");
+    const char *parent = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(relationships, "parent"));
     if(parent && strcmp(parent, removed_entity->id) == 0)
     {
       arr_push(&children, potential_child);

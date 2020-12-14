@@ -127,6 +127,8 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
   intent->xmovement = cJSON_GetObjectItemCaseSensitive(from, "xmovement")->valuedouble;
   intent->yaw = cJSON_GetObjectItemCaseSensitive(from, "yaw")->valuedouble;
   intent->pitch = cJSON_GetObjectItemCaseSensitive(from, "pitch")->valuedouble;
+  cJSON *hand_left = cJSON_GetObjectItemCaseSensitive(poses, "hand/left");
+  cJSON *hand_right = cJSON_GetObjectItemCaseSensitive(poses, "hand/right");
   intent->poses = (allo_client_poses){
     .head = (allo_client_head_pose){
       .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "head"), "matrix")),
@@ -135,16 +137,16 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
       .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "torso"), "matrix")),
     },
     .left_hand = (allo_client_hand_pose){
-      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "hand/left"), "matrix")),
-      .grab = grab_parse_cjson(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "hand/left"), "grab"))
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(hand_left, "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItemCaseSensitive(hand_left, "grab"))
     },
     .right_hand = (allo_client_hand_pose){
-      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "hand/right"), "matrix")),
-      .grab = grab_parse_cjson(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "hand/right"), "grab"))
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(hand_right, "matrix")),
+      .grab = grab_parse_cjson(cJSON_GetObjectItemCaseSensitive(hand_right, "grab"))
     },
   };
-  cjson_to_skeleton(intent->poses.left_hand.skeleton, cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "hand/left"), "skeleton"));
-  cjson_to_skeleton(intent->poses.right_hand.skeleton, cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "hand/right"), "skeleton"));
+  cjson_to_skeleton(intent->poses.left_hand.skeleton, cJSON_GetObjectItemCaseSensitive(hand_left, "skeleton"));
+  cjson_to_skeleton(intent->poses.right_hand.skeleton, cJSON_GetObjectItemCaseSensitive(hand_right, "skeleton"));
 
   intent->ack_state_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(from, "ack_state_rev"));
   return intent;

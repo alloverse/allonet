@@ -167,7 +167,7 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
 }
 
-static void _asset_state_callback_func(const char *asset_id, int state, void *user) {
+static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
     alloclient *client = (alloclient *)user;
     if (client->asset_state_callback) {
         client->asset_state_callback(client, asset_id, state);

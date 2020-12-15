@@ -240,7 +240,7 @@ assetstore *assetstore_open(const char *disk_path) {
         
         free(contents);
     } else {
-        char *wd = getwd(NULL);
+        char *wd = getcwd(NULL, 0);
         log("assetstore: CWD: %s\n", wd);
         free(wd);
         log("assetstore: Initializing store at %s\n", disk_path);

@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <cJSON/cJSON.h>
 #include <tinycthread.h>
 

@@ -54,13 +54,13 @@ void _resetTestDiskSpace() {
     }
 }
 
-int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag) {
     int rv = remove(fpath);
     if (rv) perror(fpath);
     return rv;
 }
 int rmrf(const char *path) {
-    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
+    return ftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 void _reset_disk() {

@@ -366,7 +366,6 @@ static void asset_state_callback(alloclient *client, const char *asset_id, clien
         lua_pushnumber(lclient->L, state);
         lua_call(lclient->L, 2, 0);
     }
-    return true;
 }
 
 

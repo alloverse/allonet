@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <cJSON/cJSON.h>
 #include <tinycthread.h>
 
@@ -66,7 +67,7 @@ size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, si
 /// @param out_total_size Is set to the total size of the asset.
 /// @returns The number of bytes read, or a negative value on error.
 /// @note Trying to read bytes from an incomplete asset may return ininitialized data. Check with `assetstore_state`.
-int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_int8_t *buffer, size_t length, size_t *out_total_size);
+int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size);
 
 /// Write some data to an asset
 /// @param store The asset store
@@ -76,7 +77,7 @@ int assetstore_read(assetstore *store, const char *asset_id, size_t offset, u_in
 /// @param length The size of the data to write
 /// @param total_size The expected total size of the asset.
 /// @returns Negative error code, or positive number of bytes written
-int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size);
+int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
 
 /// Imports and publishes files in folder
 int assetstore_assimilate(assetstore *store, const char *folder);

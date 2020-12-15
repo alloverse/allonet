@@ -128,7 +128,7 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
     return (int)rlen;
 }
 
-int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
+int __disk_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
     char *fpath = _asset_path(store, asset_id);
     int res = 0;
     int f = open(fpath, O_WRONLY | O_APPEND | O_CREAT, 0600);
@@ -518,7 +518,7 @@ void _update_asset_state(assetstore *store, const char *asset_id) {
     _write_state(store);
 }
 
-int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
+int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
     assert(store);
     assert(asset_id);
     assert(data);

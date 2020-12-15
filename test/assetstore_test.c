@@ -39,7 +39,7 @@ int __test_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
     return length;
 }
 
-int __test_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size) {
+int __test_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
     assert(data);
     assert((offset + length) < TEST_DISK_SPACE);
     memcpy(&__test_disk[offset], data, length);
@@ -91,7 +91,7 @@ static void _asset_complete_cb(assetstore *store, const char *asset_id) {
 ///Private assetstore.c declares
 char *_asset_path(assetstore *store, const char *id);
 int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length);
-int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u_int8_t *data, size_t length, size_t total_size);
+int __disk_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
 
 void test_assetstore_basic_disk_io() {
     char *path = _asset_path(store, "1");

@@ -12,11 +12,16 @@
 #include <memory.h>
 #include <assert.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <ftw.h>
+#ifdef _WIN32
+ #include <direct.h>
+ #define getcwd _getcwd // stupid MSFT "deprecation" warning
+#else
+ #include <unistd.h>
+#endif
 #include "assetstore.h"
 
 #define max(a,b) \
@@ -556,7 +561,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
 
 __thread cJSON *ass_state = 0;
 
-int _assimilate(const char *path, const struct stat *sb, int typeflag) {
+int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
     static const size_t buffsize = 1024*1024*10;
     uint8_t *buffer = malloc(buffsize);
     
@@ -598,7 +603,7 @@ int assetstore_assimilate(assetstore *store, const char *folder) {
     
     mtx_lock(&store->lock);
     ass_state = store->state;
-    ftw(full_path, _assimilate, 64);
+    nftw(full_path, _assimilate, 64, FTW_DEPTH | FTW_PHYS);
     ass_state = NULL;
     
     _write_state(store);

@@ -208,7 +208,8 @@ void test_assetstore_range_reads(void) {
     TEST_ASSERT_EQUAL_CHAR_ARRAY(e3, buff, 5);
 }
 
-/// end with SIZE_T_MAX
+#define RANGES_END 0xffffffffffffffffUL
+/// end with RANGES_END
 cJSON *_ranges(size_t start, size_t end, ...) {
     cJSON *ranges = cJSON_CreateArray();
     int numbers[2] = {(int)start, (int)end};
@@ -217,7 +218,7 @@ cJSON *_ranges(size_t start, size_t end, ...) {
     va_start(args, end);
     while(1) {
         numbers[0] = va_arg(args, int);
-        if (numbers[0] == SIZE_T_MAX) break;
+        if (numbers[0] == RANGES_END) break;
         numbers[1] = va_arg(args, int);
         cJSON_AddItemToArray(ranges, cJSON_CreateIntArray(numbers, 2));
     }
@@ -228,7 +229,7 @@ cJSON *_ranges(size_t start, size_t end, ...) {
 
 size_t __missing_ranges_count(cJSON *ranges, size_t total_size);
 void test_missing_ranges() {
-    TEST_ASSERT_EQUAL_INT(4, __missing_ranges_count(_ranges(5, 6,  10, 15,  100, 200, SIZE_T_MAX), 300));
+    TEST_ASSERT_EQUAL_INT(4, __missing_ranges_count(_ranges(5, 6,  10, 15,  100, 200, RANGES_END), 300));
 }
 
 void _merge_range(cJSON *ranges, size_t start, size_t end);
@@ -240,66 +241,66 @@ void _test_merge(cJSON *ranges, size_t start, size_t end, cJSON *expected) {
 void test_merge_range() {
     
     // ranges are inclusive
-    _test_merge(cJSON_CreateArray(), 0, 0, _ranges(0, 0, SIZE_T_MAX));
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 4, 4, _ranges(4, 7, SIZE_T_MAX));
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 5, 5, _ranges(5, 7, SIZE_T_MAX));
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 6, 6, _ranges(5, 7, SIZE_T_MAX));
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 7, 7, _ranges(5, 7, SIZE_T_MAX));
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 8, 8, _ranges(5, 8, SIZE_T_MAX));
+    _test_merge(cJSON_CreateArray(), 0, 0, _ranges(0, 0, RANGES_END));
+    _test_merge(_ranges(5, 7, RANGES_END), 4, 4, _ranges(4, 7, RANGES_END));
+    _test_merge(_ranges(5, 7, RANGES_END), 5, 5, _ranges(5, 7, RANGES_END));
+    _test_merge(_ranges(5, 7, RANGES_END), 6, 6, _ranges(5, 7, RANGES_END));
+    _test_merge(_ranges(5, 7, RANGES_END), 7, 7, _ranges(5, 7, RANGES_END));
+    _test_merge(_ranges(5, 7, RANGES_END), 8, 8, _ranges(5, 8, RANGES_END));
 
     // Insert before
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 1, 2, _ranges(1, 2, 5, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, RANGES_END), 1, 2, _ranges(1, 2, 5, 7, RANGES_END));
     // Merge before
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 1, 6, _ranges(1, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, RANGES_END), 1, 6, _ranges(1, 7, RANGES_END));
     // Merge inside
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 6, 6, _ranges(5, 7, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, RANGES_END), 6, 6, _ranges(5, 7, RANGES_END));
     // Merge around
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 1, 9, _ranges(1, 9, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, RANGES_END), 1, 9, _ranges(1, 9, RANGES_END));
     // Merge after
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 6, 8, _ranges(5, 8, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, RANGES_END), 6, 8, _ranges(5, 8, RANGES_END));
     // Insert after
-    _test_merge(_ranges(5, 7, SIZE_T_MAX), 9, 9, _ranges(5, 7, 9, 9, SIZE_T_MAX));
+    _test_merge(_ranges(5, 7, RANGES_END), 9, 9, _ranges(5, 7, 9, 9, RANGES_END));
     // Insert between
-    _test_merge(_ranges(1, 3, 5, 7, SIZE_T_MAX), 4, 4, _ranges(1, 7, SIZE_T_MAX));
+    _test_merge(_ranges(1, 3, 5, 7, RANGES_END), 4, 4, _ranges(1, 7, RANGES_END));
     // merge before between
-    _test_merge(_ranges(1, 3, 5, 7, SIZE_T_MAX), 3, 4, _ranges(1, 7, SIZE_T_MAX));
+    _test_merge(_ranges(1, 3, 5, 7, RANGES_END), 3, 4, _ranges(1, 7, RANGES_END));
     
-    _test_merge(_ranges(1, 3, 5, 7, SIZE_T_MAX), 4, 5, _ranges(1, 7, SIZE_T_MAX));
-    _test_merge(cJSON_CreateArray(), 1, 2, _ranges(1, 2, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 100, 200, SIZE_T_MAX), 40, 60, _ranges(1, 2, 40, 60, 100, 200, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, SIZE_T_MAX), 2, 3, _ranges(1, 3, SIZE_T_MAX));
-    _test_merge(_ranges(1, 3, SIZE_T_MAX), 6, 9, _ranges(1, 3, 6, 9, SIZE_T_MAX));
-    _test_merge(_ranges(1, 3, 6, 9, SIZE_T_MAX), 2, 7, _ranges(1, 9, SIZE_T_MAX));
-    _test_merge(_ranges(5, 8, SIZE_T_MAX), 1, 3, _ranges(1, 3, 5, 8, SIZE_T_MAX));
-    _test_merge(_ranges(5, 8, SIZE_T_MAX), 10, 30, _ranges(5, 8, 10, 30, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 9, 11, _ranges(1, 2, 5, 15, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 9, 10, _ranges(1, 2, 5, 10, 12, 15, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 6, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 4, _ranges(1, 2, 4, 4, 6, 8, 12, 15, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 4, _ranges(1, 2, 4, 8, 12, 15, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 18, _ranges(1, 2, 4, 18, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 9, 30, _ranges(1, 2, 5, 30, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 1, 9999, _ranges(1, 9999, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 22, _ranges(1, 2, 4, 22, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, SIZE_T_MAX), 4, 20, _ranges(1, 2, 4, 21, SIZE_T_MAX));
+    _test_merge(_ranges(1, 3, 5, 7, RANGES_END), 4, 5, _ranges(1, 7, RANGES_END));
+    _test_merge(cJSON_CreateArray(), 1, 2, _ranges(1, 2, RANGES_END));
+    _test_merge(_ranges(1, 2, 100, 200, RANGES_END), 40, 60, _ranges(1, 2, 40, 60, 100, 200, RANGES_END));
+    _test_merge(_ranges(1, 2, RANGES_END), 2, 3, _ranges(1, 3, RANGES_END));
+    _test_merge(_ranges(1, 3, RANGES_END), 6, 9, _ranges(1, 3, 6, 9, RANGES_END));
+    _test_merge(_ranges(1, 3, 6, 9, RANGES_END), 2, 7, _ranges(1, 9, RANGES_END));
+    _test_merge(_ranges(5, 8, RANGES_END), 1, 3, _ranges(1, 3, 5, 8, RANGES_END));
+    _test_merge(_ranges(5, 8, RANGES_END), 10, 30, _ranges(5, 8, 10, 30, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 9, 11, _ranges(1, 2, 5, 15, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 9, 10, _ranges(1, 2, 5, 10, 12, 15, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 6, 8, 12, 15, 20, 21, RANGES_END), 4, 4, _ranges(1, 2, 4, 4, 6, 8, 12, 15, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 4, _ranges(1, 2, 4, 8, 12, 15, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 18, _ranges(1, 2, 4, 18, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 9, 30, _ranges(1, 2, 5, 30, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 1, 9999, _ranges(1, 9999, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 22, _ranges(1, 2, 4, 22, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 20, _ranges(1, 2, 4, 21, RANGES_END));
     
     
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 5, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 6, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 7, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 8, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 9, 9999, _ranges(1, 2, 5, 9999, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 10, 9999, _ranges(1, 2, 5, 8, 10, 9999, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 5, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 6, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 7, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 8, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 9, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 10, 9999, _ranges(1, 2, 5, 8, 10, 9999, RANGES_END));
     
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 18, _ranges(1, 18, 20, 21, 40, 45, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 19, _ranges(1, 21, 40, 45, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 20, _ranges(1, 21, 40, 45, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 21, _ranges(1, 21, 40, 45, SIZE_T_MAX));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, SIZE_T_MAX), 1, 22, _ranges(1, 22, 40, 45, SIZE_T_MAX));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 18, _ranges(1, 18, 20, 21, 40, 45, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 19, _ranges(1, 21, 40, 45, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 20, _ranges(1, 21, 40, 45, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 21, _ranges(1, 21, 40, 45, RANGES_END));
+    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 22, _ranges(1, 22, 40, 45, RANGES_END));
     
     // is there an edge when it starts with 0?
-    _test_merge(_ranges(0, 92258, SIZE_T_MAX), 0, 92258, _ranges(0, 92258, SIZE_T_MAX));
+    _test_merge(_ranges(0, 92258, RANGES_END), 0, 92258, _ranges(0, 92258, RANGES_END));
 }
 
 void test_assimilation() {

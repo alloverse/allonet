@@ -556,7 +556,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
 
 __thread cJSON *ass_state = 0;
 
-int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+int _assimilate(const char *path, const struct stat *sb, int typeflag) {
     static const size_t buffsize = 1024*1024*10;
     uint8_t *buffer = malloc(buffsize);
     
@@ -598,7 +598,7 @@ int assetstore_assimilate(assetstore *store, const char *folder) {
     
     mtx_lock(&store->lock);
     ass_state = store->state;
-    nftw(full_path, _assimilate, 64, FTW_DEPTH | FTW_PHYS);
+    ftw(full_path, _assimilate, 64);
     ass_state = NULL;
     
     _write_state(store);

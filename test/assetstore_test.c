@@ -60,7 +60,7 @@ int unlink_cb(const char *fpath, const struct stat *sb, int typeflag) {
     return rv;
 }
 int rmrf(const char *path) {
-    return ftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
+    return ftw(path, unlink_cb, 64);
 }
 
 void _reset_disk() {

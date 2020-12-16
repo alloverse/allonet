@@ -4,7 +4,7 @@
 //
 //  Created by Patrik on 2020-11-27.
 //
-
+#define _XOPEN_SOURCE 600
 #include <allonet/arr.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +12,7 @@
 #include <memory.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <errno.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -23,6 +24,7 @@
  #include <unistd.h>
 #endif
 #include "assetstore.h"
+#include "os.h"
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
@@ -71,6 +73,107 @@ cJSON *_range(cJSON *ranges, int index) {
     return cJSON_GetArrayItem(ranges, index);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Return the input path in a canonical form. This is achieved by expanding all
+// symbolic links, resolving references to "." and "..", and removing duplicate
+// "/" characters.
+//
+// If the file exists, its path is canonicalized and returned. If the file,
+// or parts of the containing directory, do not exist, path components are
+// removed from the end until an existing path is found. The remainder of the
+// path is then appended to the canonical form of the existing path,
+// and returned. Consequently, the returned path may not exist. The portion
+// of the path which exists, however, is represented in canonical form.
+//
+// If successful, this function returns a C-string, which needs to be freed by
+// the caller using free().
+//
+// ARGUMENTS:
+//   file_path
+//   File path, whose canonical form to return.
+//
+// RETURNS:
+//   On success, returns the canonical path to the file, which needs to be freed
+//   by the caller.
+//
+//   On failure, returns NULL.
+////////////////////////////////////////////////////////////////////////////////
+char *make_file_name_canonical(char const *file_path)
+{
+    char *canonical_file_path  = NULL;
+    unsigned int file_path_len = strlen(file_path);
+    
+    if (file_path_len > 0)
+    {
+        canonical_file_path = realpath(file_path, NULL);
+        if (canonical_file_path == NULL && errno == ENOENT)
+        {
+            // The file was not found. Back up to a segment which exists,
+            // and append the remainder of the path to it.
+            char *file_path_copy = NULL;
+            if (file_path[0] == '/'                ||
+                (strncmp(file_path, "./", 2) == 0) ||
+                (strncmp(file_path, "../", 3) == 0))
+            {
+                // Absolute path, or path starts with "./" or "../"
+                file_path_copy = strdup(file_path);
+            }
+            else
+            {
+                // Relative path
+                file_path_copy = (char*)malloc(strlen(file_path) + 3);
+                strcpy(file_path_copy, "./");
+                strcat(file_path_copy, file_path);
+            }
+            
+            // Remove path components from the end, until an existing path is found
+            for (int char_idx = strlen(file_path_copy) - 1;
+                 char_idx >= 0 && canonical_file_path == NULL;
+                 --char_idx)
+            {
+                if (file_path_copy[char_idx] == '/')
+                {
+                    // Remove the slash character
+                    file_path_copy[char_idx] = '\0';
+                    
+                    canonical_file_path = realpath(file_path_copy, NULL);
+                    if (canonical_file_path != NULL)
+                    {
+                        // An existing path was found. Append the remainder of the path
+                        // to a canonical form of the existing path.
+                        char *combined_file_path = (char*)malloc(strlen(canonical_file_path) + strlen(file_path_copy + char_idx + 1) + 2);
+                        strcpy(combined_file_path, canonical_file_path);
+                        strcat(combined_file_path, "/");
+                        strcat(combined_file_path, file_path_copy + char_idx + 1);
+                        free(canonical_file_path);
+                        canonical_file_path = combined_file_path;
+                    }
+                    else
+                    {
+                        // The path segment does not exist. Replace the slash character
+                        // and keep trying by removing the previous path component.
+                        file_path_copy[char_idx] = '/';
+                    }
+                }
+            }
+            
+            free(file_path_copy);
+        }
+    }
+    
+    return canonical_file_path;
+}
+
+char *really_realpath(const char *path) {
+    char *maybe = make_file_name_canonical(path);
+    if (maybe == NULL || strlen(maybe) == 0) {
+        char workdir[PATH_MAX];
+        allo_os_working_dir(workdir, PATH_MAX);
+        snprintf(workdir, PATH_MAX, "%s/%s", workdir, path);
+        maybe = make_file_name_canonical(workdir);
+    }
+    return maybe;
+}
 
 char __asset_path[PATH_MAX];
 char *_asset_path(assetstore *store, const char *asset_id) {
@@ -82,6 +185,8 @@ char *_asset_path(assetstore *store, const char *asset_id) {
     sprintf(__asset_path, "%s/%s", store->disk_path, asset_id);
     return __asset_path;
 }
+
+
 
 char *assetstore_asset_path(assetstore *store, const char *asset_id) {
     mtx_lock(&store->lock);
@@ -100,7 +205,9 @@ char *assetstore_asset_path(assetstore *store, const char *asset_id) {
     if (cJSON_IsString(path)) {
         value = strdup(cJSON_GetStringValue(path));
     } else {
-        asprintf(&value, "%s/%s", store->disk_path, asset_id);
+        size_t len = strlen(store->disk_path) + strlen(asset_id) + 2;
+        value = malloc(len);
+        snprintf(value, len, "%s/%s", store->disk_path, asset_id);
     }
     
     mtx_unlock(&store->lock);
@@ -174,8 +281,8 @@ assetstore *assetstore_open(const char *disk_path) {
     }
     assetstore *store = NULL;
     
-    char absolute_disk_path[PATH_MAX];
-    realpath(disk_path, absolute_disk_path);
+    char *absolute_disk_path = really_realpath(disk_path);
+    
     
     mtx_lock(&_global_lock);
     for (int i = 0; i < _global_stores.length; i++) {
@@ -199,8 +306,9 @@ assetstore *assetstore_open(const char *disk_path) {
     arr_push(&_global_stores, store);
     mtx_unlock(&_global_lock);
     
-    char *statefile = NULL;
-    asprintf(&statefile, "%s/%s", disk_path, "state.json");
+    size_t len = strlen(disk_path) + 12;
+    char *statefile = malloc(len);
+    snprintf(statefile, len, "%s/%s", disk_path, "state.json");
     FILE *f = fopen(statefile, "r");
     free(statefile);
     if (f) {
@@ -245,9 +353,6 @@ assetstore *assetstore_open(const char *disk_path) {
         
         free(contents);
     } else {
-        char *wd = getcwd(NULL, 0);
-        log("assetstore: CWD: %s\n", wd);
-        free(wd);
         log("assetstore: Initializing store at %s\n", disk_path);
         f = fopen_mkdir(statefile, "w");
         if (f) fclose(f);
@@ -491,8 +596,9 @@ int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint
 }
 
 void _write_state(assetstore *store) {
-    char *statefile = NULL;
-    asprintf(&statefile, "%s/%s", store->disk_path, "state.json");
+    size_t len = strlen(store->disk_path) + 12;
+    char *statefile = malloc(len);
+    snprintf(statefile, len, "%s/%s", store->disk_path, "state.json");
     FILE *f = fopen(statefile, "w");
     free(statefile);
     char *data = cJSON_Print(store->state);
@@ -582,8 +688,8 @@ int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FT
     unsigned char sha[20] = {0};
     SHA1Final(sha, &ctx);
     
-    char *xsha;
-    asprintf(&xsha, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
+    char *xsha = malloc(21);
+    snprintf(xsha, 21, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
     
     cJSON_DeleteItemFromObject(ass_state, xsha);
     cJSON *state = cJSON_AddObjectToObject(ass_state, xsha);
@@ -598,8 +704,7 @@ int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FT
 int assetstore_assimilate(assetstore *store, const char *folder) {
     assert(ass_state == NULL);
     
-    char full_path[PATH_MAX];
-    realpath(folder, full_path);
+    char *full_path = really_realpath(folder);
     
     mtx_lock(&store->lock);
     ass_state = store->state;

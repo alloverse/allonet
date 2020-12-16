@@ -1,4 +1,4 @@
-
+#define _XOPEN_SOURCE 500
 #include <cJSON/cJSON.h>
 #include <unity.h>
 #include <allonet/jobs.h>
@@ -54,13 +54,13 @@ void _resetTestDiskSpace() {
     }
 }
 
-int unlink_cb(const char *fpath, const struct stat *sb, int typeflag) {
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
     int rv = remove(fpath);
     if (rv) perror(fpath);
     return rv;
 }
 int rmrf(const char *path) {
-    return ftw(path, unlink_cb, 64);
+    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 void _reset_disk() {
@@ -79,7 +79,7 @@ void setUp() {
 
 void tearDown() {
     assetstore_close(store);
-    assert(rmrf(relative_path) == 0);
+    rmrf(relative_path);
 }
 
 
@@ -87,6 +87,8 @@ static char _last_completed_asset[PATH_MAX];
 static void _asset_complete_cb(assetstore *store, const char *asset_id) {
     strcpy(_last_completed_asset, asset_id);
 }
+
+char *really_realpath(const char *path);
 
 ///Private assetstore.c declares
 char *_asset_path(assetstore *store, const char *id);
@@ -310,7 +312,7 @@ void test_assimilation() {
 
 void test_asset_path() {
     char *path;
-    char expected_path[PATH_MAX];
+    char *expected_path;
     
     cJSON *cached = cJSON_AddObjectToObject(store->state, "cached");
     cJSON_AddBoolToObject(cached, "complete", 1);
@@ -329,10 +331,11 @@ void test_asset_path() {
     TEST_ASSERT_NULL(path);
     free(path);
     
-    realpath("asset_test_cache/cached", expected_path);
+    expected_path = really_realpath("asset_test_cache/cached");
     path = assetstore_asset_path(store, "cached");
     TEST_ASSERT_EQUAL_STRING(expected_path, path);
     free(path);
+    free(expected_path);
     
     path = assetstore_asset_path(store, "imported");
     TEST_ASSERT_EQUAL_STRING("imported_path/file", path);

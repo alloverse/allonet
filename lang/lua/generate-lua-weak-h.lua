@@ -52,7 +52,8 @@ local funcs = {
  	lua_pushstring = "void  lua_pushstring (lua_State *L, const char *s)",
 	lua_pushlstring = "void lua_pushlstring (lua_State *L, const char *s, size_t len)",
  	lua_getfield = "void  lua_getfield (lua_State *L, int idx, const char *k)",
- 	lua_isstring = "int             lua_isstring (lua_State *L, int idx)"
+	lua_isstring = "int             lua_isstring (lua_State *L, int idx)",
+	luaL_optlstring = "const char *luaL_optlstring (lua_State *L, int narg, const char *d, size_t *l)",
 }
 
 -- MacOS: Uses -Wl,-undefined,dynamic_lookup, so we can just use regular old lua.h

@@ -14,7 +14,7 @@ uint64_t allo_os_time() {
 }
 
 double allo_os_time_seconds() {
-    return getTime() / (double) NS_PER_SEC;
+    return allo_os_time() / (double) NS_PER_SEC;
 }
 
 size_t allo_os_working_dir(char* buffer, size_t size) {

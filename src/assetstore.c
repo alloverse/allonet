@@ -12,7 +12,6 @@
 #include <memory.h>
 #include <assert.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <errno.h>
 #include <limits.h>
 #include <fcntl.h>

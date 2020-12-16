@@ -6,6 +6,17 @@
 //
 #define ASS_FTW 0
 #define _XOPEN_SOURCE 600
+#ifdef _WIN32
+ #include <direct.h>
+ #include <crtdefs.h>
+ #define getcwd _getcwd // stupid MSFT "deprecation" warning
+ #ifndef PATH_MAX
+  #include <windows.h>
+  #define PATH_MAX MAX_PATH
+ #endif
+#else
+ #include <unistd.h>
+#endif
 #include <allonet/arr.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,17 +29,6 @@
 #include <fcntl.h>
 #if ASS_FTW
  #include <ftw.h>
-#endif
-#ifdef _WIN32
- #include <direct.h>
- #include <crtdefs.h>
- #define getcwd _getcwd // stupid MSFT "deprecation" warning
- #ifndef PATH_MAX
-  #include <windows.h>
-  #define PATH_MAX MAX_PATH
- #endif
-#else
- #include <unistd.h>
 #endif
 #include "assetstore.h"
 #include "os.h"
@@ -239,10 +239,10 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
         return -1;
     }
     
-    ssize_t rlen = pread(f, buffer, length, offset);
+    int64_t rlen = pread(f, buffer, length, offset);
     close(f);
     if (rlen < 0) {
-        log("assetstore: Could only read %ld of %ld bytes of %s. %s\n", rlen, length, asset_id, strerror(errno));
+        log("assetstore: Could only read %lld of %ld bytes of %s. %s\n", rlen, length, asset_id, strerror(errno));
     }
     return (int)rlen;
 }

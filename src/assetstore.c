@@ -37,6 +37,60 @@
 #define max(a,b) a > b ? a : b
 #define log(f_, ...) printf((f_), ##__VA_ARGS__)
 
+static int64_t allo_pread(int fd, void *buf, size_t size, off_t offset)
+{
+#ifdef _WIN32
+    OVERLAPPED    overlapped = {0};
+    HANDLE        handle;
+    DWORD        result;
+    
+    handle = (HANDLE) _get_osfhandle(fd);
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        errno = EBADF;
+        return -1;
+    }
+    
+    overlapped.Offset = offset;
+    if (!ReadFile(handle, buf, size, &result, &overlapped))
+    {
+        _dosmaperr(GetLastError());
+        return -1;
+    }
+    //TODO: restore handle seek pos
+    return result;
+#else
+    return pread(fd, buf, size, offset);
+#endif
+}
+
+static int64_t allo_pwrite(int fd, const void *buf, size_t size, off_t offset)
+{
+#ifdef _WIN32
+    OVERLAPPED    overlapped = {0};
+    HANDLE        handle;
+    DWORD        result;
+    
+    handle = (HANDLE) _get_osfhandle(fd);
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        errno = EBADF;
+        return -1;
+    }
+    
+    overlapped.Offset = offset;
+    if (!WriteFile(handle, buf, size, &result, &overlapped))
+    {
+        _dosmaperr(GetLastError());
+        return -1;
+    }
+    
+    return result;
+#else
+    return pwrite(fd, buf, size, offset);
+#endif
+}
+
 void rek_mkdir(char *path) {
     char *sep = strrchr(path, '/');
     if(sep != NULL) {
@@ -72,6 +126,14 @@ cJSON *_range(cJSON *ranges, int index) {
     return cJSON_GetArrayItem(ranges, index);
 }
 
+char *allo_realpath(const char *path) {
+#if _WIN32
+    //TODO: this...
+    return strdup(path);
+#else
+    return realpath(path, NULL);
+#endif
+}
 ////////////////////////////////////////////////////////////////////////////////
 // Return the input path in a canonical form. This is achieved by expanding all
 // symbolic links, resolving references to "." and "..", and removing duplicate
@@ -104,7 +166,7 @@ char *make_file_name_canonical(char const *file_path)
     
     if (file_path_len > 0)
     {
-        canonical_file_path = realpath(file_path, NULL);
+        canonical_file_path = allo_realpath(file_path);
         if (canonical_file_path == NULL && errno == ENOENT)
         {
             // The file was not found. Back up to a segment which exists,
@@ -135,7 +197,7 @@ char *make_file_name_canonical(char const *file_path)
                     // Remove the slash character
                     file_path_copy[char_idx] = '\0';
                     
-                    canonical_file_path = realpath(file_path_copy, NULL);
+                    canonical_file_path = allo_realpath(file_path_copy);
                     if (canonical_file_path != NULL)
                     {
                         // An existing path was found. Append the remainder of the path
@@ -231,7 +293,7 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
         return -1;
     }
     
-    int64_t rlen = pread(f, buffer, length, offset);
+    int64_t rlen = allo_pread(f, buffer, length, offset);
     close(f);
     if (rlen < 0) {
         log("assetstore: Could only read %lld of %ld bytes of %s. %s\n", rlen, length, asset_id, strerror(errno));
@@ -247,7 +309,7 @@ int __disk_write(assetstore *store, const char *asset_id, size_t offset, const u
         log("assetstore: Failed to open file for writing: %s", fpath);
         return 0;
     }
-    res = pwrite(f, data, length, offset);
+    res = allo_pwrite(f, data, length, offset);
     close(f);
     if (res != length) {
         log("assetstore: Could only write %d of %ld bytes of %s\n", res, length, asset_id);

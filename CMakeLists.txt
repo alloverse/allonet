@@ -79,6 +79,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/clientproxy.c
     ${SOURCE_FILES_PREFIX}/sha1.h
     ${SOURCE_FILES_PREFIX}/sha1.c
+    ${SOURCE_FILES_PREFIX}/os.c
     lib/mathc/mathc.c
 )
 

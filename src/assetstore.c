@@ -21,6 +21,7 @@
 #endif
 #ifdef _WIN32
  #include <direct.h>
+ #include <crtdefs.h>
  #define getcwd _getcwd // stupid MSFT "deprecation" warning
  #ifndef PATH_MAX
   #include <windows.h>

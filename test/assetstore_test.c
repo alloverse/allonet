@@ -305,10 +305,6 @@ void test_merge_range() {
     _test_merge(_ranges(0, 92258, RANGES_END), 0, 92258, _ranges(0, 92258, RANGES_END));
 }
 
-void test_assimilation() {
-    assetstore_assimilate(store, import_files_folder);
-}
-
 
 void test_asset_path() {
     char *path;
@@ -368,7 +364,6 @@ int main(void) {
     RUN_TEST(test_merge_range);
     RUN_TEST(test_assetstore_partial_read_write);
     RUN_TEST(test_missing_ranges);
-    RUN_TEST(test_assimilation);
     RUN_TEST(test_asset_path);
     RUN_TEST(test_open_same_path_yields_same_store);
     

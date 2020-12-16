@@ -569,11 +569,11 @@ static char *_alloclient_get_path_for_asset(alloclient *client, const char *asse
     return assetstore_asset_path(_internal(client)->assetstore, asset_id);
 }
 
-void alloclient_add_asset(alloclient *client, const char *folder) {
-    client->alloclient_add_asset(client, folder);
+void alloclient_add_asset(alloclient *client, const char *path) {
+    client->alloclient_add_asset(client, path);
 }
-static void _alloclient_add_asset(alloclient *client, const char *folder) {
-    assetstore_assimilate(_internal(client)->assetstore, folder);
+static void _alloclient_add_asset(alloclient *client, const char *path) {
+    assetstore_assimilate(_internal(client)->assetstore, path);
 }
 
 void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {

@@ -4,6 +4,7 @@
 //
 //  Created by Patrik on 2020-11-27.
 //
+#define ASS_FTW 0
 #define _XOPEN_SOURCE 600
 #include <allonet/arr.h>
 #include <stdio.h>
@@ -15,7 +16,9 @@
 #include <errno.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <ftw.h>
+#if ASS_FTW
+ #include <ftw.h>
+#endif
 #ifdef _WIN32
  #include <direct.h>
  #define getcwd _getcwd // stupid MSFT "deprecation" warning
@@ -664,9 +667,7 @@ int assetstore_write(assetstore *store, const char *asset_id, size_t offset, con
 #include "sha1.h"
 
 
-__thread cJSON *ass_state = 0;
-
-int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+int _assimilate_file(const char *path, cJSON *store_state) {
     static const size_t buffsize = 1024*1024*10;
     uint8_t *buffer = malloc(buffsize);
     
@@ -690,8 +691,8 @@ int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FT
     char *xsha = malloc(21);
     snprintf(xsha, 21, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
     
-    cJSON_DeleteItemFromObject(ass_state, xsha);
-    cJSON *state = cJSON_AddObjectToObject(ass_state, xsha);
+    cJSON_DeleteItemFromObject(store_state, xsha);
+    cJSON *state = cJSON_AddObjectToObject(store_state, xsha);
     free(xsha);
     cJSON_AddBoolToObject(state, "complete", 1);
     cJSON_AddStringToObject(state, "path", path);
@@ -700,15 +701,27 @@ int _assimilate(const char *path, const struct stat *sb, int typeflag, struct FT
     return 0;
 }
 
-int assetstore_assimilate(assetstore *store, const char *folder) {
-    assert(ass_state == NULL);
-    
-    char *full_path = really_realpath(folder);
+#if ASS_FTW
+__thread cJSON *ass_state = 0;
+//int _assimilate_ftw(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+//    return _assimilate_file(path);
+//}
+#endif
+int assetstore_assimilate(assetstore *store, const char *path) {
+    char *full_path = really_realpath(path);
     
     mtx_lock(&store->lock);
+    
+
+    //TODO: shold add whole dirs but cross platform iterating dirs is an epic in itself ofc.
+#if ASS_FTW
+    assert(ass_state == NULL);
     ass_state = store->state;
-    nftw(full_path, _assimilate, 64, FTW_DEPTH | FTW_PHYS);
+    nftw(full_path, _assimilate_ftw, 64, FTW_DEPTH | FTW_PHYS);
     ass_state = NULL;
+#else
+    _assimilate_file(full_path, store->state);
+#endif
     
     _write_state(store);
     mtx_unlock(&store->lock);

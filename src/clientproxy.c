@@ -77,7 +77,7 @@ typedef struct proxy_message
         } asset_request;
         
         struct {
-            char *folder;
+            char *path;
         } asset_assimilate;
         
         struct {
@@ -235,14 +235,14 @@ static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, si
     snprintf(buffer, bufferlen, "p2b %d\nb2p %d", p2b, b2p);
 }
 
-static void proxy_alloclient_add_asset(alloclient *proxyclient, const char *folder) {
+static void proxy_alloclient_add_asset(alloclient *proxyclient, const char *path) {
     proxy_message *msg = proxy_message_create(msg_asset_assimilate);
-    msg->value.asset_assimilate.folder = strdup(folder);
+    msg->value.asset_assimilate.path = strdup(path);
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
 static void bridge_alloclient_add_asset(alloclient *bridgeclient, proxy_message *msg) {
-    alloclient_add_asset(bridgeclient, msg->value.asset_assimilate.folder);
-    free(msg->value.asset_assimilate.folder);
+    alloclient_add_asset(bridgeclient, msg->value.asset_assimilate.path);
+    free(msg->value.asset_assimilate.path);
 }
 
 static void proxy_alloclient_request_asset(alloclient *proxyclient, const char *asset_id, const char *entity_id) {

@@ -79,8 +79,8 @@ int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint
 /// @returns Negative error code, or positive number of bytes written
 int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
 
-/// Imports and publishes files in folder
-int assetstore_assimilate(assetstore *store, const char *folder);
+/// Imports and publishes a file
+int assetstore_assimilate(assetstore *store, const char *path);
 
 /// Get a file path for an asset, if it exists.
 /// Stores not backed by disk should write to a temp file and provide a path to it.

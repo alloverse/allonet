@@ -73,8 +73,8 @@ jobs:
   - task: VSBuild@1
     displayName: "Visual Studio build"
     inputs:
+      solution: 'allonet.vcxproj'
       msbuildArchitecture: 'x64'
-      msbuildArgs: '-t:allonet allonet.sln'
   - task: CopyFiles@2
     displayName: "Stage artifacts"
     inputs:

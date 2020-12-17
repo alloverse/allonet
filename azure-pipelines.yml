@@ -74,6 +74,7 @@ jobs:
     displayName: "Visual Studio build"
     inputs:
       solution: 'build/allonet.vcxproj'
+      configuration: 'release'
       msbuildArchitecture: 'x64'
   - task: CopyFiles@2
     displayName: "Stage artifacts"

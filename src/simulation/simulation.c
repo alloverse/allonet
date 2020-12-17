@@ -8,7 +8,7 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   if(place) {
     cJSON *clock = cJSON_GetObjectItemCaseSensitive(place->components, "clock");
     if(!clock) {
-      clock = cjson_create_object("time", cJSON_CreateNumber(server_time));
+      clock = cjson_create_object("time", cJSON_CreateNumber(server_time), NULL);
       cJSON_AddItemToObject(place->components, "clock", clock);
     }
     cJSON *time =cJSON_GetObjectItemCaseSensitive(clock, "time");

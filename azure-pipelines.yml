@@ -74,7 +74,7 @@ jobs:
     displayName: "Visual Studio build"
     inputs:
       msbuildArchitecture: 'x64'
-      msbuildArgs: '-targets -t:allonet'
+      msbuildArgs: '-t:allonet'
   - task: CopyFiles@2
     displayName: "Stage artifacts"
     inputs:

@@ -3,6 +3,12 @@
 #include <math.h>
 #include <assert.h>
 #include <stdlib.h>
+#ifdef _WIN32
+    #include <process.h>
+#else
+    #include <sys/types.h>
+    #include <unistd.h>
+#endif
 #include "lua-utils.h"
 #include "../../src/util.h"
 
@@ -29,6 +35,23 @@ static int l_alloclient_create (lua_State *L)
     client->_backref = lclient;
     luaL_getmetatable(L, "allonet.client");
     lua_setmetatable(L, -2);
+    return 1;
+}
+
+static int l_get_monotonic_time(lua_State *L)
+{
+    double t = get_ts_monod();
+    lua_pushnumber(L, t);
+    return 1;
+}
+
+static int l_get_random_seed(lua_State *L)
+{
+    uint64_t t = get_ts_mono();
+    t += getpid();
+    t += (uint64_t)L;
+    t = (t << 16) | (t >> 16);
+    lua_pushnumber(L, t);
     return 1;
 }
 
@@ -69,7 +92,9 @@ static int l_alloserv_stop_standalone(lua_State* L)
 
 static const struct luaL_Reg allonet [] =
 {
-    {"create", l_alloclient_create},
+    {"create", l_alloclient_create },
+    {"get_monotonic_time", l_get_monotonic_time },
+    {"get_random_seed", l_get_random_seed},
     {"run_standalone_server", l_alloserv_run_standalone},
     {"start_standalone_server", l_alloserv_start_standalone},
     {"poll_standalone_server", l_alloserv_poll_standalone},

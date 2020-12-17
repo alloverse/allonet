@@ -54,7 +54,6 @@ static int64_t allo_pread(int fd, void *buf, size_t size, off_t offset)
     overlapped.Offset = offset;
     if (!ReadFile(handle, buf, size, &result, &overlapped))
     {
-        _dosmaperr(GetLastError());
         return -1;
     }
     //TODO: restore handle seek pos

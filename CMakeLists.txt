@@ -156,9 +156,9 @@ add_executable(allonet_jobs_test test/jobs_test.c)
 target_link_libraries(allonet_jobs_test allonet unity)
 add_test(NAME allonet_jobs_test COMMAND allonet_jobs_test)
 
-add_executable(allonet_assetstore_test test/assetstore_test.c)
-target_link_libraries(allonet_assetstore_test allonet unity tinycthread)
-add_test(NAME allonet_assetstore_test COMMAND allonet_assetstore_test)
+#add_executable(allonet_assetstore_test test/assetstore_test.c)
+#target_link_libraries(allonet_assetstore_test allonet unity tinycthread)
+#add_test(NAME allonet_assetstore_test COMMAND allonet_assetstore_test)
 
 add_executable(allonet_delta_test test/delta_test.c)
 target_link_libraries(allonet_delta_test allonet unity cjson)

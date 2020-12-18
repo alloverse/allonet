@@ -53,7 +53,7 @@ void test_basic(void)
   // initialize sender and receiver with an initial state
   cJSON *first = allo_state_to_json(state);
   allo_delta_insert(sendhistory, first);
-  allo_delta_insert(recvhistory, first);
+  allo_delta_insert(recvhistory, cJSON_Duplicate(first, 1));
 
   // pretend we moved an object, insert that into sender's history....
   allo_m4x4 moved = allo_m4x4_translate((allo_vector){2, 3, 4});

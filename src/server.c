@@ -114,6 +114,7 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
         printf("Server: Asking %s for %s\n", other->agent_id, cJSON_Print(header));
         ENetPeer *peer = _clientinternal(other)->peer;
         enet_peer_send(peer, CHANNEL_ASSETS, packet);
+        allo_statistics.bytes_sent[CHANNEL_ASSETS] += packet->dataLength;
     }
 }
 void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
@@ -126,6 +127,7 @@ void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *da
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
+    allo_statistics.bytes_sent[CHANNEL_ASSETS] += packet->dataLength;
 }
 void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     alloserver_client *client = ((asset_user *)user)->client;
@@ -255,11 +257,13 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
     );
     memcpy(packet->data, buf, len);
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
+    allo_statistics.bytes_sent[channel] += packet->dataLength;
 }
 
 void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
 {
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
+    allo_statistics.bytes_sent[channel] += packet->dataLength;
 }
 
 alloserver *allo_listen(int listenhost, int port)

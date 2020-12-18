@@ -165,6 +165,7 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
+    allo_statistics.bytes_sent[CHANNEL_ASSETS] += packet->dataLength;
 }
 
 static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
@@ -187,6 +188,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloclient *c
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
+    allo_statistics.bytes_recv[0] += packet->dataLength;
+    allo_statistics.bytes_recv[1+channel] += packet->dataLength;
+    
     switch(channel) {
     case CHANNEL_STATEDIFFS: {
         cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
@@ -308,6 +312,7 @@ static void send_latest_intent(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
+    allo_statistics.bytes_sent[CHANNEL_STATEDIFFS] += packet->dataLength;
     free((void*)json);
 }
 
@@ -324,6 +329,7 @@ static void send_clock_request(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
+    allo_statistics.bytes_sent[CHANNEL_CLOCK] += packet->dataLength;
     free((void*)json);
 }
 
@@ -349,6 +355,7 @@ static void _alloclient_send_interaction(alloclient *client, allo_interaction *i
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
+    allo_statistics.bytes_sent[CHANNEL_COMMANDS] += packet->dataLength;
     free((void*)json);
 }
 
@@ -559,7 +566,7 @@ void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 }
 static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
-    snprintf(buffer, bufferlen, "--");
+    snprintf(buffer, bufferlen, "{\"ndelta_set\": %ud, \"ndelta_merge\": %ud}", allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
 }
 
 char *alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {

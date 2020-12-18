@@ -11,6 +11,15 @@
 #include <cJSON/cJSON.h>
 #include <allonet/state.h>
 
+typedef struct allo_statistics_t {
+    unsigned int ndelta_set;
+    unsigned int ndelta_merge;
+    unsigned int bytes_sent[6];//total + per channel
+    unsigned int bytes_recv[6];//total + per channel
+} allo_statistics_t;
+// because of threading without sync these values are just ballpark figures.
+extern allo_statistics_t allo_statistics;
+
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
 double get_ts_monod(void);

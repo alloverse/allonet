@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include "../util.h"
 
 #define DEBUG_AUDIO 0
 
@@ -146,5 +147,6 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
     int ok = enet_packet_resize(packet, headerlen + len+1);
     assert(ok == 0);
     ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
+    allo_statistics.bytes_sent[CHANNEL_MEDIA] += packet->dataLength;
     assert(ok == 0);
 }

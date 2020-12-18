@@ -232,7 +232,7 @@ static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, si
     int b2p = _internal(proxyclient)->bridge_to_proxy_len;
     mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
 
-    snprintf(buffer, bufferlen, "p2b %d\nb2p %d", p2b, b2p);
+    snprintf(buffer, bufferlen, "p2b %d\nb2p %d\ntotal\ts:%u r:%u\nch0-diffs\ts:%u r:%u\nch1-cmd\ts:%u r:%u\nch2-asset\ts:%u r:%u\nch3-media\ts:%u r:%u\nch4-clock\ts:%u r:%u\nState: set:%u delta:%u", p2b, b2p, allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0], allo_statistics.bytes_sent[1], allo_statistics.bytes_recv[1], allo_statistics.bytes_sent[2], allo_statistics.bytes_recv[2], allo_statistics.bytes_sent[3], allo_statistics.bytes_recv[3], allo_statistics.bytes_sent[4], allo_statistics.bytes_recv[4], allo_statistics.bytes_sent[5], allo_statistics.bytes_recv[5], allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
 }
 
 static void proxy_alloclient_add_asset(alloclient *proxyclient, const char *path) {

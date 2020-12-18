@@ -188,8 +188,8 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloclient *c
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
     switch(channel) {
-    case CHANNEL_STATEDIFFS: { 
-        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
+    case CHANNEL_STATEDIFFS: {
+        cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
         if(!cmdrep) {
             fprintf(stderr, "alloclient: unparseable statediff:\n");
             fprintf(stderr, "%s\n", packet->data);
@@ -200,7 +200,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         alloclient_parse_statediff(client, cmdrep);
         break; }
     case CHANNEL_COMMANDS: {
-        cJSON *cmdrep = cJSON_Parse((const char*)(packet->data));
+        cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
         parse_command(client, cmdrep);
         cJSON_Delete(cmdrep);
         break; }
@@ -211,7 +211,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);
         break; }
     case CHANNEL_CLOCK: {
-        cJSON *response = cJSON_Parse((const char*)(packet->data));
+        cJSON *response = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
         parse_clock(client, response);
         cJSON_Delete(response);
         break; }

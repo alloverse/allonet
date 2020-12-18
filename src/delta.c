@@ -84,7 +84,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
             break;
         case Merge:
             result = cJSON_Duplicate(current, 1);
-            cJSONUtils_MergePatch(result, delta);
+            cJSONUtils_MergePatchCaseSensitive(result, delta);
             cJSON_Delete(delta);
             break;
     }

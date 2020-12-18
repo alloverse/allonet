@@ -165,7 +165,8 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
-    allo_statistics.bytes_sent[CHANNEL_ASSETS] += packet->dataLength;
+    allo_statistics.bytes_sent[0] += packet->dataLength;
+    allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
 }
 
 static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
@@ -189,7 +190,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloclient *c
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
     allo_statistics.bytes_recv[0] += packet->dataLength;
-    allo_statistics.bytes_recv[1+channel] += packet->dataLength;
+    if (channel < CHANNEL_COUNT) {
+        allo_statistics.bytes_recv[1+channel] += packet->dataLength;
+    }
     
     switch(channel) {
     case CHANNEL_STATEDIFFS: {
@@ -312,7 +315,8 @@ static void send_latest_intent(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
-    allo_statistics.bytes_sent[CHANNEL_STATEDIFFS] += packet->dataLength;
+    allo_statistics.bytes_sent[0] += packet->dataLength;
+    allo_statistics.bytes_sent[1+CHANNEL_STATEDIFFS] += packet->dataLength;
     free((void*)json);
 }
 
@@ -329,7 +333,8 @@ static void send_clock_request(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
-    allo_statistics.bytes_sent[CHANNEL_CLOCK] += packet->dataLength;
+    allo_statistics.bytes_sent[0] += packet->dataLength;
+    allo_statistics.bytes_sent[1+CHANNEL_CLOCK] += packet->dataLength;
     free((void*)json);
 }
 
@@ -355,7 +360,8 @@ static void _alloclient_send_interaction(alloclient *client, allo_interaction *i
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
-    allo_statistics.bytes_sent[CHANNEL_COMMANDS] += packet->dataLength;
+    allo_statistics.bytes_sent[0] += packet->dataLength;
+    allo_statistics.bytes_sent[1+CHANNEL_COMMANDS] += packet->dataLength;
     free((void*)json);
 }
 

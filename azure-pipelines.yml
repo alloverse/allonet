@@ -41,7 +41,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
-      cmakeArgs: "-G \"Unix Makefiles\" .."
+      cmakeArgs: "-G \"Unix Makefiles\" \"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64\" .."
   - script: make allonet
     workingDirectory: build
     displayName: "Make"

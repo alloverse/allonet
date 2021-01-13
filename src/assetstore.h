@@ -22,8 +22,12 @@ typedef struct assetstore {
     /// State tracking, completed ranges etc
     cJSON *state;
     
+    /// Allonet asks you to provide data for an asset
     int (*read)(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size);
+    /// Allonet asks you to store data for an asset
     int (*write)(struct assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
+
+    
     
     mtx_t lock;
     int refcount;

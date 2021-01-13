@@ -101,11 +101,6 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
     alloserver *server = ((asset_user *)user)->server;
     alloserver_client *client = ((asset_user *)user)->client;
     
-    asset_packet_header packet_header;
-    char *cheader = cJSON_Print(header);
-    packet_header.mid = mid;
-    packet_header.hlen = strlen(cheader);
-    
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     
     alloserver_client *other;

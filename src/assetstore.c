@@ -729,6 +729,11 @@ int _assimilate_file(const char *path, cJSON *store_state) {
     uint8_t *buffer = malloc(buffsize);
     
     FILE *f = fopen(path, "rb");
+    if (f == NULL) {
+        log("assetstore: File does not exist: %s\n", path);
+        free(buffer);
+        return -1;
+    }
     size_t rd;
     SHA1_CTX ctx;
     SHA1Init(&ctx);

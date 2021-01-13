@@ -333,6 +333,13 @@ static int l_alloclient_get_path_for_asset(lua_State *L)
     return 1;
 }
 
+static int l_alloclient_add_asset(lua_State *L)
+{
+    l_alloclient_t *lclient = check_alloclient(L, 1);
+    const char *asset_path = luaL_checkstring(L, 2);
+    alloclient_add_asset(lclient->client, asset_path);
+}
+
 ////// Callbacks from allonet
 
 static void asset_available_callback(alloclient *client, char *asset_id) {
@@ -416,6 +423,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"get_stats", l_alloclient_get_stats},
     {"get_path_for_asset", l_alloclient_get_path_for_asset},
     {"request_asset", l_alloclient_request_asset},
+    {"add_asset", l_alloclient_add_asset},
     {NULL, NULL}
 };
 

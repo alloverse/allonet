@@ -22,7 +22,7 @@ typedef struct {
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     scheduler jobs;
-    assetstore *assetstore;
+    assetstore assetstore;
 } alloclient_internal;
 
 typedef struct decoder_track decoder_track;

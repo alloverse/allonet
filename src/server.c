@@ -21,7 +21,7 @@ typedef struct {
     ENetHost *enet;
     /// map from asset_id to list of client peers
     arr_t(wanted_asset*) wanted_assets;
-    assetstore *assetstore;
+    assetstore assetstore;
 } alloserv_internal;
 
 typedef struct {
@@ -161,7 +161,7 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
 static void handle_assets(const uint8_t *data, size_t data_length, alloserver *server, alloserver_client *client) {
     
     asset_user usr = { .server = server, .client = client };
-    asset_handle(data, data_length, _servinternal(server)->assetstore, _asset_send_func, _asset_state_callback_func, (void*)&usr);
+    asset_handle(data, data_length, &(_servinternal(server)->assetstore), _asset_send_func, _asset_state_callback_func, (void*)&usr);
 }
 
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
@@ -279,7 +279,8 @@ alloserver *allo_listen(int listenhost, int port)
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     arr_init(&_servinternal(serv)->wanted_assets);
-    _servinternal(serv)->assetstore = assetstore_open("server_asset_cache");
+    
+    asset_diskstore_init(&(_servinternal(serv)->assetstore), "server_asset_cache");
     
     srand((unsigned int)time(NULL));
 
@@ -368,7 +369,7 @@ void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_
             //TODO: Setup job to send to only send to a few peers at once.
             // deliver the first bytes. After this it's up to the client to request more.
             // TODO: only deliver the range requested in the original request
-            asset_deliver(asset_id, sv->assetstore, _asset_send_func_peer, wanted->peer);
+            asset_deliver(asset_id, &sv->assetstore, _asset_send_func_peer, wanted->peer);
             
             arr_splice(&sv->wanted_assets, i, 1);
             --i;

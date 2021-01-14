@@ -146,12 +146,14 @@ static void parse_clock(alloclient *client, cJSON *response)
 
 int _asset_read_range_func(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
     alloclient *client = (alloclient *)user;
-    return assetstore_read(_internal(client)->assetstore, id, offset, buffer, length, out_total_size);
+    assetstore *store = &_internal(client)->assetstore;
+    return store->read(store, id, offset, buffer, length, out_total_size);
 }
 
 int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, cJSON **out_error, void *user) {
     alloclient *client = (alloclient *)user;
-    return assetstore_write(_internal(client)->assetstore, id, offset, buffer, length, total_size);
+    assetstore *store = &_internal(client)->assetstore;
+    return store->write(store, id, offset, buffer, length, total_size);
 }
 
 static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
@@ -177,10 +179,9 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
 }
 
 static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
-    assert(_internal(client)->assetstore);
     asset_handle(
         data, data_length,
-        _internal(client)->assetstore,
+        &(_internal(client)->assetstore),
         _asset_send_func,
         _asset_state_callback_func,
         (void*)client
@@ -579,14 +580,16 @@ char *alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {
     return client->alloclient_get_path_for_asset(client, asset_id);
 }
 static char *_alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {
-    return assetstore_asset_path(_internal(client)->assetstore, asset_id);
+    assetstore *store = &_internal(client)->assetstore;
+    return store->get_asset_file_path(store, asset_id);
 }
 
 void alloclient_add_asset(alloclient *client, const char *path) {
     client->alloclient_add_asset(client, path);
 }
 static void _alloclient_add_asset(alloclient *client, const char *path) {
-    assetstore_assimilate(_internal(client)->assetstore, path);
+    assetstore *store = &_internal(client)->assetstore;
+    store->register_asset(store, path);
 }
 
 void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
@@ -612,7 +615,7 @@ alloclient *alloclient_create(bool threaded)
     
     LIST_INIT(&client->_state.entities);
     
-    _internal(client)->assetstore = assetstore_open("client_asset_cache");
+    asset_diskstore_init(&(_internal(client)->assetstore), "client_asset_cache");
 
     client->alloclient_connect = _alloclient_connect;
     client->alloclient_disconnect = _alloclient_disconnect;

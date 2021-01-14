@@ -133,7 +133,7 @@ void _asset_deliver(const char *id, assetstore *store, size_t offset, size_t len
     uint8_t *read_buffer = malloc(length);
     assert(read_buffer);
     
-    int read_length = assetstore_read(store, id, offset, read_buffer, length, &total_size);
+    int read_length = store->read(store, id, offset, read_buffer, length, &total_size);
     
     if (read_length < 0) {
         cJSON *error = asset_error(id, read_length, "Failed to read");
@@ -186,7 +186,7 @@ void asset_handle(
         
         printf("Asset: Got a request for %s\n", id);
         
-        if (assetstore_asset_is_complete(store, id)) {
+        if (store->get_is_asset_complete(store, id)) {
             // If we have the complete asset then we can deliver the request
             printf("Asset:  Delivering %s\n", id);
             _asset_deliver(id, store, offset, length, send, user);
@@ -205,7 +205,7 @@ void asset_handle(
             return;
         }
         
-        assetstore_write(store, id, offset, data, length, total_length);
+        store->write(store, id, offset, data, length, total_length);
         // request more?
         // TODO: check missing ranges instead
         if (offset + length < total_length) {

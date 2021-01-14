@@ -396,8 +396,6 @@ extern bool allo_initialize(bool redirect_stdout)
         fprintf (stderr, "An error occurred while initializing ENet.\n");
         return false;
     }
-    assetstore_init();
-    atexit(assetstore_deinit);
     atexit (enet_deinitialize);
 
     return true;

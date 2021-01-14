@@ -235,7 +235,7 @@ char *really_realpath(const char *path) {
 }
 
 char __asset_path[PATH_MAX];
-char *_asset_path(assetstore *store, const char *asset_id) {
+char *_asset_path(asset_diskstore *store, const char *asset_id) {
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *path = cJSON_GetObjectItem(state, "path");
     if (cJSON_IsString(path)) {
@@ -247,7 +247,9 @@ char *_asset_path(assetstore *store, const char *asset_id) {
 
 
 
-char *assetstore_asset_path(assetstore *store, const char *asset_id) {
+char *assetstore_asset_path(assetstore *_store, const char *asset_id) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
+    
     mtx_lock(&store->lock);
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *complete = cJSON_GetObjectItem(state, "complete");
@@ -273,7 +275,7 @@ char *assetstore_asset_path(assetstore *store, const char *asset_id) {
     return value;
 }
 
-int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
+int __disk_read(asset_diskstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
     assert(asset_id);
     assert(buffer);
     assert(out_total_size);
@@ -299,7 +301,7 @@ int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t 
     return (int)rlen;
 }
 
-int __disk_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
+int __disk_write(asset_diskstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
     char *fpath = _asset_path(store, asset_id);
     int res = 0;
     int f = open(fpath, O_WRONLY | O_APPEND | O_CREAT, 0600);
@@ -333,37 +335,11 @@ void assetstore_deinit() {
     mtx_destroy(&_global_lock);
 }
 
-assetstore *assetstore_open(const char *disk_path) {
-    if (_global_stores.data == (assetstore**)0xdead) {
-        log("assetstore: Not initialized yet\n");
-        exit(555);
-    }
-    assetstore *store = NULL;
-    
+int _assetstore_open(asset_diskstore *store, const char *disk_path) {
     char *absolute_disk_path = really_realpath(disk_path);
     
-    
-    mtx_lock(&_global_lock);
-    for (int i = 0; i < _global_stores.length; i++) {
-        if (strcmp(_global_stores.data[i]->disk_path, absolute_disk_path) == 0) {
-            store = _global_stores.data[i];
-            ++store->refcount;
-            mtx_unlock(&_global_lock);
-            return store;
-        }
-    }
-    mtx_unlock(&_global_lock);
-    
-    store = malloc(sizeof(assetstore));
     mtx_init(&store->lock, mtx_plain);
-    store->refcount = 1;
     store->disk_path = strdup(absolute_disk_path);
-    store->read = __disk_read;
-    store->write = __disk_write;
-    
-    mtx_lock(&_global_lock);
-    arr_push(&_global_stores, store);
-    mtx_unlock(&_global_lock);
     
     size_t len = strlen(disk_path) + 12;
     char *statefile = malloc(len);
@@ -374,7 +350,7 @@ assetstore *assetstore_open(const char *disk_path) {
         if (fseek(f, 0, SEEK_END) != 0) {
             fclose(f);
             log("assetstore: Unable to seek state file\n");
-            return store;
+            return -1;
         }
         size_t size = ftell(f);
         fseek(f, 0, SEEK_SET);
@@ -383,21 +359,21 @@ assetstore *assetstore_open(const char *disk_path) {
             log("assetstore: statefile is empty\n");
             store->state = cJSON_CreateObject();
             fclose(f);
-            return store;
+            return -2;
         }
         char *contents = (char *)malloc(size);
         if(contents == NULL) {
             log("assetstore: could not fit statefile in memory\n");
             store->state = cJSON_CreateObject();
             fclose(f);
-            return store;
+            return -3;
         }
         if (fread(contents, 1, size, f) != size) {
             log("assetstore: Failed to read the whole statefile\n");
             store->state = cJSON_CreateObject();
             free(contents);
             fclose(f);
-            return store;
+            return -4;
         }
         
         fclose(f);
@@ -407,7 +383,7 @@ assetstore *assetstore_open(const char *disk_path) {
             log("assetstore: Failed to parse statefile\n");
             store->state = cJSON_CreateObject();
             free(contents);
-            return store;
+            return -5;
         }
         
         free(contents);
@@ -418,34 +394,16 @@ assetstore *assetstore_open(const char *disk_path) {
         store->state = cJSON_CreateObject();
     }
     
-    return store;
+    return 0;
 }
 
-void _assetstore_close(assetstore *store) {
+void assetstore_close(assetstore *_store) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
+    
     free((void*)store->disk_path);
     cJSON_Delete(store->state);
     store->disk_path = NULL;
     store->state = NULL;
-    free(store);
-}
-
-void assetstore_close(assetstore *store) {
-    mtx_lock(&_global_lock);
-    if (--store->refcount > 0) {
-        mtx_unlock(&_global_lock);
-        return;
-    }
-    
-    for (int i = 0; i < _global_stores.length; i++) {
-        if (_global_stores.data[i] == store) {
-            arr_splice(&_global_stores, i, 1);
-            break;
-        }
-    }
-    
-    _assetstore_close(store);
-    
-    mtx_unlock(&_global_lock);
 }
 
 /// Returns missing ranges
@@ -485,7 +443,7 @@ size_t __missing_ranges_count(cJSON *ranges, size_t total_size) {
     return _missing_ranges(ranges, total_size, NULL, ULONG_MAX);
 }
 
-size_t _missing_ranges_count(assetstore *store, const char *asset_id) {
+size_t _missing_ranges_count(asset_diskstore *store, const char *asset_id) {
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     assert(cJSON_IsObject(state));
     // No missing ranges if asset is complete
@@ -499,9 +457,9 @@ size_t _missing_ranges_count(assetstore *store, const char *asset_id) {
     return __missing_ranges_count(ranges, j_top->valueint);
 }
 
-int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count) {
-    assert(store);
+int assetstore_state(assetstore *_store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count) {
     assert(asset_id);
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
     
     mtx_lock(&store->lock);
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
@@ -538,7 +496,8 @@ int assetstore_state(assetstore *store, const char *asset_id, int *out_exists, i
     return 0;
 }
 
-int assetstore_asset_is_complete(assetstore *store, const char *asset_id) {
+int assetstore_asset_is_complete(assetstore *_store, const char *asset_id) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
     assert(asset_id);
     
     mtx_lock(&store->lock);
@@ -550,7 +509,9 @@ int assetstore_asset_is_complete(assetstore *store, const char *asset_id) {
     return result;
 }
 
-size_t assetstore_get_missing_ranges(assetstore *store, const char *asset_id, size_t *out_ranges, size_t count) {
+size_t assetstore_get_missing_ranges(assetstore *_store, const char *asset_id, size_t *out_ranges, size_t count) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
+    
     assert(store);
     assert(asset_id);
     assert(out_ranges);
@@ -647,14 +608,7 @@ void _merge_range(cJSON *ranges, size_t start, size_t end) {
     return;
 }
 
-int assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
-    assert(asset_id);
-    assert(buffer);
-    assert(out_total_size);
-    return store->read(store, asset_id, offset, buffer, length, out_total_size);
-}
-
-void _write_state(assetstore *store) {
+void _write_state(asset_diskstore *store) {
     size_t len = strlen(store->disk_path) + 12;
     char *statefile = malloc(len);
     snprintf(statefile, len, "%s/%s", store->disk_path, "state.json");
@@ -667,8 +621,7 @@ void _write_state(assetstore *store) {
     fclose(f);
 }
 
-void _update_asset_state(assetstore *store, const char *asset_id) {
-    
+void _update_asset_state(asset_diskstore *store, const char *asset_id) {
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     cJSON *ranges = cJSON_GetObjectItem(state, "ranges");
     
@@ -688,12 +641,18 @@ void _update_asset_state(assetstore *store, const char *asset_id) {
     _write_state(store);
 }
 
-int assetstore_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
+int assetstore_read(assetstore *_store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
+    return __disk_read(store, asset_id, offset, buffer, length, out_total_size);
+}
+
+int assetstore_write(assetstore *_store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
     assert(store);
     assert(asset_id);
     assert(data);
     
-    int bytes_written = store->write(store, asset_id, offset, data, length, total_size);
+    int bytes_written = __disk_write(store, asset_id, offset, data, length, total_size);
     
     mtx_lock(&store->lock);
     // get or create the ranges from asset state in the store state
@@ -769,7 +728,8 @@ __thread cJSON *ass_state = 0;
 //    return _assimilate_file(path);
 //}
 #endif
-int assetstore_assimilate(assetstore *store, const char *path) {
+int assetstore_assimilate(assetstore *_store, const char *path) {
+    asset_diskstore *store = (asset_diskstore*)_store->_impl;
     char *full_path = really_realpath(path);
     
     mtx_lock(&store->lock);
@@ -789,4 +749,28 @@ int assetstore_assimilate(assetstore *store, const char *path) {
     mtx_unlock(&store->lock);
     
     return 0;
+}
+
+
+int asset_diskstore_init(assetstore *store, const char *disk_path) {
+    asset_diskstore *diskstore = calloc(1, sizeof(asset_diskstore));
+    
+    diskstore->interface = store;
+    store->_impl = (void*)diskstore;
+    
+    store->get_asset_file_path = assetstore_asset_path;
+    store->get_is_asset_complete = assetstore_asset_is_complete;
+    store->get_missing_ranges = assetstore_get_missing_ranges;
+    store->get_state = assetstore_state;
+    store->read = assetstore_read;
+    store->write = assetstore_write;
+    store->register_asset = assetstore_assimilate;
+    
+    
+    _assetstore_open(diskstore, disk_path);
+}
+
+void asset_diskstore_deinit(assetstore *store) {
+    asset_diskstore *diskstore = calloc(1, sizeof(asset_diskstore));
+    assetstore_close(store);
 }

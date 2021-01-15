@@ -20,8 +20,7 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   // https://www.gamasutra.com/blogs/BramStolk/20160408/269988/Fixing_your_time_step_the_easy_way_with_the_golden_48537_ms.php
   // for now, slow down simulation if we're given a larger dt than a 20fps equivalent
   double dt = server_time - old_time;
-  dt = MIN(dt, 1/20.0);
-
+  dt = MIN(dt, 1/5.0);
   allo_simulate_iteration(state, intents, intent_count, dt);
 }
 

@@ -550,7 +550,8 @@ static void _alloclient_simulate(alloclient *client)
 {
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
   
-  allo_simulate(&client->_state, intents, 1, alloclient_get_time(client));
+  double now = alloclient_get_time(client);
+  allo_simulate(&client->_state, intents, 1, now);
   if (client->state_callback)
   {
     client->state_callback(client, &client->_state);

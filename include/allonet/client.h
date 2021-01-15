@@ -75,20 +75,6 @@ typedef struct alloclient {
     );
 
     /*! 
-     * Someone is asking you if you have asset `asset_id`.
-     * @param asset_id sha identifier of the asset
-     * @param entity_id Hint of which entity might have the asset
-     * @return size_t How big is this asset? Return 0 if you don't have the asset.
-     * @discussion If you return >0 from this asset, you will later get
-     *             asset_transmission_callback asking you for the data for this asset.
-     */
-    size_t (*asset_request_callback)(
-      alloclient* client,
-      const char* asset_id,
-      const char* entity_id
-    );
-
-    /*! 
      * Please provide data into `buf` starting at `offset` and of at most `chunk_length` bytes
      * to send to the server. Return the number of bytes you actually put into
      * `buf`. You must not provide more or less bytes in total than what you returned from
@@ -145,23 +131,14 @@ typedef struct alloclient {
     void (*alloclient_simulate)(alloclient* client);
     double (*alloclient_get_time)(alloclient* client);
     void (*alloclient_get_stats)(alloclient* client, char *buffer, size_t bufferlen);
+    
     // -- Assets
-    /// Get the absolute path to an asset
-    /// @param asset_id The asset id
-    /// @returns The full path for the asset if it exists and is complete, otherwise NULL.
-    char *(*alloclient_get_path_for_asset)(alloclient *client, const char *asset_id);
-    /// Add a path to scan for assets
-    /// @param folder A path to scan for assets
-    void (*alloclient_add_asset)(alloclient *client, const char *folder);
+        
     /// Let client know an asset is needed
+    /// `asset_state_callback` will let you know when the asset is available or not found.
     /// @param asset_id The asset
     /// @param entity_id Optional entity that needs the asset.
-    void (*alloclient_request_asset)(alloclient* client, const char* asset_id, const char* entity_id);
-    
-    // FUTURE: Let client know an asset is no longer needed
-    // -- Asset callbacks
-    // Let app know an asset has become available
-    // Let app know an asset failed to load
+    void (*alloclient_asset_request)(alloclient* client, const char* asset_id, const char* entity_id);
     
 } alloclient;
 
@@ -224,7 +201,7 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
  * that you want to draw. If you know which entity is referencing it, you can
  * send it as `entity_id`, but that's optional.
  */
-void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id);
+void alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id);
 
 
 /**
@@ -240,10 +217,5 @@ void alloclient_simulate(alloclient* client);
 double alloclient_get_time(alloclient* client);
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
-
-char *alloclient_get_path_for_asset(alloclient *client, const char *asset_id);
-void alloclient_add_asset(alloclient *client, const char *folder);
-void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id);
-
 
 #endif

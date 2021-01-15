@@ -280,7 +280,7 @@ alloserver *allo_listen(int listenhost, int port)
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     arr_init(&_servinternal(serv)->wanted_assets);
     
-    asset_diskstore_init(&(_servinternal(serv)->assetstore), "server_asset_cache");
+    asset_memstore_init(&(_servinternal(serv)->assetstore));
     
     srand((unsigned int)time(NULL));
 

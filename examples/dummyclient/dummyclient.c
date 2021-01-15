@@ -95,7 +95,7 @@ static bool interaction(
         allo_interaction_free(request);
         
 //        alloclient_request_asset(client, "f03660c3844041df50a9189bf9b231aed3b1aff5", "anyone");
-        alloclient_request_asset(client, "803d5bab08a8a0758222cd4dff9793bd16add262", "anyone");
+        alloclient_asset_request(client, "803d5bab08a8a0758222cd4dff9793bd16add262", "anyone");
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {
@@ -282,7 +282,6 @@ int main(int argc, char **argv)
     char *identity = (char*)calloc(1, 255);
     snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
     alloclient *client = alloclient_create(true);
-    alloclient_add_asset(client, "client_asset_files");
     alloclient_connect(client, argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);

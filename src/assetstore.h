@@ -59,29 +59,22 @@ typedef struct assetstore {
     size_t (*get_missing_ranges)(struct assetstore *store, const char *asset_id, size_t out_ranges[], size_t count);
 
     /// Register an asset with the store
-    int (*register_asset)(struct assetstore *store, const char *name);
-
-    /// Get a file path for an asset to be used where streaming data is not possible.
-    /// Stores not backed by disk need to write to a temp file and provide the path for it.
-    /// @returns the path on success, otherwise NULL. The pointer should be freed by the caller.
-    char *(*get_asset_file_path)(struct assetstore *store, const char *asset_id);
+    int (*register_asset_nocopy)(struct assetstore *store, const char *asset_id, const uint8_t *data, size_t length);
+//    int (*register_asset)(struct assetstore *store, const char *asset_id, int(*read)(const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size));
+    
     
     void *_impl;
 } assetstore;
 
-typedef struct asset_diskstore {
+typedef struct asset_memstore {
     assetstore *interface;
     
-    /// The disk root
-    const char *disk_path;
-    /// State tracking, completed ranges etc
     cJSON *state;
     
     mtx_t lock;
-    int refcount;
-} asset_diskstore;
+} asset_memstore;
 
-int asset_diskstore_init(assetstore *store, const char *disk_path);
-void asset_diskstore_deinit(assetstore *store);
+int asset_memstore_init(assetstore *store);
+void asset_memstore_deinit(assetstore *store);
 
 #endif /* asset_store_h */

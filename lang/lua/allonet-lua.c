@@ -313,31 +313,14 @@ static int l_alloclient_get_stats(lua_State *L)
 
 ////// Assets
 
-static int l_alloclient_request_asset(lua_State *L)
+static int l_alloclient_asset_request(lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
     
     const char *asset_id  = luaL_checkstring(L, 2);
     const char *entity_id = luaL_optstring(L, 3, NULL);
-    alloclient_request_asset(lclient->client, asset_id, entity_id);
+    alloclient_asset_request(lclient->client, asset_id, entity_id);
     return 0;
-}
-
-static int l_alloclient_get_path_for_asset(lua_State *L)
-{
-    l_alloclient_t *lclient = check_alloclient(L, 1);
-    const char *asset_id = luaL_checkstring(L, 2);
-    char *path = alloclient_get_path_for_asset(lclient->client, asset_id);
-    lua_pushstring(lclient->L, path);
-    free(path);
-    return 1;
-}
-
-static int l_alloclient_add_asset(lua_State *L)
-{
-    l_alloclient_t *lclient = check_alloclient(L, 1);
-    const char *asset_path = luaL_checkstring(L, 2);
-    alloclient_add_asset(lclient->client, asset_path);
 }
 
 ////// Callbacks from allonet
@@ -421,9 +404,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"get_latency", l_alloclient_get_latency},
     {"get_clock_delta", l_alloclient_get_clock_delta},
     {"get_stats", l_alloclient_get_stats},
-    {"get_path_for_asset", l_alloclient_get_path_for_asset},
-    {"request_asset", l_alloclient_request_asset},
-    {"add_asset", l_alloclient_add_asset},
+    {"request_asset", l_alloclient_asset_request},
     {NULL, NULL}
 };
 

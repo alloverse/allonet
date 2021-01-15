@@ -34,7 +34,6 @@ typedef enum
     msg_clock,
     
     msg_asset_request,
-    msg_asset_assimilate,
     msg_asset_state_callback,
 
     msg_count
@@ -75,10 +74,6 @@ typedef struct proxy_message
             char *asset_id;
             char *entity_id;
         } asset_request;
-        
-        struct {
-            char *path;
-        } asset_assimilate;
         
         struct {
             char *asset_id;
@@ -235,33 +230,19 @@ static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, si
     snprintf(buffer, bufferlen, "p2b %d\nb2p %d\ntotal\ts:%u r:%u\nch0-diffs\ts:%u r:%u\nch1-cmd\ts:%u r:%u\nch2-asset\ts:%u r:%u\nch3-media\ts:%u r:%u\nch4-clock\ts:%u r:%u\nState: set:%u delta:%u", p2b, b2p, allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0], allo_statistics.bytes_sent[1], allo_statistics.bytes_recv[1], allo_statistics.bytes_sent[2], allo_statistics.bytes_recv[2], allo_statistics.bytes_sent[3], allo_statistics.bytes_recv[3], allo_statistics.bytes_sent[4], allo_statistics.bytes_recv[4], allo_statistics.bytes_sent[5], allo_statistics.bytes_recv[5], allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
 }
 
-static void proxy_alloclient_add_asset(alloclient *proxyclient, const char *path) {
-    proxy_message *msg = proxy_message_create(msg_asset_assimilate);
-    msg->value.asset_assimilate.path = strdup(path);
-    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
-}
-static void bridge_alloclient_add_asset(alloclient *bridgeclient, proxy_message *msg) {
-    alloclient_add_asset(bridgeclient, msg->value.asset_assimilate.path);
-    free(msg->value.asset_assimilate.path);
-}
-
-static void proxy_alloclient_request_asset(alloclient *proxyclient, const char *asset_id, const char *entity_id) {
+static void proxy_alloclient_asset_request(alloclient *proxyclient, const char *asset_id, const char *entity_id) {
     proxy_message *msg = proxy_message_create(msg_asset_request);
     msg->value.asset_request.asset_id = strdup(asset_id);
     msg->value.asset_request.entity_id = entity_id == NULL ? NULL : strdup(entity_id);
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
-static void bridge_alloclient_request_asset(alloclient *bridgeclient, proxy_message *msg) {
-    alloclient_request_asset(bridgeclient, msg->value.asset_request.asset_id, msg->value.asset_request.entity_id);
+static void bridge_alloclient_asset_request(alloclient *bridgeclient, proxy_message *msg) {
+    alloclient_asset_request(bridgeclient, msg->value.asset_request.asset_id, msg->value.asset_request.entity_id);
     
     free(msg->value.asset_request.asset_id);
     if (msg->value.asset_request.entity_id) {
         free(msg->value.asset_request.entity_id);
     }
-}
-
-static char *proxy_alloclient_get_path_for_asset(alloclient *proxyclient, const char *asset_id) {
-    return alloclient_get_path_for_asset(_internal(proxyclient)->bridgeclient, asset_id);
 }
 
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
@@ -270,8 +251,7 @@ static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_interaction] = bridge_alloclient_send_interaction,
     [msg_intent] = bridge_alloclient_set_intent,
     [msg_audio] = bridge_alloclient_send_audio,
-    [msg_asset_assimilate] = bridge_alloclient_add_asset,
-    [msg_asset_request] = bridge_alloclient_request_asset,
+    [msg_asset_request] = bridge_alloclient_asset_request,
 };
 
 //////// Callbacks
@@ -474,9 +454,7 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
     proxyclient->alloclient_get_time = proxy_alloclient_get_time;
     proxyclient->alloclient_get_stats = proxy_alloclient_get_stats;
-    proxyclient->alloclient_request_asset = proxy_alloclient_request_asset;
-    proxyclient->alloclient_add_asset = proxy_alloclient_add_asset;
-    proxyclient->alloclient_get_path_for_asset = proxy_alloclient_get_path_for_asset;
+    proxyclient->alloclient_asset_request = proxy_alloclient_asset_request;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

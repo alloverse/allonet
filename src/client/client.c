@@ -576,26 +576,10 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     snprintf(buffer, bufferlen, "{\"ndelta_set\": %ud, \"ndelta_merge\": %ud}", allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
 }
 
-char *alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {
-    return client->alloclient_get_path_for_asset(client, asset_id);
+void alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id) {
+    client->alloclient_asset_request(client, asset_id, entity_id);
 }
-static char *_alloclient_get_path_for_asset(alloclient *client, const char *asset_id) {
-    assetstore *store = &_internal(client)->assetstore;
-    return store->get_asset_file_path(store, asset_id);
-}
-
-void alloclient_add_asset(alloclient *client, const char *path) {
-    client->alloclient_add_asset(client, path);
-}
-static void _alloclient_add_asset(alloclient *client, const char *path) {
-    assetstore *store = &_internal(client)->assetstore;
-    store->register_asset(store, path);
-}
-
-void alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
-    client->alloclient_request_asset(client, asset_id, entity_id);
-}
-static void _alloclient_request_asset(alloclient* client, const char* asset_id, const char* entity_id) {
+static void _alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id) {
     asset_request(asset_id, entity_id, _asset_send_func, (void*)client);
 }
 
@@ -615,8 +599,6 @@ alloclient *alloclient_create(bool threaded)
     
     LIST_INIT(&client->_state.entities);
     
-    asset_diskstore_init(&(_internal(client)->assetstore), "client_asset_cache");
-
     client->alloclient_connect = _alloclient_connect;
     client->alloclient_disconnect = _alloclient_disconnect;
     client->alloclient_poll = _alloclient_poll;
@@ -628,9 +610,7 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_get_stats = _alloclient_get_stats;
     
     // assets
-    client->alloclient_get_path_for_asset = _alloclient_get_path_for_asset;
-    client->alloclient_add_asset = _alloclient_add_asset;
-    client->alloclient_request_asset = _alloclient_request_asset;
+    client->alloclient_asset_request = _alloclient_asset_request;
     
     return client;
 }

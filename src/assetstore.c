@@ -81,7 +81,7 @@ size_t _missing_ranges_count(asset_memstore *store, const char *asset_id) {
     return __missing_ranges_count(ranges, j_top->valueint);
 }
 
-int assetstore_state(assetstore *_store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count) {
+int _memstore_state(assetstore *_store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count) {
     assert(asset_id);
     asset_memstore *store = (asset_memstore*)_store->_impl;
     
@@ -94,7 +94,7 @@ int assetstore_state(assetstore *_store, const char *asset_id, int *out_exists, 
         mtx_unlock(&store->lock);
         return 0;
     } else {
-        *out_exists = 1;
+        if (out_exists) *out_exists = 1;
     }
     assert(cJSON_IsObject(state));
     if (!cJSON_IsObject(state)) {
@@ -120,20 +120,7 @@ int assetstore_state(assetstore *_store, const char *asset_id, int *out_exists, 
     return 0;
 }
 
-int assetstore_asset_is_complete(assetstore *_store, const char *asset_id) {
-    asset_memstore *store = (asset_memstore*)_store->_impl;
-    assert(asset_id);
-    
-    mtx_lock(&store->lock);
-    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
-    cJSON *complete = cJSON_GetObjectItem(state, "complete");
-    int result = cJSON_IsTrue(complete);
-    mtx_unlock(&store->lock);
-    
-    return result;
-}
-
-size_t assetstore_get_missing_ranges(assetstore *_store, const char *asset_id, size_t *out_ranges, size_t count) {
+size_t _memstore_get_missing_ranges(assetstore *_store, const char *asset_id, size_t *out_ranges, size_t count) {
     asset_memstore *store = (asset_memstore*)_store->_impl;
     
     assert(store);
@@ -250,7 +237,7 @@ void _update_asset_state(asset_memstore *store, const char *asset_id) {
     }
 }
 
-int assetstore_read(assetstore *_store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
+int _memstore_read(assetstore *_store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
     asset_memstore *store = (asset_memstore*)_store->_impl;
     
     mtx_lock(&store->lock);
@@ -281,7 +268,7 @@ int assetstore_read(assetstore *_store, const char *asset_id, size_t offset, uin
     return length;
 }
 
-int assetstore_write(assetstore *_store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
+int _memstorestore_write(assetstore *_store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
     asset_memstore *store = (asset_memstore*)_store->_impl;
     assert(store);
     assert(asset_id);
@@ -354,26 +341,27 @@ int memstore_register_asset_nocopy(struct assetstore *_store, const char *asset_
     cJSON *state = cJSON_AddObjectToObject(store->state, asset_id);
     cJSON_AddBoolToObject(state, "complete", 1);
     cJSON_AddRawToObject(state, "data", (const char *)data);
+    cJSON_AddNumberToObject(state, "total_size", length);
     
     mtx_unlock(&store->lock);
     
-    log("assetstore: Assimilated %s\n", cJSON_Print(state));
+    log("assetstore: Did register complete asset %s\n", cJSON_Print(state));
     
     return 0;
 }
 
 
 int asset_memstore_init(assetstore *store) {
-    asset_memstore *diskstore = calloc(1, sizeof(asset_memstore));
+    asset_memstore *memstore = calloc(1, sizeof(asset_memstore));
     
-    diskstore->interface = store;
-    store->_impl = (void*)diskstore;
+    memstore->interface = store;
+    memstore->state = cJSON_CreateObject();
+    store->_impl = (void*)memstore;
     
-    store->get_is_asset_complete = assetstore_asset_is_complete;
-    store->get_missing_ranges = assetstore_get_missing_ranges;
-    store->get_state = assetstore_state;
-    store->read = assetstore_read;
-    store->write = assetstore_write;
+    store->get_missing_ranges = _memstore_get_missing_ranges;
+    store->get_state = _memstore_state;
+    store->read = _memstore_read;
+    store->write = _memstorestore_write;
     store->register_asset_nocopy = memstore_register_asset_nocopy;
 }
 
@@ -385,4 +373,37 @@ void asset_memstore_deinit(assetstore *_store) {
         _clear_state(state);
         state = state->next;
     }
+}
+
+
+
+
+// ---- Public API
+
+int assetstore_read(struct assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
+    return store->read(store, asset_id, offset, buffer, length, out_total_size);
+}
+
+int assetstore_write(struct assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
+    return store->write(store, asset_id, offset, data, length, total_size);
+}
+
+int assetstore_get_is_asset_complete(struct assetstore *store, const char *asset_id) {
+    int complete = 0;
+    if (assetstore_get_state(store, asset_id, NULL, &complete, NULL) == 0) {
+        return complete;
+    }
+    return 0;
+}
+
+int assetstore_get_state(struct assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count) {
+    return store->get_state(store, asset_id, out_exists, out_complete, out_regions_count);
+}
+
+size_t assetstore_get_missing_ranges(struct assetstore *store, const char *asset_id, size_t out_ranges[], size_t count) {
+    return store->get_missing_ranges(store, asset_id, out_ranges, count);
+}
+
+int assetstore_register_asset_nocopy(struct assetstore *store, const char *asset_id, const uint8_t *data, size_t length) {
+    return store->register_asset_nocopy(store, asset_id, data, length);
 }

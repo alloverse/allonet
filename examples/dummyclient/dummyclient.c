@@ -95,7 +95,7 @@ static bool interaction(
         allo_interaction_free(request);
         
 //        alloclient_request_asset(client, "f03660c3844041df50a9189bf9b231aed3b1aff5", "anyone");
-        alloclient_asset_request(client, "803d5bab08a8a0758222cd4dff9793bd16add262", "anyone");
+        alloclient_asset_request(client, "hello", "anyone");
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {

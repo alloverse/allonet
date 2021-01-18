@@ -173,7 +173,7 @@ void asset_handle(
     cJSON *json = NULL;
     cJSON *error = NULL;
     assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
-    if (mid == asset_mid_request) {
+    if (mid == asset_mid_request && store->read != NULL) {
         const char *id = NULL;
         size_t offset = 0, length = 0;
         
@@ -186,7 +186,7 @@ void asset_handle(
         
         printf("Asset: Got a request for %s\n", id);
         
-        if (store->get_is_asset_complete(store, id)) {
+        if (assetstore_get_is_asset_complete(store, id)) {
             // If we have the complete asset then we can deliver the request
             printf("Asset:  Delivering %s\n", id);
             _asset_deliver(id, store, offset, length, send, user);
@@ -195,7 +195,7 @@ void asset_handle(
             // Otherwise we delegate that it's unavailable.
             callback(id, asset_state_requested_unavailable, user);
         }
-    } else if (mid == asset_mid_data) {
+    } else if (mid == asset_mid_data && store->write != NULL) {
         printf("Asset: received data: %s\n", cJSON_Print(json));
         const char *id = NULL;
         size_t offset = 0, length = 0, total_length = 0;
@@ -204,7 +204,6 @@ void asset_handle(
             cJSON_Delete(error);
             return;
         }
-        
         store->write(store, id, offset, data, length, total_length);
         // request more?
         // TODO: check missing ranges instead

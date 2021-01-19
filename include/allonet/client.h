@@ -68,7 +68,7 @@ typedef struct alloclient {
      *  To free up resources, you must call alloclient_disconnect() after
      *  receiving this callback.
      */
-    void  (*disconnected_callback)(
+    void (*disconnected_callback)(
        alloclient *client,
        alloerror code,
        const char *message
@@ -76,31 +76,41 @@ typedef struct alloclient {
 
     /*! 
      * Please provide data into `buf` starting at `offset` and of at most `chunk_length` bytes
-     * to send to the server. Return the number of bytes you actually put into
-     * `buf`. You must not provide more or less bytes in total than what you returned from
-     * `asset_request_callback`. If you are not ready to provide data, you can return
-     * 0 to get a callback slightly later.
+     * to send to the server.
+     * @discussion You may write less than `length` bytes to the `buffer`, but must never write more.
+     * @param client The client object
+     * @param asset_id An asset identifier
+     * @param buffer Buffer to write data to
+     * @param offset An offset into the data to start reading from
+     * @param length The size requested
+     * @param out_total_size Write the total number of bytes of the asset
+     * @return The number of bytes you actually put into the `buffer`, or 0 if you do not have any data to send for the requested asset and range.
      */
     size_t (*asset_send_callback)(
       alloclient* client,
       const char* asset_id,
-      char *buf,
+      uint8_t *buffer,
       size_t offset,
-      size_t chunk_length
+      size_t length,
+      size_t *out_total_size
     );
 
     /*!
      * You have received data for an asset; write it to your cache or whatever.
-     * `chunk_length` is the number of bytes available in `buf`.
+     * @param client The client object
+     * @param asset_id The asset identifier
+     * @param buffer Bytes
+     * @param length Is the number of bytes available in `buffer`.
+     * @param total_size The total size of the asset.
      * @return true if you want to continue receving bytes for this asset.
      */
     bool (*asset_receive_callback)(
       alloclient* client,
       const char* asset_id,
-      char* buf,
+      const uint8_t* buffer,
       size_t offset,
-      size_t chunk_length,
-      size_t total_length
+      size_t length,
+      size_t total_size
     );
     
     /*!

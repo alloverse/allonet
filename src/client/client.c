@@ -8,7 +8,7 @@
 #include "../util.h"
 #include "../clientproxy.h"
 #include "../asset.h"
-#include "../assetstore.h"
+#include <allonet/assetstore.h>
 
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
@@ -147,7 +147,11 @@ static void parse_clock(alloclient *client, cJSON *response)
 int _asset_read_range_func(const char *id, uint8_t *buffer, size_t offset, size_t length, size_t *out_read_length, size_t *out_total_size, cJSON **out_error, void *user) {
     alloclient *client = (alloclient *)user;
     assetstore *store = &_internal(client)->assetstore;
-    return assetstore_read(store, id, offset, buffer, length, out_total_size);
+    if (client->asset_send_callback) {
+        return client->asset_send_callback(client, id, buffer, offset, length, out_total_size);
+    } else {
+        return assetstore_read(store, id, offset, buffer, length, out_total_size);
+    }
 }
 
 int _asset_write_range_func(const char *id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, cJSON **out_error, void *user) {
@@ -171,12 +175,15 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
 }
 
-static int _asset_read_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user) {
+static int _asset_query_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user) {
     alloclient *client = (alloclient *)user;
+    if (client->asset_send_callback) {
+        return client->asset_send_callback(client, asset_id, buffer, offset, length, out_total_size);
+    }
     return assetstore_read(&(_internal(client)->assetstore), asset_id, offset, buffer, length, out_total_size);
 }
 
-static int _asset_write_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
+static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
     alloclient *client = (alloclient *)user;
     if (client->asset_receive_callback) {
         return client->asset_receive_callback(client, asset_id, buffer, offset, length, total_size);
@@ -195,7 +202,7 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
 static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
     asset_handle(
         data, data_length,
-        _asset_read_func,
+        _asset_query_func,
         _asset_write_func,
         _asset_send_func,
         _asset_state_callback_func,
@@ -608,7 +615,6 @@ void alloclient_set_send_callback(alloclient *client, int(*callback)(alloclient*
                                                              size_t offset,
                                                              size_t chunk_length)) {
     client->asset_send_callback = callback;
-    
 }
 
 alloclient *alloclient_create(bool threaded)

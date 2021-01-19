@@ -3,7 +3,7 @@
 #include <opus.h>
 #include <enet/enet.h>
 #include "../delta.h"
-#include "../assetstore.h"
+#include <allonet/assetstore.h>
 
 typedef struct interaction_queue {
     allo_interaction *interaction;
@@ -22,7 +22,7 @@ typedef struct {
     statehistory_t history;
     LIST_HEAD(decoder_track_list, decoder_track) decoder_tracks;
     scheduler jobs;
-    assetstore assetstore;
+    assetstore assetstore; // asset state tracking
 } alloclient_internal;
 
 typedef struct decoder_track decoder_track;

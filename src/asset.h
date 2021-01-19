@@ -18,17 +18,19 @@ typedef enum asset_mid asset_mid;
 /// @param user The same pointer as sent to a method that also takes this function
 typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
 
-typedef int (*asset_read_func)(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user);
+typedef int (*asset_query_func)(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user);
 typedef int (*asset_write_func)(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user);
 
 
 typedef enum {
-    /// Asset became available
+    /// Asset became available.
     asset_state_now_available,
-    /// Asset became unavailable
+    /// Asset became unavailable.
     asset_state_now_unavailable,
-    /// Asset was requested but was not available
+    /// Asset was requested but was not available.
     asset_state_requested_unavailable,
+    /// Asset handling is not supported.
+    asset_state_not_supported,
 } asset_state;
 
 /// A callback for when the state of an asset changes, for example when asset availability changes.
@@ -43,7 +45,7 @@ typedef void(*asset_state_func)(const char *asset_id, asset_state state, void *u
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
-    asset_read_func read,
+    asset_query_func query,
     asset_write_func write,
     asset_send_func send,
     asset_state_func callback,
@@ -67,7 +69,7 @@ void asset_request(
 /// @param store The asset store
 /// @param send A function to send data over the network
 /// @param user User data passed as last argument to `send`
-void asset_deliver(const char *id, asset_read_func read, asset_send_func send, void *user);
+void asset_deliver(const char *id, asset_query_func query, asset_send_func send, void *user);
 
 
 // Protocol details

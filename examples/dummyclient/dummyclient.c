@@ -1,4 +1,5 @@
 #include <allonet/allonet.h>
+#include <allonet/assetstore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -64,10 +65,6 @@ static int32_t track_id = 0;
 
 allo_client_intent* intent;
 
-static void asset_state(alloclient *client, const char *asset_id, int state) {
-    printf("Asset %s changed state %d\n", asset_id, state);
-}
-
 static bool interaction(
     alloclient *client, 
     allo_interaction *inter
@@ -94,8 +91,9 @@ static bool interaction(
         alloclient_send_interaction(client, request);
         allo_interaction_free(request);
         
-//        alloclient_request_asset(client, "f03660c3844041df50a9189bf9b231aed3b1aff5", "anyone");
         alloclient_asset_request(client, "hello", "anyone");
+        alloclient_asset_request(client, "ring", "anyone");
+        alloclient_asset_request(client, "unavailable", "anyone");
     }
     
     if(strcmp(interaction_name, "poke") == 0 ) {
@@ -202,13 +200,41 @@ static void send_audio(alloclient *client)
 	alloclient_send_audio(client, track_id, pcm, 960);
 }
 
-bool dummy_receive_asset(alloclient *client, const char *asset_id, char *buffer, size_t offset, size_t length, size_t total_length) {
+assetstore assets;
+
+bool dummy_receive_asset(alloclient *client, const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_length) {
+    assetstore_write(&assets, asset_id, offset, buffer, length, total_length);
     printf("Dummy client received bytes %zu-%zu of %zu\n", offset, offset+length, total_length);
+    
     return true;
+}
+
+size_t dummy_send_asset(alloclient *client, const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size) {
+    if (strcmp(asset_id, "ring") != 0) return 0;
+    char *data = "Yes this is client?";
+    size_t size = strlen(data)+1;
+    
+    // If buffer is null then this is just a query
+    if (buffer == NULL) {
+        return 1;
+    }
+    
+    if (out_total_size) *out_total_size = size;
+    if (offset >= size) return 0;
+    if (offset + length > size) length = size - offset;
+    if (length <= 0) return 0;
+    memcpy(buffer, data + offset, length);
+    return length;
 }
 
 void dummy_asset_state_change(alloclient *client, const char *asset_id, client_asset_state state) {
     printf("Dummy client received state update %d about asset %s\n", state, asset_id);
+    if (state == client_asset_state_now_available) {
+        size_t size = 0;
+        assetstore_get_state(&assets, asset_id, NULL, NULL, NULL, &size);
+        uint8_t *data = asset_memstore_get_data_pointer(&assets, asset_id);
+        printf("Dummy asset %s complete: %s\n", asset_id, data);
+    }
 }
 
 int main(int argc, char **argv)
@@ -223,6 +249,8 @@ int main(int argc, char **argv)
         return -2;
     }
 
+    asset_memstore_init(&assets);
+    
     intent = allo_client_intent_create();
 
     printf("hello microverse\n");
@@ -291,6 +319,8 @@ int main(int argc, char **argv)
     snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
     alloclient *client = alloclient_create(false);
     client->asset_receive_callback = dummy_receive_asset;
+    client->asset_send_callback = dummy_send_asset;
+    client->asset_state_callback = dummy_asset_state_change;
     alloclient_connect(client, argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);
@@ -304,7 +334,6 @@ int main(int argc, char **argv)
 #endif
     client->interaction_callback = interaction;
     client->disconnected_callback = disconnected;
-    client->asset_state_callback = asset_state;
     
     int i = 0;
     

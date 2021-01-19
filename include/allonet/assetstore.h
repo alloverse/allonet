@@ -45,8 +45,9 @@ typedef struct assetstore {
     /// @param out_exists Optional. Will be set to 1 if the asset exists
     /// @param out_complete Optional. Will be set to 1 if the all of the assets bytes are stored
     /// @param out_ranges_count Optional. The number of missing ranges for the asset. Get the ranges with `assetstore_get_missing_ranges`
+    /// @param out_size Optional. The assets size
     /// @return 0 on success
-    int (*get_state)(struct assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count);
+    int (*get_state)(struct assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count, size_t *out_size);
 
     /// Get missing ranges for an asset
     /// @param store The store
@@ -93,8 +94,9 @@ int assetstore_write(struct assetstore *store, const char *asset_id, size_t offs
 /// @param out_exists Optional. Will be set to 1 if the asset exists
 /// @param out_complete Optional. Will be set to 1 if the all of the assets bytes are stored
 /// @param out_ranges_count Optional. The number of missing ranges for the asset. Get the ranges with `assetstore_get_missing_ranges`
+/// @param out_size Optional. The size of the asset.
 /// @returns 0 on success
-int assetstore_get_state(struct assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count);
+int assetstore_get_state(struct assetstore *store, const char *asset_id, int *out_exists, int *out_complete, size_t *out_regions_count, size_t *out_size);
 
 /// Convenience method for `assetstore_get_state` only requesting `out_complete`
 /// @return 1 if asset is complete.
@@ -117,6 +119,7 @@ typedef struct asset_memstore {
 
 int asset_memstore_init(assetstore *store);
 void asset_memstore_deinit(assetstore *store);
-int asset_memstore_register_asset_nocopy(struct assetstore *store, const char *asset_id, const uint8_t *data, size_t length);
+int asset_memstore_register_asset_nocopy(assetstore *store, const char *asset_id, const uint8_t *data, size_t length);
+uint8_t *asset_memstore_get_data_pointer(assetstore *store, const char *asset_id);
 
 #endif /* asset_store_h */

@@ -6,7 +6,6 @@
 #include <allonet/arr.h>
 #include <assert.h>
 #include <math.h>
-#include "assetstore.h"
 
 allo_client_intent* allo_client_intent_create()
 {

@@ -125,17 +125,16 @@ int asset_read_data_header(const cJSON *header, const char **out_id, size_t *out
     return 0;
 }
 
-
-void _asset_deliver(const char *id, size_t offset, size_t length, asset_read_func read, asset_send_func send, void *user) {
+size_t _asset_deliver(const char *asset_id, size_t offset, size_t length, asset_query_func query, asset_send_func send, void *user) {
     
     size_t total_size = 0;
     uint8_t *read_buffer = malloc(length);
     assert(read_buffer);
     
-    int read_length = read(id, read_buffer, offset, length, &total_size, user);
+    int read_length = query(asset_id, read_buffer, offset, length, &total_size, user);
     
     if (read_length < 0) {
-        cJSON *error = asset_error(id, read_length, "Failed to read");
+        cJSON *error = asset_error(asset_id, read_length, "Failed to read");
         send(asset_mid_failure, error, NULL, 0, user);
         cJSON_Delete(error);
         return;
@@ -143,7 +142,7 @@ void _asset_deliver(const char *id, size_t offset, size_t length, asset_read_fun
     
     int response_range[2] = {offset, read_length};
     cJSON *response = cjson_create_object(
-        "id", cJSON_CreateString(id),
+        "id", cJSON_CreateString(asset_id),
         "range", cJSON_CreateIntArray(response_range, 2),
         "total_length", cJSON_CreateNumber((double)total_size),
         NULL
@@ -152,18 +151,20 @@ void _asset_deliver(const char *id, size_t offset, size_t length, asset_read_fun
     send(asset_mid_data, response, read_buffer, read_length, user);
     
     free(read_buffer);
+    
+    return read_length;
 }
 
 /// Deliver some first bytes of an asset.
-void asset_deliver(const char *id, asset_read_func read, asset_send_func send, void *user) {
-    _asset_deliver(id, 0, ASSET_CHUNK_SIZE, read, send, user);
+void asset_deliver(const char *id, asset_query_func query, asset_send_func send, void *user) {
+    _asset_deliver(id, 0, ASSET_CHUNK_SIZE, query, send, user);
 }
 
 /// Does all the work with a package from the asset data channel, via function pointers provided
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
-    asset_read_func read,
+    asset_query_func query,
     asset_write_func write,
     asset_send_func send,
     asset_state_func callback,
@@ -187,14 +188,17 @@ void asset_handle(
         printf("Asset: Got a request for %s\n", id);
         
         // If we can't read we just fail early.
-        if (read != NULL) {
-            // If we have the complete asset then we can deliver the request
-            printf("Asset:  Delivering %s\n", id);
-            _asset_deliver(id, offset, length, read, send, user);
+        if (query == NULL) {
+            printf("Asset: Asset reading not supported");
+            callback(id, asset_state_not_supported, user);
         } else {
-            printf("Asset:  %s is unavailable\n", id);
-            // Otherwise we delegate that it's unavailable.
-            callback(id, asset_state_requested_unavailable, user);
+            // Check if we have the asset
+            if (query(id, NULL, offset, length, NULL, user)) {
+                printf("Asset:  Delivering %s\n", id);
+                size_t delivered = _asset_deliver(id, offset, length, query, send, user);
+            } else {
+                callback(id, asset_state_requested_unavailable, user);
+            }
         }
     } else if (mid == asset_mid_data && write != NULL) { // if we can't write we just ignore the message
         printf("Asset: received data: %s\n", cJSON_Print(json));

@@ -7,7 +7,7 @@
 #include "util.h"
 #include <allonet/arr.h>
 #include "asset.h"
-#include "assetstore.h"
+#include <allonet/assetstore.h>
 
 void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len);
 
@@ -91,6 +91,7 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client);
 typedef struct asset_user {
     alloserver *server;
     alloserver_client *client;
+    ENetPeer *peer;
 } asset_user;
 
 
@@ -105,7 +106,7 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
     
     alloserver_client *other;
     LIST_FOREACH(other, &server->clients, pointers) {
-        if (other == client) continue;
+//        if (other == client) continue;
         printf("Server: Asking %s for %s\n", other->agent_id, cJSON_Print(header));
         ENetPeer *peer = _clientinternal(other)->peer;
         enet_peer_send(peer, CHANNEL_ASSETS, packet);
@@ -114,7 +115,7 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
     }
 }
 void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
-    ENetPeer *peer = (ENetPeer *)user;
+    ENetPeer *peer = ((asset_user *)user)->peer;
     
     asset_packet_header packet_header;
     char *cheader = cJSON_Print(header);
@@ -129,16 +130,24 @@ void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *da
 void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     alloserver_client *client = ((asset_user *)user)->client;
     ENetPeer *peer = _clientinternal(client)->peer;
+    asset_user usr = *(asset_user*)user;
+    usr.peer = peer;
     
-    _asset_send_func_peer(mid, header, data, data_length, (void*)peer);
+    _asset_send_func_peer(mid, header, data, data_length, &usr);
 }
 
-static int _asset_read_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user) {
+static int _asset_query_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user) {
     alloserver *server = ((asset_user *)user)->server;
+    if (buffer == NULL) {
+        int exists = 0;
+        assetstore_get_state(&(_servinternal(server)->assetstore), asset_id, &exists, NULL, NULL, out_total_size);
+        return exists;
+    }
+    
     return assetstore_read(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, out_total_size);
 }
 
-static int _asset_write_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
+static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
     alloserver *server = ((asset_user *)user)->server;
     return assetstore_write(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, total_size);
 }
@@ -171,7 +180,7 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
 static void handle_assets(const uint8_t *data, size_t data_length, alloserver *server, alloserver_client *client) {
     
     asset_user usr = { .server = server, .client = client };
-    asset_handle(data, data_length, _asset_read_func, _asset_write_func, _asset_send_func, _asset_state_callback_func, (void*)&usr);
+    asset_handle(data, data_length, _asset_query_func, _asset_write_func, _asset_send_func, _asset_state_callback_func, (void*)&usr);
 }
 
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
@@ -381,7 +390,8 @@ void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_
             //TODO: Setup job to send to only send to a few peers at once.
             // deliver the first bytes. After this it's up to the client to request more.
             // TODO: only deliver the range requested in the original request
-            asset_deliver(asset_id, &sv->assetstore, _asset_send_func_peer, wanted->peer);
+            asset_user usr = { .server = server, .client = client, .peer = wanted->peer };
+            asset_deliver(asset_id, _asset_query_func, _asset_send_func_peer, &usr);
             
             arr_splice(&sv->wanted_assets, i, 1);
             --i;

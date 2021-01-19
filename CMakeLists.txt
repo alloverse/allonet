@@ -52,6 +52,7 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
     ${INCLUDE_FILES_PREFIX}/jobs.h
+    ${INCLUDE_FILES_PREFIX}/assetstore.h
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
@@ -71,7 +72,6 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/jobs.c
     ${SOURCE_FILES_PREFIX}/asset.h
     ${SOURCE_FILES_PREFIX}/asset.c
-    ${SOURCE_FILES_PREFIX}/assetstore.h
     ${SOURCE_FILES_PREFIX}/assetstore.c
     ${SOURCE_FILES_PREFIX}/delta.h
     ${SOURCE_FILES_PREFIX}/delta.c

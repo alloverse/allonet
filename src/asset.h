@@ -8,7 +8,6 @@
 #ifndef asset_h
 #define asset_h
 
-typedef struct assetstore assetstore;
 typedef enum asset_mid asset_mid;
 
 /// Provide assets a way to send data in the network
@@ -18,6 +17,9 @@ typedef enum asset_mid asset_mid;
 /// @param data_length The length of `data`
 /// @param user The same pointer as sent to a method that also takes this function
 typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
+
+typedef int (*asset_read_func)(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user);
+typedef int (*asset_write_func)(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user);
 
 
 typedef enum {
@@ -41,7 +43,8 @@ typedef void(*asset_state_func)(const char *asset_id, asset_state state, void *u
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
-    assetstore *store,
+    asset_read_func read,
+    asset_write_func write,
     asset_send_func send,
     asset_state_func callback,
     void *user
@@ -64,7 +67,7 @@ void asset_request(
 /// @param store The asset store
 /// @param send A function to send data over the network
 /// @param user User data passed as last argument to `send`
-void asset_deliver(const char *id, assetstore *store, asset_send_func send, void *user);
+void asset_deliver(const char *id, asset_read_func read, asset_send_func send, void *user);
 
 
 // Protocol details

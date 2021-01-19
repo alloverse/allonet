@@ -92,8 +92,9 @@ typedef struct alloclient {
     /*!
      * You have received data for an asset; write it to your cache or whatever.
      * `chunk_length` is the number of bytes available in `buf`.
+     * @return true if you want to continue receving bytes for this asset.
      */
-    void (*asset_receive_callback)(
+    bool (*asset_receive_callback)(
       alloclient* client,
       const char* asset_id,
       char* buf,

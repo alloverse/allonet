@@ -202,6 +202,14 @@ static void send_audio(alloclient *client)
 	alloclient_send_audio(client, track_id, pcm, 960);
 }
 
+bool dummy_receive_asset(alloclient *client, const char *asset_id, char *buffer, size_t offset, size_t length, size_t total_length) {
+    printf("Dummy client received bytes %zu-%zu of %zu\n", offset, offset+length, total_length);
+    return true;
+}
+
+void dummy_asset_state_change(alloclient *client, const char *asset_id, client_asset_state state) {
+    printf("Dummy client received state update %d about asset %s\n", state, asset_id);
+}
 
 int main(int argc, char **argv)
 {
@@ -281,7 +289,8 @@ int main(int argc, char **argv)
 
     char *identity = (char*)calloc(1, 255);
     snprintf(identity, 255, "{\"display_name\": \"%s\"}", argv[1]);
-    alloclient *client = alloclient_create(true);
+    alloclient *client = alloclient_create(false);
+    client->asset_receive_callback = dummy_receive_asset;
     alloclient_connect(client, argv[2], identity, avatardesc);
     cJSON_Delete(avatardesco);
     free((void*)avatardesc);

@@ -171,6 +171,20 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
 }
 
+static int _asset_read_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user) {
+    alloclient *client = (alloclient *)user;
+    return assetstore_read(&(_internal(client)->assetstore), asset_id, offset, buffer, length, out_total_size);
+}
+
+static int _asset_write_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
+    alloclient *client = (alloclient *)user;
+    if (client->asset_receive_callback) {
+        return client->asset_receive_callback(client, asset_id, buffer, offset, length, total_size);
+    } else {
+        return assetstore_write(&(_internal(client)->assetstore), asset_id, offset, buffer, length, total_size);
+    }
+}
+
 static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
     alloclient *client = (alloclient *)user;
     if (client->asset_state_callback) {
@@ -181,7 +195,8 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
 static void handle_assets(const uint8_t *data, size_t data_length, alloclient *client) {
     asset_handle(
         data, data_length,
-        &(_internal(client)->assetstore),
+        _asset_read_func,
+        _asset_write_func,
         _asset_send_func,
         _asset_state_callback_func,
         (void*)client
@@ -583,6 +598,18 @@ static void _alloclient_asset_request(alloclient* client, const char* asset_id, 
     asset_request(asset_id, entity_id, _asset_send_func, (void*)client);
 }
 
+static int _asset_write(assetstore *store, const char* asset_id, char *buf, size_t offset, size_t chunk_length) {
+    
+}
+
+void alloclient_set_send_callback(alloclient *client, int(*callback)(alloclient* client,
+                                                             const char* asset_id,
+                                                             char *buf,
+                                                             size_t offset,
+                                                             size_t chunk_length)) {
+    client->asset_send_callback = callback;
+    
+}
 
 alloclient *alloclient_create(bool threaded)
 {
@@ -594,6 +621,7 @@ alloclient *alloclient_create(bool threaded)
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
+    asset_memstore_init(&(_internal(client)->assetstore));
     
     scheduler_init(&_internal(client)->jobs);
     

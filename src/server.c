@@ -133,6 +133,16 @@ void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, s
     _asset_send_func_peer(mid, header, data, data_length, (void*)peer);
 }
 
+static int _asset_read_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user) {
+    alloserver *server = ((asset_user *)user)->server;
+    return assetstore_read(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, out_total_size);
+}
+
+static int _asset_write_func(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
+    alloserver *server = ((asset_user *)user)->server;
+    return assetstore_write(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, total_size);
+}
+
 static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
     alloserver *server = ((asset_user *)user)->server;
     alloserver_client *client = ((asset_user *)user)->client;
@@ -161,7 +171,7 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
 static void handle_assets(const uint8_t *data, size_t data_length, alloserver *server, alloserver_client *client) {
     
     asset_user usr = { .server = server, .client = client };
-    asset_handle(data, data_length, &(_servinternal(server)->assetstore), _asset_send_func, _asset_state_callback_func, (void*)&usr);
+    asset_handle(data, data_length, _asset_read_func, _asset_write_func, _asset_send_func, _asset_state_callback_func, (void*)&usr);
 }
 
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
@@ -282,7 +292,7 @@ alloserver *allo_listen(int listenhost, int port)
     
     assetstore *assetstore = &(_servinternal(serv)->assetstore);
     asset_memstore_init(assetstore);
-    assetstore_register_asset_nocopy(assetstore, "hello", (uint8_t*)"Hello World!", 13);
+    asset_memstore_register_asset_nocopy(assetstore, "hello", (uint8_t*)"Hello World!", 13);
     
     srand((unsigned int)time(NULL));
 

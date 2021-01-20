@@ -605,18 +605,6 @@ static void _alloclient_asset_request(alloclient* client, const char* asset_id, 
     asset_request(asset_id, entity_id, _asset_send_func, (void*)client);
 }
 
-static int _asset_write(assetstore *store, const char* asset_id, char *buf, size_t offset, size_t chunk_length) {
-    
-}
-
-void alloclient_set_send_callback(alloclient *client, int(*callback)(alloclient* client,
-                                                             const char* asset_id,
-                                                             char *buf,
-                                                             size_t offset,
-                                                             size_t chunk_length)) {
-    client->asset_send_callback = callback;
-}
-
 alloclient *alloclient_create(bool threaded)
 {
     if(threaded)
@@ -643,6 +631,7 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_get_time = _alloclient_get_time;
     client->alloclient_get_stats = _alloclient_get_stats;
     client->asset_send_callback = NULL;
+    client->asset_receive_callback = NULL;
     
     // assets
     client->alloclient_asset_request = _alloclient_asset_request;

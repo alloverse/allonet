@@ -421,8 +421,12 @@ int asset_memstore_register_asset_nocopy(struct assetstore *store, const char *a
     _clear_state_asset(store, asset_id);
     cJSON *state = cJSON_AddObjectToObject(store->state, asset_id);
     cJSON_AddBoolToObject(state, "complete", 1);
-    cJSON_AddRawToObject(state, "data", (const char *)data);
+    // warning: hacky hack-hack
+    char num[255];
+    sprintf(num, "%ld", (long)data);
+    cJSON_AddStringToObject(state, "data", num);
     cJSON_AddNumberToObject(state, "total_size", length);
+    
     
     mtx_unlock(&store->lock);
     

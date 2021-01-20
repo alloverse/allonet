@@ -18,7 +18,9 @@ typedef enum asset_mid asset_mid;
 /// @param user The same pointer as sent to a method that also takes this function
 typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
 
-typedef int (*asset_query_func)(const char *asset_id, uint8_t *buffer, size_t offset, size_t length, size_t *out_total_size, void *user);
+/// Request a chunk of data
+typedef bool (*asset_request_func)(const char *asset_id, size_t offset, size_t length, void *user);
+/// Write a chunc of data
 typedef int (*asset_write_func)(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user);
 
 
@@ -45,7 +47,7 @@ typedef void(*asset_state_func)(const char *asset_id, asset_state state, void *u
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
-    asset_query_func query,
+    asset_request_func request,
     asset_write_func write,
     asset_send_func send,
     asset_state_func callback,
@@ -58,7 +60,7 @@ void asset_handle(
 /// @param send A function to send data over the network
 /// @param user Passed to `send`.
 void asset_request(
-    const char *id,
+    const char *asset_id,
     const char *entity_id,
     asset_send_func send,
     void *user
@@ -67,9 +69,21 @@ void asset_request(
 /// Start delivering an asset.
 /// @param id The asset to deliver
 /// @param store The asset store
+/// @param request A callback for requesting data. Deliver using `asset_deliver_bytes`
 /// @param send A function to send data over the network
-/// @param user User data passed as last argument to `send`
-void asset_deliver(const char *id, asset_query_func query, asset_send_func send, void *user);
+/// @param user User data passed as last argument to callbacks
+void asset_deliver(const char *asset_id, asset_request_func request, asset_send_func send, void *user);
+
+/// Deliver bytes after receiving a `asset_request_func`.
+/// @param asset_id The asset
+/// @param data The data to deliver
+/// @param offset The offset. Must correspond to the offset in the request
+/// @param length The number of bytes in data
+/// @param total_size The total size of the asset
+/// @param send Callback to use to send data
+/// @param user User data passed as the last argument of `send`
+///
+void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size, asset_send_func send, void *user);
 
 
 // Protocol details

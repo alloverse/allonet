@@ -34,10 +34,11 @@ typedef enum
     msg_clock,
     
     msg_asset_request,
+    msg_asset_send_data,
     msg_asset_state_callback,
     msg_asset_receive_callback,
-    msg_asset_send_callback,
-
+    msg_asset_request_bytes_callback,
+    
     msg_count
 } proxy_message_type;
 
@@ -86,13 +87,12 @@ typedef struct proxy_message
             char *asset_id;
             size_t offset, length, total_size;
             uint8_t *data;
-        } asset_receive_callback;
+        } asset_data;
         
         struct {
             char *asset_id;
-            size_t offset, length, total_size;
-            uint8_t *data;
-        } asset_send_callback;
+            size_t offset, length;
+        } asset_request_bytes;
     } value;
     STAILQ_ENTRY(proxy_message) entries;
 } proxy_message;
@@ -259,63 +259,32 @@ static void bridge_alloclient_asset_request(alloclient *bridgeclient, proxy_mess
     }
 }
 
-//proxyclient->asset_receive_callback = proxy_receive_callback;
-static void proxy_asset_receive_callback(alloclient *proxyclient, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {
-    proxy_message *msg = proxy_message_create(msg_asset_receive_callback);
-    msg->value.asset_receive_callback.asset_id = strdup(asset_id);
-    msg->value.asset_receive_callback.offset = offset;
-    msg->value.asset_receive_callback.length = length;
-    msg->value.asset_receive_callback.total_size = total_size;
-    msg->value.asset_receive_callback.data = malloc(length);
-    memcpy(msg->value.asset_receive_callback.data, data, length);
-    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
-}
-static void bridge_asset_receive_callback(alloclient *bridgeclient, proxy_message *msg) {
-    
-    if (bridgeclient->asset_receive_callback) {
-        bridgeclient->asset_receive_callback(
-             bridgeclient,
-             msg->value.asset_receive_callback.asset_id,
-             msg->value.asset_receive_callback.data,
-             msg->value.asset_receive_callback.offset,
-             msg->value.asset_receive_callback.length,
-             msg->value.asset_receive_callback.total_size
-         );
+static void proxy_alloclient_asset_send(alloclient *proxyclient, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {
+    proxy_message *msg = proxy_message_create(msg_asset_send_data);
+    msg->value.asset_data.asset_id = strdup(asset_id);
+    if (data == NULL) {
+        msg->value.asset_data.data = NULL;
+    } else {
+        msg->value.asset_data.data = malloc(length);
+        assert(msg->value.asset_data.data);
+        memcpy(msg->value.asset_data.data, data, length);
     }
-    
-    free(msg->value.asset_receive_callback.asset_id);
-    free(msg->value.asset_receive_callback.data);
-}
-
-//proxyclient->asset_send_callback = proxy_send_callback;
-static void proxy_asset_send_callback(alloclient *proxyclient, const char *asset_id, const char *entity_id) {
-    proxy_message *msg = proxy_message_create(msg_asset_request);
-    msg->value.asset_request.asset_id = strdup(asset_id);
-    msg->value.asset_request.entity_id = entity_id == NULL ? NULL : strdup(entity_id);
+    msg->value.asset_data.offset = offset;
+    msg->value.asset_data.length = length;
+    msg->value.asset_data.total_size = total_size;
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
-static void bridge_alloclient_asset_request(alloclient *bridgeclient, proxy_message *msg) {
-    alloclient_asset_request(bridgeclient, msg->value.asset_request.asset_id, msg->value.asset_request.entity_id);
+static void bridge_alloclient_asset_send_data(alloclient *bridgeclient, proxy_message *msg) {
+    alloclient_asset_send(bridgeclient, msg->value.asset_data.asset_id,
+        msg->value.asset_data.data,
+        msg->value.asset_data.offset,
+        msg->value.asset_data.length,
+        msg->value.asset_data.total_size
+    );
     
-    free(msg->value.asset_request.asset_id);
-    if (msg->value.asset_request.entity_id) {
-        free(msg->value.asset_request.entity_id);
-    }
-}
-
-proxyclient->asset_state_callback = proxy_asset_state_callback;
-static void proxy_alloclient_asset_request(alloclient *proxyclient, const char *asset_id, const char *entity_id) {
-    proxy_message *msg = proxy_message_create(msg_asset_request);
-    msg->value.asset_request.asset_id = strdup(asset_id);
-    msg->value.asset_request.entity_id = entity_id == NULL ? NULL : strdup(entity_id);
-    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
-}
-static void bridge_alloclient_asset_request(alloclient *bridgeclient, proxy_message *msg) {
-    alloclient_asset_request(bridgeclient, msg->value.asset_request.asset_id, msg->value.asset_request.entity_id);
-    
-    free(msg->value.asset_request.asset_id);
-    if (msg->value.asset_request.entity_id) {
-        free(msg->value.asset_request.entity_id);
+    free(msg->value.asset_data.asset_id);
+    if (msg->value.asset_data.data) {
+        free(msg->value.asset_data.data);
     }
 }
 
@@ -326,6 +295,7 @@ static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_intent] = bridge_alloclient_set_intent,
     [msg_audio] = bridge_alloclient_send_audio,
     [msg_asset_request] = bridge_alloclient_asset_request,
+    [msg_asset_send_data] = bridge_alloclient_asset_send_data,
 };
 
 //////// Callbacks
@@ -341,6 +311,58 @@ static void proxy_asset_state_callback(alloclient *proxyclient, proxy_message *m
         proxyclient->asset_state_callback(proxyclient, msg->value.asset_state_callback.asset_id, msg->value.asset_state_callback.state);
     }
     free(msg->value.asset_state_callback.asset_id);
+}
+
+
+//proxyclient->asset_receive_callback = proxy_receive_callback;
+static void bridge_asset_receive_callback(alloclient *bridgeclient, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {
+    proxy_message *msg = proxy_message_create(msg_asset_receive_callback);
+    msg->value.asset_data.asset_id = strdup(asset_id);
+    msg->value.asset_data.offset = offset;
+    msg->value.asset_data.length = length;
+    msg->value.asset_data.total_size = total_size;
+    assert(length > 0);
+    assert(data != NULL);
+    msg->value.asset_data.data = malloc(length);
+    assert(msg->value.asset_data.data);
+    memcpy(msg->value.asset_data.data, data, length);
+    enqueue_bridge_to_proxy(_internal(bridgeclient->_backref), msg);
+}
+static void proxy_asset_receive_callback(alloclient *bridgeclient, proxy_message *msg) {
+    
+    if (bridgeclient->asset_receive_callback) {
+        bridgeclient->asset_receive_callback(
+            bridgeclient,
+            msg->value.asset_data.asset_id,
+            msg->value.asset_data.data,
+            msg->value.asset_data.offset,
+            msg->value.asset_data.length,
+            msg->value.asset_data.total_size
+        );
+    }
+    
+    free(msg->value.asset_data.asset_id);
+    free(msg->value.asset_data.data);
+}
+
+//proxyclient->asset_send_callback = proxy_send_callback;
+static void bridge_asset_request_bytes_callback(alloclient *bridgeclient, const char *asset_id, size_t offset, size_t length) {
+    proxy_message *msg = proxy_message_create(msg_asset_request_bytes_callback);
+    msg->value.asset_request_bytes.asset_id = strdup(asset_id);
+    msg->value.asset_request_bytes.length = length;
+    msg->value.asset_request_bytes.offset = offset;
+    
+    enqueue_bridge_to_proxy(_internal(bridgeclient->_backref), msg);
+}
+static void proxy_alloclient_asset_request_bytes_callback(alloclient *bridgeclient, proxy_message *msg) {
+    bridgeclient->asset_request_bytes_callback(
+        bridgeclient,
+        msg->value.asset_request_bytes.asset_id,
+        msg->value.asset_request_bytes.offset,
+        msg->value.asset_request_bytes.length
+    );
+    
+    free(msg->value.asset_request_bytes.asset_id);
 }
 
 static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd)
@@ -437,6 +459,8 @@ static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_disconnect] = proxy_disconnected_callback,
     [msg_clock] = proxy_clock_callback,
     [msg_asset_state_callback] = proxy_asset_state_callback,
+    [msg_asset_receive_callback] = proxy_asset_receive_callback,
+    [msg_asset_request_bytes_callback] = proxy_alloclient_asset_request_bytes_callback,
 };
 
 
@@ -513,10 +537,8 @@ alloclient *clientproxy_create(void)
     _internal(proxyclient)->bridgeclient->disconnected_callback = bridge_disconnected_callback;
     _internal(proxyclient)->bridgeclient->clock_callback = bridge_clock_callback;
     _internal(proxyclient)->bridgeclient->asset_state_callback = bridge_asset_state_callback;
-    _internal(proxyclient)->bridgeclient->asset_receive_callback = bridge_receive_callback;
-    _internal(proxyclient)->bridgeclient->asset_send_callback = bridge_send_callback;
-    _internal(proxyclient)->bridgeclient->asset_state_callback = bridge_asset_state_callback;
-    _internal(proxyclient)->bridgeclient->alloclient_asset_request = bridge_asset_request;
+    _internal(proxyclient)->bridgeclient->asset_receive_callback = bridge_asset_receive_callback;
+    _internal(proxyclient)->bridgeclient->asset_request_bytes_callback = bridge_asset_request_bytes_callback;
     _internal(proxyclient)->running = true;
 
     STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);
@@ -532,10 +554,10 @@ alloclient *clientproxy_create(void)
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
     proxyclient->alloclient_get_time = proxy_alloclient_get_time;
     proxyclient->alloclient_get_stats = proxy_alloclient_get_stats;
-    proxyclient->asset_receive_callback = proxy_asset_receive_callback;
-    proxyclient->asset_send_callback = proxy_asset_send_callback;
-    proxyclient->asset_state_callback = proxy_asset_state_callback;
+    
+    
     proxyclient->alloclient_asset_request = proxy_alloclient_asset_request;
+    proxyclient->alloclient_asset_send = proxy_alloclient_asset_send;
 
     int success = thrd_create(&_internal(proxyclient)->thr, (thrd_start_t)_bridgethread, (void*)_internal(proxyclient)->bridgeclient);
     assert(success == thrd_success);

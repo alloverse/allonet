@@ -75,24 +75,18 @@ typedef struct alloclient {
     );
 
     /*! 
-     * Please provide data into `buf` starting at `offset` and of at most `chunk_length` bytes
-     * to send to the server.
-     * @discussion You may write less than `length` bytes to the `buffer`, but must never write more.
+     * Please provide the asset bytes between offset and offset+length using the `alloclient_asset_send` method.
+     * @note You may return less bytes than requested but you must respond with the requested `offset`
      * @param client The client object
      * @param asset_id An asset identifier
-     * @param buffer Buffer to write data to
      * @param offset An offset into the data to start reading from
      * @param length The size requested
-     * @param out_total_size Write the total number of bytes of the asset
-     * @return The number of bytes you actually put into the `buffer`, or 0 if you do not have any data to send for the requested asset and range.
      */
-    size_t (*asset_send_callback)(
+    void (*asset_request_bytes_callback)(
       alloclient* client,
       const char* asset_id,
-      uint8_t *buffer,
       size_t offset,
-      size_t length,
-      size_t *out_total_size
+      size_t length
     );
 
     /*!
@@ -102,9 +96,8 @@ typedef struct alloclient {
      * @param buffer Bytes
      * @param length Is the number of bytes available in `buffer`.
      * @param total_size The total size of the asset.
-     * @return true if you want to continue receving bytes for this asset.
      */
-    bool (*asset_receive_callback)(
+    void (*asset_receive_callback)(
       alloclient* client,
       const char* asset_id,
       const uint8_t* buffer,
@@ -150,6 +143,8 @@ typedef struct alloclient {
     /// @param asset_id The asset
     /// @param entity_id Optional entity that needs the asset.
     void (*alloclient_asset_request)(alloclient* client, const char* asset_id, const char* entity_id);
+    
+    void (*alloclient_asset_send)(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size);
     
 } alloclient;
 
@@ -214,6 +209,12 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
  */
 void alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id);
 
+
+/*!
+ * Respond to an asset_request_callback
+ * Send NULL as `data` if you do not have the requested byte range
+ */
+void alloclient_asset_send(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size);
 
 /**
   * Run allo_simulate() on the internal world state with our latest intent, so that we get local interpolation

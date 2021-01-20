@@ -12,7 +12,7 @@
 #define ASSET_CHUNK_SIZE 1024*1024
 
 void _asset_request(
-    const char *id,
+    const char *asset_id,
     const char *entity_id,
     size_t offset,
     size_t length,
@@ -125,46 +125,43 @@ int asset_read_data_header(const cJSON *header, const char **out_id, size_t *out
     return 0;
 }
 
-size_t _asset_deliver(const char *asset_id, size_t offset, size_t length, asset_query_func query, asset_send_func send, void *user) {
+void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size, asset_send_func send, void *user) {
     
-    size_t total_size = 0;
-    uint8_t *read_buffer = malloc(length);
-    assert(read_buffer);
-    
-    int read_length = query(asset_id, read_buffer, offset, length, &total_size, user);
-    
-    if (read_length < 0) {
-        cJSON *error = asset_error(asset_id, read_length, "Failed to read");
+    if (data == NULL) {
+        // ok user didn't have this chunk
+        cJSON *error = asset_error(asset_id, asset_not_available_error, "Chunk not available");
         send(asset_mid_failure, error, NULL, 0, user);
         cJSON_Delete(error);
         return;
     }
     
-    int response_range[2] = {offset, read_length};
+    int response_range[2] = {offset, length};
     cJSON *response = cjson_create_object(
-        "id", cJSON_CreateString(asset_id),
-        "range", cJSON_CreateIntArray(response_range, 2),
-        "total_length", cJSON_CreateNumber((double)total_size),
-        NULL
-    );
+                                          "id", cJSON_CreateString(asset_id),
+                                          "range", cJSON_CreateIntArray(response_range, 2),
+                                          "total_length", cJSON_CreateNumber((double)total_size),
+                                          NULL
+                                          );
     
-    send(asset_mid_data, response, read_buffer, read_length, user);
-    
-    free(read_buffer);
-    
-    return read_length;
+    send(asset_mid_data, response, data, length, user);
 }
 
-/// Deliver some first bytes of an asset.
-void asset_deliver(const char *id, asset_query_func query, asset_send_func send, void *user) {
-    _asset_deliver(id, 0, ASSET_CHUNK_SIZE, query, send, user);
+void asset_deliver(const char *asset_id, asset_request_func request, asset_send_func send, void *user) {
+    assert(request);
+    assert(send);
+    
+    if (request(asset_id, 0, ASSET_CHUNK_SIZE, user) == false) {
+        cJSON *error = asset_error(asset_id, asset_not_available_error, "Can not deliver");
+        send(asset_mid_failure, error, NULL, 0, user);
+        cJSON_Delete(error);
+    }
 }
 
 /// Does all the work with a package from the asset data channel, via function pointers provided
 void asset_handle(
     const uint8_t* data,
     size_t data_length,
-    asset_query_func query,
+    asset_request_func request,
     asset_write_func write,
     asset_send_func send,
     asset_state_func callback,
@@ -175,47 +172,42 @@ void asset_handle(
     cJSON *error = NULL;
     assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
     if (mid == asset_mid_request) {
-        const char *id = NULL;
+        const char *asset_id = NULL;
         size_t offset = 0, length = 0;
         
-        if (asset_read_request_header(json, &id, &offset, &length, &error)) {
+        if (asset_read_request_header(json, &asset_id, &offset, &length, &error)) {
             send(asset_mid_failure, error, NULL, 0, user);
             cJSON_Delete(json);
             cJSON_Delete(error);
             return;
         }
         
-        printf("Asset: Got a request for %s\n", id);
+        printf("Asset: Got a request for %s\n", asset_id);
         
         // If we can't read we just fail early.
-        if (query == NULL) {
+        if (request == NULL) {
             printf("Asset: Asset reading not supported");
-            callback(id, asset_state_not_supported, user);
-        } else {
-            // Check if we have the asset
-            if (query(id, NULL, offset, length, NULL, user)) {
-                printf("Asset:  Delivering %s\n", id);
-                size_t delivered = _asset_deliver(id, offset, length, query, send, user);
-            } else {
-                callback(id, asset_state_requested_unavailable, user);
-            }
+            callback(asset_id, asset_state_not_supported, user);
+        } else if (request(asset_id, offset, length, user) == false) {
+            callback(asset_id, asset_state_requested_unavailable, user);
         }
+        // Then we wait for user to honor the request
     } else if (mid == asset_mid_data && write != NULL) { // if we can't write we just ignore the message
         printf("Asset: received data: %s\n", cJSON_Print(json));
-        const char *id = NULL;
+        const char *asset_id = NULL;
         size_t offset = 0, length = 0, total_length = 0;
-        if(asset_read_data_header(json, &id, &offset, &length, &total_length, &error)) {
+        if(asset_read_data_header(json, &asset_id, &offset, &length, &total_length, &error)) {
             cJSON_Delete(json);
             cJSON_Delete(error);
             return;
         }
-        write(id, data, offset, length, total_length, user);
+        write(asset_id, data, offset, length, total_length, user);
         // request more?
         // TODO: check missing ranges instead
         if (offset + length < total_length) {
-            _asset_request(id, NULL, offset + length, length, send, user);
+            _asset_request(asset_id, NULL, offset + length, length, send, user);
         } else {
-            callback(id, asset_state_now_available, user);
+            callback(asset_id, asset_state_now_available, user);
         }
         assert(offset + length <= total_length);
     } else if (mid == asset_mid_failure) {
@@ -238,7 +230,7 @@ void asset_handle(
 
 
 void _asset_request(
-   const char *id,
+   const char *asset_id,
    const char *entity_id,
    size_t offset,
    size_t length,
@@ -247,7 +239,7 @@ void _asset_request(
 ) {
     int range[2] = {offset, length};
     cJSON *header = cjson_create_object(
-        "id", cJSON_CreateString(id),
+        "id", cJSON_CreateString(asset_id),
         "range", cJSON_CreateIntArray(range, 2),
         NULL
     );
@@ -260,12 +252,12 @@ void _asset_request(
 
 
 void asset_request(
-    const char *id,
+    const char *asset_id,
     const char *entity_id,
     asset_send_func send,
     void *user
 ) {
-    _asset_request(id, entity_id, 0, ASSET_CHUNK_SIZE, send, user);
+    _asset_request(asset_id, entity_id, 0, ASSET_CHUNK_SIZE, send, user);
 }
 
 int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_mid, cJSON **out_json) {

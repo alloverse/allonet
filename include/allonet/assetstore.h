@@ -113,7 +113,7 @@ size_t assetstore_get_missing_ranges(struct assetstore *store, const char *asset
 
 
 typedef struct asset_memstore {
-    assetstore *interface;
+    struct assetstore *interface;
     
 } asset_memstore;
 

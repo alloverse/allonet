@@ -34,8 +34,8 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
     {
         fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state\n",
             _internal(client)->avatar_id,
-            patch_from,
-            _internal(client)->history.latest_revision
+            (long long int)patch_from,
+            (long long int)_internal(client)->history.latest_revision
         );
         _internal(client)->latest_intent->ack_state_rev = 0;
         return;
@@ -488,9 +488,9 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     const char *slash = strstr(hostandport, "/");
     char *justhost = allo_strndup(hostandport,
         port ? // if host part contains port descriptor...
-            (int)(port-hostandport-1) : // dup up until and excluding the colon
+            (size_t)(port-hostandport-1) : // dup up until and excluding the colon
             slash ? // otherwise, if there's a slash...
-                (int)(slash-hostandport) : // dup up until and excluding the slash
+                (size_t)(slash-hostandport) : // dup up until and excluding the slash
                 strlen(hostandport) // otherwise, dup the whole string
     );
     char *justport = (port && slash) ? allo_strndup(port, slash-port) : port ? strdup(port) : NULL;
@@ -590,10 +590,11 @@ static double _alloclient_get_time(alloclient* client)
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
-    return client->alloclient_get_stats(client, buffer, bufferlen);
+    client->alloclient_get_stats(client, buffer, bufferlen);
 }
 static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
+    (void)client;
     snprintf(buffer, bufferlen, "{\"ndelta_set\": %ud, \"ndelta_merge\": %ud}", allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
 }
 

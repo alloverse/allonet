@@ -70,7 +70,7 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
         host,
         new_peer->address.port,
         new_client->agent_id,
-        new_client
+        (void*)new_client
     );
     
     _clientinternal(new_client)->peer = new_peer;

@@ -8,7 +8,37 @@
 #ifndef asset_h
 #define asset_h
 
-typedef enum asset_mid asset_mid;
+// types
+
+/// The protocol message header of asset protocol
+typedef struct asset_packet_header {
+    /// Message identifier
+    uint16_t mid;
+    /// Header size
+    uint16_t hlen;
+} asset_packet_header;
+
+/// Asset channel message types
+typedef enum asset_mid {
+    /// Asset request
+    asset_mid_request = 1,
+    /// Asset request success response
+    asset_mid_data = 2,
+    /// Asset request failure response
+    asset_mid_failure = 3
+} asset_mid;
+
+typedef enum {
+    /// Asset became available.
+    asset_state_now_available,
+    /// Asset became unavailable.
+    asset_state_now_unavailable,
+    /// Asset was requested but was not available.
+    asset_state_requested_unavailable,
+    /// Asset handling is not supported.
+    asset_state_not_supported,
+} asset_state;
+
 
 /// Provide assets a way to send data in the network
 /// @param mid The message id
@@ -24,16 +54,6 @@ typedef bool (*asset_request_func)(const char *asset_id, size_t offset, size_t l
 typedef int (*asset_write_func)(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user);
 
 
-typedef enum {
-    /// Asset became available.
-    asset_state_now_available,
-    /// Asset became unavailable.
-    asset_state_now_unavailable,
-    /// Asset was requested but was not available.
-    asset_state_requested_unavailable,
-    /// Asset handling is not supported.
-    asset_state_not_supported,
-} asset_state;
 
 /// A callback for when the state of an asset changes, for example when asset availability changes.
 typedef void(*asset_state_func)(const char *asset_id, asset_state state, void *user);
@@ -89,24 +109,6 @@ void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offse
 // Protocol details
 
 
-/// The protocol message header of asset protocol
-typedef struct asset_packet_header {
-    /// Message identifier
-    uint16_t mid;
-    /// Header size
-    uint16_t hlen;
-} asset_packet_header;
-
-
-/// Asset channel message types
-typedef enum asset_mid {
-    /// Asset request
-    asset_mid_request = 1,
-    /// Asset request success response
-    asset_mid_data = 2,
-    /// Asset request failure response
-    asset_mid_failure = 3
-} asset_mid;
 
 struct _ENetPacket;
 /// Helper method to pack an asset into an enet package

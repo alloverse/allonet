@@ -354,13 +354,15 @@ static void bridge_asset_request_bytes_callback(alloclient *bridgeclient, const 
     
     enqueue_bridge_to_proxy(_internal(bridgeclient->_backref), msg);
 }
-static void proxy_alloclient_asset_request_bytes_callback(alloclient *bridgeclient, proxy_message *msg) {
-    bridgeclient->asset_request_bytes_callback(
-        bridgeclient,
-        msg->value.asset_request_bytes.asset_id,
-        msg->value.asset_request_bytes.offset,
-        msg->value.asset_request_bytes.length
-    );
+static void proxy_alloclient_asset_request_bytes_callback(alloclient *proxyclient, proxy_message *msg) {
+    if (proxyclient->asset_request_bytes_callback) {
+        proxyclient->asset_request_bytes_callback(
+            proxyclient,
+            msg->value.asset_request_bytes.asset_id,
+            msg->value.asset_request_bytes.offset,
+            msg->value.asset_request_bytes.length
+        );
+    }
     
     free(msg->value.asset_request_bytes.asset_id);
 }

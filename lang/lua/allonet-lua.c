@@ -344,10 +344,10 @@ static int l_alloclient_asset_send(lua_State *L)
     
     const char *asset_id = luaL_checkstring(L, 2);
     size_t data_length = 0;
-    const char *data = luaL_checklstring(L, 3, &data_length);
+    const char *data = luaL_optlstring(L, 3, NULL, &data_length);
     size_t offset = luaL_checklong(L, 4);
     size_t total_size = luaL_checklong(L, 5);
-    alloclient_asset_send(lclient->client, asset_id, (const uint8_t) *data, offset, data_length, total_size);
+    alloclient_asset_send(lclient->client, asset_id, (const uint8_t *)data, offset, data_length, total_size);
 }
 
 static int l_alloclient_asset_request(lua_State *L)
@@ -361,10 +361,6 @@ static int l_alloclient_asset_request(lua_State *L)
 }
 
 ////// Callbacks from allonet
-
-static void asset_available_callback(alloclient *client, char *asset_id) {
-
-}
 
 static void state_callback(alloclient *client, allo_state *state)
 {
@@ -439,6 +435,7 @@ static void asset_receive_callback(alloclient *client, const char *asset_id, con
         lua_pushlstring(lclient->L, (const char *)data, length);
         lua_pushnumber(lclient->L, offset);
         lua_pushnumber(lclient->L, total_size);
+        lua_call(lclient->L, 4, 0);
     }
 }
 

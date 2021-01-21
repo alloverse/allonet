@@ -4,6 +4,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+extern cJSON *statehistory_get(statehistory_t *history, int64_t revision)
+{
+    return history->history[history->latest_revision%allo_statehistory_length];
+}
+
 void allo_delta_insert(statehistory_t *history, cJSON *next_state)
 {
     cJSON *revj = cJSON_GetObjectItemCaseSensitive(next_state, "revision");
@@ -24,9 +29,9 @@ void allo_delta_destroy(statehistory_t *history)
 
 char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 {
-    cJSON *latest = history->history[history->latest_revision%allo_statehistory_length];
+    cJSON *latest = statehistory_get(history, history->latest_revision);
     assert(latest);
-    cJSON *old = history->history[old_revision%allo_statehistory_length];
+    cJSON *old = statehistory_get(history, old_revision);
     int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(old, "revision"));
     if(!old || old_history_rev != old_revision)
     {
@@ -67,7 +72,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
         return NULL;
     }
 
-    cJSON *current = history->history[patch_from%allo_statehistory_length];
+    cJSON *current = statehistory_get(history, patch_from);
     int64_t current_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(current, "revision"));
 
     if(patch_fromj && (patch_from != current_rev || current == NULL))

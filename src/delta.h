@@ -26,3 +26,5 @@ extern char* allo_delta_compute(statehistory_t *history, int64_t old_revision);
 /// you should send intent.ack_state_rev=0 to get a new full state.
 /// The returned cJSON has the same restrictions as one that is allo_delta_inserted.
 extern cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta);
+
+extern cJSON *statehistory_get(statehistory_t *history, int64_t revision);

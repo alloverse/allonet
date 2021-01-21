@@ -107,7 +107,7 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
     
     alloserver_client *other;
     LIST_FOREACH(other, &server->clients, pointers) {
-//        if (other == client) continue;
+        if (other == client) continue;
         printf("Server: Asking %s for %s\n", other->agent_id, cJSON_Print(header));
         ENetPeer *peer = _clientinternal(other)->peer;
         enet_peer_send(peer, CHANNEL_ASSETS, packet);

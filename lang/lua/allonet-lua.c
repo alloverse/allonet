@@ -238,7 +238,7 @@ static int l_alloclient_set_asset_request_callback (lua_State *L)
 static int l_alloclient_set_asset_receive_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if (store_function(L, &lclient->asset_request_callback_index)) {
+    if (store_function(L, &lclient->asset_receive_callback_index)) {
         lclient->client->asset_receive_callback = asset_receive_callback;
     } else {
         lclient->client->asset_receive_callback = NULL;
@@ -411,7 +411,7 @@ static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
 }
 
 static void asset_state_callback(alloclient *client, const char *asset_id, client_asset_state state) {
-    l_alloclient_t *lclient = (l_alloclient_t *)client;
+    l_alloclient_t *lclient = (l_alloclient_t *)client->_backref;
     
     if (get_function(lclient->L, lclient->asset_state_callback_index)) {
         lua_pushstring(lclient->L, asset_id);
@@ -421,7 +421,7 @@ static void asset_state_callback(alloclient *client, const char *asset_id, clien
 }
 
 static void asset_request_callback(alloclient *client, const char *asset_id, size_t offset, size_t length) {
-    l_alloclient_t *lclient = (l_alloclient_t *)client;
+    l_alloclient_t *lclient = (l_alloclient_t *)client->_backref;
     
     if (get_function(lclient->L, lclient->asset_request_callback_index)) {
         lua_pushstring(lclient->L, asset_id);
@@ -432,7 +432,7 @@ static void asset_request_callback(alloclient *client, const char *asset_id, siz
 }
 
 static void asset_receive_callback(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {
-    l_alloclient_t *lclient = (l_alloclient_t *)client;
+    l_alloclient_t *lclient = (l_alloclient_t *)client->_backref;
     
     if (get_function(lclient->L, lclient->asset_receive_callback_index)) {
         lua_pushstring(lclient->L, asset_id);

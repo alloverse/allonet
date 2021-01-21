@@ -348,6 +348,7 @@ static int l_alloclient_asset_send(lua_State *L)
     size_t offset = luaL_checklong(L, 4);
     size_t total_size = luaL_checklong(L, 5);
     alloclient_asset_send(lclient->client, asset_id, (const uint8_t *)data, offset, data_length, total_size);
+    return 0;
 }
 
 static int l_alloclient_asset_request(lua_State *L)

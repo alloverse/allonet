@@ -129,8 +129,13 @@ void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *da
     allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
 }
 void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
-    alloserver_client *client = ((asset_user *)user)->client;
-    ENetPeer *peer = _clientinternal(client)->peer;
+    // Extract peer if one is not already set.
+    // If user->peer is set it's probably for a destination other than user->client
+    ENetPeer *peer = ((asset_user *)user)->peer;
+    if (peer == NULL) {
+        alloserver_client *client = ((asset_user *)user)->client;
+        peer = _clientinternal(client)->peer;
+    }
     asset_user usr = *(asset_user*)user;
     usr.peer = peer;
     

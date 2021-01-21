@@ -243,6 +243,7 @@ static int l_alloclient_set_asset_receive_callback (lua_State *L)
     } else {
         lclient->client->asset_receive_callback = NULL;
     }
+    return 0;
 }
 
 static int l_alloclient_set_interaction_callback (lua_State *L)

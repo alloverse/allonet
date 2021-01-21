@@ -347,7 +347,7 @@ static int l_alloclient_asset_send(lua_State *L)
     const char *data = luaL_optlstring(L, 3, NULL, &data_length);
     size_t offset = luaL_checklong(L, 4);
     size_t total_size = luaL_checklong(L, 5);
-    alloclient_asset_send(lclient->client, asset_id, (const uint8_t *)data, offset, data_length, total_size);
+    alloclient_asset_send(lclient->client, asset_id, (const uint8_t *)data, offset-1, data_length, total_size);
     return 0;
 }
 
@@ -422,7 +422,7 @@ static void asset_request_callback(alloclient *client, const char *asset_id, siz
     
     if (get_function(lclient->L, lclient->asset_request_callback_index)) {
         lua_pushstring(lclient->L, asset_id);
-        lua_pushnumber(lclient->L, offset);
+        lua_pushnumber(lclient->L, offset+1);
         lua_pushnumber(lclient->L, length);
         lua_call(lclient->L, 3, 0);
     }
@@ -434,7 +434,7 @@ static void asset_receive_callback(alloclient *client, const char *asset_id, con
     if (get_function(lclient->L, lclient->asset_receive_callback_index)) {
         lua_pushstring(lclient->L, asset_id);
         lua_pushlstring(lclient->L, (const char *)data, length);
-        lua_pushnumber(lclient->L, offset);
+        lua_pushnumber(lclient->L, offset+1);
         lua_pushnumber(lclient->L, total_size);
         lua_call(lclient->L, 4, 0);
     }

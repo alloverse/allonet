@@ -102,6 +102,12 @@ endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
 
+if(MSVC)
+  target_compile_options(allonet PRIVATE /W4)
+else()
+  target_compile_options(allonet PRIVATE -Wall -Wextra -pedantic)
+endif()
+
 
 target_sources(allonet
   PRIVATE

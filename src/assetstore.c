@@ -348,7 +348,7 @@ int asset_memstore_init(assetstore *store) {
     
     asset_memstore *memstore = calloc(1, sizeof(asset_memstore));
     
-    memstore->interface = store;
+    memstore->_interface = store;
     store->_impl = (void*)memstore;
     
     store->get_missing_ranges = _memstore_get_missing_ranges;

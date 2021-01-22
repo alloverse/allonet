@@ -370,6 +370,7 @@ void asset_memstore_deinit(assetstore *_store) {
 }
 
 int assetstore_init(assetstore *store) {
+    mtx_init(&store->lock, mtx_plain);
     store->_impl = NULL;
     store->state = cJSON_CreateObject();
     store->get_missing_ranges = _memstore_get_missing_ranges;
@@ -385,6 +386,7 @@ void assetstore_deinit(assetstore *store) {
     store->get_state = NULL;
     store->read = NULL;
     store->write = NULL;
+    mtx_destroy(&store->lock);
 }
 
 

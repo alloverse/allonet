@@ -219,7 +219,8 @@ static void handle_incoming_data(alloserver *serv, alloserver_client *client, al
         return;
     }
     
-    if(serv->raw_indata_callback)
+    
+    if(serv->raw_indata_callback && channel != CHANNEL_ASSETS)
     {
         serv->raw_indata_callback(
             serv, 

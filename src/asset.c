@@ -170,7 +170,12 @@ void asset_handle(
     uint16_t mid = 0;
     cJSON *json = NULL;
     cJSON *error = NULL;
-    assert(asset_read_header(&data, &data_length, &mid, &json) == 0);
+    
+    if (asset_read_header(&data, &data_length, &mid, &json) != 0) {
+        assert(false && "Failed to read header");
+    }
+    
+    
     if (mid == asset_mid_request) {
         const char *asset_id = NULL;
         size_t offset = 0, length = 0;
@@ -212,11 +217,10 @@ void asset_handle(
         assert(offset + length <= total_length);
     } else if (mid == asset_mid_failure) {
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
-        cJSON *id = cJSON_GetObjectItem(json, "id");
-        cJSON *reason = cJSON_GetObjectItem(json, "error_reason");
-        cJSON *code = cJSON_GetObjectItem(json, "error_code");
         
         printf("Asset: received error: %s", cJSON_Print(json));
+    } else {
+        printf("Asset: received weird mid: %d", mid);
     }
     
     if (json != NULL) {

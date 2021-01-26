@@ -309,3 +309,14 @@ ENetPacket *asset_build_enet_packet(uint16_t mid, const cJSON *header, const uin
     return packet;
 }
 
+#include "sha1.h"
+
+char *asset_generate_identifier(const uint8_t *bytes, size_t size) {
+    char sha[20] = {0};
+    SHA1(sha, (const char *)bytes, size);
+    
+    char *xsha = malloc(21);
+    snprintf(xsha, 21, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
+
+    return xsha;
+}

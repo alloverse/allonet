@@ -11,6 +11,7 @@
 #endif
 #include "lua-utils.h"
 #include "../../src/util.h"
+#include "../../src/asset.h"
 
 //// alloclient structure
 typedef struct l_alloclient
@@ -92,6 +93,17 @@ static int l_alloserv_stop_standalone(lua_State* L)
   return 0;
 }
 
+
+static int l_asset_generate_identifier (lua_State *L)
+{
+    size_t size = 0;
+    const char *data  = luaL_checklstring(L, 1, &size);
+    char *res = asset_generate_identifier((uint8_t*)data, size);
+    lua_pushstring(L, res);
+    free(res);
+    return 1;
+}
+
 static const struct luaL_Reg allonet [] =
 {
     {"create", l_alloclient_create },
@@ -101,6 +113,7 @@ static const struct luaL_Reg allonet [] =
     {"start_standalone_server", l_alloserv_start_standalone},
     {"poll_standalone_server", l_alloserv_poll_standalone},
     {"stop_standalone_server", l_alloserv_stop_standalone},
+    {"asset_generate_identifier", l_asset_generate_identifier},
     {NULL, NULL}
 };
 

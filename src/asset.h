@@ -106,6 +106,10 @@ void asset_deliver(const char *asset_id, asset_request_func request, asset_send_
 void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size, asset_send_func send, void *user);
 
 
+/// Generates an identifier for the supplied bytes.
+/// @returns the identifier. Free the result when you are done.
+char *asset_generate_identifier(const uint8_t *bytes, size_t size);
+
 // Protocol details
 
 

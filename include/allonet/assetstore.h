@@ -60,6 +60,7 @@ typedef struct assetstore {
     void *_impl;
     
     cJSON *state;
+    double next_state_prune;
     mtx_t lock;
 } assetstore;
 
@@ -114,7 +115,6 @@ size_t assetstore_get_missing_ranges(struct assetstore *store, const char *asset
 
 typedef struct asset_memstore {
     struct assetstore *_interface;
-    
 } asset_memstore;
 
 int asset_memstore_init(assetstore *store);

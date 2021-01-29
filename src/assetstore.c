@@ -282,12 +282,12 @@ void _lru_tag(cJSON *state) {
     } // lru can also be a bool:true, which means never prune
 }
 
-int _lru_compare(void *mode, const void *a, const void *b) {
-    if (*(int*)mode == 1) {
-        double x = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)a), "total_size")->valueint;
-        double y = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)b), "total_size")->valueint;
-        return y - x;
-    }
+int _lru_compare_size(const void *a, const void *b) {
+    double x = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)a), "total_size")->valueint;
+    double y = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)b), "total_size")->valueint;
+    return y - x;
+}
+int _lru_compare_age(const void *a, const void *b) {
     double x = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)a), "lru")->valuedouble;
     double y = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)b), "lru")->valuedouble;
     return x - y;
@@ -372,7 +372,11 @@ void _lru_prune(assetstore *store) {
             }
             state = state->next;
         }
-        qsort_r(candidates, candidates_count, sizeof(cJSON*), &mode, _lru_compare);
+        if (mode == 1) {
+            qsort(candidates, candidates_count, sizeof(cJSON*), _lru_compare_size);
+        } else {
+            qsort(candidates, candidates_count, sizeof(cJSON*), _lru_compare_age);
+        }
         for(int i = 0; i < candidates_count; i++) {
             cJSON *state = candidates[i];
             size_t size = cJSON_GetObjectItemCaseSensitive(state, "total_size")->valueint;
@@ -408,7 +412,7 @@ void _lru_prune(assetstore *store) {
     if (pruned_total_count > 0) {
         printf("assetstore: Removed %d assets freeing %zu bytes.\n", pruned_total_count, pruned_total_size);
     }
-    printf("assetstore: %d assets in cache using %zu bytes, whereof %d are static assets using %zu bytes.\n", total_asset_count, total_memory_usage, static_asset_count, static_memory_usage);
+    printf("assetstore: %d assets in cache using %zu bytes, whereof %d are static using %zu bytes.\n", total_asset_count, total_memory_usage, static_asset_count, static_memory_usage);
 }
 
 int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {

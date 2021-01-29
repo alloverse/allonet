@@ -233,15 +233,20 @@ void allo_state_destroy(allo_state *state)
   }
 }
 
-cJSON *allo_state_to_json(allo_state *state)
+cJSON *allo_state_to_json(allo_state *state, bool include_agent_id)
 {
   cJSON* entities_rep = cJSON_CreateObject();
   allo_entity* entity = NULL;
-  LIST_FOREACH(entity, &state->entities, pointers) {
+  LIST_FOREACH(entity, &state->entities, pointers)
+  {
     cJSON* entity_rep = cjson_create_object(
       "id", cJSON_CreateString(entity->id),
       NULL
     );
+    if(include_agent_id && entity->owner_agent_id)
+    {
+      cJSON_AddItemToObject(entity_rep, "agent_id", cJSON_CreateString(entity->owner_agent_id));
+    }
     cJSON_AddItemToObject(entity_rep, "components", cJSON_Duplicate(entity->components, 1));
     cJSON_AddItemToObject(entities_rep, entity->id, entity_rep);
   }
@@ -251,6 +256,34 @@ cJSON *allo_state_to_json(allo_state *state)
     NULL
   );
   return map;
+}
+
+allo_state *allo_state_from_json(cJSON *json)
+{
+  allo_state *state = calloc(1, sizeof(allo_state));
+  allo_state_init(state);
+
+  state->revision = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(json, "revision"));
+  cJSON *entitiesrep = cJSON_GetObjectItemCaseSensitive(json, "entities");
+  if(state->revision == 0 || entitiesrep == NULL)
+  {
+    free(state);
+    return NULL;
+  }
+
+  cJSON* entrep = entitiesrep->child;
+  while (entrep)
+  {
+    cJSON* next = entrep->next;
+    cJSON* spec = cJSON_DetachItemFromObjectCaseSensitive(entrep, "components");
+    const char *eid = cJSON_GetObjectItemCaseSensitive(entrep, "id");
+    const char *agent_id = cJSON_GetObjectItemCaseSensitive(entrep, "agent_id");
+    allo_state_add_entity_from_spec(state, agent_id, spec, eid);
+    entrep = next;
+  }
+
+
+  return state;
 }
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)
@@ -285,7 +318,7 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
   }
   allo_entity* e = entity_create(eid);
   e->owner_agent_id = strdup(agent_id ? agent_id : "place");
-  cJSON* children = cJSON_DetachItemFromObject(spec, "children");
+  cJSON* children = cJSON_DetachItemFromObjectCaseSensitive(spec, "children");
   e->components = spec;
 
   if (parent)

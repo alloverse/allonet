@@ -19,12 +19,13 @@ void allo_delta_insert(statehistory_t *history, cJSON *next_state)
     history->history[rev%allo_statehistory_length] = next_state;
     history->latest_revision = rev;
 }
-void allo_delta_destroy(statehistory_t *history)
+void allo_delta_clear(statehistory_t *history)
 {
     for(int i = 0; i < allo_statehistory_length; i++)
     {
         cJSON_Delete(history->history[i]);
     }
+    history->latest_revision = 0;
 }
 
 char *allo_delta_compute(statehistory_t *history, int64_t old_revision)

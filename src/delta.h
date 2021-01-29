@@ -14,7 +14,7 @@ typedef struct statehistory_t
 /// next call of allo_delta_* (and you sould definitely not modify it).
 extern void allo_delta_insert(statehistory_t *history, cJSON *next_state);
 /// Destroy all cached states (but not the history pointer itself; that's on you)
-extern void allo_delta_destroy(statehistory_t *history);
+extern void allo_delta_clear(statehistory_t *history);
 /// Return a state delta that can be transmitted to a client, who can later merge it with their old_revision.
 /// You own the returned memory and must free it.
 extern char* allo_delta_compute(statehistory_t *history, int64_t old_revision);

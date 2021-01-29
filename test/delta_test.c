@@ -40,9 +40,9 @@ void setUp()
 }
 void tearDown()
 {
-  allo_delta_destroy(sendhistory);
+  allo_delta_clear(sendhistory);
   free(sendhistory);
-  allo_delta_destroy(recvhistory);
+  allo_delta_clear(recvhistory);
   free(recvhistory);
   allo_state_destroy(state);
   free(state);
@@ -51,7 +51,7 @@ void tearDown()
 void test_basic(void)
 {
   // initialize sender and receiver with an initial state
-  cJSON *first = allo_state_to_json(state);
+  cJSON *first = allo_state_to_json(state, false);
   allo_delta_insert(sendhistory, first);
   allo_delta_insert(recvhistory, cJSON_Duplicate(first, 1));
 
@@ -59,7 +59,7 @@ void test_basic(void)
   allo_m4x4 moved = allo_m4x4_translate((allo_vector){2, 3, 4});
   entity_set_transform(foo, moved);
   state->revision++;
-  cJSON *second = allo_state_to_json(state);
+  cJSON *second = allo_state_to_json(state, false);
   allo_delta_insert(sendhistory, second);
 
   // ... and then pretend-send it to receiver

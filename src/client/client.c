@@ -418,7 +418,7 @@ static void _alloclient_disconnect(alloclient *client, int reason)
         enet_host_destroy(_internal(client)->host);
         opus_encoder_destroy(_internal(client)->opus_encoder);
         allo_client_intent_free(_internal(client)->latest_intent);
-        allo_delta_destroy(&_internal(client)->history);
+        allo_delta_clear(&_internal(client)->history);
         free(_internal(client)->avatar_id);
         free(_internal(client));
     }

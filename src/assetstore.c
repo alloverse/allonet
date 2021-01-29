@@ -19,16 +19,19 @@
 #define log(f_, ...) printf((f_), ##__VA_ARGS__)
 
 // Minimum number of seconds between cache prune checks
-#define CACHE_CHECK_INTERVAL 10
+static const double kCacheCheckInterval = 10.0;
 // Minimum number of seconds after last use to keep an asset in the cache.
 // Before this an asset will not leave the cache even if memory or count demands it
 // This guards assets that are currently being sent or received from disappearing.
-#define CACHE_MIN_AGE 10
+static const double kCacheMinAge = 5.0;
 // Maximum number of seconds after last use to keep an asset in the cache.
 // After being left untouched for this long the asset is always removed
-#define CACHE_MAX_AGE 60*10
+static const double kCacheMaxAge = 60.0*10;
 // Maximum number of assets to keep in the cache (not counting static assets)
-#define CACHE_MAX_COUNT 1
+// This is useful because lookup times gets bad after a while...
+static const int kCacheMaxCount = 400;
+// Maximum number of bytes to keep in the store.
+static const size_t kCacheMaxBytes = 1024*1024*1024;
 
 
 size_t _first(cJSON *range) {
@@ -252,8 +255,6 @@ void _update_asset_state(assetstore *store, const char *asset_id) {
             log("assetstore: Asset %s is complete\n", asset_id);
         }
     }
-    
-    _lru_prune(store);
 }
 
 // clears allocated data
@@ -281,7 +282,12 @@ void _lru_tag(cJSON *state) {
     } // lru can also be a bool:true, which means never prune
 }
 
-int _lru_compare(const void *a, const void *b) {
+int _lru_compare(void *mode, const void *a, const void *b) {
+    if (*(int*)mode == 1) {
+        double x = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)a), "total_size")->valueint;
+        double y = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)b), "total_size")->valueint;
+        return y - x;
+    }
     double x = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)a), "lru")->valuedouble;
     double y = cJSON_GetObjectItemCaseSensitive((cJSON*)(*(cJSON**)b), "lru")->valuedouble;
     return x - y;
@@ -291,46 +297,70 @@ void _lru_prune(assetstore *store) {
     double time = get_ts_monod();
     
     if (store->next_state_prune < time) {
-        store->next_state_prune = time + CACHE_CHECK_INTERVAL;
+        store->next_state_prune = time + kCacheCheckInterval;
+    } else {
+        return;
     }
     
-    double max_barrier = time - CACHE_MAX_AGE;
+    double max_barrier = time - kCacheMaxAge;
     cJSON *state = store->state->child;
-    int temp_asset_count = 0;
-    int pruned_count = 0;
+    int total_asset_count = 0;
     int static_asset_count = 0;
+    size_t total_memory_usage = 0;
+    size_t static_memory_usage = 0;
+    int pruned_old_count = 0;
+    size_t pruned_old_size = 0;
+    int pruned_max_count = 0;
+    size_t pruned_max_size = 0;
+    int pruned_memory_count = 0;
+    size_t pruned_memory_size = 0;
     
     // Prune too old entries
     while (state) {
         cJSON *next = state->next;
         cJSON *lru = cJSON_GetObjectItemCaseSensitive(state, "lru");
+        size_t size = cJSON_GetObjectItemCaseSensitive(state, "total_size")->valueint;
+        total_memory_usage += size;
+        total_asset_count += 1;
         
         if (cJSON_IsNumber(lru)) {
             if (lru->valuedouble < max_barrier) {
                 _clear_state(state);
                 cJSON_DetachItemViaPointer(store->state, state);
                 cJSON_Delete(state);
-                ++pruned_count;
-            } else {
-                ++temp_asset_count;
+                pruned_old_count += 1;
+                pruned_old_size += size;
             }
         } else if (lru == NULL) {
             printf("missing lru\n");
-            ++temp_asset_count;
         } else if (cJSON_IsBool(lru)) {
-            ++static_asset_count;
+            static_asset_count += 1;
+            static_memory_usage += size;
         }
         state = next;
     }
     
     // If we just have too many assets then prune some more
-    if (temp_asset_count > CACHE_MAX_COUNT) { // todo: check memory usage and sort on impact as well.
-        int count_to_evict = temp_asset_count - CACHE_MAX_COUNT; // number of items to evict
-        cJSON **candidates = malloc(temp_asset_count * sizeof(cJSON*));
+    if (total_asset_count > kCacheMaxCount || total_memory_usage > kCacheMaxBytes) { // todo: check memory usage and sort on impact as well.
+        printf("assetstore: %d assets in cache using %zu bytes\n", total_asset_count, total_memory_usage);
+        printf("assetstore: Limits are set to %d assets using %zu bytes\n", kCacheMaxCount, kCacheMaxBytes);
+        int mode = total_memory_usage > kCacheMaxBytes ? 1 : 0;
+        
+        int count_to_evict = (mode == 0) ? total_asset_count - kCacheMaxCount : 0;
+        size_t bytes_to_free = (mode == 1) ? total_memory_usage - kCacheMaxBytes : 0;
+        
+        if (mode == 0) {
+            printf("assetstore: Trying to remove %d assets\n", count_to_evict);
+        }
+        if (mode == 1) {
+            printf("assetstore: Trying to free up %zu bytes\n", bytes_to_free);
+        }
+        
+        cJSON **candidates = malloc(total_asset_count * sizeof(cJSON*));
         cJSON **cursor = candidates;
         int candidates_count = 0;
         state = store->state->child;
-        double min_barrier = time - CACHE_MIN_AGE; // don't evict items used too recently
+        double min_barrier = time - kCacheMinAge; // don't evict items used too recently
         while(state) {
             cJSON *lru = cJSON_GetObjectItemCaseSensitive(state, "lru");
             // skips static (lru is a bool:true), and too recently used
@@ -342,20 +372,43 @@ void _lru_prune(assetstore *store) {
             }
             state = state->next;
         }
-        qsort(candidates, candidates_count, sizeof(cJSON*), _lru_compare);
-        if (candidates_count < count_to_evict) count_to_evict = candidates_count;
+        qsort_r(candidates, candidates_count, sizeof(cJSON*), &mode, _lru_compare);
         for(int i = 0; i < candidates_count; i++) {
             cJSON *state = candidates[i];
+            size_t size = cJSON_GetObjectItemCaseSensitive(state, "total_size")->valueint;
             _clear_state(state);
             cJSON_DetachItemViaPointer(store->state, state);
             cJSON_Delete(state);
-            ++pruned_count;
-            --temp_asset_count;
+            
+            if (mode == 0) {
+                pruned_max_count += 1;
+                pruned_max_size += size;
+                
+                if (--count_to_evict <= 0) {
+                    break;
+                }
+            } else if (mode == 1) {
+                pruned_memory_count += 1;
+                pruned_memory_size += size;
+                
+                bytes_to_free -= size;
+                if (bytes_to_free < kCacheMaxBytes) {
+                    break;
+                }
+            }
         }
         free(candidates);
     }
+    int pruned_total_count = pruned_old_count + pruned_max_count + pruned_memory_count;
+    size_t pruned_total_size = pruned_old_size + pruned_max_size + pruned_memory_size;
     
-    printf("assetstore: pruned %d assets. %d assets in cache, whereof %d static.\n", pruned_count, temp_asset_count, static_asset_count);
+    total_asset_count -= pruned_total_count;
+    total_memory_usage -= pruned_total_size;
+    
+    if (pruned_total_count > 0) {
+        printf("assetstore: Removed %d assets freeing %zu bytes.\n", pruned_total_count, pruned_total_size);
+    }
+    printf("assetstore: %d assets in cache using %zu bytes, whereof %d are static assets using %zu bytes.\n", total_asset_count, total_memory_usage, static_asset_count, static_memory_usage);
 }
 
 int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
@@ -385,6 +438,7 @@ int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8
     memcpy(buffer, file_data + offset, length);
     
     _lru_tag(state);
+    _lru_prune(store);
     
     mtx_unlock(&store->lock);
     
@@ -432,10 +486,11 @@ int _memstorestore_write(assetstore *store, const char *asset_id, size_t offset,
     assert(offset + length <= total_size);
     memcpy(file_data + offset, data, length);
     
-    _lru_tag(state);
-    
     _merge_range(ranges, offset, offset + length);
     _update_asset_state(store, asset_id);
+    
+    _lru_tag(state);
+    _lru_prune(store);
 
     mtx_unlock(&store->lock);
     

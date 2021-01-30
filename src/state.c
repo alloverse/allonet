@@ -276,9 +276,10 @@ allo_state *allo_state_from_json(cJSON *json)
   {
     cJSON* next = entrep->next;
     cJSON* spec = cJSON_DetachItemFromObjectCaseSensitive(entrep, "components");
-    const char *eid = cJSON_GetObjectItemCaseSensitive(entrep, "id");
-    const char *agent_id = cJSON_GetObjectItemCaseSensitive(entrep, "agent_id");
-    allo_state_add_entity_from_spec(state, agent_id, spec, eid);
+    const char *eid = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(entrep, "id")); (void)eid;
+    const char *agent_id = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(entrep, "agent_id"));
+    allo_entity *ent = allo_state_add_entity_from_spec(state, agent_id, spec, NULL);
+    ent->id = strdup(eid);
     entrep = next;
   }
 
@@ -311,11 +312,13 @@ void entity_set_transform(allo_entity* entity, allo_m4x4 m)
 
 allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agent_id, cJSON* spec, const char* parent)
 {
-  char eid[11] = { 0 };
+  char generated_eid[11] = { 0 };
   for (int i = 0; i < 10; i++)
   {
-    eid[i] = 'a' + rand() % 25;
+    generated_eid[i] = 'a' + rand() % 25;
   }
+  const char *eid = generated_eid;
+
   allo_entity* e = entity_create(eid);
   e->owner_agent_id = strdup(agent_id ? agent_id : "place");
   cJSON* children = cJSON_DetachItemFromObjectCaseSensitive(spec, "children");
@@ -373,7 +376,7 @@ bool allo_state_remove_entity(allo_state *state, const char *eid, allo_removal_m
     }
   }
 
-  for(int i = 0; i < children.length; i++)
+  for(size_t i = 0; i < children.length; i++)
   {
     allo_entity *child = children.data[i];
     if(mode == AlloRemovalCascade)

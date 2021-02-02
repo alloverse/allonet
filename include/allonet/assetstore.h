@@ -60,7 +60,16 @@ typedef struct assetstore {
     void *_impl;
     
     cJSON *state;
+    
+    /// If 0, assetstore will only be used to track transfer states.
+    int use_cache;
+    /// Number of assets in the cache.
+    size_t cache_count;
+    /// Number of bytes in the cache.
+    size_t cache_size;
+    /// Cache pruning is done now and then. This tracks the next invocation.
     double next_state_prune;
+    
     mtx_t lock;
 } assetstore;
 

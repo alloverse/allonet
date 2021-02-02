@@ -296,7 +296,14 @@ int _lru_compare_age(const void *a, const void *b) {
 void _lru_prune(assetstore *store) {
     double time = get_ts_monod();
     
-    if (store->next_state_prune < time) {
+    if (store->use_cache == 0) {
+        return;
+    }
+    
+    int check_count = store->cache_count > kCacheMaxCount;
+    int check_size = store->cache_size > kCacheMaxBytes;
+    
+    if (store->next_state_prune < time || check_count || check_size) {
         store->next_state_prune = time + kCacheCheckInterval;
     } else {
         return;
@@ -415,6 +422,59 @@ void _lru_prune(assetstore *store) {
     printf("assetstore: %d assets in cache using %zu bytes, whereof %d are static using %zu bytes.\n", total_asset_count, total_memory_usage, static_asset_count, static_memory_usage);
 }
 
+int _assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
+    
+    mtx_lock(&store->lock);
+    
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    if (!cJSON_IsObject(state)) {
+        mtx_unlock(&store->lock);
+        return -1;
+    }
+    
+    _lru_tag(state);
+    _lru_prune(store);
+    
+    mtx_unlock(&store->lock);
+    
+    return -1;
+}
+
+int _assetstore_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
+    assert(store);
+    assert(asset_id);
+    assert(data);
+    
+    mtx_lock(&store->lock);
+    // get or create the ranges from asset state in the store state
+    cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
+    cJSON *ranges = NULL;
+    if (cJSON_IsObject(state)) {
+        ranges = cJSON_GetObjectItem(state, "ranges");
+        cJSON *file = cJSON_GetObjectItem(state, "data");
+        
+        // if there is a state then there is a "ranges" and "data"
+        assert(ranges || (cJSON_IsTrue(cJSON_GetObjectItem(state, "complete"))));
+        assert(cJSON_IsString(file));
+    } else {
+        state = cJSON_AddObjectToObject(store->state, asset_id);
+        cJSON_AddBoolToObject(state, "complete", 0);
+        cJSON_AddItemToObject(state, "total_size", cJSON_CreateNumber((double)total_size));
+        ranges = cJSON_AddArrayToObject(state, "ranges");
+    }
+    
+    _merge_range(ranges, offset, offset + length);
+    _update_asset_state(store, asset_id);
+    
+    _lru_tag(state);
+    _lru_prune(store);
+
+    mtx_unlock(&store->lock);
+    
+    return length;
+}
+
+
 int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
     
     mtx_lock(&store->lock);
@@ -519,6 +579,7 @@ int asset_memstore_init(assetstore *store) {
     memstore->_interface = store;
     store->_impl = (void*)memstore;
     
+    store->use_cache = 1;
     store->get_missing_ranges = _memstore_get_missing_ranges;
     store->get_state = _memstore_state;
     store->read = _memstore_read;
@@ -541,9 +602,12 @@ int assetstore_init(assetstore *store) {
     store->state = cJSON_CreateObject();
     store->get_missing_ranges = _memstore_get_missing_ranges;
     store->get_state = _memstore_state;
-    store->read = NULL;
-    store->write = NULL;
+    store->read = _assetstore_read;
+    store->write = _assetstore_write;
     store->next_state_prune = 0;
+    store->use_cache = 0;
+    store->cache_count = 0;
+    store->cache_size = 0;
     return 0;
 }
 

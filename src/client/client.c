@@ -623,7 +623,7 @@ alloclient *alloclient_create(bool threaded)
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
-    asset_memstore_init(&(_internal(client)->assetstore));
+    assetstore_init(&(_internal(client)->assetstore));
     
     scheduler_init(&_internal(client)->jobs);
     

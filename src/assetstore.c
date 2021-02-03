@@ -416,12 +416,14 @@ size_t assetstore_get_missing_ranges(struct assetstore *store, const char *asset
     return store->get_missing_ranges(store, asset_id, out_ranges, count);
 }
 
+char *asset_generate_identifier(const uint8_t *bytes, size_t size);
 int asset_memstore_register_asset_nocopy(struct assetstore *store, const char *asset_id, const uint8_t *data, size_t length) {
     
     mtx_lock(&store->lock);
     
-    _clear_state_asset(store, asset_id);
-    cJSON *state = cJSON_AddObjectToObject(store->state, asset_id);
+    char *id = asset_generate_identifier(data, length);
+    _clear_state_asset(store, id);
+    cJSON *state = cJSON_AddObjectToObject(store->state, id);
     cJSON_AddBoolToObject(state, "complete", 1);
     // warning: hacky hack-hack
     char num[255];
@@ -432,7 +434,7 @@ int asset_memstore_register_asset_nocopy(struct assetstore *store, const char *a
     
     mtx_unlock(&store->lock);
     
-    log("assetstore: Did register complete asset %s\n", cJSON_Print(state));
+    log("assetstore: Did register complete asset '%s': %s\n", id, cJSON_Print(state));
     
     return 0;
 }

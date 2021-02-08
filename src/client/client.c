@@ -17,10 +17,6 @@
     #define nonnull(x) x
 #endif
 
-#ifndef MAX
-#define MAX(a,b) a > b ? a : b
-#endif
-
 static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 
@@ -279,7 +275,7 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
     }
     
     ts = get_ts_mono();
-    int64_t servicing_timeout = MAX(deadline - ts, 0);
+    int64_t servicing_timeout = deadline - ts < 0 = 0 : deadline - ts;
     ENetEvent event;
     bool any_messages = false;
     while (enet_host_service(_internal(client)->host, & event, servicing_timeout) > 0)
@@ -305,7 +301,7 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
         }
         any_messages = true;
         ts = get_ts_mono();
-        servicing_timeout = MAX(deadline - ts, 0);
+        servicing_timeout = deadline - ts < 0 ? 0 : deadline - ts;
     }
     return any_messages;
 }

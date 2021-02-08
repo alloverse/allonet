@@ -17,6 +17,10 @@
     #define nonnull(x) x
 #endif
 
+#ifndef MAX
+#define MAX(a,b) a > b ? a : b
+#endif
+
 static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 

@@ -1,3 +1,8 @@
+
+
+#ifndef allo_math_h
+#define allo_math_h
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -67,3 +72,5 @@ extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
 extern bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma);
 extern char *allo_m4x4_string(allo_m4x4 m);
 #pragma pack(pop)
+
+#endif

@@ -1,4 +1,5 @@
 #include "simulation.h"
+#include <allonet/math.h>
 
 void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time)
 {

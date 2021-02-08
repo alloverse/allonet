@@ -30,6 +30,7 @@
 #define _SHA256_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define SHA256_HASH_SIZE 32
 

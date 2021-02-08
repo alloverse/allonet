@@ -206,15 +206,17 @@ void asset_handle(
             cJSON_Delete(error);
             return;
         }
-        write(asset_id, data, offset, length, total_length, user);
-        // request more?
-        // TODO: check missing ranges instead
-        if (offset + length < total_length) {
-            _asset_request(asset_id, NULL, offset + length, length, send, user);
-        } else {
-            callback(asset_id, asset_state_now_available, user);
+        int bytes_written = write(asset_id, data, offset, length, total_length, user);
+        if (bytes_written > 0) {
+            // request more?
+            // TODO: check missing ranges instead
+            if (offset + length < total_length) {
+                _asset_request(asset_id, NULL, offset + length, length, send, user);
+            } else {
+                callback(asset_id, asset_state_now_available, user);
+            }
+            assert(offset + length <= total_length);
         }
-        assert(offset + length <= total_length);
     } else if (mid == asset_mid_failure) {
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
         

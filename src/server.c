@@ -13,9 +13,11 @@
 void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len);
 
 typedef arr_t(ENetPeer *) PeerList;
+// When a peer requests an asset that we do not have in cache
 typedef struct {
-    char *id;
-    ENetPeer *peer;
+    char *id; // asset id
+    ENetPeer *peer;  // THe peer that wants the asset
+    ENetPeer *source;// the peer we have choosen to download the asset from
 } wanted_asset;
 
 typedef struct {
@@ -84,6 +86,7 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
     }
 }
 
+wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server);
 void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
 void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
 void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client);
@@ -108,8 +111,9 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
     alloserver_client *other;
     LIST_FOREACH(other, &server->clients, pointers) {
         if (other == client) continue;
-        printf("Server: Asking %s for %s\n", other->agent_id, cJSON_Print(header));
         ENetPeer *peer = _clientinternal(other)->peer;
+        printf("Server: Asking %s for %s\n", other->agent_id, cJSON_Print(header));
+        
         enet_peer_send(peer, CHANNEL_ASSETS, packet);
         allo_statistics.bytes_sent[0] += packet->dataLength;
         allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
@@ -163,14 +167,21 @@ static bool _asset_request_bytes_func(const char *asset_id, size_t offset, size_
 
 static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
     alloserver *server = ((asset_user *)user)->server;
-    return assetstore_write(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, total_size);
+    alloserver_client *sender = ((asset_user *)user)->client;
+    ENetPeer *sender_peer = _clientinternal(sender)->peer;
+    wanted_asset *wanted = _asset_is_wanted(asset_id, server);
+    
+    if (wanted && (wanted->source == 0 || wanted->source == sender_peer)) {
+        wanted->source = sender_peer;
+        return assetstore_write(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, total_size);
+    } else {
+        return 0;
+    }
 }
 
 static void _asset_state_callback_func(const char *asset_id, asset_state state, void *user) {
     alloserver *server = ((asset_user *)user)->server;
     alloserver_client *client = ((asset_user *)user)->client;
-    alloserv_client_internal *cl = _clientinternal(client);
-    alloserv_internal *sv = _servinternal(server);
     
     if (state == asset_state_now_available) {
         printf("Forwarding asset %s\n", asset_id);
@@ -181,11 +192,15 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
         // an asset was requested but I don't have it
         // track who wanted it
         printf("Delegating asset request %s\n", asset_id);
+        
+        int already_wanted = _asset_is_wanted(asset_id, server) != NULL;
         _add_asset_to_wanted(asset_id, server, client);
         
-        // Broadcast request the asset
-        asset_user usr = { .server = server, .client = client };
-        asset_request(asset_id, NULL, _asset_send_func_broadcast, &usr);
+        // Broadcast request the asset unless it is already wanted
+        if (!already_wanted) {
+            asset_user usr = { .server = server, .client = client };
+            asset_request(asset_id, NULL, _asset_send_func_broadcast, &usr);
+        }
     } else {
         printf("Unhandled asset state %d\n", state);
     }
@@ -369,9 +384,18 @@ int allo_socket_for_select(alloserver *serv)
     return _servinternal(serv)->enet->socket;
 }
 
+                                                                                                                    
 
-
-
+wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server) {
+    alloserv_internal *sv = _servinternal(server);
+    for (size_t i = 0; i < sv->wanted_assets.length; i++) {
+        wanted_asset *wanted = sv->wanted_assets.data[i];
+        if (strcmp(wanted->id, asset_id) == 0) {
+            return wanted;
+        }
+    }
+    return NULL;
+}
 
 void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
@@ -379,6 +403,7 @@ void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_c
     wanted_asset *wanted = malloc(sizeof(wanted_asset));
     wanted->id = strdup(asset_id);
     wanted->peer = _clientinternal(client)->peer;
+    wanted->source = NULL;
     arr_push(&sv->wanted_assets, wanted);
 }
 
@@ -386,11 +411,12 @@ void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloser
     alloserv_internal *sv = _servinternal(server);
     ENetPeer *peer = _clientinternal(client)->peer;
     
-    for (int i = 0; i < sv->wanted_assets.length; i++) {
+    for (size_t i = 0; i < sv->wanted_assets.length; i++) {
         wanted_asset *wanted = sv->wanted_assets.data[i];
-        if (strcmp(wanted->id, asset_id) == 0) {
+        if (peer == wanted->peer && strcmp(wanted->id, asset_id) == 0) {
             arr_splice(&sv->wanted_assets, i, 1);
             --i;
+            free(wanted->id);
             free(wanted);
         }
     }
@@ -399,7 +425,7 @@ void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloser
 void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     
-    for (int i = 0; i < sv->wanted_assets.length; i++) {
+    for (size_t i = 0; i < sv->wanted_assets.length; i++) {
         wanted_asset *wanted = sv->wanted_assets.data[i];
         if (strcmp(wanted->id, asset_id) == 0) {
             //TODO: Setup job to send to only send to a few peers at once.
@@ -410,6 +436,7 @@ void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_
             
             arr_splice(&sv->wanted_assets, i, 1);
             --i;
+            free(wanted->id);
             free(wanted);
         }
     }
@@ -419,11 +446,12 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     ENetPeer *peer = _clientinternal(client)->peer;
     
-    for (int i = 0; i < sv->wanted_assets.length; i++) {
+    for (size_t i = 0; i < sv->wanted_assets.length; i++) {
         wanted_asset *wanted = sv->wanted_assets.data[i];
         if (wanted->peer == peer) {
             arr_splice(&sv->wanted_assets, i, 1);
             --i;
+            free(wanted->id);
             free(wanted);
         }
     }

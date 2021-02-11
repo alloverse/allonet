@@ -1,5 +1,6 @@
 #include <allonet/allonet.h>
 #include <allonet/assetstore.h>
+#include <allonet/math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

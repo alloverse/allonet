@@ -318,9 +318,9 @@ char *_asset_generate_identifier_sha1(const uint8_t *bytes, size_t size) {
     SHA1(sha, (const char *)bytes, size);
     
     char *prefix = "asset:sha1:";
-    char *xsha = malloc(21 + strlen(prefix));
-    memcpy(xsha, prefix, strlen(prefix));
-    snprintf(xsha+strlen(prefix), 21, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
+    size_t len = strlen(prefix) + sizeof(sha) * 2 + 1;
+    char *xsha = malloc(len);
+    snprintf(xsha, len, "%s%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", prefix, sha[0], sha[1], sha[2], sha[3], sha[4], sha[5], sha[6], sha[7], sha[8], sha[9], sha[10], sha[11], sha[12], sha[13], sha[14], sha[15], sha[16], sha[17], sha[18], sha[19]);
 
     return xsha;
 }
@@ -334,12 +334,14 @@ char *_asset_generate_identifier_sha256(const uint8_t *bytes, size_t size) {
     sha256_final(&ctx, sha);
     
     char *prefix = "asset:sha256:";
-    char *xsha = malloc(SHA256_HASH_SIZE * 2 + strlen(prefix));
+    size_t len = strlen(prefix) + SHA256_HASH_SIZE * 2 + 1;
+    char* xsha = malloc(len);
     memcpy(xsha, prefix, strlen(prefix));
     
     char *cursor = xsha + strlen(prefix);
     for (int i = 0; i < SHA256_HASH_SIZE; i++) {
-        snprintf(cursor, SHA256_HASH_SIZE*2-i, "%02x", sha[i]);
+        assert(cursor <= xsha + len - 3);
+        snprintf(cursor, 2+1, "%02x", sha[i]);
         cursor += 2;
     }
     return xsha;

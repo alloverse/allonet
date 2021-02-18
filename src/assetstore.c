@@ -476,7 +476,11 @@ int _assetstore_write(assetstore *store, const char *asset_id, size_t offset, co
 
 
 int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
-    
+#ifdef _WIN32
+  // there's an access violation SOMEWHERE in this method. disable the store as an emergency fix for tomorrow.
+  return -4;
+#endif
+
     mtx_lock(&store->lock);
     
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);

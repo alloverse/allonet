@@ -68,6 +68,11 @@ static void cjson_to_skeleton(allo_m4x4 skeleton[26], cJSON *list)
 
 static cJSON* grab_to_cjson(allo_client_pose_grab grab)
 {
+  if(grab.entity == NULL)
+  {
+    return cJSON_CreateObject();
+  }
+  
   return cjson_create_object(
     "entity", cJSON_CreateString(grab.entity ? grab.entity : ""),
     "grabber_from_entity_transform", m2cjson(grab.grabber_from_entity_transform),

@@ -12,6 +12,7 @@
 #include "lua-utils.h"
 #include "../../src/util.h"
 #include "../../src/asset.h"
+#include "../../src/simulation/simulation.h"
 
 //// alloclient structure
 typedef struct l_alloclient
@@ -195,13 +196,7 @@ static int l_alloclient_set_intent (lua_State *L)
     {
         return luaL_error(L, "set_intent: Expected table with keys zmovement, xmovement, yaw, pitch, poses");
     }
-    allo_client_intent* intent = allo_client_intent_create();
-    intent->entity_id = get_table_string(L, "entity_id");
-    intent->zmovement = get_table_number(L, "zmovement");
-    intent->xmovement = get_table_number(L, "xmovement");
-    intent->yaw = get_table_number(L, "yaw");
-    intent->pitch = get_table_number(L, "pitch");
-    intent->poses = get_table_poses(L, "poses");
+    allo_client_intent* intent = get_intent(L);
     alloclient_set_intent(lclient->client, intent);
     allo_client_intent_free(intent);
     return 0;
@@ -298,6 +293,21 @@ static int l_alloclient_simulate(lua_State* L)
     l_alloclient_t* lclient = check_alloclient(L, 1);
     alloclient_simulate(lclient->client);
     return 0;
+}
+
+static int l_alloclient_simulate_root_pose(lua_State* L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    const char *avatar_id = luaL_checkstring(L, 2);
+    allo_entity *avatar = state_get_entity(&lclient->client->_state, avatar_id);
+    allo_entity* head = allosim_get_child_with_pose(&lclient->client->_state, avatar, "head");
+    float dt = luaL_checknumber(L, 3);
+    allo_client_intent *intent = get_intent(L);
+    
+    allo_m4x4 root_pose = allosim_stick_movement(avatar, head, intent, dt, false);
+    allo_client_intent_free(intent);
+    push_matrix_table(L, root_pose);
+    return 1;
 }
 
 static int l_alloclient_get_state (lua_State *L)
@@ -468,6 +478,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
     {"set_audio_callback", l_alloclient_set_audio_callback},
     {"simulate", l_alloclient_simulate},
+    {"simulate_root_pose", l_alloclient_simulate_root_pose},
     {"get_state", l_alloclient_get_state},
     {"get_time", l_alloclient_get_time},
     {"get_server_time", l_alloclient_get_server_time},

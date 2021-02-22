@@ -33,8 +33,8 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
     if (intent->entity_id == NULL || avatar == NULL)
       return;
     allo_entity* head = allosim_get_child_with_pose(state, avatar, "head");
-    allosim_stick_movement(avatar, head, intent, dt);
-    allosim_pose_movement(state, avatar, intent, intents, intent_count, dt);
+    allosim_stick_movement(avatar, head, intent, dt, true);
+    allosim_pose_movements(state, avatar, intent, intents, intent_count, dt);
     allosim_handle_grabs(state, avatar, intent, dt);
   }
 }

@@ -68,7 +68,7 @@ cJSON* m2cjson(allo_m4x4 mat)
 
 allo_m4x4 cjson2m(const cJSON* matlist)
 {
-  if (matlist == NULL)
+  if (matlist == NULL || cJSON_GetArraySize(matlist) != 16)
     return allo_m4x4_identity();
   allo_m4x4 m;
   for (int i = 0; i < 16; i++) {

@@ -1,6 +1,6 @@
 #include "simulation.h"
 
-void allosim_pose_movement(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt)
+void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt)
 {
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
@@ -32,14 +32,16 @@ void allosim_pose_movement(allo_state* state, allo_entity* avatar, const allo_cl
     }
 
     // if this is a client-side move pose, make sure we're only moving this client's avatar...
-    if(!from_avatar && strcmp(intent->entity_id, parent))
-      continue;
+    if(!from_avatar)
+      if(parent ? strcmp(intent->entity_id, parent) : strcmp(intent->entity_id, entity->id))
+        continue;
 
     allo_m4x4 new_transform;
     if (strcmp(actuate_pose, "hand/left") == 0) new_transform = intent->poses.left_hand.matrix;
     else if (strcmp(actuate_pose, "hand/right") == 0) new_transform = intent->poses.right_hand.matrix;
     else if (strcmp(actuate_pose, "head") == 0) new_transform = intent->poses.head.matrix;
     else if (strcmp(actuate_pose, "torso") == 0) new_transform = intent->poses.torso.matrix;
+    else if (strcmp(actuate_pose, "root") == 0) new_transform = intent->poses.root.matrix;
     else continue;
 
     // ignore identity transform, since it probably means nothing has been set

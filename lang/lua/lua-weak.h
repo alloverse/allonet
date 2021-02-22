@@ -24,19 +24,20 @@ const char *luaL_checklstring (lua_State *L, int narg, size_t *l) WEAK_ATTRIBUTE
 void  lua_createtable (lua_State *L, int narr, int nrec) WEAK_ATTRIBUTE;
 void  lua_settable (lua_State *L, int idx) WEAK_ATTRIBUTE;
 int lua_toboolean (lua_State *L, int index) WEAK_ATTRIBUTE;
+const char *luaL_optlstring (lua_State *L, int narg, const char *d, size_t *l) WEAK_ATTRIBUTE;
 int             lua_type (lua_State *L, int idx) WEAK_ATTRIBUTE;
 int             lua_isnumber (lua_State *L, int idx) WEAK_ATTRIBUTE;
 int   luaL_newmetatable (lua_State *L, const char *tname) WEAK_ATTRIBUTE;
 void  lua_settop (lua_State *L, int idx) WEAK_ATTRIBUTE;
 void *lua_newuserdata (lua_State *L, size_t sz) WEAK_ATTRIBUTE;
-const char *luaL_optlstring (lua_State *L, int narg, const char *d, size_t *l) WEAK_ATTRIBUTE;
+void  lua_getfield (lua_State *L, int idx, const char *k) WEAK_ATTRIBUTE;
 int             lua_isstring (lua_State *L, int idx) WEAK_ATTRIBUTE;
 void luaL_register (lua_State *L, const char *libname, const luaL_Reg *l) WEAK_ATTRIBUTE;
 lua_Integer luaL_checkinteger (lua_State *L, int narg) WEAK_ATTRIBUTE;
-void  lua_getfield (lua_State *L, int idx, const char *k) WEAK_ATTRIBUTE;
 void *luaL_checkudata (lua_State *L, int ud, const char *tname) WEAK_ATTRIBUTE;
 int   lua_setmetatable (lua_State *L, int objindex) WEAK_ATTRIBUTE;
 void  lua_rawgeti (lua_State *L, int idx, int n) WEAK_ATTRIBUTE;
+void  lua_rawseti (lua_State *L, int idx, int n) WEAK_ATTRIBUTE;
 void  lua_pushvalue (lua_State *L, int idx) WEAK_ATTRIBUTE;
 int luaL_ref (lua_State *L, int t) WEAK_ATTRIBUTE;
 #endif
@@ -77,6 +78,8 @@ extern void  (*lua_settable_weak) (lua_State *L, int idx);
 #define lua_settable lua_settable_weak
 extern int (*lua_toboolean_weak) (lua_State *L, int index);
 #define lua_toboolean lua_toboolean_weak
+extern const char *(*luaL_optlstring_weak) (lua_State *L, int narg, const char *d, size_t *l);
+#define luaL_optlstring luaL_optlstring_weak
 extern int             (*lua_type_weak) (lua_State *L, int idx);
 #define lua_type lua_type_weak
 extern int             (*lua_isnumber_weak) (lua_State *L, int idx);
@@ -87,22 +90,22 @@ extern void  (*lua_settop_weak) (lua_State *L, int idx);
 #define lua_settop lua_settop_weak
 extern void *(*lua_newuserdata_weak) (lua_State *L, size_t sz);
 #define lua_newuserdata lua_newuserdata_weak
-extern const char *(*luaL_optlstring_weak) (lua_State *L, int narg, const char *d, size_t *l);
-#define luaL_optlstring luaL_optlstring_weak
+extern void  (*lua_getfield_weak) (lua_State *L, int idx, const char *k);
+#define lua_getfield lua_getfield_weak
 extern int             (*lua_isstring_weak) (lua_State *L, int idx);
 #define lua_isstring lua_isstring_weak
 extern void (*luaL_register_weak) (lua_State *L, const char *libname, const luaL_Reg *l);
 #define luaL_register luaL_register_weak
 extern lua_Integer (*luaL_checkinteger_weak) (lua_State *L, int narg);
 #define luaL_checkinteger luaL_checkinteger_weak
-extern void  (*lua_getfield_weak) (lua_State *L, int idx, const char *k);
-#define lua_getfield lua_getfield_weak
 extern void *(*luaL_checkudata_weak) (lua_State *L, int ud, const char *tname);
 #define luaL_checkudata luaL_checkudata_weak
 extern int   (*lua_setmetatable_weak) (lua_State *L, int objindex);
 #define lua_setmetatable lua_setmetatable_weak
 extern void  (*lua_rawgeti_weak) (lua_State *L, int idx, int n);
 #define lua_rawgeti lua_rawgeti_weak
+extern void  (*lua_rawseti_weak) (lua_State *L, int idx, int n);
+#define lua_rawseti lua_rawseti_weak
 extern void  (*lua_pushvalue_weak) (lua_State *L, int idx);
 #define lua_pushvalue lua_pushvalue_weak
 extern int (*luaL_ref_weak) (lua_State *L, int t);

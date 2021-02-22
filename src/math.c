@@ -69,14 +69,27 @@ double allo_vector_angle(allo_vector l, allo_vector r)
     return acos(allo_vector_dot(l, r) / (allo_vector_length(l) * allo_vector_length(r)));
 }
 
+static const allo_m4x4 static_identity = {{
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+}};
+
 allo_m4x4 allo_m4x4_identity()
 {
-	return (allo_m4x4) {{
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    }};
+	return static_identity;
+}
+
+bool allo_m4x4_is_identity(allo_m4x4 m)
+{
+  for(int i = 0; i < 16; i++) {
+    if(m.v[i] != static_identity.v[i])
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 allo_m4x4 allo_m4x4_translate(allo_vector t)

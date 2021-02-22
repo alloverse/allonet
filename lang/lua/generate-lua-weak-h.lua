@@ -31,6 +31,7 @@ local funcs = {
 	lua_createtable = "void  lua_createtable (lua_State *L, int narr, int nrec)",
 	luaL_checknumber = "lua_Number luaL_checknumber (lua_State *L, int numArg)",
 	lua_rawgeti = "void  lua_rawgeti (lua_State *L, int idx, int n)",
+	lua_rawseti = "void  lua_rawseti (lua_State *L, int idx, int n)",
 	luaL_register = "void luaL_register (lua_State *L, const char *libname, const luaL_Reg *l)",
 	lua_pushinteger = "void  lua_pushinteger (lua_State *L, lua_Integer n)",
 	lua_isnumber = "int             lua_isnumber (lua_State *L, int idx)",

@@ -53,6 +53,7 @@ typedef union allo_m4x4
 } allo_m4x4;
 
 extern allo_m4x4 allo_m4x4_identity();
+extern bool allo_m4x4_is_identity(allo_m4x4 m);
 extern allo_m4x4 allo_m4x4_translate(allo_vector translation);
 extern allo_m4x4 allo_m4x4_rotate(double angle, allo_vector axis);
 extern allo_m4x4 allo_m4x4_concat(allo_m4x4 l, allo_m4x4 r);

@@ -43,6 +43,13 @@ void allo_client_intent_clone(const allo_client_intent* original, allo_client_in
 static cJSON *skeleton_to_cjson(const allo_m4x4 skeleton[26])
 {
   cJSON *list = cJSON_CreateArray();
+  // optimization: 3 is thumb root. if it's exactly identity, it's very likely the whole
+  // list of bones is identity, so just don't send it.
+  // we could also have an explicit "send skeleton" bool but that propagates a lot of
+  // layers so I'm gonna try this opt first...
+  if(allo_m4x4_is_identity(skeleton[3])) {
+    return list;
+  }
   for(int i = 0; i < ALLO_HAND_SKELETON_JOINT_COUNT; i++)
   {
     cJSON_AddItemToArray(list, m2cjson(skeleton[i]));
@@ -52,7 +59,7 @@ static cJSON *skeleton_to_cjson(const allo_m4x4 skeleton[26])
 
 static void cjson_to_skeleton(allo_m4x4 skeleton[26], cJSON *list)
 {
-  if(list == NULL)
+  if(list == NULL || list->child == NULL)
   {
     return;
   }

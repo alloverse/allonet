@@ -11,6 +11,7 @@ allo_client_intent* allo_client_intent_create()
 {
   allo_client_intent* intent = calloc(1, sizeof(allo_client_intent));
   intent->poses.head.matrix = 
+    intent->poses.root.matrix = 
     intent->poses.torso.matrix = 
     intent->poses.left_hand.matrix = 
     intent->poses.right_hand.matrix = allo_m4x4_identity();
@@ -103,6 +104,10 @@ cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
     "yaw", cJSON_CreateNumber(intent->yaw),
     "pitch", cJSON_CreateNumber(intent->pitch),
     "poses", cjson_create_object(
+      "root", cjson_create_object(
+        "matrix", m2cjson(intent->poses.root.matrix),
+        NULL
+      ),
       "head", cjson_create_object(
         "matrix", m2cjson(intent->poses.head.matrix),
         NULL
@@ -142,10 +147,13 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
   cJSON *hand_left = cJSON_GetObjectItemCaseSensitive(poses, "hand/left");
   cJSON *hand_right = cJSON_GetObjectItemCaseSensitive(poses, "hand/right");
   intent->poses = (allo_client_poses){
-    .head = (allo_client_head_pose){
+    .root = (allo_client_plain_pose){
+      .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "root"), "matrix")),
+    },
+    .head = (allo_client_plain_pose){
       .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "head"), "matrix")),
     },
-    .torso = (allo_client_head_pose){
+    .torso = (allo_client_plain_pose){
       .matrix = cjson2m(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(poses, "torso"), "matrix")),
     },
     .left_hand = (allo_client_hand_pose){

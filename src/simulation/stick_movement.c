@@ -19,11 +19,8 @@ static allo_m4x4 create_movement(allo_m4x4 heading_transform, double yaw, double
   return constrained_movement;
 }
 
-void allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt)
+allo_m4x4 allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt, bool write)
 {
-  if(intent->xmovement == 0 && intent->zmovement == 0 && intent->yaw == 0)
-    return;
-  
   double speed = 2.0; // meters per second
   double distance = speed * dt;
 
@@ -51,5 +48,8 @@ void allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_c
   allo_m4x4 new_transform = allo_m4x4_concat(old_positional_transform, movement);
   allo_m4x4 new_transform2 = allo_m4x4_concat(keep_head_centered, new_transform);
 
-  entity_set_transform(avatar, new_transform2);
+  if(write)
+    entity_set_transform(avatar, new_transform2);
+  
+  return new_transform2;
 }

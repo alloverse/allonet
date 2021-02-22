@@ -54,6 +54,19 @@ double get_table_inumber(lua_State *L, int key)
     lua_pop(L, 1);
     return result; 
 }
+
+allo_client_intent* get_intent(lua_State *L)
+{
+    allo_client_intent *intent = allo_client_intent_create();
+    intent->entity_id = get_table_string(L, "entity_id");
+    intent->zmovement = get_table_number(L, "zmovement");
+    intent->xmovement = get_table_number(L, "xmovement");
+    intent->yaw = get_table_number(L, "yaw");
+    intent->pitch = get_table_number(L, "pitch");
+    intent->poses = get_table_poses(L, "poses");
+    return intent; 
+}
+
 allo_client_poses get_table_poses(lua_State *L, const char *key)
 {
     allo_client_poses result;
@@ -61,6 +74,7 @@ allo_client_poses get_table_poses(lua_State *L, const char *key)
     lua_gettable(L, -2);
     result.head = get_table_head_pose(L, "head");
     result.torso = get_table_head_pose(L, "torso");
+    result.root = get_table_head_pose(L, "root");
     result.left_hand = get_table_hand_pose(L, "hand/left");
     result.right_hand = get_table_hand_pose(L, "hand/right");
     lua_pop(L, 1);
@@ -85,9 +99,9 @@ allo_client_hand_pose get_table_hand_pose(lua_State *L, const char *key)
   return result;
 }
 
-allo_client_head_pose get_table_head_pose(lua_State *L, const char *key)
+allo_client_plain_pose get_table_head_pose(lua_State *L, const char *key)
 {
-  allo_client_head_pose result = {allo_m4x4_identity()};
+  allo_client_plain_pose result = {allo_m4x4_identity()};
   lua_pushstring(L, key);
   lua_gettable(L, -2);
   if (!lua_isnil(L, -1))
@@ -268,4 +282,14 @@ void push_state_table(lua_State *L, allo_state *state)
         lua_settable(L, -3);
     }
     lua_settable(L, -3);
+}
+
+void push_matrix_table(lua_State *L, allo_m4x4 m)
+{
+    lua_newtable(L);
+    for(int i = 0; i < 16; i++)
+    {
+        lua_pushnumber(L, m.v[i]);
+        lua_rawseti(L, -2, i+1);
+    }
 }

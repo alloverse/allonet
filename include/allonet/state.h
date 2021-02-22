@@ -23,15 +23,16 @@ typedef struct allo_client_hand_pose
     allo_client_pose_grab grab;
 } allo_client_hand_pose;
 
-typedef struct allo_client_head_pose
+typedef struct allo_client_plain_pose
 {
     allo_m4x4 matrix;
-} allo_client_head_pose;
+} allo_client_plain_pose;
 
 typedef struct allo_client_poses
 {
-    allo_client_head_pose head;
-    allo_client_head_pose torso;
+    allo_client_plain_pose root;
+    allo_client_plain_pose head;
+    allo_client_plain_pose torso;
     allo_client_hand_pose left_hand;
     allo_client_hand_pose right_hand;
 } allo_client_poses;

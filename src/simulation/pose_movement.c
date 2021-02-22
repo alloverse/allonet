@@ -45,7 +45,7 @@ void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_c
     else continue;
 
     // ignore identity transform, since it probably means nothing has been set
-    if (allo_m4x4_equal(new_transform, allo_m4x4_identity(), 0.00001))
+    if (allo_m4x4_is_identity(new_transform))
       continue;
 
     entity_set_transform(entity, new_transform);

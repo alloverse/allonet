@@ -47,41 +47,49 @@ add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 set(INCLUDE_FILES_PREFIX include/allonet)
 set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/allonet.h
+    ${INCLUDE_FILES_PREFIX}/arr.h
+    ${INCLUDE_FILES_PREFIX}/assetstore.h
     ${INCLUDE_FILES_PREFIX}/client.h
+    ${INCLUDE_FILES_PREFIX}/jobs.h
+    ${INCLUDE_FILES_PREFIX}/math.h
     ${INCLUDE_FILES_PREFIX}/net.h
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
-    ${INCLUDE_FILES_PREFIX}/jobs.h
-    ${INCLUDE_FILES_PREFIX}/assetstore.h
+    
+    
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
+    ${SOURCE_FILES_PREFIX}/client/_client.h
     ${SOURCE_FILES_PREFIX}/client/client.c
     ${SOURCE_FILES_PREFIX}/client/audio.c
+    ${SOURCE_FILES_PREFIX}/simulation/grabbing.c
+    ${SOURCE_FILES_PREFIX}/simulation/pose_movement.c
+    ${SOURCE_FILES_PREFIX}/simulation/simulation.c
+    ${SOURCE_FILES_PREFIX}/simulation/simulation.h
+    ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
+    ${SOURCE_FILES_PREFIX}/_asset.h
+    ${SOURCE_FILES_PREFIX}/arr.c
+    ${SOURCE_FILES_PREFIX}/asset.c
+    ${SOURCE_FILES_PREFIX}/asset.h
+    ${SOURCE_FILES_PREFIX}/assetstore.c
+    ${SOURCE_FILES_PREFIX}/clientproxy.c
+    ${SOURCE_FILES_PREFIX}/clientproxy.h
+    ${SOURCE_FILES_PREFIX}/delta.c
+    ${SOURCE_FILES_PREFIX}/delta.h
+    ${SOURCE_FILES_PREFIX}/jobs.c
+    ${SOURCE_FILES_PREFIX}/math.c
+    ${SOURCE_FILES_PREFIX}/os.c
+    ${SOURCE_FILES_PREFIX}/os.h
     ${SOURCE_FILES_PREFIX}/server.c
+    ${SOURCE_FILES_PREFIX}/sha1.c
+    ${SOURCE_FILES_PREFIX}/sha1.h
+    ${SOURCE_FILES_PREFIX}/sha256.c
+    ${SOURCE_FILES_PREFIX}/sha256.h
     ${SOURCE_FILES_PREFIX}/standalone_server.c
     ${SOURCE_FILES_PREFIX}/state.c
     ${SOURCE_FILES_PREFIX}/util.c
     ${SOURCE_FILES_PREFIX}/util.h
-    ${SOURCE_FILES_PREFIX}/simulation/simulation.c
-    ${SOURCE_FILES_PREFIX}/simulation/grabbing.c
-    ${SOURCE_FILES_PREFIX}/simulation/pose_movement.c
-    ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
-    ${SOURCE_FILES_PREFIX}/arr.c
-    ${SOURCE_FILES_PREFIX}/math.c
-    ${SOURCE_FILES_PREFIX}/jobs.c
-    ${SOURCE_FILES_PREFIX}/asset.h
-    ${SOURCE_FILES_PREFIX}/asset.c
-    ${SOURCE_FILES_PREFIX}/assetstore.c
-    ${SOURCE_FILES_PREFIX}/delta.h
-    ${SOURCE_FILES_PREFIX}/delta.c
-    ${SOURCE_FILES_PREFIX}/clientproxy.h
-    ${SOURCE_FILES_PREFIX}/clientproxy.c
-    ${SOURCE_FILES_PREFIX}/sha1.h
-    ${SOURCE_FILES_PREFIX}/sha1.c
-    ${SOURCE_FILES_PREFIX}/sha256.h
-    ${SOURCE_FILES_PREFIX}/sha256.c
-    ${SOURCE_FILES_PREFIX}/os.c
     lib/mathc/mathc.c
 )
 

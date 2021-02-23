@@ -2,6 +2,7 @@
 
 void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt)
 {
+  (void)dt;
   allo_entity* entity = NULL;
   LIST_FOREACH(entity, &state->entities, pointers)
   {

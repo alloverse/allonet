@@ -181,6 +181,7 @@ static const uint8_t padding[64] = {
 void
 sha256_init (SHA256_CTX *sc)
 {
+  (void)rcsid;
 #ifdef RUNTIME_ENDIAN
   setEndian (&sc->littleEndian);
 #endif /* RUNTIME_ENDIAN */

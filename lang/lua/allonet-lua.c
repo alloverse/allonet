@@ -90,6 +90,7 @@ static int l_alloserv_poll_standalone(lua_State* L)
 
 static int l_alloserv_stop_standalone(lua_State* L)
 {
+  (void)L;
   alloserv_stop_standalone();
   return 0;
 }
@@ -321,6 +322,7 @@ static int l_alloclient_get_state (lua_State *L)
 static int l_alloclient_get_time(lua_State *L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
+    (void)lclient;
     double t = get_ts_monod();
     lua_pushnumber(L, t);
     return 1;

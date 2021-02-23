@@ -425,6 +425,7 @@ void _lru_prune(assetstore *store) {
 int _assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
     
     mtx_lock(&store->lock);
+    (void)offset; (void)buffer; (void)length; (void)out_total_size;
     
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
     if (!cJSON_IsObject(state)) {

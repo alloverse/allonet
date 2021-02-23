@@ -470,6 +470,7 @@ static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
 // thread: proxy (parsing messages from bridge)
 static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
 {
+    (void)timeout_ms;
     mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
     proxy_message *msg = NULL;
     while((msg = STAILQ_FIRST(&_internal(proxyclient)->bridge_to_proxy))) {

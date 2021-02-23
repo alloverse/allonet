@@ -29,7 +29,7 @@ void scheduler_remove_all(scheduler *s) {
 
 // Stop the job. You should free the data first.
 void scheduler_stop(scheduler *s, job *job) {
-    for (int i = 0; i < s->jobs.length; i++) {
+    for (size_t i = 0; i < s->jobs.length; i++) {
         struct job *j = &s->jobs.data[i];
         if (j->data == job->data && j->work == job->work) {
             arr_splice(&s->jobs, i, 1);
@@ -39,7 +39,7 @@ void scheduler_stop(scheduler *s, job *job) {
 }
 
 void scheduler_tick(scheduler *s) {
-    int i = 0;
+    size_t i = 0;
     while (i < s->jobs.length) {
         struct job *job = &s->jobs.data[i];
         // if work returns false we remove the job instead of incrementing i

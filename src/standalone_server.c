@@ -23,6 +23,7 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
 
 static void clients_changed(alloserver* serv, alloserver_client* added, alloserver_client* removed)
 {
+  (void)added;
   if (removed) {
     allo_entity* entity = serv->state.entities.lh_first;
     while (entity)
@@ -40,6 +41,7 @@ static void clients_changed(alloserver* serv, alloserver_client* added, alloserv
 
 static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent *intent)
 {
+  (void)serv;
   allo_client_intent_clone(intent, client->intent);
   free(client->intent->entity_id);
   client->intent->entity_id = allo_strdup(client->avatar_entity_id);
@@ -200,7 +202,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
 {
   if (channel == CHANNEL_STATEDIFFS)
   {
-    cJSON* cmd = cJSON_Parse((const char*)data);
+    cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
     const cJSON* ntvintent = cJSON_GetObjectItemCaseSensitive(cmd, "intent");
     allo_client_intent *intent = allo_client_intent_parse_cjson(ntvintent);
     handle_intent(serv, client, intent);
@@ -209,7 +211,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
   }
   else if (channel == CHANNEL_COMMANDS)
   {
-    cJSON* cmd = cJSON_Parse((const char*)data);
+    cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
     allo_interaction* interaction = allo_interaction_parse_cjson(cmd);
     handle_interaction(serv, client, interaction);
     allo_interaction_free(interaction);
@@ -217,7 +219,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
   }
   else if (channel == CHANNEL_CLOCK)
   {
-    cJSON* cmd = cJSON_Parse((const char*)data);
+    cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
     handle_clock(serv, client, cmd);
     cJSON_Delete(cmd);
   }

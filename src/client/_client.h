@@ -32,7 +32,7 @@ static inline alloclient_internal *_internal(alloclient *client)
     return (alloclient_internal*)client->_internal;
 }
 
-extern void _alloclient_parse_media(alloclient *client, unsigned char *data, int length);
+extern void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length);
 extern void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount);
 extern decoder_track *_alloclient_decoder_find_for_track(alloclient *client, uint32_t track_id);
 extern decoder_track *_alloclient_decoder_find_or_create_for_track(alloclient *client, uint32_t track_id);

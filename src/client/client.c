@@ -12,7 +12,7 @@
 
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
-    #define nonnull(x) ({ typeof(x) xx = (x); assert(xx != NULL); xx; })
+    #define nonnull(x) (assert((x) != NULL), x)
 #else
     #define nonnull(x) x
 #endif

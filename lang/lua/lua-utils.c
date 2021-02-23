@@ -128,7 +128,8 @@ void get_table_skeleton(lua_State *L, const char *key, allo_m4x4 skeleton[ALLO_H
 
 allo_client_pose_grab get_table_grab(lua_State* L, const char* key)
 {
-  allo_client_pose_grab result = { NULL, {{0,0,0}} };
+  allo_client_pose_grab result;
+  memset(&result, 0, sizeof(result));
   lua_pushstring(L, key);
   lua_gettable(L, -2);
   if (!lua_isnil(L, -1))

@@ -252,7 +252,7 @@ static void handle_lost_connection(alloserver *serv, alloserver_client *client)
     char host[255] = {0};
     ENetPeer *peer = _clientinternal(client)->peer;
     enet_address_get_host_ip(&peer->address, host, 254);
-    printf("%s/%p from %s:%d disconnected.\n", client->agent_id, client, host, peer->address.port);
+    printf("%s/%p from %s:%d disconnected.\n", client->agent_id, (void*)client, host, peer->address.port);
 
     // scan through the list of asset->peers and remove the peer where peeresent
     _remove_client_from_wanted(serv, client);
@@ -299,6 +299,7 @@ static bool allo_poll(alloserver *serv, int timeout)
 
 void allo_send(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len)
 {
+    (void)serv;
     ENetPacket *packet = enet_packet_create(
         NULL,
         len,
@@ -316,6 +317,7 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
 
 void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
 {
+    (void)serv;
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
     allo_statistics.bytes_sent[0] += packet->dataLength;
     if (channel < CHANNEL_COUNT) {
@@ -369,6 +371,7 @@ alloserver *allo_listen(int listenhost, int port)
 
 void alloserv_disconnect(alloserver *serv, alloserver_client *client, int reason_code)
 {
+    (void)serv;
     enet_peer_disconnect_later(_clientinternal(client)->peer, reason_code);
 }
 

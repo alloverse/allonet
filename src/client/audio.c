@@ -14,7 +14,7 @@ typedef struct decoder_track {
 } decoder_track;
 
 
-void _alloclient_parse_media(alloclient *client, unsigned char *data, int length)
+void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length)
 {
     uint32_t track_id;
     assert(length >= sizeof(track_id) + 3);

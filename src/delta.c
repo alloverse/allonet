@@ -6,7 +6,7 @@
 
 extern cJSON *statehistory_get(statehistory_t *history, int64_t revision)
 {
-    return history->history[history->latest_revision%allo_statehistory_length];
+    return history->history[revision%allo_statehistory_length];
 }
 
 void allo_delta_insert(statehistory_t *history, cJSON *next_state)

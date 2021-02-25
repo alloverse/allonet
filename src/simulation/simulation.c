@@ -51,7 +51,7 @@ allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar,
     cJSON* intent = cJSON_GetObjectItemCaseSensitive(entity->components, "intent");
     cJSON* actuate_pose = cJSON_GetObjectItemCaseSensitive(intent, "actuate_pose");
 
-    if (parent && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
+    if (parent && parent->valuestring && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
     {
       return entity;
     }

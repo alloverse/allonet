@@ -671,8 +671,6 @@ int asset_memstore_register_asset_nocopy(struct assetstore *store, const char *a
     
     mtx_unlock(&store->lock);
     
-    log("assetstore: Did register complete asset '%s': %s\n", id, cJSON_Print(state));
-    
     return 0;
 }
 

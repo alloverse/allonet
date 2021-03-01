@@ -144,6 +144,7 @@ void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offse
                                           );
     
     send(asset_mid_data, response, data, length, user);
+    cJSON_Delete(response);
 }
 
 void asset_deliver(const char *asset_id, asset_request_func request, asset_send_func send, void *user) {
@@ -159,7 +160,7 @@ void asset_deliver(const char *asset_id, asset_request_func request, asset_send_
 
 /// Does all the work with a package from the asset data channel, via function pointers provided
 void asset_handle(
-    const uint8_t* data,
+    const uint8_t* _data,
     size_t data_length,
     asset_request_func request,
     asset_write_func write,
@@ -170,6 +171,7 @@ void asset_handle(
     uint16_t mid = 0;
     cJSON *json = NULL;
     cJSON *error = NULL;
+    const uint8_t* data = _data;
     
     if (asset_read_header(&data, &data_length, &mid, &json) != 0) {
         assert(false && "Failed to read header");
@@ -198,7 +200,6 @@ void asset_handle(
         }
         // Then we wait for user to honor the request
     } else if (mid == asset_mid_data && write != NULL) { // if we can't write we just ignore the message
-        printf("Asset: received data: %s\n", cJSON_Print(json));
         const char *asset_id = NULL;
         size_t offset = 0, length = 0, total_length = 0;
         if(asset_read_data_header(json, &asset_id, &offset, &length, &total_length, &error)) {
@@ -220,7 +221,9 @@ void asset_handle(
     } else if (mid == asset_mid_failure) {
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
         
-        printf("Asset: received error: %s", cJSON_Print(json));
+        char *desc = cJSON_Print(json);
+        printf("Asset: received error: %s", desc);
+        free((void*)desc);
     } else {
         printf("Asset: received weird mid: %d", mid);
     }
@@ -252,8 +255,8 @@ void _asset_request(
     if (entity_id) {
         cJSON_AddStringToObject(header, "published_by", entity_id);
     }
-    printf("Asset: Requesting %s\n", cJSON_Print(header));
     send(asset_mid_request, header, NULL, 0, user);
+    cJSON_Delete(header);
 }
 
 

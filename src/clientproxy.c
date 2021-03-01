@@ -113,6 +113,7 @@ typedef struct {
     mtx_t proxy_to_bridge_mtx;
     mtx_t bridge_to_proxy_mtx;
     bool running;
+    int exit_code;
     proxy_message_stailq proxy_to_bridge;
     int32_t proxy_to_bridge_len;
     proxy_message_stailq bridge_to_proxy;
@@ -179,9 +180,10 @@ static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
 }
 static void bridge_alloclient_disconnect(alloclient *bridgeclient, proxy_message *msg)
 {
+    fprintf(stderr, "alloclient[clientproxy]: shutting down network thread...\n");
     alloclient *proxyclient = bridgeclient->_backref;
-    alloclient_disconnect(bridgeclient, msg->value.disconnection.code);
     _internal(proxyclient)->running = false;
+    _internal(proxyclient)->exit_code = msg->value.disconnection.code;
 }
 
 static void proxy_alloclient_send_interaction(alloclient *proxyclient, allo_interaction *interaction)
@@ -524,7 +526,8 @@ static void _bridgethread(alloclient *bridgeclient)
         bridge_check_for_network(bridgeclient);
         bridge_check_for_messages(bridgeclient);
     }
-    fprintf(stderr, "alloclient[clientproxy]: exiting network thread...\n");
+    fprintf(stderr, "alloclient[clientproxy]: deallocating network thread resources...\n");
+    alloclient_disconnect(bridgeclient, _internal(bridgeclient->_backref)->exit_code);
 }
 
 // thread: proxy

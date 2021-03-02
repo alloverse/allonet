@@ -53,35 +53,41 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   cJSON* identity = cJSON_GetArrayItem(body, 4); (void)identity;
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
 
-  allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);
+  allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
   client->avatar_entity_id = allo_strdup(ava->id);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
   char* respbodys = cJSON_Print(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+  free(respbodys);
   cJSON_Delete(respbody);
   send_interaction_to_client(serv, client, response);
-  free(respbodys);
+  allo_interaction_free(response);
 }
 
 static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   cJSON* edesc = cJSON_DetachItemFromArray(body, 1);
 
-  allo_entity *entity = allo_state_add_entity_from_spec(&serv->state, client->agent_id, edesc, NULL);
+  allo_entity *entity = allo_state_add_entity_from_spec(&serv->state, client->agent_id, edesc, NULL); // takes edesc
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id), NULL);
   char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
 }
 
 static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  const char *eid = cJSON_GetStringValue(cJSON_DetachItemFromArray(body, 1));
-  const char *modes = cJSON_GetStringValue(cJSON_DetachItemFromArray(body, 2));
+  cJSON *jeid = cJSON_DetachItemFromArray(body, 1);
+  cJSON *jmodes = cJSON_DetachItemFromArray(body, 2);
+  const char *eid = cJSON_GetStringValue(jeid);
+  const char *modes = cJSON_GetStringValue(jmodes);
+  cJSON_Delete(jeid);
+  cJSON_Delete(jmodes);
   allo_removal_mode mode = AlloRemovalCascade;
   if(modes && strcmp(modes, "reparent") == 0)
   {
@@ -91,10 +97,12 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("remove_entity"), cJSON_CreateString(ok?"ok":"failed"), NULL);
   char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
+  
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
 }
 
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -106,6 +114,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
   if(entity == NULL)
   {
+    cJSON_Delete(comps);
     fprintf(stderr, "warning: trying to change comp on non-existing entity %s\n", entity_id->valuestring);
     return;
   }
@@ -129,10 +138,11 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
   char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)

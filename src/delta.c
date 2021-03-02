@@ -64,9 +64,11 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     cJSON_Delete(patch_stylej);
 
     cJSON *patch_fromj = cJSON_DetachItemFromObject(delta, "patch_from");
+    bool has_patch_from = patch_fromj != NULL;
     int64_t patch_from = cjson_get_int64_value(patch_fromj);
-    assert(patch_fromj != NULL || patch_style == Set);
-    if(!(patch_fromj != NULL || patch_style == Set))
+    assert(has_patch_from || patch_style == Set);
+    cJSON_Delete(patch_fromj);
+    if(!(has_patch_from || patch_style == Set))
     {
         // Invalid patch. If it's not Set, patch_from must be available.
         cJSON_Delete(delta);
@@ -76,7 +78,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
     cJSON *current = statehistory_get(history, patch_from);
     int64_t current_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(current, "revision"));
 
-    if(patch_fromj && (patch_from != current_rev || current == NULL))
+    if(has_patch_from && (patch_from != current_rev || current == NULL))
     {
         // patch is not from our rev; can't apply
         cJSON_Delete(delta);

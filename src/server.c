@@ -112,7 +112,6 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
     LIST_FOREACH(other, &server->clients, pointers) {
         if (other == client) continue;
         ENetPeer *peer = _clientinternal(other)->peer;
-        printf("Server: Asking %s for %s\n", other->agent_id, cJSON_Print(header));
         
         enet_peer_send(peer, CHANNEL_ASSETS, packet);
         allo_statistics.bytes_sent[0] += packet->dataLength;
@@ -126,6 +125,7 @@ void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *da
     char *cheader = cJSON_Print(header);
     packet_header.mid = mid;
     packet_header.hlen = strlen(cheader);
+    free((void*)cheader);
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);

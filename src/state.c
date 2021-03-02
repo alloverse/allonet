@@ -367,6 +367,7 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
     allo_state_add_entity_from_spec(state, agent_id, spec, eid);
     child = next;
   }
+  cJSON_Delete(children);
   return e;
 }
 
@@ -461,10 +462,20 @@ allo_interaction *allo_interaction_create(const char *type, const char *sender_e
     allo_interaction *interaction = (allo_interaction*)malloc(sizeof(allo_interaction));
     interaction->type = allo_strdup(type);
     interaction->sender_entity_id = allo_strdup(sender_entity_id);
-    interaction->receiver_entity_id  = allo_strdup(receiver_entity_id);
+    interaction->receiver_entity_id = allo_strdup(receiver_entity_id);
     interaction->request_id = allo_strdup(request_id);
     interaction->body = allo_strdup(body);
     return interaction;
+}
+
+void allo_interaction_free(allo_interaction *interaction)
+{
+    free((void*)interaction->type);
+    free((void*)interaction->sender_entity_id);
+    free((void*)interaction->receiver_entity_id);
+    free((void*)interaction->request_id);
+    free((void*)interaction->body);
+    free(interaction);
 }
 
 allo_interaction *allo_interaction_clone(const allo_interaction *interaction)
@@ -492,15 +503,8 @@ allo_interaction *allo_interaction_parse_cjson(const cJSON* inter_json)
   const char* request_id = cJSON_GetArrayItem(inter_json, 4)->valuestring;
   cJSON* body = cJSON_GetArrayItem(inter_json, 5);
   const char* bodystr = cJSON_Print(body);
-  return allo_interaction_create(type, from, to, request_id, bodystr);
+  allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
+  free((void*)bodystr);
+  return interaction;
 }
 
-void allo_interaction_free(allo_interaction *interaction)
-{
-    free((void*)interaction->type);
-    free((void*)interaction->sender_entity_id);
-    free((void*)interaction->receiver_entity_id);
-    free((void*)interaction->request_id);
-    free((void*)interaction->body);
-    free(interaction);
-}

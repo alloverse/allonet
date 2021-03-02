@@ -172,7 +172,11 @@ static int l_alloclient_send_interaction (lua_State *L)
     const char* req = get_table_string(L, "request_id");
     const char* b = get_table_string(L, "body");
     allo_interaction *inter = allo_interaction_create(type, sender, recv, req, b);
-    free((void*)type); free((void*)sender); free((void*)recv); free((void*)req); free((void*)b);
+    free((void*)type);
+    free((void*)sender);
+    free((void*)recv);
+    free((void*)req);
+    free((void*)b);
     alloclient_send_interaction(lclient->client, inter);
     allo_interaction_free(inter);
     return 0;

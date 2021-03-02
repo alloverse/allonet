@@ -59,9 +59,10 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
   char* respbodys = cJSON_Print(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+  free(respbodys);
   cJSON_Delete(respbody);
   send_interaction_to_client(serv, client, response);
-  free(respbodys);
+  allo_interaction_free(response);
 }
 
 static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -72,10 +73,11 @@ static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_c
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id), NULL);
   char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
 }
 
 static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -95,10 +97,12 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("remove_entity"), cJSON_CreateString(ok?"ok":"failed"), NULL);
   char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
+  
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
 }
 
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -134,10 +138,11 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
   char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)

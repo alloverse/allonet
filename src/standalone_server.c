@@ -86,14 +86,14 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
   cJSON *jmodes = cJSON_DetachItemFromArray(body, 2);
   const char *eid = cJSON_GetStringValue(jeid);
   const char *modes = cJSON_GetStringValue(jmodes);
-  cJSON_Delete(jeid);
-  cJSON_Delete(jmodes);
   allo_removal_mode mode = AlloRemovalCascade;
   if(modes && strcmp(modes, "reparent") == 0)
   {
     mode = AlloRemovalReparent;
   }
   bool ok = allo_state_remove_entity(&serv->state, eid, mode);
+  cJSON_Delete(jeid);
+  cJSON_Delete(jmodes);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("remove_entity"), cJSON_CreateString(ok?"ok":"failed"), NULL);
   char* respbodys = cJSON_Print(respbody);

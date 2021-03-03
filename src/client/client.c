@@ -12,7 +12,8 @@
 
 
 #if !defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
-    #define nonnull(x) (assert((x) != NULL), x)
+    //#define nonnull(x) (assert((x) != NULL), x)
+    #define nonnull(x) x
 #else
     #define nonnull(x) x
 #endif

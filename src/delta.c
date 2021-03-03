@@ -94,7 +94,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta)
         case Merge:
             allo_statistics.ndelta_merge++;
             result = cJSON_Duplicate(current, 1);
-            cJSONUtils_MergePatchCaseSensitive(result, delta);
+            result = cJSONUtils_MergePatchCaseSensitive(result, delta);
             cJSON_Delete(delta);
             break;
     }

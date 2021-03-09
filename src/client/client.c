@@ -20,13 +20,14 @@
 
 static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
+void alloclient_ack_rev(alloclient *client, int64_t rev);
 
-void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
+int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 {
     if(client->raw_state_delta_callback) 
     {
         client->raw_state_delta_callback(client, cmd);
-        return;
+        return 0;
     }
 
     int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
@@ -39,11 +40,11 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
             (long long int)_internal(client)->history.latest_revision
         );
         _internal(client)->latest_intent->ack_state_rev = 0;
-        return;
+        return 0;
     }
 
     int64_t rev = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "revision"))->valueint;
-    _internal(client)->latest_intent->ack_state_rev = client->_state.revision = rev;
+    alloclient_ack_rev(client, rev);
 
     const cJSON *entities = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "entities"));
     
@@ -98,6 +99,13 @@ void alloclient_parse_statediff(alloclient *client, cJSON *cmd)
     {
         client->state_callback(client, &client->_state);
     }
+
+    return rev;
+}
+
+void alloclient_ack_rev(alloclient *client, int64_t rev)
+{
+    _internal(client)->latest_intent->ack_state_rev = client->_state.revision = rev;
 }
 
 

@@ -8,7 +8,9 @@
 #include "inlinesys/queue.h"
 
 // internals in client.c
-void alloclient_parse_statediff(alloclient *client, cJSON *cmd);
+int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd);
+void alloclient_ack_rev(alloclient *client, int64_t rev);
+
 // forwards in this file
 static void bridge_disconnected_callback(alloclient *bridgeclient, alloerror code, const char *message);
 
@@ -32,6 +34,7 @@ typedef enum
     msg_disconnect,
     msg_audio,
     msg_clock,
+    msg_ack,
     
     msg_asset_request,
     msg_asset_send_data,
@@ -72,6 +75,11 @@ typedef struct proxy_message
             double latency;
             double delta;
         } clock;
+        struct
+        {
+            int64_t rev;
+        } ack;
+        
         
         struct {
             char *asset_id;
@@ -229,6 +237,11 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
     free(msg->value.audio.pcm);
 }
 
+static void bridge_alloclient_ack(alloclient *bridgeclient, proxy_message *msg)
+{
+    alloclient_ack_rev(bridgeclient, msg->value.ack.rev);
+}
+
 static double proxy_alloclient_get_time(alloclient *proxyclient)
 {
     return get_ts_monod() + proxyclient->clock_deltaToServer;
@@ -290,12 +303,15 @@ static void bridge_alloclient_asset_send_data(alloclient *bridgeclient, proxy_me
     }
 }
 
+
+
 static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_connect] = bridge_alloclient_connect,
     [msg_disconnect] = bridge_alloclient_disconnect,
     [msg_interaction] = bridge_alloclient_send_interaction,
     [msg_intent] = bridge_alloclient_set_intent,
     [msg_audio] = bridge_alloclient_send_audio,
+    [msg_ack] = bridge_alloclient_ack,
     [msg_asset_request] = bridge_alloclient_asset_request,
     [msg_asset_send_data] = bridge_alloclient_asset_send_data,
 };
@@ -384,8 +400,12 @@ static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd
 }
 static void proxy_raw_state_delta_callback(alloclient *proxyclient, proxy_message *msg)
 {
-    alloclient_parse_statediff(proxyclient, msg->value.state_delta);
+    int64_t rev = alloclient_parse_statediff(proxyclient, msg->value.state_delta);
     // note: parse_statediff takes ownership of state_delta, so no need to free it.
+
+    proxy_message *out = proxy_message_create(msg_ack);
+    out->value.ack.rev = rev;
+    enqueue_proxy_to_bridge(_internal(proxyclient), out);
 }
 
 static bool bridge_interaction_callback(alloclient *bridgeclient, allo_interaction *interaction)

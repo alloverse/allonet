@@ -9,13 +9,13 @@ namespace Allonet
     {
         public string id;
         public string owner;
-        public object components;
+        public LitJson.JsonData components;
         public AlloComponent.Transform transform {
             get {
                 if(!components.ContainsKey("transform")) {
                     return null;
                 }
-                object transformRep = components["transform"];
+                LitJson.JsonData transformRep = components["transform"];
                 AlloComponent.Transform transform = new AlloComponent.Transform();
                 /// uh fill it with data
                 return transform;

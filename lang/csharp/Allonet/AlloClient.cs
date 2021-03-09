@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Allonet
 {
@@ -18,7 +19,7 @@ namespace Allonet
         public EntityAdded added = null;
         public delegate void EntityRemoved(AlloEntity entity);
         public EntityRemoved removed = null;
-        public delegate void Interaction(string type, AlloEntity from, AlloEntity to, object command);
+        public delegate void Interaction(string type, AlloEntity from, AlloEntity to, LitJson.JsonData command);
         public Interaction interaction = null;
         public delegate void Disconnected();
         public Disconnected disconnected = null;
@@ -33,16 +34,16 @@ namespace Allonet
         private GCHandle thisHandle;
 
 
-        public AlloClient(string url, AlloIdentity identity, object avatarDesc)
+        public AlloClient(string url, AlloIdentity identity, LitJson.JsonData avatarDesc)
         {
             unsafe
             {
                 IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);
-                IntPtr identPtr = Marshal.StringToHGlobalAnsi(JsonSerializer.Serialize(identity));
-                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(JsonSerializer.Serialize(avatarDesc));
+                IntPtr identPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(identity));
+                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(avatarDesc));
 
-                client = _AlloClient.alloclient_create();
-                bool ok = _AlloClient.allo_connect(client, urlPtr, identPtr, avatarPtr);
+                client = _AlloClient.alloclient_create(false);
+                bool ok = _AlloClient.alloclient_connect(client, urlPtr, identPtr, avatarPtr);
                 Marshal.FreeHGlobal(urlPtr);
                 Marshal.FreeHGlobal(identPtr);
                 Marshal.FreeHGlobal(avatarPtr);
@@ -170,7 +171,7 @@ namespace Allonet
             {
                 if (client != null)
                 {
-                    _AlloClient.alloclient_disconnect(client);
+                    _AlloClient.alloclient_disconnect(client, reason);
                     client = null;
 
                     thisHandle.Free();
@@ -178,18 +179,16 @@ namespace Allonet
             }
         }
 
-        [AOT.MonoPInvokeCallback(typeof(_AlloClient.InteractionCallbackFun))]
         static unsafe private void _disconnected(_AlloClient* _client)
         {
             GCHandle backref = (GCHandle)_client->_backref;
             AlloClient self = backref.Target as AlloClient;
-            Debug.Log("_disconnected: calling delegate " + self.disconnected.ToString());
+            Debug.WriteLine("_disconnected: calling delegate " + self.disconnected.ToString());
             self.disconnected?.Invoke();
-            Debug.Log("_disconnected: deallocating");
+            Debug.WriteLine("_disconnected: deallocating");
             self.Disconnect(-1);
         }
 
-        [AOT.MonoPInvokeCallback(typeof(_AlloClient.InteractionCallbackFun))]
         static unsafe private void _interaction(_AlloClient* _client, IntPtr _type, IntPtr _senderEntityId, IntPtr _receiverEntityId, IntPtr _requestId, IntPtr _body)
         {
             string type = Marshal.PtrToStringAnsi(_type);
@@ -201,8 +200,8 @@ namespace Allonet
             GCHandle backref = (GCHandle)_client->_backref;
             AlloClient self = backref.Target as AlloClient;
 
-            Debug.Log("Incoming " + type + " interaction alloclient: " + from + " > " + to + ": " + cmd + ";");
-            object data = JsonSerializer.Deserialize(cmd);
+            Debug.WriteLine("Incoming " + type + " interaction alloclient: " + from + " > " + to + ": " + cmd + ";");
+            LitJson.JsonData data = LitJson.JsonMapper.ToObject(cmd);
             
             AlloEntity fromEntity = null;
             if (!string.IsNullOrEmpty(from))

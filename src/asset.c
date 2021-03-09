@@ -284,7 +284,7 @@ int asset_read_header(uint8_t const **data, size_t *data_length, uint16_t *out_m
     *data_length -= sizeof(uint16_t);
     
     const char *parse_end;
-    *out_json = cJSON_ParseWithOpts((char *)*data, &parse_end, false);
+    *out_json = cJSON_ParseWithLengthOpts((char *)*data, header_len, &parse_end, false);
     size_t parsed_len = (size_t)(parse_end - (char*)(*data));
     assert(parsed_len == header_len);
     *out_mid = mid;

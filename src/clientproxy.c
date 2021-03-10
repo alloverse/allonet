@@ -184,7 +184,7 @@ static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
     mtx_destroy(&_internal(proxyclient)->proxy_to_bridge_mtx);
     free(proxyclient->_internal2);
     // TODO: clean out the message queues, goddammit.
-    original_alloclient_disconnect(proxyclient, msg->value.disconnection.code);
+    original_alloclient_disconnect(proxyclient, reason);
 }
 static void bridge_alloclient_disconnect(alloclient *bridgeclient, proxy_message *msg)
 {

@@ -56,7 +56,7 @@ namespace Allonet
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public unsafe delegate void StateCallbackFun(_AlloClient* client, ref _AlloState state);
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        public unsafe delegate void InteractionCallbackFun(_AlloClient* client, IntPtr type, IntPtr senderEntityId, IntPtr receiverEntityId, IntPtr requestId, IntPtr body);
+        public unsafe delegate void InteractionCallbackFun(_AlloClient* client, _AlloInteraction *inter);
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public unsafe delegate void DisconnectedCallbackFun(_AlloClient* client);
     };

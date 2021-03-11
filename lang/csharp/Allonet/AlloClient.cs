@@ -34,28 +34,17 @@ namespace Allonet
         private GCHandle thisHandle;
 
 
-        public AlloClient(string url, AlloIdentity identity, LitJson.JsonData avatarDesc)
+        public AlloClient()
         {
             if (!_AlloClient.allo_initialize(false)) {
                throw new Exception("Unable to initialize Allonet");
             }
-            
             unsafe
             {
-                IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);
-                IntPtr identPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(identity));
-                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(avatarDesc));
-
                 client = _AlloClient.alloclient_create(false);
-                bool ok = _AlloClient.alloclient_connect(client, urlPtr, identPtr, avatarPtr);
-                Marshal.FreeHGlobal(urlPtr);
-                Marshal.FreeHGlobal(identPtr);
-                Marshal.FreeHGlobal(avatarPtr);
-                if (client == null || !ok)
-                {
-                    throw new Exception("Failed to connect to " + url);
-                }
-
+                if(client == null)
+                    throw new Exception("Failed to create Allonet instance");
+                
                 interactionCallback = new _AlloClient.InteractionCallbackFun(AlloClient._interaction);
                 interactionCallbackHandle = GCHandle.Alloc(interactionCallback);
                 IntPtr icp = Marshal.GetFunctionPointerForDelegate(interactionCallback);
@@ -68,7 +57,6 @@ namespace Allonet
 
                 thisHandle = GCHandle.Alloc(this);
                 client->_backref = (IntPtr)thisHandle;
-
             }
         }
         ~AlloClient()
@@ -77,6 +65,25 @@ namespace Allonet
             {
                 interactionCallbackHandle.Free();
                 disconnectedCallbackHandle.Free();
+            }
+        }
+
+        public void Connect(string url, AlloIdentity identity, LitJson.JsonData avatarDesc)
+        {
+            unsafe
+            {
+                IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);
+                IntPtr identPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(identity));
+                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(avatarDesc));
+
+                bool ok = _AlloClient.alloclient_connect(client, urlPtr, identPtr, avatarPtr);
+                Marshal.FreeHGlobal(urlPtr);
+                Marshal.FreeHGlobal(identPtr);
+                Marshal.FreeHGlobal(avatarPtr);
+                if (!ok)
+                {
+                    throw new Exception("Failed to connect to " + url);
+                }
             }
         }
 
@@ -193,13 +200,13 @@ namespace Allonet
             self.Disconnect(-1);
         }
 
-        static unsafe private void _interaction(_AlloClient* _client, IntPtr _type, IntPtr _senderEntityId, IntPtr _receiverEntityId, IntPtr _requestId, IntPtr _body)
+        static unsafe private void _interaction(_AlloClient* _client, _AlloInteraction *inter)
         {
-            string type = Marshal.PtrToStringAnsi(_type);
-            string from = Marshal.PtrToStringAnsi(_senderEntityId);
-            string to = Marshal.PtrToStringAnsi(_receiverEntityId);
-            string cmd = Marshal.PtrToStringAnsi(_body);
-            string requestId = Marshal.PtrToStringAnsi(_requestId);
+            string type = Marshal.PtrToStringAnsi(inter->type);
+            string from = Marshal.PtrToStringAnsi(inter->senderEntityId);
+            string to = Marshal.PtrToStringAnsi(inter->receiverEntityId);
+            string cmd = Marshal.PtrToStringAnsi(inter->body);
+            string requestId = Marshal.PtrToStringAnsi(inter->requestId);
 
             GCHandle backref = (GCHandle)_client->_backref;
             AlloClient self = backref.Target as AlloClient;

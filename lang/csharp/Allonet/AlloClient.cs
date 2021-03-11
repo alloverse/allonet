@@ -11,7 +11,7 @@ namespace Allonet
         public string display_name { get; set; }
     }
 
-    class AlloClient
+    public class AlloClient
     {
         private unsafe _AlloClient* client;
         public Dictionary<string, AlloEntity> entities = new Dictionary<string, AlloEntity>();
@@ -36,6 +36,10 @@ namespace Allonet
 
         public AlloClient(string url, AlloIdentity identity, LitJson.JsonData avatarDesc)
         {
+            if (!_AlloClient.allo_initialize(false)) {
+               throw new Exception("Unable to initialize Allonet");
+            }
+            
             unsafe
             {
                 IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);

@@ -8,34 +8,35 @@ namespace Allonet
     [StructLayout(LayoutKind.Sequential)]
     struct _AlloClient
     {
-        [DllImport("liballonet")]
+        const string _dllLocation = "/usr/local/lib/liballonet.so";
+        [DllImport(_dllLocation)]
         public unsafe static extern bool allo_initialize(bool redirect_stdout);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern _AlloClient *alloclient_create(bool threaded);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern bool alloclient_connect(_AlloClient* client, IntPtr urlString, IntPtr identity, IntPtr avatarDesc);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern void alloclient_disconnect(_AlloClient* client, int reason);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern void alloclient_poll(_AlloClient* client, int timeout_ms);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern void alloclient_send_interaction(_AlloClient* client, _AlloInteraction *interaction);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern void alloclient_set_intent(_AlloClient* client, AlloIntent intent);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern _AlloInteraction *allo_interaction_create(IntPtr type, IntPtr sender_entity_id, IntPtr receiver_entity_id, IntPtr request_id, IntPtr body);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern void allo_interaction_free(_AlloInteraction *interaction);
 
-        [DllImport("liballonet")]
+        [DllImport(_dllLocation)]
         public unsafe static extern string cJSON_Print(IntPtr cjson);
         
         public IntPtr state_callback;

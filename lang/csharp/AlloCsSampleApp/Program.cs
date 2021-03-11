@@ -24,8 +24,8 @@ class Program
 
         LitJson.JsonData avatarDesc = new LitJson.JsonData();
         avatarDesc["geometry"] = new LitJson.JsonData();
-        avatarDesc["geometry"]["type"] = new LitJson.JsonData("hardcoded-model");
-        avatarDesc["geometry"]["name"] = new LitJson.JsonData("cubegal");
+        avatarDesc["geometry"]["type"] = new LitJson.JsonData("asset");
+        avatarDesc["geometry"]["name"] = new LitJson.JsonData("asset:sha256:d2a84f4b8b650937ec8f73cd8be2c74add5a911ba64df27458ed8222da804a21");
 
         client = new AlloClient();
         client.added = EntityAdded;

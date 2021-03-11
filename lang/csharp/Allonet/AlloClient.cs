@@ -245,10 +245,30 @@ namespace Allonet
             }
         }
 
-        static unsafe private void _assetRequestBytes(_AlloClient* client, IntPtr _assetId, UIntPtr offset, UIntPtr length)
+        static unsafe private void _assetRequestBytes(_AlloClient* _client, IntPtr _assetId, UIntPtr offset, UIntPtr length)
         {
+            GCHandle backref = (GCHandle)_client->_backref;
+            AlloClient self = backref.Target as AlloClient;
+
             string assetId = Marshal.PtrToStringAnsi(_assetId);
-            Debug.WriteLine("Got request for asset" + assetId);
+            Debug.WriteLine($"Got request for asset {assetId}, length {length} at offset {offset}");
+            //Byte[] lol = {1, 2, 3};
+            //self.SendAsset(assetId, lol, (int)offset, 6);
         }
+
+        public void SendAsset(string asset_id, Byte[] data, int offset, int total_size)
+        {
+            unsafe
+            {
+                IntPtr assetIdPtr = Marshal.StringToHGlobalAnsi(asset_id);
+                GCHandle pinnedData = GCHandle.Alloc(data, GCHandleType.Pinned);
+                IntPtr dataPtr = pinnedData.AddrOfPinnedObject();
+
+                _AlloClient.alloclient_asset_send(client, assetIdPtr, dataPtr, (UIntPtr)offset, (UIntPtr)data.Length, (UIntPtr)total_size);
+                Marshal.FreeHGlobal(assetIdPtr);
+                pinnedData.Free();
+            }
+        }
+
     }
 }

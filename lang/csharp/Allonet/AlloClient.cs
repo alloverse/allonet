@@ -31,6 +31,8 @@ namespace Allonet
         private GCHandle interactionCallbackHandle;
         private _AlloClient.DisconnectedCallbackFun disconnectedCallback;
         private GCHandle disconnectedCallbackHandle;
+        private _AlloClient.AssetRequestBytesCallbackFun assetRequestBytesCallback;
+        private GCHandle assetRequestBytesCallbackHandle;
         private GCHandle thisHandle;
 
 
@@ -54,6 +56,11 @@ namespace Allonet
                 disconnectedCallbackHandle = GCHandle.Alloc(disconnectedCallback);
                 IntPtr icp2 = Marshal.GetFunctionPointerForDelegate(disconnectedCallback);
                 client->disconnected_callback = icp2;
+
+                assetRequestBytesCallback = new _AlloClient.AssetRequestBytesCallbackFun(AlloClient._assetRequestBytes);
+                assetRequestBytesCallbackHandle = GCHandle.Alloc(assetRequestBytesCallback);
+                IntPtr icp3 = Marshal.GetFunctionPointerForDelegate(assetRequestBytesCallback);
+                client->asset_request_bytes_callback = icp3;
 
                 thisHandle = GCHandle.Alloc(this);
                 client->_backref = (IntPtr)thisHandle;
@@ -236,6 +243,12 @@ namespace Allonet
             {
                 self.interaction?.Invoke(type, fromEntity, toEntity, data);
             }
+        }
+
+        static unsafe private void _assetRequestBytes(_AlloClient* client, IntPtr _assetId, UIntPtr offset, UIntPtr length)
+        {
+            string assetId = Marshal.PtrToStringAnsi(_assetId);
+            Debug.WriteLine("Got request for asset" + assetId);
         }
     }
 }

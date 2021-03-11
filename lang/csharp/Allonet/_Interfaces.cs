@@ -37,6 +37,12 @@ namespace Allonet
         public unsafe static extern void allo_interaction_free(_AlloInteraction *interaction);
 
         [DllImport(_dllLocation)]
+        public unsafe static extern void alloclient_asset_request(_AlloClient* client, IntPtr asset_id, IntPtr entity_id);
+
+        [DllImport(_dllLocation)]
+        public unsafe static extern void alloclient_asset_send(_AlloClient* client, IntPtr asset_id, IntPtr data, UIntPtr offset, UIntPtr length, UIntPtr total_size);
+
+        [DllImport(_dllLocation)]
         public unsafe static extern string cJSON_Print(IntPtr cjson);
         
         public IntPtr state_callback;
@@ -59,6 +65,12 @@ namespace Allonet
         public unsafe delegate void InteractionCallbackFun(_AlloClient* client, _AlloInteraction *inter);
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public unsafe delegate void DisconnectedCallbackFun(_AlloClient* client);
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public unsafe delegate void AssetRequestBytesCallbackFun(_AlloClient* client, IntPtr assetId, UIntPtr offset, UIntPtr length);
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public unsafe delegate void AssetReceiveCallbackFun(_AlloClient* client, IntPtr assetId, IntPtr buffer, UIntPtr offset, UIntPtr length, UIntPtr total_length);
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public unsafe delegate void AssetStateCallbackFun(_AlloClient* client, IntPtr assetId, int state);
     };
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]

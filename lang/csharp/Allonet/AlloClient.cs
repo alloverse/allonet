@@ -16,13 +16,15 @@ namespace Allonet
         private unsafe _AlloClient* client;
         public Dictionary<string, AlloEntity> entities = new Dictionary<string, AlloEntity>();
         public delegate void EntityAdded(AlloEntity entity);
-        public EntityAdded added = null;
+        public EntityAdded onAdded = null;
         public delegate void EntityRemoved(AlloEntity entity);
-        public EntityRemoved removed = null;
+        public EntityRemoved onRemoved = null;
         public delegate void Interaction(string type, AlloEntity from, AlloEntity to, LitJson.JsonData command);
-        public Interaction interaction = null;
+        public Interaction onInteraction = null;
         public delegate void Disconnected();
-        public Disconnected disconnected = null;
+        public Disconnected onDisconnected = null;
+        public delegate void AssetBytesRequested(string _assetId, long offset, long length);
+        public AssetBytesRequested onAssetBytesRequested = null;
 
         public delegate void ResponseCallback(string body);
         private Dictionary<string, ResponseCallback> responseCallbacks = new Dictionary<string, ResponseCallback>();
@@ -168,18 +170,18 @@ namespace Allonet
                 lostEntityIds = new HashSet<string>(existingEntityIds);
                 lostEntityIds.ExceptWith(incomingEntityIds);
             }
-            if(added != null)
+            if(onAdded != null)
             {
                 foreach (string addedId in newEntityIds)
                 {
-                    added(entities[addedId]);
+                    onAdded(entities[addedId]);
                 }
             }
             foreach(string removedId in lostEntityIds)
             {
-                if(removed != null)
+                if(onRemoved != null)
                 {
-                    removed(entities[removedId]);
+                    onRemoved(entities[removedId]);
                 }
                 entities.Remove(removedId);
             }
@@ -202,8 +204,8 @@ namespace Allonet
         {
             GCHandle backref = (GCHandle)_client->_backref;
             AlloClient self = backref.Target as AlloClient;
-            Debug.WriteLine("_disconnected: calling delegate " + self.disconnected.ToString());
-            self.disconnected?.Invoke();
+            Debug.WriteLine("_disconnected: calling delegate " + self.onDisconnected.ToString());
+            self.onDisconnected?.Invoke();
             Debug.WriteLine("_disconnected: deallocating");
             self.Disconnect(-1);
         }
@@ -242,7 +244,7 @@ namespace Allonet
             }
             else
             {
-                self.interaction?.Invoke(type, fromEntity, toEntity, data);
+                self.onInteraction?.Invoke(type, fromEntity, toEntity, data);
             }
         }
 
@@ -253,11 +255,10 @@ namespace Allonet
 
             string assetId = Marshal.PtrToStringAnsi(_assetId);
             Debug.WriteLine($"Got request for asset {assetId}, length {length} at offset {offset}");
-            //Byte[] lol = {1, 2, 3};
-            //self.SendAsset(assetId, lol, (int)offset, 6);
+            self.onAssetBytesRequested?.Invoke(assetId, (long)offset, (long)length);
         }
 
-        public void SendAsset(string asset_id, Byte[] data, int offset, int total_size)
+        public void SendAsset(string asset_id, Byte[] data, long offset, long total_size)
         {
             unsafe
             {

@@ -43,7 +43,9 @@ namespace Allonet
         public unsafe static extern void alloclient_asset_send(_AlloClient* client, IntPtr asset_id, IntPtr data, UIntPtr offset, UIntPtr length, UIntPtr total_size);
 
         [DllImport(_dllLocation)]
-        public unsafe static extern string cJSON_Print(IntPtr cjson);
+        public unsafe static extern IntPtr cJSON_Print(IntPtr cjson);
+        [DllImport(_dllLocation)]
+        public unsafe static extern IntPtr allo_free(IntPtr mallocd);
         
         public IntPtr state_callback;
         public IntPtr interaction_callback;

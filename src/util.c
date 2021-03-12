@@ -168,3 +168,8 @@ char *allo_strndup(const char *src, size_t n)
     }
     return dest;
 }
+
+void allo_free(void *mallocd)
+{
+    free(mallocd);
+}

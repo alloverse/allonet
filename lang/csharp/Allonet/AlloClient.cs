@@ -158,9 +158,10 @@ namespace Allonet
                         newEntityIds.Add(entityId);
                     }
                     incomingEntityIds.Add(entityId);
-                    string componentsJson = _AlloClient.cJSON_Print(entry->components);
-
+                    IntPtr componentsJsonPtr = _AlloClient.cJSON_Print(entry->components);
+                    string componentsJson = Marshal.PtrToStringUTF8(componentsJsonPtr);
                     entity.components = LitJson.JsonMapper.ToObject(componentsJson);
+                    _AlloClient.allo_free(componentsJsonPtr);
                     entry = entry->le_next;
                 }
                 HashSet<String> existingEntityIds = new HashSet<string>(entities.Keys);

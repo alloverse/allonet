@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE 500
+//#define _XOPEN_SOURCE 500
+#include <string.h>
 #include <cJSON/cJSON.h>
 #include <unity.h>
 #include <allonet/jobs.h>
@@ -10,363 +11,252 @@
 #include <ftw.h>
 #include <assert.h>
 #include "../src/asset.h"
-#include "../src/assetstore.h"
-
-#define max(a,b) \
-({ __typeof__ (a) _a = (a); \
-__typeof__ (b) _b = (b); \
-_a > _b ? _a : _b; })
-
-#define min(a,b) \
-({ __typeof__ (a) _a = (a); \
-__typeof__ (b) _b = (b); \
-_a < _b ? _a : _b; })
-
-static assetstore *store;
-
-static const char *relative_path = "asset_test_cache";
-static const char *import_files_folder = "asset_test_files";
-
-#define TEST_DISK_SPACE 100
-static uint8_t __test_disk[TEST_DISK_SPACE];
-static size_t __test_disk_eof = TEST_DISK_SPACE;
-
-int __test_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *total_size) {
-    assert(buffer);
-    assert((offset + length) < TEST_DISK_SPACE);
-    memcpy(buffer, &__test_disk[offset], length);
-    *total_size = TEST_DISK_SPACE;
-    return length;
-}
-
-int __test_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size) {
-    assert(data);
-    assert((offset + length) < TEST_DISK_SPACE);
-    memcpy(&__test_disk[offset], data, length);
-    return length;
-}
+#include <allonet/assetstore.h>
 
 
-void _resetTestDiskSpace() {
-    assert(TEST_DISK_SPACE < 256);
-    for (uint8_t i = 0; i < TEST_DISK_SPACE; i++) {
-        __test_disk[i] = i;
-    }
-}
-
-int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
-    int rv = remove(fpath);
-    if (rv) perror(fpath);
-    return rv;
-}
-int rmrf(const char *path) {
-    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
-}
-
-void _reset_disk() {
-    assetstore_close(store);
-    assert(rmrf(relative_path) == 0);
-    
-    store = assetstore_open(relative_path);
-}
+static bool didCallRequest;
+static char *requestedAssetId;
 
 void setUp() {
-    _resetTestDiskSpace();
-    store = assetstore_open(relative_path);
-    store->read = __test_read;
-    store->write = __test_write;
+    didCallRequest = false;
+    requestedAssetId = NULL;
 }
 
 void tearDown() {
-    assetstore_close(store);
-    rmrf(relative_path);
-}
-
-
-static char _last_completed_asset[PATH_MAX];
-static void _asset_complete_cb(assetstore *store, const char *asset_id) {
-    strcpy(_last_completed_asset, asset_id);
-}
-
-char *really_realpath(const char *path);
-
-///Private assetstore.c declares
-char *_asset_path(assetstore *store, const char *id);
-int __disk_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length);
-int __disk_write(assetstore *store, const char *asset_id, size_t offset, const uint8_t *data, size_t length, size_t total_size);
-
-void test_assetstore_basic_disk_io() {
-    char *path = _asset_path(store, "1");
-    FILE *f;
-    uint8_t buff[100];
-    
-    __disk_write(store, "1", 0, (uint8_t *)"Hello Alloverse!", 17, 17);
-    f = fopen(path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-    fread(buff, 1, 17, f);
-    fclose(f);
-    TEST_ASSERT_EQUAL_STRING("Hello Alloverse!", buff);
-
-    _reset_disk();
-    
-    // write the last 17/27 bytes
-    __disk_write(store, "1", 10, (uint8_t *)"Hello Alloverse!", 17, 27);
-    f = fopen(path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-    // should find the 17 bytes on the correct offset
-    fread(buff, 1, 27, f);
-    fclose(f);
-    TEST_ASSERT_EQUAL_STRING("Hello Alloverse!", &buff[10]);
-}
-
-void test_assetstore_read_write() {
-
-    int exists = 0, complete = 0;
-    size_t region_count = 0;
-    assetstore_state(store, "1", &exists, &complete, &region_count);
-    TEST_ASSERT_EQUAL_INT(0, exists);
-    TEST_ASSERT_EQUAL_INT(0, complete);
-    TEST_ASSERT_EQUAL_INT(0, region_count);
-    TEST_ASSERT_EQUAL_INT(12, assetstore_write(store, "1", 0, (uint8_t*)"Hello World", 12, 12));
-    TEST_ASSERT_EQUAL_STRING("{\"1\":{\"complete\":true,\"total_size\":12}}", cJSON_PrintUnformatted(store->state));
-    
-    assetstore_state(store, "1", &exists, &complete, &region_count);
-    TEST_ASSERT_EQUAL_INT(1, exists);
-    TEST_ASSERT_EQUAL_INT(1, complete);
-    TEST_ASSERT_EQUAL_INT(0, region_count);
-    
-    size_t ranges[region_count*2];
-    TEST_ASSERT_EQUAL_INT(0, assetstore_get_missing_ranges(store, "1", ranges, region_count));
-    
-    char buff[100];
-    size_t total_size;
-    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
-    TEST_ASSERT_EQUAL_STRING("Hello World", buff);
-    
-    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6, &total_size));
-    TEST_ASSERT_EQUAL_STRING("World", buff);
-}
-
-void test_assetstore_partial_read_write(void) {
-    int exists = 0, complete = 0;
-    size_t missing_regions_count = 0;
-    assetstore_state(store, "1", &exists, &complete, &missing_regions_count);
-    TEST_ASSERT_EQUAL_INT(0, exists);
-    TEST_ASSERT_EQUAL_INT(0, complete);
-    TEST_ASSERT_EQUAL_INT(0, missing_regions_count);
-    TEST_ASSERT_EQUAL_INT(5, assetstore_write(store, "1", 0, (uint8_t*)"Hello", 5, 12));
-    TEST_ASSERT_EQUAL_STRING("{\"1\":{\"complete\":false,\"total_size\":12,\"ranges\":[[0,5]]}}", cJSON_PrintUnformatted(store->state));
-    
-    assetstore_state(store, "1", &exists, &complete, &missing_regions_count);
-    TEST_ASSERT_EQUAL_INT(1, exists);
-    TEST_ASSERT_EQUAL_INT(0, complete);
-    TEST_ASSERT_EQUAL_INT(1, missing_regions_count);
-    
-    size_t ranges[missing_regions_count*2];
-    TEST_ASSERT_EQUAL_INT(1, assetstore_get_missing_ranges(store, "1", ranges, missing_regions_count));
-    TEST_ASSERT_EQUAL_INT(6, ranges[0]);
-    TEST_ASSERT_EQUAL_INT(6, ranges[1]);
-    
-    size_t total_size;
-    char buff[100];
-    // reading the available bytes
-    TEST_ASSERT_GREATER_OR_EQUAL(5, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
-    TEST_ASSERT_EQUAL_CHAR_ARRAY("Hello\5\6\7", buff, 8); //567 is the default data from __test_disk, for verifying read and write position.
-    
-    // trying to read the unavailable bytes
-    assetstore_state(store, "1", &exists, &complete, &missing_regions_count);
-    TEST_ASSERT_EQUAL_INT(1, exists);
-    TEST_ASSERT_EQUAL_INT(0, complete);
-    TEST_ASSERT_EQUAL_INT(1, missing_regions_count);
-    
-    
-    assetstore_write(store, "1", 6, (uint8_t*)"Allo", 5, 12);
-    TEST_ASSERT_EQUAL_INT(6, assetstore_read(store, "1", 6, (uint8_t*)buff, 6, &total_size));
-    TEST_ASSERT_EQUAL_STRING("Allo", buff);
-    
-    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
-    TEST_ASSERT_EQUAL_STRING("Hello\5Allo", buff);
-    
-    assetstore_write(store, "1", 5, (uint8_t*)" ", 1, 12);
-    TEST_ASSERT_EQUAL_INT(12, assetstore_read(store, "1", 0, (uint8_t*)buff, 12, &total_size));
-    TEST_ASSERT_EQUAL_STRING("Hello Allo", buff);
-}
-
-void test_assetstore_range_reads(void) {
-    // Needs the _test_disk to contain sequential bytes
-    uint8_t buff[20];
-    size_t total_size;
-    
-    assetstore_read(store, "1", 0, buff, 5, &total_size);
-    uint8_t e1[5] = { 0, 1, 2, 3, 4 };
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(e1, buff, 5);
-    
-    assetstore_read(store, "1", 10, buff, 5, &total_size);
-    uint8_t e2[5] = { 10, 11, 12, 13, 14 };
-    TEST_ASSERT_EQUAL_CHAR_ARRAY(e2, buff, 5);
-    
-    assetstore_read(store, "1", 57, buff, 5, &total_size);
-    uint8_t e3[5] = { 57, 58, 59, 60, 61 };
-    TEST_ASSERT_EQUAL_CHAR_ARRAY(e3, buff, 5);
-}
-
-#define RANGES_END 0xffffffffffffffffUL
-/// end with RANGES_END
-cJSON *_ranges(size_t start, size_t end, ...) {
-    cJSON *ranges = cJSON_CreateArray();
-    int numbers[2] = {(int)start, (int)end};
-    cJSON_AddItemToArray(ranges, cJSON_CreateIntArray(numbers, 2));
-    va_list args;
-    va_start(args, end);
-    while(1) {
-        numbers[0] = va_arg(args, int);
-        if (numbers[0] == RANGES_END) break;
-        numbers[1] = va_arg(args, int);
-        cJSON_AddItemToArray(ranges, cJSON_CreateIntArray(numbers, 2));
+    if (requestedAssetId != NULL) {
+        free(requestedAssetId);
     }
-    va_end(args);
-    return ranges;
+}
+
+typedef struct {
+    bool didCallRequestMethod;
+    char *requestedAssetId;
+    size_t requestedOffset;
+    size_t requestedLength;
+    
+    char *respondWithText;
+    
+    bool didCallSendMethod;
+    asset_mid sentMessageType;
+    cJSON *sentJsonHeader;
+    uint8_t *sentData;
+    size_t sentDataLength;
+    
+    bool didCallWriteMethod;
+    char *writtenAssetId;
+    uint8_t *writtenData;
+    size_t writtenDataOffset;
+    size_t writtenDataLength;
+    size_t writtenDataTotalSize;
+    
+    bool didCallStateCallbac;
+    char *stateAssetId;
+    asset_state state;
+} test_context;
+
+void clean_test_context(test_context *context) {
+    if (context->requestedAssetId) {
+        free(context->requestedAssetId);
+        context->requestedAssetId = NULL;
+    }
+    
+    if (context->sentData) {
+        free(context->sentData);
+        context->sentData = NULL;
+    }
+    
+    if (context->sentJsonHeader) {
+        cJSON_Delete(context->sentJsonHeader);
+        context->sentJsonHeader = NULL;
+    }
+    
+    if (context->writtenAssetId) {
+        free(context->writtenAssetId);
+        context->writtenAssetId = NULL;
+    }
+    
+    if (context->writtenData) {
+        free(context->writtenData);
+        context->writtenData = NULL;
+    }
+    
+    if (context->stateAssetId) {
+        free(context->stateAssetId);
+        context->stateAssetId = NULL;
+    }
+}
+
+/// Provide assets a way to send data in the network
+/// @param mid The message id
+/// @param header The message header
+/// @param data The data to send
+/// @param data_length The length of `data`
+/// @param user The same pointer as sent to a method that also takes this function
+static void __asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
+    test_context *context = (test_context *)user;
+    printf("send was called\n");
+    context->didCallSendMethod = true;
+    context->sentData = malloc(data_length);
+    memcpy(context->sentData, data, data_length);
+    context->sentDataLength = data_length;
+    context->sentJsonHeader = cJSON_Duplicate(header, true);
+    context->sentMessageType = mid;
+}
+
+/// Request a chunk of data
+/// Return true if the requested chunk is available
+static bool __asset_request_func(const char *asset_id, size_t offset, size_t length, void *user) {
+    test_context *context = (test_context*)user;
+    
+    printf("request was called\n");
+    context->didCallRequestMethod = true;
+    context->requestedAssetId = strdup(asset_id);
+    context->requestedOffset = offset;
+    context->requestedLength = length;
+    
+    if (context->respondWithText) {
+        char *response = context->respondWithText;
+        asset_deliver_bytes(asset_id, (uint8_t*)response, offset, strlen(response), strlen(response), __asset_send_func, user);
+        return 1;
+    }
+    return 0;
+}
+
+/// Write a chunc of data
+static int __asset_write_func(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
+    test_context *context = (test_context *)user;
+    printf("write was called\n");
+    
+    context->didCallWriteMethod = true;
+    context->writtenData = malloc(length);
+    memcpy(context->writtenData, buffer, length);
+    context->writtenDataLength = length;
+    context->writtenDataOffset = offset;
+    context->writtenDataTotalSize = total_size;
+    context->writtenAssetId = strdup(asset_id);
+    return length;
+}
+
+/// A callback for when the state of an asset changes, for example when asset availability changes.
+static void __asset_state_func(const char *asset_id, asset_state state, void *user) {
+    printf("state was called\n");
+    
 }
 
 
-size_t __missing_ranges_count(cJSON *ranges, size_t total_size);
-void test_missing_ranges() {
-    TEST_ASSERT_EQUAL_INT(4, __missing_ranges_count(_ranges(5, 6,  10, 15,  100, 200, RANGES_END), 300));
+void test_receive_request_respond_with_some_data() {
+    //packet for an asset request is received
+    //packet structure is
+    // <message type:2><header_length:2><json_string:header_length><data:n>
+    
+    //asset request json structure:
+    // {
+    //     id: <asset identifier>,
+    //     range: [<first byte>, <number of bytes>]
+    // }
+    // no data
+    char *packet = "\0\1\0\x20{\"id\":\"abc123\", \"range\":[5, 20]}";
+    
+    test_context context = {0};
+    context.respondWithText = "Hello, this is the asset";
+    
+    asset_handle((uint8_t*)packet, sizeof(packet), __asset_request_func, __asset_write_func, __asset_send_func, __asset_state_func, (void*)&context);
+    
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("abc123", context.requestedAssetId, "Should call request callback with the asset id of the request");
+    TEST_ASSERT_EQUAL(context.requestedLength, 20);
+    TEST_ASSERT_EQUAL(context.requestedOffset, 5);
+    
+    TEST_ASSERT_TRUE_MESSAGE(context.didCallSendMethod, "Should send a reply")
+    TEST_ASSERT_EQUAL(context.sentMessageType, asset_mid_data);
+    TEST_ASSERT_EQUAL_STRING(cJSON_GetObjectItemCaseSensitive(context.sentJsonHeader, "id")->valuestring, "abc123");
+    TEST_ASSERT_EQUAL_STRING(context.sentData, context.respondWithText);
+    clean_test_context(&context);
 }
 
-void _merge_range(cJSON *ranges, size_t start, size_t end);
-void _test_merge(cJSON *ranges, size_t start, size_t end, cJSON *expected) {
-    _merge_range(ranges, start, end);
-    TEST_ASSERT_EQUAL_STRING(cJSON_PrintUnformatted(expected), cJSON_PrintUnformatted(ranges));
+void test_receive_all_data() {
+    //packet for an asset request is received
+    //packet structure is
+    // <message type:2><header_length:2><json_string:header_length><data:n>
+    
+    //asset response header json structure:
+    // {
+    //     id: <asset identifier>,
+    //     range: [<first byte>, <number of bytes>]
+    // }
+    // <data>
+    char *packet = "\0\2\0\x34{\"id\":\"abc123\", \"range\":[0, 28], \"total_length\": 28}Hello, this is the data bits";
+    
+    test_context context = {0};
+    
+    asset_handle((uint8_t*)packet, sizeof(packet), __asset_request_func, __asset_write_func, __asset_send_func, __asset_state_func, (void*)&context);
+    
+    TEST_ASSERT_FALSE(context.didCallRequestMethod);
+    TEST_ASSERT_FALSE(context.didCallSendMethod);
+    TEST_ASSERT_TRUE(context.didCallWriteMethod);
+    TEST_ASSERT_EQUAL_STRING(context.writtenData, "Hello, this is the data bits");
 }
 
-void test_merge_range() {
+void test_receive_partial_data() {
+    //packet for an asset request is received
+    //packet structure is
+    // <message type:2><header_length:2><json_string:header_length><data:n>
     
-    // ranges are inclusive
-    _test_merge(cJSON_CreateArray(), 0, 0, _ranges(0, 0, RANGES_END));
-    _test_merge(_ranges(5, 7, RANGES_END), 4, 4, _ranges(4, 7, RANGES_END));
-    _test_merge(_ranges(5, 7, RANGES_END), 5, 5, _ranges(5, 7, RANGES_END));
-    _test_merge(_ranges(5, 7, RANGES_END), 6, 6, _ranges(5, 7, RANGES_END));
-    _test_merge(_ranges(5, 7, RANGES_END), 7, 7, _ranges(5, 7, RANGES_END));
-    _test_merge(_ranges(5, 7, RANGES_END), 8, 8, _ranges(5, 8, RANGES_END));
-
-    // Insert before
-    _test_merge(_ranges(5, 7, RANGES_END), 1, 2, _ranges(1, 2, 5, 7, RANGES_END));
-    // Merge before
-    _test_merge(_ranges(5, 7, RANGES_END), 1, 6, _ranges(1, 7, RANGES_END));
-    // Merge inside
-    _test_merge(_ranges(5, 7, RANGES_END), 6, 6, _ranges(5, 7, RANGES_END));
-    // Merge around
-    _test_merge(_ranges(5, 7, RANGES_END), 1, 9, _ranges(1, 9, RANGES_END));
-    // Merge after
-    _test_merge(_ranges(5, 7, RANGES_END), 6, 8, _ranges(5, 8, RANGES_END));
-    // Insert after
-    _test_merge(_ranges(5, 7, RANGES_END), 9, 9, _ranges(5, 7, 9, 9, RANGES_END));
-    // Insert between
-    _test_merge(_ranges(1, 3, 5, 7, RANGES_END), 4, 4, _ranges(1, 7, RANGES_END));
-    // merge before between
-    _test_merge(_ranges(1, 3, 5, 7, RANGES_END), 3, 4, _ranges(1, 7, RANGES_END));
+    //asset response header json structure:
+    // {
+    //     id: <asset identifier>,
+    //     range: [<first byte>, <number of bytes>]
+    // }
+    // <data>
+    char *packet = "\0\2\0\x34{\"id\":\"abc123\", \"range\":[0, 10], \"total_length\": 28}Hello, this is the data bits";
     
-    _test_merge(_ranges(1, 3, 5, 7, RANGES_END), 4, 5, _ranges(1, 7, RANGES_END));
-    _test_merge(cJSON_CreateArray(), 1, 2, _ranges(1, 2, RANGES_END));
-    _test_merge(_ranges(1, 2, 100, 200, RANGES_END), 40, 60, _ranges(1, 2, 40, 60, 100, 200, RANGES_END));
-    _test_merge(_ranges(1, 2, RANGES_END), 2, 3, _ranges(1, 3, RANGES_END));
-    _test_merge(_ranges(1, 3, RANGES_END), 6, 9, _ranges(1, 3, 6, 9, RANGES_END));
-    _test_merge(_ranges(1, 3, 6, 9, RANGES_END), 2, 7, _ranges(1, 9, RANGES_END));
-    _test_merge(_ranges(5, 8, RANGES_END), 1, 3, _ranges(1, 3, 5, 8, RANGES_END));
-    _test_merge(_ranges(5, 8, RANGES_END), 10, 30, _ranges(5, 8, 10, 30, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 9, 11, _ranges(1, 2, 5, 15, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 9, 10, _ranges(1, 2, 5, 10, 12, 15, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 6, 8, 12, 15, 20, 21, RANGES_END), 4, 4, _ranges(1, 2, 4, 4, 6, 8, 12, 15, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 4, _ranges(1, 2, 4, 8, 12, 15, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 18, _ranges(1, 2, 4, 18, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 10, 11, _ranges(1, 2, 5, 8, 10, 15, 20, 21, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 9, 30, _ranges(1, 2, 5, 30, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 1, 9999, _ranges(1, 9999, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 22, _ranges(1, 2, 4, 22, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, RANGES_END), 4, 20, _ranges(1, 2, 4, 21, RANGES_END));
+    test_context context = {0};
     
+    asset_handle((uint8_t*)packet, sizeof(packet), __asset_request_func, __asset_write_func, __asset_send_func, __asset_state_func, (void*)&context);
     
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 5, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 6, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 7, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 8, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 9, 9999, _ranges(1, 2, 5, 9999, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 10, 9999, _ranges(1, 2, 5, 8, 10, 9999, RANGES_END));
+    TEST_ASSERT_TRUE(context.didCallWriteMethod);
+    TEST_ASSERT_EQUAL(context.writtenDataLength, 10);
+    TEST_ASSERT_EQUAL(context.writtenDataOffset, 0);
+    TEST_ASSERT_EQUAL(context.writtenDataTotalSize, 28);
+    TEST_ASSERT_EQUAL_STRING_LEN("Hello, thi", context.writtenData, context.writtenDataLength);
     
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 18, _ranges(1, 18, 20, 21, 40, 45, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 19, _ranges(1, 21, 40, 45, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 20, _ranges(1, 21, 40, 45, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 21, _ranges(1, 21, 40, 45, RANGES_END));
-    _test_merge(_ranges(1, 2, 5, 8, 12, 15, 20, 21, 40, 45, RANGES_END), 1, 22, _ranges(1, 22, 40, 45, RANGES_END));
+    TEST_ASSERT_FALSE(context.didCallRequestMethod);
     
-    // is there an edge when it starts with 0?
-    _test_merge(_ranges(0, 92258, RANGES_END), 0, 92258, _ranges(0, 92258, RANGES_END));
+    TEST_ASSERT_TRUE_MESSAGE(context.didCallSendMethod, "Request for next range is sent");
+    cJSON *range = cJSON_GetObjectItemCaseSensitive(context.sentJsonHeader, "range");
+    TEST_ASSERT_EQUAL(context.writtenDataLength, cJSON_GetArrayItem(range, 0)->valueint);
+    TEST_ASSERT_EQUAL(context.writtenDataTotalSize - context.writtenDataLength, cJSON_GetArrayItem(range, 1)->valueint);
 }
 
-
-void test_asset_path() {
-    char *path;
-    char *expected_path;
+void test_request_error() {
+    //packet for an asset request is received
+    //packet structure is
+    // <message type:2><header_length:2><json_string:header_length><data:n>
     
-    cJSON *cached = cJSON_AddObjectToObject(store->state, "cached");
-    cJSON_AddBoolToObject(cached, "complete", 1);
+    //asset error response header json structure:
+    // {
+    //     id: <asset identifier>,
+    //     error_reason: <user readable string>,
+    //     error_code: <error code number>
+    // }
+    // <no data>
+    char *packet = "\0\2\0\x48{\"id\":\"abc123\", \"error_reason\":\"Something went wrong\", \"error_code\": 28}";
     
-    cJSON *imported = cJSON_AddObjectToObject(store->state, "imported");
-    cJSON_AddBoolToObject(imported, "complete", 1);
-    cJSON_AddStringToObject(imported, "path", "imported_path/file");
+    test_context context = {0};
     
-    cJSON *incomplete = cJSON_AddObjectToObject(store->state, "incomplete");
+    asset_handle((uint8_t*)packet, sizeof(packet), __asset_request_func, __asset_write_func, __asset_send_func, __asset_state_func, (void*)&context);
     
-    path = assetstore_asset_path(store, "nothing");
-    TEST_ASSERT_NULL(path);
-    free(path);
-    
-    path = assetstore_asset_path(store, "incomplete");
-    TEST_ASSERT_NULL(path);
-    free(path);
-    
-    expected_path = really_realpath("asset_test_cache/cached");
-    path = assetstore_asset_path(store, "cached");
-    TEST_ASSERT_EQUAL_STRING(expected_path, path);
-    free(path);
-    free(expected_path);
-    
-    path = assetstore_asset_path(store, "imported");
-    TEST_ASSERT_EQUAL_STRING("imported_path/file", path);
-    free(path);
-}
-
-void test_open_same_path_yields_same_store() {
-    assetstore *a1 = assetstore_open("a");
-    assetstore *a2 = assetstore_open("a");
-    assetstore *b = assetstore_open("b");
-    
-    TEST_ASSERT(a1 == a1);
-    TEST_ASSERT(a2 != b);
-    TEST_ASSERT_EQUAL_INT(2, a1->refcount);
-    TEST_ASSERT_EQUAL_INT(1, b->refcount);
-    
-    assetstore_close(a2);
-    
-    TEST_ASSERT_EQUAL_INT(1, a1->refcount);
-    TEST_ASSERT_EQUAL_INT(1, b->refcount);
+    TEST_ASSERT_FALSE(context.didCallWriteMethod);
+    TEST_ASSERT_FALSE(context.didCallRequestMethod);
+    TEST_ASSERT_TRUE(context.didCallStateCallbac);
+    TEST_ASSERT_EQUAL(asset_state_now_unavailable, context.state);
 }
 
 int main(void) {
-    assetstore_init();
     UNITY_BEGIN();
 
-    RUN_TEST(test_assetstore_basic_disk_io);
-    RUN_TEST(test_assetstore_range_reads);
-    RUN_TEST(test_assetstore_read_write);
-    RUN_TEST(test_merge_range);
-    RUN_TEST(test_assetstore_partial_read_write);
-    RUN_TEST(test_missing_ranges);
-    RUN_TEST(test_asset_path);
-    RUN_TEST(test_open_same_path_yields_same_store);
-    
-    assetstore_deinit();
+//    RUN_TEST(test_receive_request_respond_with_some_data);
+//    RUN_TEST(test_receive_all_data);
+//    RUN_TEST(test_receive_partial_data);
+    RUN_TEST(test_request_error);
     return UNITY_END();
 }

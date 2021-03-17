@@ -39,7 +39,6 @@ typedef enum {
     asset_state_not_supported,
 } asset_state;
 
-
 /// Provide assets a way to send data in the network
 /// @param mid The message id
 /// @param header The message header
@@ -48,8 +47,9 @@ typedef enum {
 /// @param user The same pointer as sent to a method that also takes this function
 typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
 
-/// Request a chunk of data
+/// A chunk of data was requested. Deliver the data immediately or later using the `asset_deliver_bytes` method
 typedef bool (*asset_request_func)(const char *asset_id, size_t offset, size_t length, void *user);
+
 /// Write a chunc of data
 typedef int (*asset_write_func)(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user);
 
@@ -128,8 +128,6 @@ struct _ENetPacket *asset_build_enet_packet(uint16_t mid, const cJSON *header, c
 typedef enum asset_error_code {
     asset_not_available_error = 1,
     asset_malformed_request_error = 2,
-    asset_file_read_error = 3,
-    asset_file_write_error = 3,
 } asset_error_code;
 
 /// Safe parsing of the request message header

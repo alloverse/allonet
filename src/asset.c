@@ -212,7 +212,7 @@ void asset_handle(
             // request more?
             // TODO: check missing ranges instead
             if (offset + length < total_length) {
-                _asset_request(asset_id, NULL, offset + length, length, send, user);
+                _asset_request(asset_id, NULL, offset + length, total_length - offset - length, send, user);
             } else {
                 callback(asset_id, asset_state_now_available, user);
             }

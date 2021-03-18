@@ -8,7 +8,7 @@ namespace Allonet
     [StructLayout(LayoutKind.Sequential)]
     struct _AlloClient
     {
-        const string _dllLocation = "/usr/local/lib/liballonet.so";
+        const string _dllLocation = "/home/nevyn/Dev/allonet/build/liballonet.so";
         [DllImport(_dllLocation)]
         public unsafe static extern bool allo_initialize(bool redirect_stdout);
 

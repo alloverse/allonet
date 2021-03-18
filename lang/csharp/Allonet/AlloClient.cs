@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Allonet
 {
@@ -19,7 +21,7 @@ namespace Allonet
         public EntityAdded onAdded = null;
         public delegate void EntityRemoved(AlloEntity entity);
         public EntityRemoved onRemoved = null;
-        public delegate void Interaction(string type, AlloEntity from, AlloEntity to, LitJson.JsonData command);
+        public delegate void Interaction(string type, AlloEntity from, AlloEntity to, List<object> command);
         public Interaction onInteraction = null;
         public delegate void Disconnected();
         public Disconnected onDisconnected = null;
@@ -77,13 +79,13 @@ namespace Allonet
             }
         }
 
-        public void Connect(string url, AlloIdentity identity, LitJson.JsonData avatarDesc)
+        public void Connect(string url, AlloIdentity identity, AlloEntity avatarDesc)
         {
             unsafe
             {
                 IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);
-                IntPtr identPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(identity));
-                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(LitJson.JsonMapper.ToJson(avatarDesc));
+                IntPtr identPtr = Marshal.StringToHGlobalAnsi(JsonConvert.SerializeObject(identity));
+                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(JsonConvert.SerializeObject(avatarDesc));
 
                 bool ok = _AlloClient.alloclient_connect(client, urlPtr, identPtr, avatarPtr);
                 Marshal.FreeHGlobal(urlPtr);
@@ -162,7 +164,7 @@ namespace Allonet
                     incomingEntityIds.Add(entityId);
                     IntPtr componentsJsonPtr = _AlloClient.cJSON_Print(entry->components);
                     string componentsJson = Marshal.PtrToStringUTF8(componentsJsonPtr);
-                    entity.components = LitJson.JsonMapper.ToObject(componentsJson);
+                    entity.components = JsonConvert.DeserializeObject<AlloComponents>(componentsJson, new EntityConverter());
                     _AlloClient.allo_free(componentsJsonPtr);
                     entry = entry->le_next;
                 }
@@ -222,7 +224,7 @@ namespace Allonet
             AlloClient self = backref.Target as AlloClient;
 
             Debug.WriteLine("Incoming " + type + " interaction alloclient: " + from + " > " + to + ": " + cmd + ";");
-            LitJson.JsonData data = LitJson.JsonMapper.ToObject(cmd);
+            List<object> data = JsonConvert.DeserializeObject<List<object>>(cmd);
             
             AlloEntity fromEntity = null;
             if (!string.IsNullOrEmpty(from))
@@ -272,5 +274,43 @@ namespace Allonet
             }
         }
 
+    }
+
+    public class EntityConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Component.Geometry);
+        }
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+
+            if(objectType == typeof(Component.Geometry))
+            {
+                JObject jobject = JObject.Load(reader);
+                string geometryType = jobject["type"].ToString();
+                if(geometryType == "inline")
+                {
+                    return JsonConvert.DeserializeObject<Component.InlineGeometry>(jobject.ToString());
+                }
+                else if(geometryType== "asset")
+                {
+                    return JsonConvert.DeserializeObject<Component.AssetGeometry>(jobject.ToString());
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                Debug.Assert(false);
+                return null;
+            }
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
     }
 }

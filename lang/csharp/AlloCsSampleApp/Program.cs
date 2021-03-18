@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Collections;
+using System.Collections.Generic;
 using Allonet;
+using Allonet.Component;
 
 
 class Program
@@ -25,10 +28,11 @@ class Program
         AlloIdentity ident = new AlloIdentity();
         ident.display_name = "test";
 
-        LitJson.JsonData avatarDesc = new LitJson.JsonData();
-        avatarDesc["geometry"] = new LitJson.JsonData();
-        avatarDesc["geometry"]["type"] = new LitJson.JsonData("asset");
-        avatarDesc["geometry"]["name"] = new LitJson.JsonData("asset:sha256:220969d522c1a88edccdeb5330980e27cfb095a5a62c8f1e870cfa42be13cd7b");
+        AlloEntity ava = new AlloEntity();
+        ava.components.geometry = new AssetGeometry("asset:sha256:220969d522c1a88edccdeb5330980e27cfb095a5a62c8f1e870cfa42be13cd7b");
+        ava.components.material = new Material();
+        ava.components.material.shader_name = "pbr";
+        
         cubeAsset = new FileStream("cube.glb", FileMode.Open, FileAccess.Read, FileShare.Read);
 
         client = new AlloClient();
@@ -38,7 +42,7 @@ class Program
         client.onDisconnected = OnDisconnected;
         client.onAssetBytesRequested = OnAssetBytesRequested;
 
-        client.Connect(url, ident, avatarDesc);
+        client.Connect(url, ident, ava);
 
         while(running)
         {
@@ -57,7 +61,7 @@ class Program
         Debug.WriteLine("Lost entity: " + entity.id);
     }
 
-    void Interaction(string type, AlloEntity from, AlloEntity to, LitJson.JsonData cmd)
+    void Interaction(string type, AlloEntity from, AlloEntity to, List<object> cmd)
     {
         if(cmd.Count >= 3 && cmd[0].ToString() == "announce") {
             myAvatarEntityId = cmd[1].ToString();

@@ -13,6 +13,12 @@ namespace Allonet
         public string display_name { get; set; }
     }
 
+    public class EntitySpecification
+    {
+        public AlloComponents components = new AlloComponents();
+        public List<EntitySpecification> children = new List<EntitySpecification>();
+    }
+
     public class AlloClient
     {
         private unsafe _AlloClient* client;
@@ -23,10 +29,16 @@ namespace Allonet
         public EntityRemoved onRemoved = null;
         public delegate void Interaction(string type, AlloEntity from, AlloEntity to, List<object> command);
         public Interaction onInteraction = null;
+        public delegate void Connected();
+        public Connected onConnected = null;
         public delegate void Disconnected();
         public Disconnected onDisconnected = null;
         public delegate void AssetBytesRequested(string _assetId, long offset, long length);
         public AssetBytesRequested onAssetBytesRequested = null;
+
+        public bool connected {get; private set;}
+        public string avatarId {get; private set;}
+        public string placeName {get; private set;}
 
         public delegate void ResponseCallback(string body);
         private Dictionary<string, ResponseCallback> responseCallbacks = new Dictionary<string, ResponseCallback>();
@@ -79,7 +91,7 @@ namespace Allonet
             }
         }
 
-        public void Connect(string url, AlloIdentity identity, AlloEntity avatarDesc)
+        public void Connect(string url, AlloIdentity identity, EntitySpecification avatarDesc)
         {
             unsafe
             {
@@ -136,8 +148,9 @@ namespace Allonet
             _Interact("request", senderEntityId, receiverEntityId, requestId, body);
         }
 
-        public void Poll(int timeoutMs)
+        public void Poll(double timeout)
         {
+            int timeoutMs = (int)timeout*1000;
             HashSet<string> newEntityIds = new HashSet<string>();
             HashSet<string> lostEntityIds = new HashSet<string>();
             unsafe
@@ -202,6 +215,14 @@ namespace Allonet
             }
         }
 
+        public void SpawnEntity(EntitySpecification spec)
+        {
+            Debug.Assert(this.avatarId != null);
+            List<object> bodyO = new List<object>{"spawn_entity", spec};
+            string body = JsonConvert.SerializeObject(bodyO);
+            this.InteractRequest(this.avatarId, "place", body, null);
+        }
+
         static unsafe private void _disconnected(_AlloClient* _client)
         {
             GCHandle backref = (GCHandle)_client->_backref;
@@ -225,6 +246,14 @@ namespace Allonet
 
             Debug.WriteLine("Incoming " + type + " interaction alloclient: " + from + " > " + to + ": " + cmd + ";");
             List<object> data = JsonConvert.DeserializeObject<List<object>>(cmd);
+
+            if(from == "place" && data[0].ToString() == "announce")
+            {
+                self.avatarId = data[1].ToString();
+                self.placeName = data[2].ToString();
+                self.connected = true;
+                self.onConnected?.Invoke();
+            }
             
             AlloEntity fromEntity = null;
             if (!string.IsNullOrEmpty(from))

@@ -28,7 +28,7 @@ class Program
         AlloIdentity ident = new AlloIdentity();
         ident.display_name = "test";
 
-        AlloEntity ava = new AlloEntity();
+        EntitySpecification ava = new EntitySpecification();
         ava.components.geometry = new AssetGeometry("asset:sha256:220969d522c1a88edccdeb5330980e27cfb095a5a62c8f1e870cfa42be13cd7b");
         ava.components.material = new Material();
         ava.components.material.shader_name = "pbr";

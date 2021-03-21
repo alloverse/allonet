@@ -17,6 +17,7 @@ namespace Allonet
         public Component.Transform transform = new Component.Transform();
         public Component.Geometry geometry;
         public Component.Material material;
+        public Component.UI ui;
     }
 
     namespace Component 
@@ -54,6 +55,11 @@ namespace Allonet
         {
             public Vector<double> color; // vec4 rgba
             public string shader_name;
+        }
+
+        public class UI
+        {
+            public string view_id;
         }
     }
 }

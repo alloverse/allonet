@@ -21,7 +21,7 @@ namespace Allonet
             this.appName = appName;
             client.onInteraction = this.routeInteraction;
             client.onDisconnected = this.clientWasDisconnected;
-            //client.onComponentAdded = this.checkForAddedViewEntity; // TODO
+            client.onAdded = this.checkForAddedViewEntity;
         }
 
         public void Connect(string url)
@@ -68,7 +68,7 @@ namespace Allonet
         {
             foreach(View view in rootViews)
             {
-                View found = null; // TODO view.FindView(viewId);
+                View found = view.FindView(viewId);
                 if(found != null)
                 {
                     return found;
@@ -77,9 +77,19 @@ namespace Allonet
             return null;
         }
 
-        void routeInteraction(string type, AlloEntity from, AlloEntity to, List<object> command)
+        void routeInteraction(string type, AlloEntity sender, AlloEntity receiver, List<object> body)
         {
-            // TODO
+            if(receiver == null) return;
+            string vid = receiver.components.ui.view_id;
+            View view = this.FindView(vid);
+            if(view != null)
+            {
+                view.OnInteraction(type, body, sender);
+            } 
+            else
+            {
+                Debug.WriteLine($"Warning: Got interaction {body[0].ToString()} for nonexistent vid {vid} receiver {receiver.id} sender {sender.id}");
+            }
         }
 
         void clientWasDisconnected()
@@ -87,10 +97,16 @@ namespace Allonet
             this.running = false;
         }
 
-        void checkForAddedViewEntity(string componentName, object component)
+        void checkForAddedViewEntity(AlloEntity entity)
         {
-            if(componentName != "ui") return;
-            // TODO
+            if(entity.components.ui == null) return;
+
+            View matchingView = FindView(entity.components.ui.view_id);
+            if(matchingView != null)
+            {
+                matchingView.entity = entity;
+                matchingView.Awake();
+            }
         }
     }
 }

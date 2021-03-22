@@ -31,6 +31,8 @@ class SampleApp
 
     View MakeMainUI()
     {
-        return new View();
+        View root = new View();
+        root.IsGrabbable = true;
+        return root;
     }
 }

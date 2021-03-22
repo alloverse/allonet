@@ -105,7 +105,7 @@ namespace Allonet
             View matchingView = FindView(entity.components.ui.view_id);
             if(matchingView != null)
             {
-                matchingView.entity = entity;
+                matchingView.Entity = entity;
                 matchingView.Awake();
             }
         }

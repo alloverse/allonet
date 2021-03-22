@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Allonet
 {
@@ -96,8 +97,8 @@ namespace Allonet
             unsafe
             {
                 IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);
-                IntPtr identPtr = Marshal.StringToHGlobalAnsi(JsonConvert.SerializeObject(identity));
-                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(JsonConvert.SerializeObject(avatarDesc));
+                IntPtr identPtr = Marshal.StringToHGlobalAnsi(Serialize(identity));
+                IntPtr avatarPtr = Marshal.StringToHGlobalAnsi(Serialize(avatarDesc));
 
                 bool ok = _AlloClient.alloclient_connect(client, urlPtr, identPtr, avatarPtr);
                 Marshal.FreeHGlobal(urlPtr);
@@ -141,10 +142,11 @@ namespace Allonet
         {
             _Interact("oneway", senderEntityId, receiverEntityId, "", body);
         }
-        public void InteractRequest(string senderEntityId, string receiverEntityId, string body, ResponseCallback callback)
+        public void InteractRequest(string senderEntityId, string receiverEntityId, List<object> bodyO, ResponseCallback callback)
         {
             string requestId = System.Guid.NewGuid().ToString();
             responseCallbacks[requestId] = callback;
+            string body = Serialize(bodyO);
             _Interact("request", senderEntityId, receiverEntityId, requestId, body);
         }
 
@@ -177,7 +179,7 @@ namespace Allonet
                     incomingEntityIds.Add(entityId);
                     IntPtr componentsJsonPtr = _AlloClient.cJSON_Print(entry->components);
                     string componentsJson = Marshal.PtrToStringUTF8(componentsJsonPtr);
-                    entity.components = JsonConvert.DeserializeObject<AlloComponents>(componentsJson, new EntityConverter());
+                    entity.components = Deserialize<AlloComponents>(componentsJson);
                     _AlloClient.allo_free(componentsJsonPtr);
                     entry = entry->le_next;
                 }
@@ -218,9 +220,7 @@ namespace Allonet
         public void SpawnEntity(EntitySpecification spec)
         {
             Debug.Assert(this.avatarId != null);
-            List<object> bodyO = new List<object>{"spawn_entity", spec};
-            string body = JsonConvert.SerializeObject(bodyO);
-            this.InteractRequest(this.avatarId, "place", body, null);
+            this.InteractRequest(this.avatarId, "place", new List<object>{"spawn_entity", spec}, null);
         }
 
         static unsafe private void _disconnected(_AlloClient* _client)
@@ -245,7 +245,7 @@ namespace Allonet
             AlloClient self = backref.Target as AlloClient;
 
             Debug.WriteLine("Incoming " + type + " interaction alloclient: " + from + " > " + to + ": " + cmd + ";");
-            List<object> data = JsonConvert.DeserializeObject<List<object>>(cmd);
+            List<object> data = Deserialize<List<object>>(cmd);
 
             if(from == "place" && data[0].ToString() == "announce")
             {
@@ -303,9 +303,19 @@ namespace Allonet
             }
         }
 
+        static internal JsonConverter[] converters = new JsonConverter[]{new ComponentsConverter(), new MathConverter()};
+        static internal string Serialize(Object thing)
+        {
+            return JsonConvert.SerializeObject(thing, converters);
+        }
+
+        static internal T Deserialize<T>(string value)
+        {
+            return JsonConvert.DeserializeObject<T>(value, converters);
+        }
     }
 
-    public class EntityConverter : JsonConverter
+    public class ComponentsConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
         {
@@ -320,11 +330,11 @@ namespace Allonet
                 string geometryType = jobject["type"].ToString();
                 if(geometryType == "inline")
                 {
-                    return JsonConvert.DeserializeObject<Component.InlineGeometry>(jobject.ToString());
+                    return AlloClient.Deserialize<Component.InlineGeometry>(jobject.ToString());
                 }
                 else if(geometryType== "asset")
                 {
-                    return JsonConvert.DeserializeObject<Component.AssetGeometry>(jobject.ToString());
+                    return AlloClient.Deserialize<Component.AssetGeometry>(jobject.ToString());
                 }
                 else
                 {
@@ -339,7 +349,45 @@ namespace Allonet
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            writer.WriteValue(value.ToString());
+            JToken t = JToken.FromObject(value);
+            t.WriteTo(writer);
+        }
+    }
+
+    public class MathConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(DenseMatrix);
+        }
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if(objectType == typeof(DenseMatrix))
+            {
+                Double[] numbers = new Double[16];
+                for(int i = 0; i < 16; i++)
+                {
+                    numbers[i] = reader.ReadAsDouble() ?? 0.0;
+                }
+                reader.Read();
+                return DenseMatrix.OfColumnMajor(4, 4, numbers);
+            }
+            else
+            {
+                Debug.Assert(false);
+                return null;
+            }
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            DenseMatrix mat = (DenseMatrix)value;
+
+            writer.WriteToken(JsonToken.StartArray);
+            for(int i = 0; i < 16; i++)
+            {
+                writer.WriteValue(mat.Values[i]);
+            }
+            writer.WriteToken(JsonToken.EndArray);
         }
     }
 }

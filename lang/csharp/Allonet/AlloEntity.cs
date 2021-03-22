@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Allonet
 {
@@ -18,13 +18,16 @@ namespace Allonet
         public Component.Geometry geometry;
         public Component.Material material;
         public Component.UI ui;
+        public Component.Collider collider;
+        public Component.Relationships relationships;
+        public Component.Grabbable grabbable;
     }
 
     namespace Component 
     {
         public class Transform
         {
-            public List<double> matrix;
+            public DenseMatrix matrix = DenseMatrix.CreateIdentity(4);
         }
 
         abstract public class Geometry
@@ -51,15 +54,54 @@ namespace Allonet
             public List<List<int>> triangles; // vec3 of indices
         }
 
+        abstract public class Collider
+        {
+            abstract public string type {get;}
+        }
+        public class BoxCollider : Collider
+        {
+            override public string type { get { return "box"; } }
+            public double width = 1, height = 1, depth = 1;
+
+            public BoxCollider(double width, double height, double depth)
+            {
+                this.width = width;
+                this.height = height;
+                this.depth = depth;
+            }
+        }
+
         public class Material
         {
-            public Vector<double> color; // vec4 rgba
+            public List<double> color; // vec4 rgba
             public string shader_name;
         }
 
         public class UI
         {
             public string view_id;
+
+            public UI(string id)
+            {
+                this.view_id = id;
+            }
+        }
+
+        public class Relationships
+        {
+            public string parent;
+
+            public Relationships(string parentId)
+            {
+                this.parent = parentId;
+            }
+        }
+
+        public class Grabbable
+        {
+            public string actuate_on;
+            public List<int> translation_constraint;
+            public List<int> rotation_constraint;
         }
     }
 }

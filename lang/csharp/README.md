@@ -8,7 +8,7 @@ You might have to change `Allonet/_Interfaces.cs`'s `   Allonet._AlloClient._dll
 
 To run the sample app, do:
 ```
-    env COMPlus_DebugWriteToStdErr=1 dotnet run -c Debug --project AlloCsSampleApp/AlloCsSampleApp.csproj alloplace://nevyn.places.alloverse.com
+    env COMPlus_DebugWriteToStdErr=1 dotnet run -c Debug --project AppSample/AppSample.csproj alloplace://nevyn.places.alloverse.com
 ```
 
 Good luck!

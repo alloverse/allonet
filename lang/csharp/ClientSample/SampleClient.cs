@@ -7,12 +7,12 @@ using Allonet;
 using Allonet.Component;
 
 
-class Program
+class SampleClient
 {
     AlloClient client;
     static void Main(string[] args)
     {
-         Program program = new Program();
+         SampleClient program = new SampleClient();
          program.RunApp(args[0]);
     }
 
@@ -24,7 +24,6 @@ class Program
     {
         Debug.AutoFlush = true;
         Debug.WriteLine("Hello world");
-        Program prog = new Program();
         AlloIdentity ident = new AlloIdentity();
         ident.display_name = "test";
 

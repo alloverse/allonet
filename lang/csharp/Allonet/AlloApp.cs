@@ -12,7 +12,7 @@ namespace Allonet
         public View mainView = new View();
         public List<View> rootViews {get; private set; } = new List<View>();
         
-        public bool running {get; private set;}
+        public bool running {get; private set;} = true;
         public string appName {get; private set;}
         
         public App(AlloClient client, string appName)
@@ -34,6 +34,7 @@ namespace Allonet
             EntitySpecification mainViewSpec = this.mainView.Specification();
 
             this.client.Connect(url, identity, mainViewSpec);
+            Debug.WriteLine("Connected");
 
             foreach(View view in this.rootViews)
             {

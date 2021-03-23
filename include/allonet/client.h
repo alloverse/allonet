@@ -76,6 +76,16 @@ typedef struct alloclient {
 
     /*! 
      * Please provide the asset bytes between offset and offset+length using the `alloclient_asset_send` method.
+     * You an respond by calling `alloclient_asset_send` either directly or at a later time. If you do not have any data for the requested asset then call `alloclient_asset_send` with NULL data and 0 length.
+     * @example
+     * void _asset_needs_data(alloclient *client, const char *asset_id, size_t offset, size_t length) {
+     *  if (app_has_asset(asset_id)) {
+     *   // get a pointer to the asset bytes
+     *   alloclient_asset_send(client, asset_id, pointer + offset, offset, length, asset_size);
+     *  } else {
+     *   alloclient_asset_send(client, asset_id, NULL, offset, 0, 0);
+     *  }
+     * }
      * @note You may return less bytes than requested but you must respond with the requested `offset`
      * @param client The client object
      * @param asset_id An asset identifier
@@ -90,7 +100,9 @@ typedef struct alloclient {
     );
 
     /*!
-     * You have received data for an asset; write it to your cache or whatever.
+     * You have received data for an asset; write it to your cache.
+     * You may request the next chunk of data as a response to this callback.
+     * @note If there is an error in response to a request then this method will not be called.
      * @param client The client object
      * @param asset_id The asset identifier
      * @param buffer Bytes

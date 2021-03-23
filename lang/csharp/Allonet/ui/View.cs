@@ -9,6 +9,7 @@ namespace Allonet
     public class View
     {
         public string ViewId {get; private set;} = Guid.NewGuid().ToString("N");
+        public Bounds Bounds = new Bounds(0, 0, 0, 1, 1, 1);
         public List<View> Subviews = new List<View>();
         public View Superview {get; private set;} = null;
         private App _app;
@@ -19,14 +20,18 @@ namespace Allonet
         public EntitySpecification Specification()
         {
             EntitySpecification spec = new EntitySpecification();
+
             spec.components.ui = new Component.UI(ViewId);
+
+            spec.components.transform.matrix = Bounds.Pose;
+
             if(Superview != null && Superview.IsAwake)
             {
                 spec.components.relationships = new Component.Relationships(Superview.Entity.id);
             }
             if(IsGrabbable)
             {
-                spec.components.collider = new Component.BoxCollider(1, 1, 1);
+                spec.components.collider = new Component.BoxCollider(Bounds.Size.Width, Bounds.Size.Height, Bounds.Size.Depth);
                 spec.components.grabbable = new Component.Grabbable();
             }
             return spec;

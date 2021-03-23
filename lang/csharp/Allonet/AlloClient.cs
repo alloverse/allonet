@@ -6,6 +6,7 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MathNet.Numerics.LinearAlgebra.Double;
+using MathNet.Spatial.Euclidean;
 
 namespace Allonet
 {
@@ -94,6 +95,7 @@ namespace Allonet
 
         public void Connect(string url, AlloIdentity identity, EntitySpecification avatarDesc)
         {
+            Debug.WriteLine($"Spawning with ava {Serialize(avatarDesc)}");
             unsafe
             {
                 IntPtr urlPtr = Marshal.StringToHGlobalAnsi(url);
@@ -303,10 +305,18 @@ namespace Allonet
             }
         }
 
-        static internal JsonConverter[] converters = new JsonConverter[]{new ComponentsConverter(), new MathConverter()};
+        static internal JsonConverter[] converters = new JsonConverter[]{new GeometryConverter(), new ColliderConverter(), new MathConverter()};
+        static internal JsonSerializerSettings serializerSettings = new JsonSerializerSettings { 
+            NullValueHandling = NullValueHandling.Ignore,
+            Converters = converters
+        };
         static internal string Serialize(Object thing)
         {
-            return JsonConvert.SerializeObject(thing, converters);
+            return JsonConvert.SerializeObject(
+                thing, 
+                Newtonsoft.Json.Formatting.None, 
+                serializerSettings
+            );
         }
 
         static internal T Deserialize<T>(string value)
@@ -315,37 +325,56 @@ namespace Allonet
         }
     }
 
-    public class ComponentsConverter : JsonConverter
+    public class GeometryConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Component.Geometry);
         }
+
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
+            JObject jobject = JObject.Load(reader);
+            string geometryType = jobject["type"].ToString();
+            if(geometryType == "inline")
+            {
+                return AlloClient.Deserialize<Component.InlineGeometry>(jobject.ToString());
+            }
+            else if(geometryType == "asset")
+            {
+                return AlloClient.Deserialize<Component.AssetGeometry>(jobject.ToString());
+            }
+            else if(geometryType == "hardcoded-model")
+            {
+                return AlloClient.Deserialize<Component.HardcodedGeometry>(jobject.ToString());
+            }
+            Debug.Assert(false);
+            return null;
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            JToken t = JToken.FromObject(value);
+            t.WriteTo(writer);
+        }
+    }
 
-            if(objectType == typeof(Component.Geometry))
+    public class ColliderConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Component.Collider);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            JObject jobject = JObject.Load(reader);
+            string type = jobject["type"].ToString();
+            if(type == "box")
             {
-                JObject jobject = JObject.Load(reader);
-                string geometryType = jobject["type"].ToString();
-                if(geometryType == "inline")
-                {
-                    return AlloClient.Deserialize<Component.InlineGeometry>(jobject.ToString());
-                }
-                else if(geometryType== "asset")
-                {
-                    return AlloClient.Deserialize<Component.AssetGeometry>(jobject.ToString());
-                }
-                else
-                {
-                    return null;
-                }
+                return AlloClient.Deserialize<Component.BoxCollider>(jobject.ToString());
             }
-            else
-            {
-                Debug.Assert(false);
-                return null;
-            }
+            Debug.Assert(false);
+            return null;
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
@@ -358,25 +387,17 @@ namespace Allonet
     {
         public override bool CanConvert(Type objectType)
         {
-            return objectType == typeof(DenseMatrix);
+            return objectType == typeof(DenseMatrix) || objectType == typeof(CoordinateSystem);
         }
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            if(objectType == typeof(DenseMatrix))
+            Double[] numbers = new Double[16];
+            for(int i = 0; i < 16; i++)
             {
-                Double[] numbers = new Double[16];
-                for(int i = 0; i < 16; i++)
-                {
-                    numbers[i] = reader.ReadAsDouble() ?? 0.0;
-                }
-                reader.Read();
-                return DenseMatrix.OfColumnMajor(4, 4, numbers);
+                numbers[i] = reader.ReadAsDouble() ?? 0.0;
             }
-            else
-            {
-                Debug.Assert(false);
-                return null;
-            }
+            reader.Read();
+            return new CoordinateSystem(DenseMatrix.OfColumnMajor(4, 4, numbers));
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

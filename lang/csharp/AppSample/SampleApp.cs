@@ -32,6 +32,7 @@ class SampleApp
     View MakeMainUI()
     {
         View root = new View();
+        root.Bounds.Move(0, 0, 1.5);
         root.IsGrabbable = true;
         return root;
     }

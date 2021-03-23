@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MathNet.Numerics.LinearAlgebra.Double;
+using MathNet.Spatial.Euclidean;
 
 namespace Allonet
 {
@@ -27,7 +28,7 @@ namespace Allonet
     {
         public class Transform
         {
-            public DenseMatrix matrix = DenseMatrix.CreateIdentity(4);
+            public CoordinateSystem matrix = new CoordinateSystem();
         }
 
         abstract public class Geometry
@@ -43,6 +44,11 @@ namespace Allonet
             {
                 this.name = name;
             }
+        }
+        public class HardcodedGeometry : Geometry
+        {
+            override public string type { get { return "asset"; } }
+            public string name;
         }
         public class InlineGeometry : Geometry
         {

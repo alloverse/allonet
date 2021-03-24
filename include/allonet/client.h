@@ -106,7 +106,7 @@ typedef struct alloclient {
      * @param client The client object
      * @param asset_id The asset identifier
      * @param buffer Bytes
-     * @param length Is the number of bytes available in `buffer`.
+     * @param length The number of bytes available in `buffer`.
      * @param total_size The total size of the asset.
      */
     void (*asset_receive_callback)(

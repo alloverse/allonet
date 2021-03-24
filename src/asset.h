@@ -48,7 +48,7 @@ typedef enum {
 typedef void(*asset_send_func)(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user);
 
 /// A chunk of data was requested. Deliver the data immediately or later using the `asset_deliver_bytes` method
-typedef bool (*asset_request_func)(const char *asset_id, size_t offset, size_t length, void *user);
+typedef void (*asset_request_func)(const char *asset_id, size_t offset, size_t length, void *user);
 
 /// Write a chunc of data
 typedef int (*asset_write_func)(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user);
@@ -90,9 +90,8 @@ void asset_request(
 /// @param id The asset to deliver
 /// @param store The asset store
 /// @param request A callback for requesting data. Deliver using `asset_deliver_bytes`
-/// @param send A function to send data over the network
 /// @param user User data passed as last argument to callbacks
-void asset_deliver(const char *asset_id, asset_request_func request, asset_send_func send, void *user);
+void asset_deliver(const char *asset_id, asset_request_func request, void *user);
 
 /// Deliver bytes after receiving a `asset_request_func`.
 /// @param asset_id The asset
@@ -128,6 +127,7 @@ struct _ENetPacket *asset_build_enet_packet(uint16_t mid, const cJSON *header, c
 typedef enum asset_error_code {
     asset_not_available_error = 1,
     asset_malformed_request_error = 2,
+    asset_not_supported_error = 3,
 } asset_error_code;
 
 /// Safe parsing of the request message header

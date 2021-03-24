@@ -88,6 +88,7 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
 
 wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server);
 void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
+void _request_missing_asset(alloserver *server, alloserver_client *client, const char *asset_id);
 void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
 void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client);
 void _remove_client_from_wanted(alloserver *server, alloserver_client *client);
@@ -146,8 +147,9 @@ void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, s
     _asset_send_func_peer(mid, header, data, data_length, &usr);
 }
 
-static bool _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
+static void _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
     alloserver *server = ((asset_user *)user)->server;
+    alloserver_client *client = ((asset_user *)user)->client;
     
     uint8_t *buffer = malloc(length);
     assert(buffer);
@@ -155,14 +157,12 @@ static bool _asset_request_bytes_func(const char *asset_id, size_t offset, size_
     size_t total_size = 0;
     int read_length = assetstore_read(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, &total_size);
     
-    if (read_length <= 0) {
-        free(buffer);
-        return false;
-    } else {
+    if (read_length > 0) {
         asset_deliver_bytes(asset_id, buffer, offset, read_length, total_size, _asset_send_func, user);
-        free(buffer);
-        return true;
+    } else {
+        _request_missing_asset(server, client, asset_id);
     }
+    free(buffer);
 }
 
 static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {
@@ -188,19 +188,6 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
         // asset was completed
         // Ping registered peers by sending a first chunk.
         _forward_wanted_asset(asset_id, server, client);
-    } else if (state == asset_state_requested_unavailable) {
-        // an asset was requested but I don't have it
-        // track who wanted it
-        printf("Delegating asset request %s\n", asset_id);
-        
-        int already_wanted = _asset_is_wanted(asset_id, server) != NULL;
-        _add_asset_to_wanted(asset_id, server, client);
-        
-        // Broadcast request the asset unless it is already wanted
-        if (!already_wanted) {
-            asset_user usr = { .server = server, .client = client };
-            asset_request(asset_id, NULL, _asset_send_func_broadcast, &usr);
-        }
     } else {
         printf("Unhandled asset state %d\n", state);
     }
@@ -387,8 +374,6 @@ int allo_socket_for_select(alloserver *serv)
     return _servinternal(serv)->enet->socket;
 }
 
-                                                                                                                    
-
 wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server) {
     alloserv_internal *sv = _servinternal(server);
     for (size_t i = 0; i < sv->wanted_assets.length; i++) {
@@ -408,6 +393,17 @@ void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_c
     wanted->peer = _clientinternal(client)->peer;
     wanted->source = NULL;
     arr_push(&sv->wanted_assets, wanted);
+}
+
+void _request_missing_asset(alloserver *server, alloserver_client *client, const char *asset_id) {
+    int already_wanted = _asset_is_wanted(asset_id, server) != NULL;
+    _add_asset_to_wanted(asset_id, server, client);
+    
+    // Broadcast request the asset unless it is already wanted
+    if (!already_wanted) {
+        asset_user usr = { .server = server, .client = client };
+        asset_request(asset_id, NULL, _asset_send_func_broadcast, &usr);
+    }
 }
 
 void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
@@ -435,7 +431,7 @@ void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_
             // deliver the first bytes. After this it's up to the client to request more.
             // TODO: only deliver the range requested in the original request
             asset_user usr = { .server = server, .client = client, .peer = wanted->peer };
-            asset_deliver(asset_id, _asset_request_bytes_func, _asset_send_func_peer, &usr);
+            asset_deliver(asset_id, _asset_request_bytes_func, &usr);
             
             arr_splice(&sv->wanted_assets, i, 1);
             --i;

@@ -147,15 +147,11 @@ void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offse
     cJSON_Delete(response);
 }
 
-void asset_deliver(const char *asset_id, asset_request_func request, asset_send_func send, void *user) {
+void asset_deliver(const char *asset_id, asset_request_func request, void *user) {
     assert(request);
     assert(send);
     
-    if (request(asset_id, 0, ASSET_CHUNK_SIZE, user) == false) {
-        cJSON *error = asset_error(asset_id, asset_not_available_error, "Can not deliver");
-        send(asset_mid_failure, error, NULL, 0, user);
-        cJSON_Delete(error);
-    }
+    request(asset_id, 0, ASSET_CHUNK_SIZE, user);
 }
 
 /// Does all the work with a package from the asset data channel, via function pointers provided
@@ -195,8 +191,8 @@ void asset_handle(
         if (request == NULL) {
             printf("Asset: Asset reading not supported");
             callback(asset_id, asset_state_not_supported, user);
-        } else if (request(asset_id, offset, length, user) == false) {
-            callback(asset_id, asset_state_requested_unavailable, user);
+        } else {
+            request(asset_id, offset, length, user);
         }
         // Then we wait for user to honor the request
     } else if (mid == asset_mid_data && write != NULL) { // if we can't write we just ignore the message

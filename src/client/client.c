@@ -168,7 +168,7 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
 }
 
-static bool _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
+static void _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
     alloclient *client = (alloclient *)user;
     if (client->asset_request_bytes_callback) {
         client->asset_request_bytes_callback(client, asset_id, offset, length);
@@ -178,15 +178,14 @@ static bool _asset_request_bytes_func(const char *asset_id, size_t offset, size_
         size_t total_size = 0;
         int read_bytes = assetstore_read(&(_internal(client)->assetstore), asset_id, offset, buffer, length, &total_size);
         
-        if (read_bytes <= 0) {
-            return false;
-        } else {
+        if (read_bytes > 0) {
             asset_deliver_bytes(asset_id, buffer, offset, read_bytes, total_size, _asset_send_func, user);
+        } else {
+            asset_deliver_bytes(asset_id, NULL, offset, 0, 0, _asset_send_func, user);
         }
         
         free(buffer);
     }
-    return true;
 }
 
 static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t offset, size_t length, size_t total_size, void *user) {

@@ -39,6 +39,15 @@ typedef enum {
     asset_state_not_supported,
 } asset_state;
 
+/// Asset error response types
+typedef enum asset_error_code {
+    asset_not_available_error = 1,
+    asset_malformed_request_error = 2,
+    asset_not_supported_error = 3,
+} asset_error_code;
+
+
+
 /// Provide assets a way to send data in the network
 /// @param mid The message id
 /// @param header The message header
@@ -93,6 +102,15 @@ void asset_request(
 /// @param user User data passed as last argument to callbacks
 void asset_deliver(const char *asset_id, asset_request_func request, void *user);
 
+/// Send an error as response to a request
+/// @param asset_id The asset id the error is for
+/// @param code The error code
+/// @param reason Human readable descriptive error reason
+/// @param send A method to send data over the network
+/// @param user Passed to `send`
+///
+void asset_deliver_error(const char *asset_id, asset_error_code code, char *reason, asset_send_func send, void *user);
+
 /// Deliver bytes after receiving a `asset_request_func`.
 /// @param asset_id The asset
 /// @param data The data to deliver
@@ -121,14 +139,6 @@ struct _ENetPacket;
 /// @param data_length The size of the `data` buffer
 struct _ENetPacket *asset_build_enet_packet(uint16_t mid, const cJSON *header, const uint8_t *data, size_t data_length);
 
-
-
-/// Asset error response types
-typedef enum asset_error_code {
-    asset_not_available_error = 1,
-    asset_malformed_request_error = 2,
-    asset_not_supported_error = 3,
-} asset_error_code;
 
 /// Safe parsing of the request message header
 /// `out_id` will point to data in `header` and only valid as long as header is.

@@ -125,6 +125,34 @@ int asset_read_data_header(const cJSON *header, const char **out_id, size_t *out
     return 0;
 }
 
+int asset_read_error_header(const cJSON *header, const char **out_id, char **out_error_reason, int *out_error_code) {
+    //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
+    
+    cJSON *id = cJSON_GetObjectItem(header, "id");
+    if (cJSON_IsString(id)) {
+        *out_id = id->valuestring;
+    } else {
+        return asset_malformed_request_error;
+    }
+    
+    cJSON *reason = cJSON_GetObjectItem(header, "error_reason");
+    if (cJSON_IsString(reason)) {
+        *out_error_reason = reason->valuestring;
+    } else {
+        return asset_malformed_request_error;
+    }
+    
+    cJSON *code = cJSON_GetObjectItemCaseSensitive(header, "error_code");
+    if (cJSON_IsNumber(code)) {
+        *out_error_code = code->valueint;
+    } else {
+        return asset_malformed_request_error;
+    }
+    
+    return 0;
+}
+
+
 void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size, asset_send_func send, void *user) {
     
     if (data == NULL) {
@@ -152,6 +180,12 @@ void asset_deliver(const char *asset_id, asset_request_func request, void *user)
     assert(send);
     
     request(asset_id, 0, ASSET_CHUNK_SIZE, user);
+}
+
+void asset_deliver_error(const char *asset_id, asset_error_code code, char *reason, asset_send_func send, void *user) {
+    cJSON *error = asset_error(asset_id, code, reason);
+    send(asset_mid_failure, error, NULL, 0, user);
+    cJSON_Delete(error);
 }
 
 /// Does all the work with a package from the asset data channel, via function pointers provided
@@ -220,6 +254,13 @@ void asset_handle(
         char *desc = cJSON_Print(json);
         printf("Asset: received error: %s", desc);
         free((void*)desc);
+        
+        const char *asset_id = NULL;
+        int error_code;
+        char *error_reason;
+        
+        asset_read_error_header(json, &asset_id, &error_reason, &error_code);
+        callback(asset_id, asset_state_now_unavailable, user);
     } else {
         printf("Asset: received weird mid: %d", mid);
     }

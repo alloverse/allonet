@@ -91,6 +91,7 @@ void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_c
 void _request_missing_asset(alloserver *server, alloserver_client *client, const char *asset_id);
 void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
 void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client);
+void _forward_wanted_asset_failure(const char *asset_id, alloserver *server, alloserver_client *client);
 void _remove_client_from_wanted(alloserver *server, alloserver_client *client);
 
 typedef struct asset_user {
@@ -188,6 +189,8 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
         // asset was completed
         // Ping registered peers by sending a first chunk.
         _forward_wanted_asset(asset_id, server, client);
+    } else if (state == asset_state_now_unavailable) {
+        _forward_wanted_asset_failure(asset_id, server, client);
     } else {
         printf("Unhandled asset state %d\n", state);
     }
@@ -413,6 +416,23 @@ void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloser
     for (size_t i = 0; i < sv->wanted_assets.length; i++) {
         wanted_asset *wanted = sv->wanted_assets.data[i];
         if (peer == wanted->peer && strcmp(wanted->id, asset_id) == 0) {
+            arr_splice(&sv->wanted_assets, i, 1);
+            --i;
+            free(wanted->id);
+            free(wanted);
+        }
+    }
+}
+
+void _forward_wanted_asset_failure(const char *asset_id, alloserver *server, alloserver_client *client) {
+    alloserv_internal *sv = _servinternal(server);
+    for (size_t i = 0; i < sv->wanted_assets.length; i++) {
+        wanted_asset *wanted = sv->wanted_assets.data[i];
+        if (strcmp(wanted->id, asset_id) == 0) {
+            // deliver the first bytes. After this it's up to the client to request more.
+            asset_user usr = { .server = server, .client = client, .peer = wanted->peer };
+            asset_deliver_error(asset_id, asset_not_available_error, "Server could not find asset", _asset_send_func, &usr);
+            
             arr_splice(&sv->wanted_assets, i, 1);
             --i;
             free(wanted->id);

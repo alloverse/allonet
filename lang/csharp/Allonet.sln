@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allonet", "Allonet\Allonet.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientSample", "ClientSample\ClientSample.csproj", "{48A208BA-ACDA-4CF7-9735-9F493B9ED361}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppSample", "AppSample\AppSample.csproj", "{97EC14E1-2C59-4CB6-B8BB-069F90BC325A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

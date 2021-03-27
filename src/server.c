@@ -454,6 +454,7 @@ void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_
             asset_deliver(asset_id, _asset_request_bytes_func, &usr);
             
             arr_splice(&sv->wanted_assets, i, 1);
+            --i;
             free(wanted->id);
             free(wanted);
         }

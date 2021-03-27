@@ -261,9 +261,6 @@ void _update_asset_state(assetstore *store, const char *asset_id) {
 void _clear_state(cJSON *state) {
     if (cJSON_IsObject(state)) {
         cJSON *file = cJSON_GetObjectItem(state, "data");
-        if (cJSON_IsRaw(file)) {
-            free(file->valuestring);
-        }
         if (cJSON_IsString(file)) {
             // warning: hacky hack-hack
             uint8_t *data = (uint8_t *)strtol(file->valuestring, NULL, 10);
@@ -477,11 +474,6 @@ int _assetstore_write(assetstore *store, const char *asset_id, size_t offset, co
 
 
 int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
-#ifdef _WIN32
-  // there's an access violation SOMEWHERE in this method. disable the store as an emergency fix for tomorrow.
-  return -4;
-#endif
-
     mtx_lock(&store->lock);
     
     cJSON *state = cJSON_GetObjectItem(store->state, asset_id);
@@ -502,7 +494,7 @@ int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8
         mtx_unlock(&store->lock);
         return -3;
     }
-    uint8_t *file_data = strtol(file->valuestring, NULL, 10);
+    uint8_t *file_data = strtoll(file->valuestring, NULL, 10);
     length = min(length, *out_total_size - offset);
     memcpy(buffer, file_data + offset, length);
     
@@ -548,7 +540,7 @@ int _memstorestore_write(assetstore *store, const char *asset_id, size_t offset,
         
         // warning: hacky hack-hack
         char num[255];
-        sprintf(num, "%ld", (long)file_data);
+        sprintf(num, "%llu", (long long unsigned int)file_data);
         cJSON_AddStringToObject(state, "data", num);
     }
     assert(file_data);

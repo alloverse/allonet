@@ -54,11 +54,25 @@ double get_table_inumber(lua_State *L, int key)
     lua_pop(L, 1);
     return result; 
 }
+bool get_table_bool(lua_State *L, const char *key)
+{
+    lua_pushinteger(L, key);
+    lua_gettable(L, -2);
+    if (!lua_isboolean(L, -1))
+    {
+        luaL_error(L, "Unexpected non-bool value for key %d", key);
+        return 0.0;
+    }
+    double result = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    return result; 
+}
 
 allo_client_intent* get_intent(lua_State *L)
 {
     allo_client_intent *intent = allo_client_intent_create();
     intent->entity_id = get_table_string(L, "entity_id");
+    intent->wants_stick_movement = get_table_bool(L, "wants_stick_movement");
     intent->zmovement = get_table_number(L, "zmovement");
     intent->xmovement = get_table_number(L, "xmovement");
     intent->yaw = get_table_number(L, "yaw");

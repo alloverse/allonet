@@ -199,7 +199,7 @@ static int l_alloclient_set_intent (lua_State *L)
     l_alloclient_t *lclient = check_alloclient(L, 1);
     if(!lua_istable(L, 2))
     {
-        return luaL_error(L, "set_intent: Expected table with keys zmovement, xmovement, yaw, pitch, poses");
+        return luaL_error(L, "set_intent: Expected table with keys wants_stick_movement, zmovement, xmovement, yaw, pitch, poses");
     }
     allo_client_intent* intent = get_intent(L);
     alloclient_set_intent(lclient->client, intent);

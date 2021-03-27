@@ -60,6 +60,7 @@ int main(int argc, char **argv)
     }
 
     intent = allo_client_intent_create();
+    intent->wants_stick_movement = true;
 
     printf("hello microverse\n");
 

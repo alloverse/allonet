@@ -86,6 +86,7 @@ namespace Allonet
     public struct AlloIntent
     {
         public IntPtr entity_id;
+        public bool wants_stick_movement;
         public double zmovement;
         public double xmovement;
         public double yaw;

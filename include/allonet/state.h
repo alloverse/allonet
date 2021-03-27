@@ -40,6 +40,7 @@ typedef struct allo_client_poses
 typedef struct allo_client_intent
 {
     char* entity_id; // which entity is this intent for
+    bool wants_stick_movement;
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
     double yaw;       // rotation around x in radians

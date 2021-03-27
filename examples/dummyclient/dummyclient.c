@@ -248,6 +248,7 @@ int main(int argc, char **argv)
     asset_memstore_init(&assets);
     
     intent = allo_client_intent_create();
+    intent->wants_stick_movement = true;
 
     printf("hello microverse\n");
 

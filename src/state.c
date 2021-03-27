@@ -99,6 +99,7 @@ static allo_client_pose_grab grab_parse_cjson(cJSON* cjson)
 cJSON* allo_client_intent_to_cjson(const allo_client_intent* intent)
 {
   return cjson_create_object(
+    "wants_stick_movement", cJSON_CreateBool(intent->wants_stick_movement),
     "zmovement", cJSON_CreateNumber(intent->zmovement),
     "xmovement", cJSON_CreateNumber(intent->xmovement),
     "yaw", cJSON_CreateNumber(intent->yaw),
@@ -140,6 +141,7 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
   allo_client_intent* intent = allo_client_intent_create();
   cJSON* poses = cJSON_GetObjectItemCaseSensitive(from, "poses");
   intent->entity_id = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(from, "entity_id")));
+  intent->wants_stick_movement = cJSON_GetObjectItemCaseSensitive(from, "wants_stick_movement")->valueint;
   intent->zmovement = cJSON_GetObjectItemCaseSensitive(from, "zmovement")->valuedouble;
   intent->xmovement = cJSON_GetObjectItemCaseSensitive(from, "xmovement")->valuedouble;
   intent->yaw = cJSON_GetObjectItemCaseSensitive(from, "yaw")->valuedouble;

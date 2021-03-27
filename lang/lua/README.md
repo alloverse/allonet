@@ -73,6 +73,7 @@ Change this client's movement/action intent.
 
 `intent` is a table with these keys:
 
+* wants_stick_movement
 * zmovement
 * xmovement
 * yaw

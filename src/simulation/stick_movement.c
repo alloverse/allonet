@@ -21,6 +21,12 @@ static allo_m4x4 create_movement(allo_m4x4 heading_transform, double yaw, double
 
 allo_m4x4 allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt, bool write)
 {
+  // if client doesn't actually want us to stick-move their avatar, then return early.
+  // except if this is is a simulate call (indicated by write=false), in which case DO return that simulated stick movement.
+  if(intent->wants_stick_movement == false && write == true)
+  {
+    return allo_m4x4_identity();
+  }
   double speed = 2.0; // meters per second
   double distance = speed * dt;
 

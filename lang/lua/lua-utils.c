@@ -54,16 +54,18 @@ double get_table_inumber(lua_State *L, int key)
     lua_pop(L, 1);
     return result; 
 }
+
 bool get_table_bool(lua_State *L, const char *key)
 {
-    lua_pushinteger(L, key);
+    lua_pushstring(L, key);
     lua_gettable(L, -2);
     if (!lua_isboolean(L, -1))
     {
-        luaL_error(L, "Unexpected non-bool value for key %d", key);
+        dumpstack(L);
+        luaL_error(L, "Unexpected non-bool value for key %s", key);
         return 0.0;
     }
-    double result = lua_toboolean(L, -1);
+    bool result = lua_toboolean(L, -1);
     lua_pop(L, 1);
     return result; 
 }

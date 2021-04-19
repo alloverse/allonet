@@ -38,6 +38,7 @@ local funcs = {
 	luaL_checklstring = "const char *luaL_checklstring (lua_State *L, int narg, size_t *l)",
  	lua_pushvalue = "void  lua_pushvalue (lua_State *L, int idx)",
  	lua_gettable = "void  lua_gettable (lua_State *L, int idx)",
+	lua_gettop = "int lua_gettop (lua_State *L)",
  	lua_newuserdata = "void *lua_newuserdata (lua_State *L, size_t sz)",
  	lua_setmetatable = "int   lua_setmetatable (lua_State *L, int objindex)",
  	lua_pushnumber = "void  lua_pushnumber (lua_State *L, lua_Number n)",
@@ -55,6 +56,9 @@ local funcs = {
  	lua_getfield = "void  lua_getfield (lua_State *L, int idx, const char *k)",
 	lua_isstring = "int             lua_isstring (lua_State *L, int idx)",
 	luaL_optlstring = "const char *luaL_optlstring (lua_State *L, int narg, const char *d, size_t *l)",
+	lua_tonumber = "lua_Number lua_tonumber (lua_State *L, int index)",
+	lua_tolstring = "const char *lua_tolstring (lua_State *L, int index, size_t *len)",
+	lua_topointer = "const void *lua_topointer (lua_State *L, int index)",
 }
 
 -- MacOS: Uses -Wl,-undefined,dynamic_lookup, so we can just use regular old lua.h

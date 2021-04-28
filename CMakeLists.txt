@@ -15,6 +15,7 @@ include_directories(SYSTEM
 )
 add_subdirectory (lib/enet)
 
+set(OPUS_DISABLE_INTRINSICS OFF) # fix m1 build
 add_subdirectory(lib/opus)
 
 # Don't want to require lua installed on dev machine, so include sources instead.

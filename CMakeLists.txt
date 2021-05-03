@@ -89,7 +89,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/sha256.h
     ${SOURCE_FILES_PREFIX}/standalone_server.c
     ${SOURCE_FILES_PREFIX}/state.c
-    ${SOURCE_FILES_PREFIX}/util.c
+    ${SOURCE_FILES_PREFIX}/util.cpp
     ${SOURCE_FILES_PREFIX}/util.h
     lib/mathc/mathc.c
 )

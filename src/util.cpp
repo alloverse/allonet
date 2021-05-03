@@ -5,7 +5,9 @@
 //  Created by Nevyn Bengtsson on 1/2/19.
 //
 
+extern "C" {
 #include "util.h"
+}
 #include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -16,7 +18,7 @@
 
 allo_statistics_t allo_statistics = {0};
 
-int64_t
+extern "C" int64_t
 get_ts_mono(void)
 {
 #ifdef _WIN32
@@ -28,12 +30,12 @@ get_ts_mono(void)
 #endif
 }
 
-double get_ts_monod(void)
+extern "C" double get_ts_monod(void)
 {
     return get_ts_mono()/1000.0;
 }
 
-allo_vector cjson2vec(const cJSON *veclist)
+extern "C" allo_vector cjson2vec(const cJSON *veclist)
 {
     const cJSON *x = cJSON_GetArrayItem(veclist, 0);
     const cJSON *y = cJSON_GetArrayItem(veclist, 1);
@@ -45,7 +47,7 @@ allo_vector cjson2vec(const cJSON *veclist)
     return (allo_vector){{x->valuedouble, y->valuedouble, z->valuedouble}};
 }
 
-cJSON *vec2cjson(allo_vector vec)
+extern "C" cJSON *vec2cjson(allo_vector vec)
 {
     return cjson_create_list(
         cJSON_CreateNumber(vec.x),
@@ -55,7 +57,7 @@ cJSON *vec2cjson(allo_vector vec)
     );
 }
 
-cJSON* m2cjson(allo_m4x4 mat)
+extern "C" cJSON* m2cjson(allo_m4x4 mat)
 {
 	return cjson_create_list(
 		cJSON_CreateNumber(mat.c1r1), cJSON_CreateNumber(mat.c1r2), cJSON_CreateNumber(mat.c1r3), cJSON_CreateNumber(mat.c1r4),
@@ -66,7 +68,7 @@ cJSON* m2cjson(allo_m4x4 mat)
 	);
 }
 
-allo_m4x4 cjson2m(const cJSON* matlist)
+extern "C" allo_m4x4 cjson2m(const cJSON* matlist)
 {
   if (matlist == NULL || cJSON_GetArraySize(matlist) != 16)
     return allo_m4x4_identity();
@@ -77,7 +79,7 @@ allo_m4x4 cjson2m(const cJSON* matlist)
   return m;
 }
 
-int cjson_find_in_array(cJSON *array, const char *value)
+extern "C" int cjson_find_in_array(cJSON *array, const char *value)
 {
     int i = 0;
     const cJSON *child = NULL;
@@ -89,7 +91,7 @@ int cjson_find_in_array(cJSON *array, const char *value)
     }
     return -1;
 }
-void cjson_delete_from_array(cJSON *array, const char *value)
+extern "C" void cjson_delete_from_array(cJSON *array, const char *value)
 {
     int index = cjson_find_in_array(array, value);
     if(index != -1) {
@@ -97,7 +99,7 @@ void cjson_delete_from_array(cJSON *array, const char *value)
     }
 }
 
-cJSON *cjson_create_object(const char *key, cJSON *value, ...)
+extern "C" cJSON *cjson_create_object(const char *key, cJSON *value, ...)
 {
     cJSON *parent = cJSON_CreateObject();
     va_list args;
@@ -114,7 +116,7 @@ cJSON *cjson_create_object(const char *key, cJSON *value, ...)
     return parent;
 }
 
-cJSON *cjson_create_list(cJSON *value, ...)
+extern "C" cJSON *cjson_create_list(cJSON *value, ...)
 {
     cJSON *parent = cJSON_CreateArray();
     va_list args;
@@ -127,7 +129,7 @@ cJSON *cjson_create_list(cJSON *value, ...)
     return parent;
 }
 
-int64_t cjson_get_int64_value(cJSON *value)
+extern "C" int64_t cjson_get_int64_value(cJSON *value)
 {
     if(value == NULL)
     {
@@ -136,7 +138,7 @@ int64_t cjson_get_int64_value(cJSON *value)
     return value->valuedouble;
 }
 
-void cjson_clear(cJSON *object)
+extern "C" void cjson_clear(cJSON *object)
 {
     cJSON *child = object->child;
     while(child) {
@@ -147,7 +149,7 @@ void cjson_clear(cJSON *object)
     }
 }
 
-char *allo_strdup(const char *src)
+extern "C" char *allo_strdup(const char *src)
 {
     if(src == NULL)
     {
@@ -156,20 +158,20 @@ char *allo_strdup(const char *src)
     return strdup(src);
 }
 
-char *allo_strndup(const char *src, size_t n)
+extern "C" char *allo_strndup(const char *src, size_t n)
 {
     if(src == NULL || n == 0) 
     {
         return NULL;
     }
-    char *dest = calloc(1, n+1);
+    char *dest = (char*)calloc(1, n+1);
     for(size_t i = 0; i < n; i++) {
         dest[i] = src[i];
     }
     return dest;
 }
 
-void allo_free(void *mallocd)
+extern "C" void allo_free(void *mallocd)
 {
     free(mallocd);
 }

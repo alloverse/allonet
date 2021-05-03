@@ -141,7 +141,8 @@ allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from)
   allo_client_intent* intent = allo_client_intent_create();
   cJSON* poses = cJSON_GetObjectItemCaseSensitive(from, "poses");
   intent->entity_id = allo_strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(from, "entity_id")));
-  intent->wants_stick_movement = cJSON_GetObjectItemCaseSensitive(from, "wants_stick_movement")->valueint;
+  cJSON *wants = cJSON_GetObjectItemCaseSensitive(from, "wants_stick_movement");
+  intent->wants_stick_movement = wants ? wants->valueint : true;
   intent->zmovement = cJSON_GetObjectItemCaseSensitive(from, "zmovement")->valuedouble;
   intent->xmovement = cJSON_GetObjectItemCaseSensitive(from, "xmovement")->valuedouble;
   intent->yaw = cJSON_GetObjectItemCaseSensitive(from, "yaw")->valuedouble;

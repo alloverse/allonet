@@ -18,6 +18,8 @@ typedef struct {
     char *id; // asset id
     ENetPeer *peer;  // THe peer that wants the asset
     ENetPeer *source;// the peer we have choosen to download the asset from
+    
+    int nSourcesToTry; // Number of sources left to wait for a success repsone from
 } wanted_asset;
 
 typedef struct {
@@ -87,7 +89,7 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
 }
 
 wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server);
-void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
+wanted_asset *_add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
 void _request_missing_asset(alloserver *server, alloserver_client *client, const char *asset_id);
 void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client);
 void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client);
@@ -190,7 +192,21 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
         // Ping registered peers by sending a first chunk.
         _forward_wanted_asset(asset_id, server, client);
     } else if (state == asset_state_now_unavailable) {
-        _forward_wanted_asset_failure(asset_id, server, client);
+        wanted_asset *wanted = _asset_is_wanted(asset_id, server);
+        // Ignore if the asset was not even wanted
+        if (wanted == NULL) {
+            printf("Unwanted asset %s\n", asset_id);
+            return;
+        }
+        // A bit of a workaround here:
+        // If source is set then if the sender was the source then forward error
+        // If source is NULL and nSourcesToTry is 0 then forward
+        // otherwise just skip the error
+        if (wanted->source == _clientinternal(client)->peer || (wanted->source == NULL && --wanted->nSourcesToTry <= 0)) {
+            _forward_wanted_asset_failure(asset_id, server, client);
+        } else {
+            printf("Skipping the failure\n");
+        }
     } else {
         printf("Unhandled asset state %d\n", state);
     }
@@ -388,7 +404,7 @@ wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server) {
     return NULL;
 }
 
-void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
+wanted_asset *_add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     
     wanted_asset *wanted = malloc(sizeof(wanted_asset));
@@ -396,31 +412,23 @@ void _add_asset_to_wanted(const char *asset_id, alloserver *server, alloserver_c
     wanted->peer = _clientinternal(client)->peer;
     wanted->source = NULL;
     arr_push(&sv->wanted_assets, wanted);
+    return wanted;
 }
 
 void _request_missing_asset(alloserver *server, alloserver_client *client, const char *asset_id) {
-    int already_wanted = _asset_is_wanted(asset_id, server) != NULL;
-    _add_asset_to_wanted(asset_id, server, client);
+    wanted_asset *wanted = _asset_is_wanted(asset_id, server);
     
     // Broadcast request the asset unless it is already wanted
-    if (!already_wanted) {
+    if (wanted == NULL) {
+        wanted = _add_asset_to_wanted(asset_id, server, client);
+        
+        int count = 0; alloserver_client *other;
+        LIST_FOREACH(other, &server->clients, pointers) {
+            ++count;
+        }
+        wanted->nSourcesToTry = count;
         asset_user usr = { .server = server, .client = client };
         asset_request(asset_id, NULL, _asset_send_func_broadcast, &usr);
-    }
-}
-
-void _remove_asset_from_wanted(const char *asset_id, alloserver *server, alloserver_client *client) {
-    alloserv_internal *sv = _servinternal(server);
-    ENetPeer *peer = _clientinternal(client)->peer;
-    
-    for (size_t i = 0; i < sv->wanted_assets.length; i++) {
-        wanted_asset *wanted = sv->wanted_assets.data[i];
-        if (peer == wanted->peer && strcmp(wanted->id, asset_id) == 0) {
-            arr_splice(&sv->wanted_assets, i, 1);
-            --i;
-            free(wanted->id);
-            free(wanted);
-        }
     }
 }
 
@@ -464,14 +472,28 @@ void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_
 void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     ENetPeer *peer = _clientinternal(client)->peer;
-    
+ 
     for (size_t i = 0; i < sv->wanted_assets.length; i++) {
         wanted_asset *wanted = sv->wanted_assets.data[i];
+        // If the peer wanted the asset
         if (wanted->peer == peer) {
             arr_splice(&sv->wanted_assets, i, 1);
             --i;
             free(wanted->id);
             free(wanted);
+        }
+        // If the peer was sending us an asset
+        if (wanted->source == peer) {
+            int count = 0; alloserver_client *other;
+            LIST_FOREACH(other, &server->clients, pointers) {
+                ++count;
+            }
+            // Clear source and make a broadcast request again
+            wanted->source = NULL;
+            wanted->nSourcesToTry = count;
+            // TODO: Might need to find the correct offset, or just scrub and redo, or maybe it just works for now.
+            asset_user usr = { .server = server, .client = client };
+            asset_request(wanted->id, NULL, _asset_send_func_broadcast, &usr);
         }
     }
 }

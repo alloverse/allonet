@@ -42,9 +42,17 @@ extern "C" allo_vector cjson2vec(const cJSON *veclist)
     const cJSON *z = cJSON_GetArrayItem(veclist, 2);
     if (!x || !y || !z)
     {
-      return (allo_vector) {{0, 0, 0}};
+        allo_vector v;
+        v.v[0] = 0.0;
+        v.v[1] = 0.0;
+        v.v[2] = 0.0;
+        return v;
     }
-    return (allo_vector){{x->valuedouble, y->valuedouble, z->valuedouble}};
+    allo_vector v;
+    v.v[0] = x->valuedouble;
+    v.v[1] = y->valuedouble;
+    v.v[2] = z->valuedouble;
+    return v;
 }
 
 extern "C" cJSON *vec2cjson(allo_vector vec)

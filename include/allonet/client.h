@@ -21,6 +21,10 @@ typedef enum {
     client_asset_state_requested_unavailable,
 } client_asset_state;
 
+typedef struct allopixel {
+  uint8_t r, g, b, a;
+} allopixel;
+
 typedef struct alloclient alloclient;
 typedef struct alloclient {
     /** set this to get a callback when state changes. 
@@ -59,6 +63,14 @@ typedef struct alloclient {
         uint32_t track_id,
         int16_t pcm[],
         int32_t samples_decoded
+    );
+
+    bool (*video_callback)(
+        alloclient *client,
+        uint32_t track_id,
+        allopixel pixels[],
+        int32_t pixels_wide,
+        int32_t pixels_high
     );
 
 
@@ -212,6 +224,8 @@ void alloclient_set_intent(alloclient *client, const allo_client_intent *intent)
   *   
   */
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
+
+void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high);
 
 /*!
  * Request an asset. This might be a texture, a model, a sound or something that

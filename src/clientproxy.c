@@ -33,6 +33,7 @@ typedef enum
     msg_state_delta,
     msg_disconnect,
     msg_audio,
+    msg_video,
     msg_clock,
     msg_ack,
     
@@ -70,6 +71,13 @@ typedef struct proxy_message
             int16_t *pcm;
             size_t sample_count;
         } audio;
+        struct
+        {
+            uint32_t track_id;
+            int32_t pixels_wide;
+            int32_t pixels_high;
+            allopixel *pixels;
+        } video;
         struct 
         {
             double latency;
@@ -442,6 +450,26 @@ static void proxy_audio_callback(alloclient *proxyclient, proxy_message *msg)
     }
 }
 
+static bool bridge_video_callback(alloclient *bridgeclient, uint32_t track_id, allopixel pixels[], int32_t pixels_wide, int32_t pixels_high)
+{
+    alloclient *proxyclient = bridgeclient->_backref;
+    proxy_message *msg = proxy_message_create(msg_audio);
+    msg->value.video.track_id = track_id;
+    msg->value.video.pixels_wide = pixels_wide;
+    msg->value.video.pixels_high = pixels_high;
+    msg->value.video.pixels = calloc(pixels_high*pixels_wide, sizeof(allopixel));
+    memcpy(msg->value.video.pixels, pixels, pixels_high*pixels_wide*sizeof(allopixel));
+    enqueue_bridge_to_proxy(_internal(proxyclient), msg);
+    return false;
+}
+static void proxy_video_callback(alloclient *proxyclient, proxy_message *msg)
+{
+    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.pixels_wide, msg->value.video.pixels_high, msg->value.video.pixels))
+    {
+        free(msg->value.video.pixels);
+    }
+}
+
 static void bridge_disconnected_callback(alloclient *bridgeclient, alloerror code, const char *message)
 {
     alloclient *proxyclient = bridgeclient->_backref;
@@ -480,6 +508,7 @@ static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_state_delta] = proxy_raw_state_delta_callback,
     [msg_interaction] = proxy_interaction_callback,
     [msg_audio] = proxy_audio_callback,
+    [msg_video] = proxy_video_callback,
     [msg_disconnect] = proxy_disconnected_callback,
     [msg_clock] = proxy_clock_callback,
     [msg_asset_state_callback] = proxy_asset_state_callback,
@@ -560,6 +589,7 @@ alloclient *clientproxy_create(void)
     _internal(proxyclient)->bridgeclient->raw_state_delta_callback = bridge_raw_state_delta_callback;
     _internal(proxyclient)->bridgeclient->interaction_callback = bridge_interaction_callback;
     _internal(proxyclient)->bridgeclient->audio_callback = bridge_audio_callback;
+    _internal(proxyclient)->bridgeclient->video_callback = bridge_video_callback;
     _internal(proxyclient)->bridgeclient->disconnected_callback = bridge_disconnected_callback;
     _internal(proxyclient)->bridgeclient->clock_callback = bridge_clock_callback;
     _internal(proxyclient)->bridgeclient->asset_state_callback = bridge_asset_state_callback;

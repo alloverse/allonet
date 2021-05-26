@@ -23,6 +23,7 @@ typedef struct l_alloclient
     int interaction_callback_index;
     int disconnected_callback_index;
     int audio_callback_index;
+    int video_callback_index;
     int asset_request_callback_index;
     int asset_state_callback_index;
     int asset_receive_callback_index;
@@ -211,6 +212,7 @@ static void state_callback(alloclient *client, allo_state *state);
 static bool interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client, alloerror code, const char* message );
 static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
+static bool video_callback(alloclient *client, uint32_t track_id, allopixel pixels[], int32_t pixels_wide, int32_t pixels_high);
 static void asset_state_callback(alloclient *client, const char *asset_id, client_asset_state state);
 static void asset_request_callback(alloclient *client, const char *asset_id, size_t offset, size_t length);
 static void asset_receive_callback(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size);
@@ -289,6 +291,18 @@ static int l_alloclient_set_audio_callback(lua_State* L)
     }
     else {
         lclient->client->audio_callback = NULL;
+    }
+    return 0;
+}
+
+static int l_alloclient_set_video_callback(lua_State *L)
+{
+    l_alloclient_t* lclient = check_alloclient(L, 1);
+    if (store_function(L, &lclient->video_callback_index)) {
+        lclient->client->video_callback = video_callback;
+    }
+    else {
+        lclient->client->video_callback = NULL;
     }
     return 0;
 }
@@ -437,6 +451,20 @@ static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[],
     return true;
 }
 
+static bool video_callback(alloclient *client, uint32_t track_id, allopixel pixels[], int32_t pixels_wide, int32_t pixels_high)
+{
+    l_alloclient_t* lclient = (l_alloclient_t*)client->_backref;
+    if (get_function(lclient->L, lclient->video_callback_index))
+    {
+        lua_pushnumber(lclient->L, track_id);
+        lua_pushlightuserdata(lclient->L, (void*)pixels);
+        lua_pushnumber(lclient->L, pixels_wide);
+        lua_pushnumber(lclient->L, pixels_high);
+        lua_call(lclient->L, 4, 0);
+    }
+    return true;
+}
+
 static void asset_state_callback(alloclient *client, const char *asset_id, client_asset_state state) {
     l_alloclient_t *lclient = (l_alloclient_t *)client->_backref;
     
@@ -483,6 +511,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"set_interaction_callback", l_alloclient_set_interaction_callback},
     {"set_disconnected_callback", l_alloclient_set_disconnected_callback},
     {"set_audio_callback", l_alloclient_set_audio_callback},
+    {"set_video_callback", l_alloclient_set_video_callback},
     {"simulate", l_alloclient_simulate},
     {"simulate_root_pose", l_alloclient_simulate_root_pose},
     {"get_state", l_alloclient_get_state},

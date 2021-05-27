@@ -453,7 +453,7 @@ static void proxy_audio_callback(alloclient *proxyclient, proxy_message *msg)
 static bool bridge_video_callback(alloclient *bridgeclient, uint32_t track_id, allopixel pixels[], int32_t pixels_wide, int32_t pixels_high)
 {
     alloclient *proxyclient = bridgeclient->_backref;
-    proxy_message *msg = proxy_message_create(msg_audio);
+    proxy_message *msg = proxy_message_create(msg_video);
     msg->value.video.track_id = track_id;
     msg->value.video.pixels_wide = pixels_wide;
     msg->value.video.pixels_high = pixels_high;
@@ -464,7 +464,7 @@ static bool bridge_video_callback(alloclient *bridgeclient, uint32_t track_id, a
 }
 static void proxy_video_callback(alloclient *proxyclient, proxy_message *msg)
 {
-    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.pixels_wide, msg->value.video.pixels_high, msg->value.video.pixels))
+    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.pixels, msg->value.video.pixels_wide, msg->value.video.pixels_high))
     {
         free(msg->value.video.pixels);
     }

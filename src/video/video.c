@@ -1,26 +1,29 @@
-#include "_client.h"
+#include "../client/_client.h"
 #include "../util.h"
+#include "mjpeg.h"
+#include <string.h>
+#include <assert.h>
 
-static void create_packet(ENetPacket **packet, void* data, int size)
+static void create_packet(ENetPacket **packet, void* encoded, int size)
 {
     *packet = enet_packet_create(NULL, size + 4, 0 /* unreliable */);
-    memcpy((*packet)->data + 4, &data, size);
+    memcpy((*packet)->data + 4, encoded, size);
 }
 
 void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
 {
     if (_internal(client)->peer == NULL) {
-        fprintf(stderr, "alloclient: Skipping send audio as we don't even have a peer\n");
+        fprintf(stderr, "alloclient: Skipping send video as we don't even have a peer\n");
         return;
     }
     
     if (_internal(client)->peer->state != ENET_PEER_STATE_CONNECTED) {
-        fprintf(stderr, "alloclient: Skipping send audio as peer is not connected\n");
+        fprintf(stderr, "alloclient: Skipping send video as peer is not connected\n");
         return;
     }
 
     ENetPacket *packet;
-    allo_mjpeg_encode(pixels, pixels_wide, pixels_high, create_packet, &packet);
+    allo_mjpeg_encode(pixels, pixels_wide, pixels_high, (allo_mjpeg_encode_func*)create_packet, &packet);
     
     const int headerlen = sizeof(int32_t); // track id header
     int32_t big_track_id = htonl(track_id);

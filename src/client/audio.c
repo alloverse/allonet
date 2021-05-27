@@ -120,6 +120,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
     allo_media_track *track = __track_find(shared, track_id);
     if (!track) {
         // it is possible to receive data before the track exists in components
+        _alloclient_internal_shared_end(client);
         return;
     }
     
@@ -138,9 +139,12 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
             fflush(debugFile);
         }
 
+        _alloclient_internal_shared_end(client);
+        
         if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
             free(pcm);
         }
+        return;
     } else {
         
     }

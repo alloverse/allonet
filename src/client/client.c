@@ -701,7 +701,9 @@ alloclient *alloclient_create(bool threaded) {
     
     alloclient *client = _alloclient_create();
     alloclient_internal_shared *shared = malloc(sizeof(alloclient_internal_shared));
+    mtx_init(&shared->lock, mtx_plain);
     arr_init(&shared->media_tracks);
     _internal(client)->shared = shared;
+    
     return client;
 }

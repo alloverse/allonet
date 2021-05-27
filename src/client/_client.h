@@ -34,7 +34,7 @@ typedef struct {
 typedef arr_t(allo_media_track) allo_media_track_list;
 
 typedef struct {
-    pthread_mutex_t lock;
+    mtx_t lock;
     allo_media_track_list media_tracks;
 } alloclient_internal_shared;
 
@@ -67,13 +67,11 @@ extern void _alloclient_send_audio(alloclient *client, int32_t track_id, const i
 
 static inline alloclient_internal_shared *_alloclient_internal_shared_begin(alloclient *client) {
     alloclient_internal *cl = _internal(client);
-    if (!cl->shared) return NULL;
-    pthread_mutex_lock(&cl->shared->lock);
+    mtx_lock(&cl->shared->lock);
     return cl->shared;
 }
 
 static inline void _alloclient_internal_shared_end(alloclient *client) {
     alloclient_internal *cl = _internal(client);
-    if (!cl->shared) return;
-    pthread_mutex_unlock(&cl->shared->lock);
+    mtx_unlock(&cl->shared->lock);
 }

@@ -6,106 +6,124 @@
 
 #define DEBUG_AUDIO 0
 
-typedef struct decoder_track {
-    OpusDecoder *decoder;
-    uint32_t track_id;
-    FILE* debug;
-    LIST_ENTRY(decoder_track) pointers;
-} decoder_track;
-
+allo_media_track *media_find_track_by_id(alloclient_internal *cl, uint32_t track_id) {
+    for(size_t i = 0; i < cl->media_tracks.length; i++) {
+        allo_media_track *track = &cl->media_tracks.data[i];
+        if (track->track_id == track_id) {
+            return track;
+        }
+    }
+    return NULL;
+}
 
 void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length)
 {
+    alloclient_internal *cl = _internal(client);
+    
+    // get the track_id from the top of data
     uint32_t track_id;
     assert(length >= sizeof(track_id) + 3);
     memcpy(&track_id, data, sizeof(track_id));
     track_id = ntohl(track_id);
     data += sizeof(track_id);
     length -= sizeof(track_id);
-
-    // todo: decode on another tread
-    decoder_track *dec = _alloclient_decoder_find_or_create_for_track(client, track_id);
-    const int maximumFrameCount = 5760; // 120ms as per documentation
-    int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
-    int samples_decoded = opus_decode(dec->decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
-
-    assert(samples_decoded >= 0);
-    if (DEBUG_AUDIO && dec->debug) {
-        fwrite(pcm, sizeof(int16_t), samples_decoded, dec->debug);
-        fflush(dec->debug);
-    }
-
-    if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded))
-    {
-        free(pcm);
-    }
-}
-
-
-/// Find by track_id, else NULL
-decoder_track *_alloclient_decoder_find_for_track(alloclient *client, uint32_t track_id)
-{
-    decoder_track *dec = NULL;
-    LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
-    {
-        if(dec->track_id == track_id)
-        {
-            return dec;
-        }
-    }
-    return dec;
-}
-
-decoder_track *_alloclient_decoder_find_or_create_for_track(alloclient *client, uint32_t track_id)
-{
-    decoder_track *dec = _alloclient_decoder_find_for_track(client, track_id);
-    if (dec) { return dec; }
     
-    dec = (decoder_track*)calloc(1, sizeof(decoder_track));
-    dec->track_id = track_id;
-    int err;
-    dec->decoder = opus_decoder_create(48000, 1, &err);
-    if (DEBUG_AUDIO) {
-        char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
-        dec->debug = fopen(name, "wb");
-        fprintf(stderr, "Opening decoder for %s\n", name);
+    // see if we have allocated a media object for this
+    allo_media_track *track = media_find_track_by_id(cl, track_id);
+    if (!track) {
+        //TODO: track created in statediff is on other thread. workaround until state is shared across threads. 
+        track = _allo_media_track_create(client, track_id, allo_media_type_audio);
     }
-    assert(dec->decoder);
-    LIST_INSERT_HEAD(&_internal(client)->decoder_tracks, dec, pointers);
+    
+    if (track->type == allo_media_type_audio) {
+        // todo: decode on another tread
+        OpusDecoder *decoder = track->info.audio.decoder;
+        FILE *debugFile = track->info.audio.debug;
+        
+        const int maximumFrameCount = 5760; // 120ms as per documentation
+        int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
+        int samples_decoded = opus_decode(decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
 
-    return dec;
+        assert(samples_decoded >= 0);
+        if (debugFile) {
+            fwrite(pcm, sizeof(int16_t), samples_decoded, debugFile);
+            fflush(debugFile);
+        }
+
+        if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
+            free(pcm);
+        }
+    } else {
+        
+    }
 }
 
-void _alloclient_decoder_destroy_for_track(alloclient *client, uint32_t track_id)
+extern allo_media_track *_allo_media_track_find(alloclient *client, uint32_t track_id, allo_media_track_type type) {
+    allo_media_track *track = media_find_track_by_id(_internal(client), track_id);
+    if (track) {
+        assert(track->type == type);
+    }
+    return track;
+}
+
+allo_media_track *_allo_media_track_create(alloclient *client, uint32_t track_id, allo_media_track_type type) {
+    alloclient_internal *cl = _internal(client);
+    // reserve 1 extra and use that
+    arr_reserve(&cl->media_tracks, cl->media_tracks.length+1);
+    allo_media_track *track = &cl->media_tracks.data[cl->media_tracks.length++];
+    track->track_id = track_id;
+    track->type = type;
+    if (type == allo_media_type_audio) {
+        int err;
+        track->info.audio.decoder = opus_decoder_create(48000, 1, &err);
+        if (DEBUG_AUDIO) {
+            char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
+            track->info.audio.debug = fopen(name, "wb");
+            fprintf(stderr, "Opening decoder for %s\n", name);
+        } else {
+            track->info.audio.debug = NULL;
+        }
+        assert(track->info.audio.decoder);
+    }
+    return track;
+}
+
+void _alloclient_media_destroy(alloclient *client, uint32_t track_id)
 {
-    decoder_track *dec = _alloclient_decoder_find_for_track(client, track_id);
-    if (dec == NULL) {
+    allo_media_track *track = media_find_track_by_id(_internal(client), track_id);
+    alloclient_internal *cl = _internal(client);
+    if (track == NULL) {
         fprintf(stderr, "A decoder for track_id %d was not found\n", track_id);
         fprintf(stderr, "Active decoder tracks:\n ");
-        dec = NULL;
-        LIST_FOREACH(dec, &_internal(client)->decoder_tracks, pointers)
-        {
-            fprintf(stderr, "%d, ", dec->track_id);
+        track = NULL;
+        for (size_t i = 0; i < cl->media_tracks.length; i++) {
+            allo_media_track *track = &cl->media_tracks.data[i];
+            fprintf(stderr, "%d, ", track->track_id);
         }
-
         return;
     }
-    assert(dec->decoder);
+    if (track->type == allo_media_type_audio) {
+        assert(track->info.audio.decoder);
 
-    if (DEBUG_AUDIO) {
-        char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
-        fprintf(stderr, "Closing decoder for %s\n", name);
-        if (dec->debug) {
-            fclose(dec->debug);
-            dec->debug = NULL;
+        if (DEBUG_AUDIO) {
+            char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
+            fprintf(stderr, "Closing decoder for %s\n", name);
+            if (track->info.audio.debug) {
+                fclose(track->info.audio.debug);
+                track->info.audio.debug = NULL;
+            }
+        }
+        opus_decoder_destroy(track->info.audio.decoder);
+        track->info.audio.decoder = NULL;
+    } else {
+        
+    }
+    for (size_t i = 0; i < cl->media_tracks.length; i++) {
+        if (cl->media_tracks.data[i].track_id == track_id) {
+            arr_splice(&_internal(client)->media_tracks, i, 1);
+            break;
         }
     }
-    dec->track_id = -1;
-    opus_decoder_destroy(dec->decoder);
-    dec->decoder = NULL;
-    LIST_REMOVE(dec, pointers);
-
-    free(dec);
 }
 
 

@@ -22,6 +22,47 @@ static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 void alloclient_ack_rev(alloclient *client, int64_t rev);
 
+void entity_added(alloclient *client, allo_entity *ent) {
+    if (!ent->components) {
+        return;
+    }
+    
+    // if we find a decoder linked to the entity we remove it
+    cJSON *jmedia = cJSON_GetObjectItemCaseSensitive(ent->components, "live_media");
+    cJSON *jtrack_id = cJSON_GetObjectItemCaseSensitive(jmedia, "track_id");
+    if (jmedia && jtrack_id) {
+        cJSON *jmedia_type = cJSON_GetObjectItemCaseSensitive(jmedia, "type");
+        allo_media_track_type type = allo_media_type_audio;
+        char *typeString = cJSON_GetStringValue(jmedia_type);
+        if (typeString && strcmp("video", typeString) == 0) {
+            type = allo_media_type_video;
+        }
+        uint32_t track_id = jtrack_id->valueint;
+        
+        if (!_allo_media_track_find(client, track_id, type)) {
+            fprintf(stderr, "Creating a decoder\n");
+            _allo_media_track_create(client, track_id, type);
+        }
+    }
+}
+
+void entity_changed(alloclient *client, allo_entity *ent) {
+    entity_added(client, ent);
+}
+
+void entity_removed(alloclient *client, allo_entity *ent) {
+    if (!ent->components) {
+        return;
+    }
+    // if we find a decoder linked to the entity we remove it
+    cJSON *media = cJSON_GetObjectItemCaseSensitive(ent->components, "live_media");
+    cJSON *track_id = cJSON_GetObjectItemCaseSensitive(media, "track_id");
+    if (media && track_id) {
+        fprintf(stderr, "Destroying a linked decoder\n");
+        _alloclient_media_destroy(client, track_id->valueint);
+    }
+}
+
 int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 {
     if(client->raw_state_delta_callback) 
@@ -64,9 +105,13 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         
         cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(edesc, "components"), 1));
         allo_entity *entity = state_get_entity(&client->_state, entity_id);
-        if(!entity) {
+        if(entity) {
+            entity_changed(client, entity);
+        } else {
             entity = entity_create(entity_id);
             LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
+            
+            entity_added(client, entity);
         }
         
         cJSON_Delete(entity->components);
@@ -82,13 +127,8 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         if(cjson_find_in_array(deletes, to_delete->id) != -1) {
             LIST_REMOVE(to_delete, pointers);
             
-            // if we find a decoder linked to the entity we remove it
-            cJSON *media = cJSON_GetObjectItemCaseSensitive(to_delete->components, "live_media");
-            cJSON *track_id = cJSON_GetObjectItemCaseSensitive(media, "track_id");
-            if (media && track_id) {
-                fprintf(stderr, "Destroying a linked decoder\n");
-                _alloclient_decoder_destroy_for_track(client, track_id->valueint);
-            }
+            entity_removed(client, to_delete);
+            
             
             entity_destroy(to_delete);
         }
@@ -632,6 +672,7 @@ alloclient *alloclient_create(bool threaded)
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
     assetstore_init(&(_internal(client)->assetstore));
+    arr_init(&_internal(client)->media_tracks);
     
     scheduler_init(&_internal(client)->jobs);
     

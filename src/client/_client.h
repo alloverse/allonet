@@ -31,6 +31,13 @@ typedef struct {
     } info;
 } allo_media_track;
 
+typedef arr_t(allo_media_track) allo_media_track_list;
+
+typedef struct {
+    pthread_mutex_t lock;
+    allo_media_track_list media_tracks;
+} alloclient_internal_shared;
+
 typedef struct {
     ENetHost *host;
     ENetPeer *peer;
@@ -42,7 +49,7 @@ typedef struct {
     statehistory_t history;
     scheduler jobs;
     assetstore assetstore; // asset state tracking
-    arr_t(allo_media_track) media_tracks;
+    alloclient_internal_shared *shared; // only use within a  _alloclient_internal_shared_begin/_alloclient_internal_shared_end block
 } alloclient_internal;
 
 static inline alloclient_internal *_internal(alloclient *client)
@@ -50,8 +57,23 @@ static inline alloclient_internal *_internal(alloclient *client)
     return (alloclient_internal*)client->_internal;
 }
 
-extern allo_media_track *_allo_media_track_create(alloclient *client, uint32_t track_id, allo_media_track_type type);
-extern allo_media_track *_allo_media_track_find(alloclient *client, uint32_t track_id, allo_media_track_type type);
-extern void _alloclient_media_destroy(alloclient *client, uint32_t track_id);
+/// Creates a track for track_id unless one is not already created
+extern void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type);
+/// Free up track resources
+extern void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id);
 extern void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length);
 extern void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount);
+
+
+static inline alloclient_internal_shared *_alloclient_internal_shared_begin(alloclient *client) {
+    alloclient_internal *cl = _internal(client);
+    if (!cl->shared) return NULL;
+    pthread_mutex_lock(&cl->shared->lock);
+    return cl->shared;
+}
+
+static inline void _alloclient_internal_shared_end(alloclient *client) {
+    alloclient_internal *cl = _internal(client);
+    if (!cl->shared) return;
+    pthread_mutex_unlock(&cl->shared->lock);
+}

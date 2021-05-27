@@ -580,11 +580,11 @@ static void _bridgethread(alloclient *bridgeclient)
 }
 
 // thread: proxy
-alloclient *clientproxy_create(void)
+alloclient *clientproxy_create(alloclient *target)
 {
     alloclient *proxyclient = alloclient_create(false);
     proxyclient->_internal2 = calloc(1, sizeof(clientproxy_internal));
-    _internal(proxyclient)->bridgeclient = alloclient_create(false);
+    _internal(proxyclient)->bridgeclient = target;
     _internal(proxyclient)->bridgeclient->_backref = proxyclient;
     _internal(proxyclient)->bridgeclient->raw_state_delta_callback = bridge_raw_state_delta_callback;
     _internal(proxyclient)->bridgeclient->interaction_callback = bridge_interaction_callback;
@@ -624,3 +624,4 @@ alloclient *clientproxy_create(void)
 
     return proxyclient;
 }
+

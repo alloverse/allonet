@@ -39,10 +39,7 @@ void entity_added(alloclient *client, allo_entity *ent) {
         }
         uint32_t track_id = jtrack_id->valueint;
         
-        if (!_allo_media_track_find(client, track_id, type)) {
-            fprintf(stderr, "Creating a decoder\n");
-            _allo_media_track_create(client, track_id, type);
-        }
+        _alloclient_media_track_find_or_create(client, track_id, type);
     }
 }
 
@@ -59,7 +56,7 @@ void entity_removed(alloclient *client, allo_entity *ent) {
     cJSON *track_id = cJSON_GetObjectItemCaseSensitive(media, "track_id");
     if (media && track_id) {
         fprintf(stderr, "Destroying a linked decoder\n");
-        _alloclient_media_destroy(client, track_id->valueint);
+        _alloclient_media_track_destroy(client, track_id->valueint);
     }
 }
 
@@ -661,18 +658,12 @@ static void _alloclient_asset_send(alloclient *client, const char *asset_id, con
     asset_deliver_bytes(asset_id, data, offset, length, total_size, _asset_send_func, (void*)client);
 }
 
-alloclient *alloclient_create(bool threaded)
+alloclient *_alloclient_create()
 {
-    if(threaded)
-    {
-        return clientproxy_create();
-    }
-
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
     assetstore_init(&(_internal(client)->assetstore));
-    arr_init(&_internal(client)->media_tracks);
     
     scheduler_init(&_internal(client)->jobs);
     
@@ -696,5 +687,21 @@ alloclient *alloclient_create(bool threaded)
     client->alloclient_asset_request = _alloclient_asset_request;
     client->alloclient_asset_send = _alloclient_asset_send;
     
+    return client;
+}
+
+alloclient *alloclient_create(bool threaded) {
+    if (threaded) {
+        alloclient *network = _alloclient_create(); // will not have a shared
+        alloclient *proxy = clientproxy_create(network); // will have a shared
+        _internal(network)->shared = _internal(proxy)->shared; // share shared
+        
+        return proxy;
+    }
+    
+    alloclient *client = _alloclient_create();
+    alloclient_internal_shared *shared = malloc(sizeof(alloclient_internal_shared));
+    arr_init(&shared->media_tracks);
+    _internal(client)->shared = shared;
     return client;
 }

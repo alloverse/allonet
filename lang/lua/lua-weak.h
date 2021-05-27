@@ -25,6 +25,7 @@ void  lua_pushinteger (lua_State *L, lua_Integer n) WEAK_ATTRIBUTE;
 const char *luaL_checklstring (lua_State *L, int narg, size_t *l) WEAK_ATTRIBUTE;
 void  lua_createtable (lua_State *L, int narr, int nrec) WEAK_ATTRIBUTE;
 void  lua_settable (lua_State *L, int idx) WEAK_ATTRIBUTE;
+int luaL_ref (lua_State *L, int t) WEAK_ATTRIBUTE;
 int lua_toboolean (lua_State *L, int index) WEAK_ATTRIBUTE;
 const char *lua_tolstring (lua_State *L, int index, size_t *len) WEAK_ATTRIBUTE;
 lua_Number lua_tonumber (lua_State *L, int index) WEAK_ATTRIBUTE;
@@ -43,7 +44,7 @@ int   lua_setmetatable (lua_State *L, int objindex) WEAK_ATTRIBUTE;
 void  lua_rawgeti (lua_State *L, int idx, int n) WEAK_ATTRIBUTE;
 void  lua_rawseti (lua_State *L, int idx, int n) WEAK_ATTRIBUTE;
 void  lua_pushvalue (lua_State *L, int idx) WEAK_ATTRIBUTE;
-int luaL_ref (lua_State *L, int t) WEAK_ATTRIBUTE;
+void lua_pushlightuserdata (lua_State *L, void *p) WEAK_ATTRIBUTE;
 #endif
 #ifdef WIN32
 extern void   (*lua_call_weak) (lua_State *L, int nargs, int nresults);
@@ -84,6 +85,8 @@ extern void  (*lua_createtable_weak) (lua_State *L, int narr, int nrec);
 #define lua_createtable lua_createtable_weak
 extern void  (*lua_settable_weak) (lua_State *L, int idx);
 #define lua_settable lua_settable_weak
+extern int (*luaL_ref_weak) (lua_State *L, int t);
+#define luaL_ref luaL_ref_weak
 extern int (*lua_toboolean_weak) (lua_State *L, int index);
 #define lua_toboolean lua_toboolean_weak
 extern const char *(*lua_tolstring_weak) (lua_State *L, int index, size_t *len);
@@ -120,7 +123,7 @@ extern void  (*lua_rawseti_weak) (lua_State *L, int idx, int n);
 #define lua_rawseti lua_rawseti_weak
 extern void  (*lua_pushvalue_weak) (lua_State *L, int idx);
 #define lua_pushvalue lua_pushvalue_weak
-extern int (*luaL_ref_weak) (lua_State *L, int t);
-#define luaL_ref luaL_ref_weak
+extern void (*lua_pushlightuserdata_weak) (lua_State *L, void *p);
+#define lua_pushlightuserdata lua_pushlightuserdata_weak
 #endif
 extern void load_weak_lua_symbols();

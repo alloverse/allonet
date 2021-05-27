@@ -19,6 +19,7 @@ void  (*lua_pushinteger_weak) (lua_State *L, lua_Integer n) = NULL;
 const char *(*luaL_checklstring_weak) (lua_State *L, int narg, size_t *l) = NULL;
 void  (*lua_createtable_weak) (lua_State *L, int narr, int nrec) = NULL;
 void  (*lua_settable_weak) (lua_State *L, int idx) = NULL;
+int (*luaL_ref_weak) (lua_State *L, int t) = NULL;
 int (*lua_toboolean_weak) (lua_State *L, int index) = NULL;
 const char *(*lua_tolstring_weak) (lua_State *L, int index, size_t *len) = NULL;
 lua_Number (*lua_tonumber_weak) (lua_State *L, int index) = NULL;
@@ -37,7 +38,7 @@ int   (*lua_setmetatable_weak) (lua_State *L, int objindex) = NULL;
 void  (*lua_rawgeti_weak) (lua_State *L, int idx, int n) = NULL;
 void  (*lua_rawseti_weak) (lua_State *L, int idx, int n) = NULL;
 void  (*lua_pushvalue_weak) (lua_State *L, int idx) = NULL;
-int (*luaL_ref_weak) (lua_State *L, int t) = NULL;
+void (*lua_pushlightuserdata_weak) (lua_State *L, void *p) = NULL;
 #include <Windows.h>
 void load_weak_lua_symbols() 
 {
@@ -77,6 +78,7 @@ void load_weak_lua_symbols()
 	luaL_checklstring_weak = (const char *(*) (lua_State *L, int narg, size_t *l))GetProcAddress(mod, "luaL_checklstring");
 	lua_createtable_weak = (void  (*) (lua_State *L, int narr, int nrec))GetProcAddress(mod, "lua_createtable");
 	lua_settable_weak = (void  (*) (lua_State *L, int idx))GetProcAddress(mod, "lua_settable");
+	luaL_ref_weak = (int (*) (lua_State *L, int t))GetProcAddress(mod, "luaL_ref");
 	lua_toboolean_weak = (int (*) (lua_State *L, int index))GetProcAddress(mod, "lua_toboolean");
 	lua_tolstring_weak = (const char *(*) (lua_State *L, int index, size_t *len))GetProcAddress(mod, "lua_tolstring");
 	lua_tonumber_weak = (lua_Number (*) (lua_State *L, int index))GetProcAddress(mod, "lua_tonumber");
@@ -95,7 +97,7 @@ void load_weak_lua_symbols()
 	lua_rawgeti_weak = (void  (*) (lua_State *L, int idx, int n))GetProcAddress(mod, "lua_rawgeti");
 	lua_rawseti_weak = (void  (*) (lua_State *L, int idx, int n))GetProcAddress(mod, "lua_rawseti");
 	lua_pushvalue_weak = (void  (*) (lua_State *L, int idx))GetProcAddress(mod, "lua_pushvalue");
-	luaL_ref_weak = (int (*) (lua_State *L, int t))GetProcAddress(mod, "luaL_ref");
+	lua_pushlightuserdata_weak = (void (*) (lua_State *L, void *p))GetProcAddress(mod, "lua_pushlightuserdata");
 }
 #else
 void load_weak_lua_symbols() {}

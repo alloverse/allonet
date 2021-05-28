@@ -32,7 +32,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef __MACH__
 #include <malloc.h>
+#endif
 
 #define JPGE_MAX(a,b) (((a)>(b))?(a):(b))
 #define JPGE_MIN(a,b) (((a)<(b))?(a):(b))

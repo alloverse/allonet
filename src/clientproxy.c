@@ -457,8 +457,7 @@ static bool bridge_video_callback(alloclient *bridgeclient, uint32_t track_id, a
     msg->value.video.track_id = track_id;
     msg->value.video.pixels_wide = pixels_wide;
     msg->value.video.pixels_high = pixels_high;
-    msg->value.video.pixels = calloc(pixels_high*pixels_wide, sizeof(allopixel));
-    memcpy(msg->value.video.pixels, pixels, pixels_high*pixels_wide*sizeof(allopixel));
+    msg->value.video.pixels = pixels;
     enqueue_bridge_to_proxy(_internal(proxyclient), msg);
     return false;
 }

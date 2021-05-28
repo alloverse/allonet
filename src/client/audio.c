@@ -146,7 +146,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         }
         int size = samples_decoded/32;
         if (client->video_callback) {
-            allopixel p[32*32];
+            allopixel *p = malloc(32*32*sizeof(allopixel));
             for (int i = 0; i < 32*32; i++) {
 //                p[i].r = i % 16;
 //                p[i].g = i / 16;

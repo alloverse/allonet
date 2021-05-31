@@ -49,7 +49,7 @@ typedef struct {
     statehistory_t history;
     scheduler jobs;
     assetstore assetstore; // asset state tracking
-    alloclient_internal_shared *shared; // only use within a  _alloclient_internal_shared_begin/_alloclient_internal_shared_end block
+    alloclient_internal_shared *shared; // only use this and derivates thereof within a  _alloclient_internal_shared_begin/_alloclient_internal_shared_end block
 } alloclient_internal;
 
 static inline alloclient_internal *_internal(alloclient *client)

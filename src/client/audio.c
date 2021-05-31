@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include "../util.h"
+#include "../video/mjpeg.h"
 
 #define DEBUG_AUDIO 0
 
@@ -144,33 +145,18 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
             free(pcm);
         }
-        int size = samples_decoded/32;
-        if (client->video_callback) {
-            allopixel *p = malloc(32*32*sizeof(allopixel));
-            for (int i = 0; i < 32*32; i++) {
-//                p[i].r = i % 16;
-//                p[i].g = i / 16;
-                p[i].r = 255;
-                p[i].g = 255 - pcm[(i/32)*size];
-                p[i].b = 255 - pcm[(i%32)*size];
-                p[i].a = 255;
-            }
-            client->video_callback(client, track_id, p, 32, 32);
-        }
         return;
-    } else {
+    } else if (track->type == allo_media_type_video) {
+        int32_t wide, high;
         if (client->video_callback) {
-            allopixel *p = malloc(256);
-            for (int i = 0; i < 256; i++) {
-//                p[i].r = i % 16;
-//                p[i].g = i / 16;
-//                p[i].a = 255;
-                p[i].r = 255;
-                p[i].g = 255;
-                p[i].b = 255;
-                p[i].a = 255;
+            allopixel *pixels = allo_mjpeg_decode(data, length, &wide, &high);
+            
+            _alloclient_internal_shared_end(client);
+            
+            if (client->video_callback(client, track_id, pixels, wide, high)) {
+                free(pixels);
             }
-            client->video_callback(client, track_id, p, 16, 16);
+            return;
         }
     }
     

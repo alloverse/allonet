@@ -439,7 +439,7 @@ static bool announce(alloclient *client, const char *identity, const char *avata
     cJSON *bodyobj = cjson_create_list(
         cJSON_CreateString("announce"),
         cJSON_CreateString("version"),
-        cJSON_CreateNumber(ALLO_PROTOCOL_VERSION),
+        cJSON_CreateNumber(GetAllonetProtocolVersion()),
         cJSON_CreateString("identity"),
         cJSON_Parse(identity),
         cJSON_CreateString("spawn_avatar"),

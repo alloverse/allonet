@@ -117,6 +117,11 @@ endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
 
+add_custom_command( TARGET allonet
+	PRE_BUILD
+	COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh
+)
+
 if(MSVC)
   target_compile_options(allonet PRIVATE /W4)
 else()

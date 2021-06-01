@@ -61,29 +61,22 @@ and just click "build" in the UI.
    Path to android toolchain file may be different on your system (e g if you're running Linux or Windows).
 4. `make allonet`
 
+### Versioning
+
+The allonet library has a major.minor.micro versioning scheme where:
+
+* major is also the protocol version. If the wire protocol becomes incompatible,
+  bump this version to have client/server auto-reject non-compatible versions.
+* minor is bumped whenever there's a big new nice feature
+* micro is distance-to-tag, so the number of commits since the latest 'minor' tag.
+
+Create new tags with 
+
+```
+git tag -am "version description" x.y HEAD
+git push --tags
+```
 
 ### Notes for specific languages
 
 Lua: `lib/lua` must be point at 5.1 to be luajit compatible. (Alloverse Visor uses LÖVR which uses luajit).
-
-## Progress
-
-So far, extremely rudimentary. Todo in order of priority:
-
-- [x] Switch out manual arrays for libsvc
-- [x] Basic Server implementation on enet
-- [x] Basic Client implementation on enet
-- [x] C# bridge and integrate with Unity visor
-- [x] Erlang bridge and make sure server API fits mm pattern
-- [x] Move to component based entities
-- [x] Flesh out intents (head and hands, pointing, clicking)
-- [x] Lua bridge and integrate with Lovr visor
-- [ ] Assets (geometry, textures, animations)
-- [ ] Static geometry (i e the place's environment)
-- [ ] Manipulation intents (grabbing, throwing, menuing, ...)
-- [ ] ACLs
-- [ ] Avatar (specify asset for entity, and then animate/manipulate it)
-- [ ] Multiple entities per client
-- [ ] Move from enet to webrtc data channels
-- [ ] Audio channels
-- [ ] Video channels

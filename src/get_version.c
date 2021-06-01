@@ -1,17 +1,19 @@
 #include "allonet_version.h"
-#define str(s) #s
+
+#define STR_VALUE(arg)      #arg
+#define STR(name) STR_VALUE(name)
 
 const char *GetAllonetVersion()
 {
-    return str(ALLONET_VERSION);
+    return STR(ALLONET_VERSION);
 }
 const char *GetAllonetNumericVersion()
 {
-    return str(ALLONET_NUMERIC_VERSION);
+    return STR(ALLONET_NUMERIC_VERSION);
 }
 const char *GetAllonetGitHash()
 {
-    return str(ALLONET_HASH);
+    return STR(ALLONET_HASH);
 }
 
 int GetAllonetProtocolVersion()

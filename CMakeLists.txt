@@ -80,6 +80,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/clientproxy.h
     ${SOURCE_FILES_PREFIX}/delta.c
     ${SOURCE_FILES_PREFIX}/delta.h
+    ${SOURCE_FILES_PREFIX}/get_version.c
     ${SOURCE_FILES_PREFIX}/jobs.c
     ${SOURCE_FILES_PREFIX}/math.c
     ${SOURCE_FILES_PREFIX}/os.c

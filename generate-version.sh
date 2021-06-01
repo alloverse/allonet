@@ -1,8 +1,7 @@
 #!/bin/sh
 set -e
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-OUT_DIR="$SCRIPT_DIR/src"
+OUT_DIR="$1"
 VERSION_H="$OUT_DIR/allonet_version.h"
 VERSION_TXT="$OUT_DIR/allonet_version.txt"
 PRODUCT="ALLONET"

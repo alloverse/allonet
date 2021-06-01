@@ -7,7 +7,11 @@ option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instea
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 option(ALLONET_LINK_TINYCTHREAD "Whether to link with tinycthread. say off if you already have it in the process." ON)
 
-include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")
+include_directories(
+  "${PROJECT_SOURCE_DIR}/include"
+  "lib/mathc"
+  "${CMAKE_CURRENT_BINARY_DIR}/include"
+)
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
     "${PROJECT_SOURCE_DIR}/lib/tinycthread/source"
@@ -56,8 +60,6 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/net.h
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
-    
-    
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
@@ -118,10 +120,15 @@ endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
 
-add_custom_command( TARGET allonet
-	PRE_BUILD
-	COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/allonet_version.h
+	COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh ${CMAKE_CURRENT_BINARY_DIR}/include
 )
+add_custom_target(
+    version_header ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/include/allonet_version.h
+)
+add_dependencies(allonet version_header)
 
 if(MSVC)
   target_compile_options(allonet PRIVATE /W4)

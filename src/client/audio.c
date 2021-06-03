@@ -153,7 +153,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
             
             _alloclient_internal_shared_end(client);
             
-            if (client->video_callback(client, track_id, pixels, wide, high)) {
+            if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
                 free(pixels);
             }
             return;

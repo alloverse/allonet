@@ -204,8 +204,8 @@ static int l_alloclient_send_video(lua_State *L)
     const uint8_t* data = (uint8_t*)luaL_checklstring(L, 3, &bytelength);
     size_t width = luaL_checkint(L, 4);
     size_t height = luaL_checkint(L, 5);
-    size_t format = luaL_optstring(L, 6, "rgba");
-    size_t stride = luaL_optint(L, 7, width * 4);
+    const char *format = luaL_optstring(L, 6, "rgba");
+    size_t stride = luaL_optint(L, 7, (int)(width * 4));
     if (strcmp(format, "rgba") == 0) {
         alloclient_send_video(lclient->client, track_id, (allopixel*)data, width, height);
     } else if (strcmp(format, "bgrx8") == 0) {

@@ -16,6 +16,9 @@ typedef enum allochannel {
 
 #define CHANNEL_COUNT 5
 
-#define ALLO_PROTOCOL_VERSION 3
+extern const char *GetAllonetVersion(); // 3.1.4.g123abc
+extern const char *GetAllonetNumericVersion(); // 3.1.4
+extern const char *GetAllonetGitHash(); // g123abc
+extern int GetAllonetProtocolVersion(); // 3
 
 #endif

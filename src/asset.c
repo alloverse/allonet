@@ -252,7 +252,7 @@ void asset_handle(
         //https://github.com/alloverse/docs/blob/master/specifications/assets.md#csc-asset-response-failure-header
         
         char *desc = cJSON_Print(json);
-        printf("Asset: received error: %s", desc);
+        printf("Asset: received error: %s\n", desc);
         free((void*)desc);
         
         const char *asset_id = NULL;

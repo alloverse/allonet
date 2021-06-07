@@ -7,7 +7,11 @@ option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instea
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 option(ALLONET_LINK_TINYCTHREAD "Whether to link with tinycthread. say off if you already have it in the process." ON)
 
-include_directories("${PROJECT_SOURCE_DIR}/include", "lib/mathc")
+include_directories(
+  "${PROJECT_SOURCE_DIR}/include"
+  "lib/mathc"
+  "${CMAKE_CURRENT_BINARY_DIR}/include"
+)
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
     "${PROJECT_SOURCE_DIR}/lib/tinycthread/source"
@@ -56,8 +60,6 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/net.h
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
-    
-    
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
@@ -80,6 +82,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/clientproxy.h
     ${SOURCE_FILES_PREFIX}/delta.c
     ${SOURCE_FILES_PREFIX}/delta.h
+    ${SOURCE_FILES_PREFIX}/get_version.c
     ${SOURCE_FILES_PREFIX}/jobs.c
     ${SOURCE_FILES_PREFIX}/math.c
     ${SOURCE_FILES_PREFIX}/os.c
@@ -117,6 +120,20 @@ else()
 endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
+
+# Versioning
+# crazy relative-path hack courtesy of running bash on windows and having mixed path types...
+file(RELATIVE_PATH GENERATE_VERSION_SH ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh)
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/allonet_version.h
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND bash ${GENERATE_VERSION_SH} include
+)
+add_custom_target(
+    version_header ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/include/allonet_version.h
+)
+add_dependencies(allonet version_header)
 
 if(MSVC)
   target_compile_options(allonet PRIVATE /W4)

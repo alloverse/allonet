@@ -204,18 +204,19 @@ static int l_alloclient_send_video(lua_State *L)
     const uint8_t* data = (uint8_t*)luaL_checklstring(L, 3, &bytelength);
     size_t width = luaL_checkint(L, 4);
     size_t height = luaL_checkint(L, 5);
-    size_t format = luaL_optinteger(L, 6, 0);
+    size_t format = luaL_optstring(L, 6, "rgba");
     size_t stride = luaL_optinteger(L, 7, 0);
-    switch (format) {
-        case 0: //RGBA8
-            alloclient_send_video(lclient->client, track_id, (allopixel*)data, width, height);
-            break;
-        case 1: { //bgrx8
-            allopixel *pixels = malloc(sizeof(allopixel) * width * height);
-            uint8_t *ptr = (uint8_t*)data;
-            allopixel *pixel = pixels;
-            if (stride == 0) stride = width;
-            while (ptr < (data + stride * height)) {
+    if (strcmp(format, "rgba") == 0) {
+        alloclient_send_video(lclient->client, track_id, (allopixel*)data, width, height);
+    } else if (strcmp(format, "bgrx8") == 0) {
+        allopixel *pixels = malloc(sizeof(allopixel) * width * height);
+        uint8_t *ptr = (uint8_t*)data;
+        allopixel *pixel = pixels;
+        if (stride == 0) stride = width * 4;
+        for (size_t y = 0; y < height; y++) {
+            uint8_t *start = ptr;
+            uint8_t *end = ptr + width * 4;
+            while (ptr < end) {
                 pixel->r = ptr[2];
                 pixel->g = ptr[1];
                 pixel->b = ptr[0];
@@ -223,11 +224,11 @@ static int l_alloclient_send_video(lua_State *L)
                 ptr += 4;
                 pixel += 1;
             }
-            alloclient_send_video(lclient->client, track_id, pixels, width, height);
-            break;
+            ptr = start + stride;
         }
-        default:
-            assert(false); // unsupported format
+        alloclient_send_video(lclient->client, track_id, pixels, width, height);
+    } else {
+        assert(false);
     }
     
     return 0;

@@ -226,6 +226,7 @@ static int l_alloclient_send_video(lua_State *L)
             ptr = start + stride;
         }
         alloclient_send_video(lclient->client, track_id, pixels, width, height);
+        free(pixels);
     } else {
         assert(false);
     }

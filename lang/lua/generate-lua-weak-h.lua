@@ -59,7 +59,8 @@ local funcs = {
 	lua_tonumber = "lua_Number lua_tonumber (lua_State *L, int index)",
 	lua_tolstring = "const char *lua_tolstring (lua_State *L, int index, size_t *len)",
 	lua_topointer = "const void *lua_topointer (lua_State *L, int index)",
-	lua_pushlightuserdata = "void lua_pushlightuserdata (lua_State *L, void *p)"
+	lua_pushlightuserdata = "void lua_pushlightuserdata (lua_State *L, void *p)",
+	luaL_optinteger = "lua_Integer luaL_optinteger(lua_State *L, int nArg, lua_Integer def)",
 }
 
 -- MacOS: Uses -Wl,-undefined,dynamic_lookup, so we can just use regular old lua.h

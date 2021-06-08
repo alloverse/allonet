@@ -71,7 +71,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/simulation/simulation.c
     ${SOURCE_FILES_PREFIX}/simulation/simulation.h
     ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
-    ${SOURCE_FILES_PREFIX}/video/mjpeg.c
+    ${SOURCE_FILES_PREFIX}/video/mjpeg.cpp
     ${SOURCE_FILES_PREFIX}/video/video.c
     ${SOURCE_FILES_PREFIX}/_asset.h
     ${SOURCE_FILES_PREFIX}/arr.c
@@ -97,7 +97,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/util.cpp
     ${SOURCE_FILES_PREFIX}/util.h
     lib/mathc/mathc.c
-    lib/nanojpeg/nanojpeg.c
+    lib/richgel9999-jpegcompressor/jpgd.cpp
+    lib/richgel9999-jpegcompressor/jpge.cpp
     lib/tinyjpeg/tiny_jpeg.c
 )
 

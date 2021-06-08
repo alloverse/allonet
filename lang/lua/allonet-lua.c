@@ -13,6 +13,7 @@
 #include "../../src/util.h"
 #include "../../src/asset.h"
 #include "../../src/simulation/simulation.h"
+#include <allonet/client.h>
 
 //// alloclient structure
 typedef struct l_alloclient
@@ -192,6 +193,44 @@ static int l_alloclient_send_audio(lua_State* L)
     size_t samplelength = bytelength / sizeof(int16_t);
     lua_assert(samplelength == 480 || samplelength == 960);
     alloclient_send_audio(lclient->client, track_id, (int16_t*)data, samplelength);
+    return 0;
+}
+
+static int l_alloclient_send_video(lua_State *L)
+{
+    l_alloclient_t *lclient = check_alloclient(L, 1);
+    int32_t track_id = luaL_checkint(L, 2);
+    size_t bytelength = 0;
+    const uint8_t* data = (uint8_t*)luaL_checklstring(L, 3, &bytelength);
+    size_t width = luaL_checkint(L, 4);
+    size_t height = luaL_checkint(L, 5);
+    const char *format = luaL_optstring(L, 6, "rgba");
+    size_t stride = luaL_optint(L, 7, (int)(width * 4));
+    if (strcmp(format, "rgba") == 0) {
+        alloclient_send_video(lclient->client, track_id, (allopixel*)data, width, height);
+    } else if (strcmp(format, "bgrx8") == 0) {
+        allopixel *pixels = malloc(sizeof(allopixel) * width * height);
+        uint8_t *ptr = (uint8_t*)data;
+        allopixel *pixel = pixels;
+        for (size_t y = 0; y < height; y++) {
+            uint8_t *start = ptr;
+            uint8_t *end = ptr + width * 4;
+            while (ptr < end) {
+                pixel->r = ptr[2];
+                pixel->g = ptr[1];
+                pixel->b = ptr[0];
+                pixel->a = 255;
+                ptr += 4;
+                pixel += 1;
+            }
+            ptr = start + stride;
+        }
+        alloclient_send_video(lclient->client, track_id, pixels, width, height);
+        free(pixels);
+    } else {
+        assert(false);
+    }
+    
     return 0;
 }
 
@@ -506,6 +545,7 @@ static const struct luaL_Reg alloclient_m [] = {
     {"poll", l_alloclient_poll},
     {"send_interaction", l_alloclient_send_interaction},
     {"send_audio", l_alloclient_send_audio},
+    {"send_video", l_alloclient_send_video},
     {"set_intent", l_alloclient_set_intent},
     {"set_state_callback", l_alloclient_set_state_callback},
     {"set_interaction_callback", l_alloclient_set_interaction_callback},

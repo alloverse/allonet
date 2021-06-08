@@ -18,6 +18,7 @@ void  (*lua_gettable_weak) (lua_State *L, int idx) = NULL;
 void  (*lua_pushinteger_weak) (lua_State *L, lua_Integer n) = NULL;
 const char *(*luaL_checklstring_weak) (lua_State *L, int narg, size_t *l) = NULL;
 void  (*lua_createtable_weak) (lua_State *L, int narr, int nrec) = NULL;
+lua_Integer (*luaL_optinteger_weak)(lua_State *L, int nArg, lua_Integer def) = NULL;
 void  (*lua_settable_weak) (lua_State *L, int idx) = NULL;
 int (*luaL_ref_weak) (lua_State *L, int t) = NULL;
 int (*lua_toboolean_weak) (lua_State *L, int index) = NULL;
@@ -77,6 +78,7 @@ void load_weak_lua_symbols()
 	lua_pushinteger_weak = (void  (*) (lua_State *L, lua_Integer n))GetProcAddress(mod, "lua_pushinteger");
 	luaL_checklstring_weak = (const char *(*) (lua_State *L, int narg, size_t *l))GetProcAddress(mod, "luaL_checklstring");
 	lua_createtable_weak = (void  (*) (lua_State *L, int narr, int nrec))GetProcAddress(mod, "lua_createtable");
+	luaL_optinteger_weak = (lua_Integer (*)(lua_State *L, int nArg, lua_Integer def))GetProcAddress(mod, "luaL_optinteger");
 	lua_settable_weak = (void  (*) (lua_State *L, int idx))GetProcAddress(mod, "lua_settable");
 	luaL_ref_weak = (int (*) (lua_State *L, int t))GetProcAddress(mod, "luaL_ref");
 	lua_toboolean_weak = (int (*) (lua_State *L, int index))GetProcAddress(mod, "lua_toboolean");

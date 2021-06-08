@@ -24,6 +24,7 @@ void  lua_gettable (lua_State *L, int idx) WEAK_ATTRIBUTE;
 void  lua_pushinteger (lua_State *L, lua_Integer n) WEAK_ATTRIBUTE;
 const char *luaL_checklstring (lua_State *L, int narg, size_t *l) WEAK_ATTRIBUTE;
 void  lua_createtable (lua_State *L, int narr, int nrec) WEAK_ATTRIBUTE;
+lua_Integer luaL_optinteger(lua_State *L, int nArg, lua_Integer def) WEAK_ATTRIBUTE;
 void  lua_settable (lua_State *L, int idx) WEAK_ATTRIBUTE;
 int luaL_ref (lua_State *L, int t) WEAK_ATTRIBUTE;
 int lua_toboolean (lua_State *L, int index) WEAK_ATTRIBUTE;
@@ -83,6 +84,8 @@ extern const char *(*luaL_checklstring_weak) (lua_State *L, int narg, size_t *l)
 #define luaL_checklstring luaL_checklstring_weak
 extern void  (*lua_createtable_weak) (lua_State *L, int narr, int nrec);
 #define lua_createtable lua_createtable_weak
+extern lua_Integer (*luaL_optinteger_weak)(lua_State *L, int nArg, lua_Integer def);
+#define luaL_optinteger luaL_optinteger_weak
 extern void  (*lua_settable_weak) (lua_State *L, int idx);
 #define lua_settable lua_settable_weak
 extern int (*luaL_ref_weak) (lua_State *L, int t);

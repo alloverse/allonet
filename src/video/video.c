@@ -6,8 +6,14 @@
 
 static void create_packet(ENetPacket **packet, void* encoded, int size)
 {
-    *packet = enet_packet_create(NULL, size + 4, 0 /* unreliable */);
-    memcpy((*packet)->data + 4, encoded, size);
+    if (*packet) {
+        size_t acc = (*packet)->dataLength;
+        enet_packet_resize(*packet, acc + size);
+        memcpy((*packet)->data + acc, encoded, size);
+    } else {
+        *packet = enet_packet_create(NULL, size + 4, 0 /* unreliable */);
+        memcpy((*packet)->data + 4, encoded, size);
+    }
 }
 
 void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
@@ -22,7 +28,7 @@ void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixe
         return;
     }
 
-    ENetPacket *packet;
+    ENetPacket *packet = NULL;
     allo_mjpeg_encode(pixels, pixels_wide, pixels_high, (allo_mjpeg_encode_func*)create_packet, &packet);
     
     const int headerlen = sizeof(int32_t); // track id header

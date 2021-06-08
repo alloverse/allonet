@@ -453,18 +453,17 @@ static void proxy_audio_callback(alloclient *proxyclient, proxy_message *msg)
 static bool bridge_video_callback(alloclient *bridgeclient, uint32_t track_id, allopixel pixels[], int32_t pixels_wide, int32_t pixels_high)
 {
     alloclient *proxyclient = bridgeclient->_backref;
-    proxy_message *msg = proxy_message_create(msg_audio);
+    proxy_message *msg = proxy_message_create(msg_video);
     msg->value.video.track_id = track_id;
     msg->value.video.pixels_wide = pixels_wide;
     msg->value.video.pixels_high = pixels_high;
-    msg->value.video.pixels = calloc(pixels_high*pixels_wide, sizeof(allopixel));
-    memcpy(msg->value.video.pixels, pixels, pixels_high*pixels_wide*sizeof(allopixel));
+    msg->value.video.pixels = pixels;
     enqueue_bridge_to_proxy(_internal(proxyclient), msg);
     return false;
 }
 static void proxy_video_callback(alloclient *proxyclient, proxy_message *msg)
 {
-    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.pixels_wide, msg->value.video.pixels_high, msg->value.video.pixels))
+    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.pixels, msg->value.video.pixels_wide, msg->value.video.pixels_high))
     {
         free(msg->value.video.pixels);
     }
@@ -580,11 +579,11 @@ static void _bridgethread(alloclient *bridgeclient)
 }
 
 // thread: proxy
-alloclient *clientproxy_create(void)
+alloclient *clientproxy_create(alloclient *target)
 {
     alloclient *proxyclient = alloclient_create(false);
     proxyclient->_internal2 = calloc(1, sizeof(clientproxy_internal));
-    _internal(proxyclient)->bridgeclient = alloclient_create(false);
+    _internal(proxyclient)->bridgeclient = target;
     _internal(proxyclient)->bridgeclient->_backref = proxyclient;
     _internal(proxyclient)->bridgeclient->raw_state_delta_callback = bridge_raw_state_delta_callback;
     _internal(proxyclient)->bridgeclient->interaction_callback = bridge_interaction_callback;
@@ -624,3 +623,4 @@ alloclient *clientproxy_create(void)
 
     return proxyclient;
 }
+

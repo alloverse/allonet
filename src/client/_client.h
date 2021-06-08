@@ -2,6 +2,7 @@
 #include <allonet/jobs.h>
 #include <opus.h>
 #include <enet/enet.h>
+#include <cJSON/cJSON.h>
 #include "../delta.h"
 #include <allonet/assetstore.h>
 
@@ -12,9 +13,20 @@ typedef struct interaction_queue {
 
 
 typedef enum {
+    allo_media_type_invalid = -1,
     allo_media_type_audio,
     allo_media_type_video,
 } allo_media_track_type;
+
+typedef enum allo_audio_format {
+    allo_audio_format_invalid = -1,
+    allo_audio_format_opus,
+} allo_audio_format;
+
+typedef enum allo_video_format {
+    allo_video_format_invalid = -1,
+    allo_video_format_mjpeg
+} allo_video_format;
 
 
 typedef struct {
@@ -24,9 +36,10 @@ typedef struct {
         struct {
             OpusDecoder *decoder;
             FILE *debug;
+            allo_audio_format format;
         } audio;
         struct {
-            int empty_structs_not_allowed_placeholder;
+            allo_video_format format;
         } video;
     } info;
 } allo_media_track;
@@ -58,7 +71,7 @@ static inline alloclient_internal *_internal(alloclient *client)
 }
 
 /// Creates a track for track_id unless one is not already created
-extern void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type);
+extern void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type, cJSON *comp);
 /// Free up track resources
 extern void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id);
 extern void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length);

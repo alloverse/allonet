@@ -32,14 +32,20 @@ void entity_added(alloclient *client, allo_entity *ent) {
     cJSON *jtrack_id = cJSON_GetObjectItemCaseSensitive(jmedia, "track_id");
     if (jmedia && jtrack_id) {
         cJSON *jmedia_type = cJSON_GetObjectItemCaseSensitive(jmedia, "type");
-        allo_media_track_type type = allo_media_type_audio;
+        allo_media_track_type type = allo_media_type_invalid;
         char *typeString = cJSON_GetStringValue(jmedia_type);
         if (typeString && strcmp("video", typeString) == 0) {
             type = allo_media_type_video;
+        } else if (typeString && strcmp("audio", typeString) == 0) {
+            type = allo_media_type_audio;
+        } else {
+            fprintf(stderr, "skipping unknown media track type %s\n", typeString);
+            return;
         }
         uint32_t track_id = jtrack_id->valueint;
         
-        _alloclient_media_track_find_or_create(client, track_id, type);
+        _alloclient_media_track_find_or_create(client, track_id, type, jmedia);
+
     }
 }
 

@@ -38,8 +38,10 @@ void __track_create(alloclient_internal_shared *shared, uint32_t track_id, allo_
         }
         assert(track->info.audio.decoder);
     } else if(type == allo_media_type_video) {
-        if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "mjpeg")) {
+        if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
             track->info.video.format = allo_video_format_mjpeg;
+        } else {
+            fprintf(stderr, "Unknown video format for track %d: %s\n", track_id, cJSON_GetStringValue(jformat));
         }
     }
 }

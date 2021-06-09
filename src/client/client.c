@@ -287,7 +287,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         handle_assets(packet->data, packet->dataLength, client);
         } break;
     case CHANNEL_MEDIA: {
-        _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength);
+        _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength-1);
         break; }
     case CHANNEL_CLOCK: {
         cJSON *response = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);

@@ -16,7 +16,7 @@ static void create_packet(ENetPacket **packet, void* encoded, int size)
     }
 }
 
-void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
 {
     if (_internal(client)->peer == NULL) {
         fprintf(stderr, "alloclient: Skipping send video as we don't even have a peer\n");

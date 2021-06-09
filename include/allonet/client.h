@@ -156,6 +156,7 @@ typedef struct alloclient {
     void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
     void (*alloclient_set_intent)(alloclient *client, const allo_client_intent *intent);
     void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
+    void (*alloclient_send_video)(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high);
     void (*alloclient_simulate)(alloclient* client);
     double (*alloclient_get_time)(alloclient* client);
     void (*alloclient_get_stats)(alloclient* client, char *buffer, size_t bufferlen);

@@ -613,6 +613,12 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
     client->alloclient_send_audio(client, track_id, pcm, frameCount);
 }
 
+void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+{
+    client->alloclient_send_video(client, track_id, pixels, pixels_wide, pixels_high);
+}
+
+
 
 void alloclient_simulate(alloclient *client)
 {
@@ -681,6 +687,7 @@ alloclient *_alloclient_create()
     client->alloclient_send_interaction = _alloclient_send_interaction;
     client->alloclient_set_intent = _alloclient_set_intent;
     client->alloclient_send_audio = _alloclient_send_audio;
+    client->alloclient_send_video = _alloclient_send_video;
     client->alloclient_simulate = _alloclient_simulate;
     client->alloclient_get_time = _alloclient_get_time;
     client->alloclient_get_stats = _alloclient_get_stats;

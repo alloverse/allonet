@@ -245,6 +245,23 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
     free(msg->value.audio.pcm);
 }
 
+static void proxy_alloclient_send_video(alloclient *proxyclient, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+{
+    proxy_message *msg = proxy_message_create(msg_video);
+    msg->value.video.pixels = calloc(pixels_wide * pixels_high, sizeof(allopixel));
+    memcpy(msg->value.video.pixels, pixels, sizeof(allopixel)*pixels_wide*pixels_high);
+    msg->value.video.pixels_wide = pixels_wide;
+    msg->value.video.pixels_high = pixels_high;
+    msg->value.video.track_id = track_id;
+    enqueue_proxy_to_bridge(_internal(proxyclient), msg);
+}
+static void bridge_alloclient_send_video(alloclient *bridgeclient, proxy_message *msg)
+{
+    alloclient_send_video(bridgeclient, msg->value.video.track_id, msg->value.video.pixels, msg->value.video.pixels_wide, msg->value.video.pixels_high);
+    // in the best of worlds, we'd use a pool of buffers here to avoid malloc churn
+    free(msg->value.video.pixels);
+}
+
 static void bridge_alloclient_ack(alloclient *bridgeclient, proxy_message *msg)
 {
     alloclient_ack_rev(bridgeclient, msg->value.ack.rev);
@@ -319,6 +336,7 @@ static void(*bridge_message_lookup_table[])(alloclient*, proxy_message*) = {
     [msg_interaction] = bridge_alloclient_send_interaction,
     [msg_intent] = bridge_alloclient_set_intent,
     [msg_audio] = bridge_alloclient_send_audio,
+    [msg_video] = bridge_alloclient_send_video,
     [msg_ack] = bridge_alloclient_ack,
     [msg_asset_request] = bridge_alloclient_asset_request,
     [msg_asset_send_data] = bridge_alloclient_asset_send_data,
@@ -607,6 +625,7 @@ alloclient *clientproxy_create(alloclient *target)
     proxyclient->alloclient_send_interaction = proxy_alloclient_send_interaction;
     proxyclient->alloclient_set_intent = proxy_alloclient_set_intent;
     proxyclient->alloclient_send_audio = proxy_alloclient_send_audio;
+    proxyclient->alloclient_send_video = proxy_alloclient_send_video;
     proxyclient->alloclient_get_time = proxy_alloclient_get_time;
     proxyclient->alloclient_get_stats = proxy_alloclient_get_stats;
     

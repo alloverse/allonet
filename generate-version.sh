@@ -9,6 +9,14 @@ PRODUCT="ALLONET"
 
 mkdir -p "${OUT_DIR}"
 
+if [ ! -f .git ] && [ -f $VERSION_H ]
+then
+    echo "No .git folder but version header exists; exiting gracefully"
+    exit 0
+fi
+
+git describe || exit 1
+
 VERSION=`cd $SCRIPT_DIR; git describe --abbrev=7 --long | sed "y/-/./"`
 SHORTVERSION=`echo $VERSION | cut -f 1-3 -d "."`
 MAJORVERSION=`echo $VERSION | cut -f 1 -d "."`

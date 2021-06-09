@@ -208,6 +208,25 @@ static int l_alloclient_send_video(lua_State *L)
     size_t stride = luaL_optint(L, 7, (int)(width * 4));
     if (strcmp(format, "rgba") == 0) {
         alloclient_send_video(lclient->client, track_id, (allopixel*)data, width, height);
+    } else if (strcmp(format, "xrgb8") == 0) {
+        allopixel *pixels = malloc(sizeof(allopixel) * width * height);
+        uint8_t *ptr = (uint8_t*)data;
+        allopixel *pixel = pixels;
+        for (size_t y = 0; y < height; y++) {
+            uint8_t *start = ptr;
+            uint8_t *end = ptr + width * 4;
+            while (ptr < end) {
+                pixel->r = ptr[1];
+                pixel->g = ptr[2];
+                pixel->b = ptr[3];
+                pixel->a = 255;
+                ptr += 4;
+                pixel += 1;
+            }
+            ptr = start + stride;
+        }
+        alloclient_send_video(lclient->client, track_id, pixels, width, height);
+        free(pixels);
     } else if (strcmp(format, "bgrx8") == 0) {
         allopixel *pixels = malloc(sizeof(allopixel) * width * height);
         uint8_t *ptr = (uint8_t*)data;

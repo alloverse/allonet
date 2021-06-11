@@ -146,6 +146,36 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   allo_interaction_free(response);
 }
 
+static int next_free_track_id = 1;
+
+static void handle_place_allocate_track_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+  cJSON *media_type = cJSON_GetArrayItem(body, 1);
+  cJSON *media_format = cJSON_GetArrayItem(body, 2);
+  cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
+
+  int track_id = next_free_track_id++;
+  cJSON *mediacomp = cjson_create_object(
+    "track_id", cJSON_CreateNumber(track_id),
+    "type", cJSON_Duplicate(media_type, false),
+    "format", cJSON_Duplicate(media_format, false),
+    "metadata", cJSON_Duplicate(media_metadata, true),
+    NULL
+  );
+
+  allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
+
+  cJSON_AddItemToObject(entity->components, "live_media", mediacomp);
+
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+  char* respbodys = cJSON_Print(respbody);
+  cJSON_Delete(respbody);
+  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+  free(respbodys);
+  send_interaction_to_client(serv, client, response);
+  allo_interaction_free(response);
+}
+
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
 {
   cJSON* body = cJSON_Parse(interaction->body);
@@ -164,6 +194,10 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
   else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "remove_entity") == 0)
   {
     handle_place_remove_entity_interaction(serv, client, interaction, body);
+  }
+  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "allocate_track") == 0)
+  {
+    handle_place_allocate_track_interaction(serv, client, interaction, body);
   }
 
   // force sending delta, since the above was likely an important change

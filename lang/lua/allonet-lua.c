@@ -65,7 +65,8 @@ static int l_alloserv_run_standalone(lua_State* L)
 {
   int host = luaL_checkint(L, 1);
   int port = luaL_checkint(L, 2);
-  bool done_successfully = alloserv_run_standalone(host, port);
+  const char *name = luaL_checkstring(L, 3);
+  bool done_successfully = alloserv_run_standalone(host, port, name);
   lua_pushboolean(L, done_successfully);
   return 1;
 }
@@ -74,7 +75,8 @@ static int l_alloserv_start_standalone(lua_State* L)
 {
   int host = luaL_checkint(L, 1);
   int port = luaL_checkint(L, 2);
-  alloserver *serv = alloserv_start_standalone(host, port);
+  const char *name = luaL_checkstring(L, 3);
+  alloserver *serv = alloserv_start_standalone(host, port, name);
   int allosocket = allo_socket_for_select(serv);
   int actualport = serv->_port;
   lua_pushinteger(L, allosocket);

@@ -10,6 +10,7 @@
 static alloserver* serv;
 static allo_entity* place;
 static double last_simulate_at = 0;
+static char *g_placename;
 
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
@@ -56,7 +57,7 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
   client->avatar_entity_id = allo_strdup(ava->id);
 
-  cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString("Menu"), NULL);
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString(g_placename), NULL);
   char* respbodys = cJSON_Print(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
   free(respbodys);
@@ -377,10 +378,6 @@ static allo_entity* add_place(alloserver *serv)
       "time", cJSON_CreateNumber(0.0),
       NULL
     ),
-    "decorations", cjson_create_object(
-      "type", cJSON_CreateString("mainmenu"),
-      NULL
-    ),
     NULL
   );
 
@@ -389,9 +386,9 @@ static allo_entity* add_place(alloserver *serv)
   return e;
 }
 
-bool alloserv_run_standalone(int host, int port)
+bool alloserv_run_standalone(int host, int port, const char *placename)
 {
-  alloserver *serv = alloserv_start_standalone(host, port);
+  alloserver *serv = alloserv_start_standalone(host, port, placename);
   
   if (serv == NULL)
   {
@@ -412,7 +409,7 @@ bool alloserv_run_standalone(int host, int port)
   return true;
 }
 
-alloserver *alloserv_start_standalone(int listenhost, int port)
+alloserver *alloserv_start_standalone(int listenhost, int port, const char *placename)
 {
   if (!allo_initialize(false))
   {
@@ -421,6 +418,8 @@ alloserver *alloserv_start_standalone(int listenhost, int port)
   }
 
   assert(serv == NULL);
+
+  g_placename = strdup(placename);
 
   int retries = 3;
   while (!serv)

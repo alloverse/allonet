@@ -57,10 +57,10 @@ void alloserv_stop(alloserver* serv);
 void alloserv_disconnect(alloserver *serv, alloserver_client *client, int reason_code);
 
 // run a minimal standalone C server. returns when it shuts down. false means it broke.
-bool alloserv_run_standalone(int listenhost, int port);
+bool alloserv_run_standalone(int listenhost, int port, const char *placename);
 
 // start it but don't run it. returns allosocket.
-alloserver *alloserv_start_standalone(int listenhost, int port);
+alloserver *alloserv_start_standalone(int listenhost, int port, const char *placename);
 // call this frequently to run it. returns false if server has broken and shut down; then you should call stop on it to clean up.
 bool alloserv_poll_standalone(int allosocket);
 // and then call this to stop and clean up state.

@@ -280,8 +280,16 @@ static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, si
     mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
     int b2p = _internal(proxyclient)->bridge_to_proxy_len;
     mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    
+    char extra[255];
+    _internal(proxyclient)->bridgeclient->alloclient_get_stats(_internal(proxyclient)->bridgeclient, extra, 255);
 
-    snprintf(buffer, bufferlen, "p2b %d\nb2p %d\ntotal\ts:%u r:%u\nch0-diffs\ts:%u r:%u\nch1-cmd\ts:%u r:%u\nch2-asset\ts:%u r:%u\nch3-media\ts:%u r:%u\nch4-clock\ts:%u r:%u\nState: set:%u delta:%u", p2b, b2p, allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0], allo_statistics.bytes_sent[1], allo_statistics.bytes_recv[1], allo_statistics.bytes_sent[2], allo_statistics.bytes_recv[2], allo_statistics.bytes_sent[3], allo_statistics.bytes_recv[3], allo_statistics.bytes_sent[4], allo_statistics.bytes_recv[4], allo_statistics.bytes_sent[5], allo_statistics.bytes_recv[5], allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
+    snprintf(buffer, bufferlen, 
+        "p2b %d\nb2p %d\n"
+        "%s",
+        p2b, b2p, 
+        extra
+    );
 }
 
 static void proxy_alloclient_asset_request(alloclient *proxyclient, const char *asset_id, const char *entity_id) {

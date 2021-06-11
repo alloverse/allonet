@@ -645,14 +645,36 @@ static double _alloclient_get_time(alloclient* client)
     return get_ts_monod() + client->clock_deltaToServer;
 }
 
+static char *
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
     client->alloclient_get_stats(client, buffer, bufferlen);
 }
 static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
-    (void)client;
-    snprintf(buffer, bufferlen, "{\"ndelta_set\": %ud, \"ndelta_merge\": %ud}", allo_statistics.ndelta_set, allo_statistics.ndelta_merge);
+    snprintf(buffer, bufferlen,
+        "total\ts:%u r:%u\n"
+        "ch0-diffs\ts:%u r:%u\n"
+        "ch1-cmd\ts:%u r:%u\n"
+        "ch2-asset\ts:%u r:%u\n"
+        "ch3-media\ts:%u r:%u\n"
+        "ch4-clock\ts:%u r:%u\n"
+        "State: set:%u delta:%u\n"
+        "Packets lost\t%d\n"
+        "RTT\t%dms\t"
+        "Packet throttle\t%d\n"
+        ,
+        allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0],
+        allo_statistics.bytes_sent[1], allo_statistics.bytes_recv[1],
+        allo_statistics.bytes_sent[2], allo_statistics.bytes_recv[2],
+        allo_statistics.bytes_sent[3], allo_statistics.bytes_recv[3],
+        allo_statistics.bytes_sent[4], allo_statistics.bytes_recv[4],
+        allo_statistics.bytes_sent[5], allo_statistics.bytes_recv[5],
+        allo_statistics.ndelta_set, allo_statistics.ndelta_merge,
+        _internal(client)->peer->packetsLost,
+        _internal(client)->peer->roundTripTime,
+        _internal(client)->peer->packetThrottle,
+    );
 }
 
 void alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id) {

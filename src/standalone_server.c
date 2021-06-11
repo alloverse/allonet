@@ -52,11 +52,12 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   const int version = cJSON_GetArrayItem(body, 2)->valueint; (void)version;
-  cJSON* identity = cJSON_GetArrayItem(body, 4); (void)identity;
+  cJSON* identity = cJSON_GetArrayItem(body, 4);
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
 
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
   client->avatar_entity_id = allo_strdup(ava->id);
+  client->identity = cJSON_Duplicate(identity, true);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString(g_placename), NULL);
   char* respbodys = cJSON_Print(respbody);

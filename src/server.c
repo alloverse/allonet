@@ -66,6 +66,7 @@ static alloserver_client *_client_create()
 static void alloserv_client_free(alloserver_client *client)
 {
     allo_client_intent_free(client->intent);
+    cJSON_Delete(client->identity);
     free(_clientinternal(client));
     free(client);
 }
@@ -396,6 +397,33 @@ void alloserv_stop(alloserver* serv)
 int allo_socket_for_select(alloserver *serv)
 {
     return _servinternal(serv)->enet->socket;
+}
+
+void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
+{
+    int offset = snprintf(buffer, bufferlen,
+        "\tPeers\t%lu (limited %lu)\n"
+        ,
+        _servinternal(server)->enet->connectedPeers, _servinternal(server)->enet->bandwidthLimitedPeers
+    );
+    alloserver_client *client;
+
+    LIST_FOREACH(client, &server->clients, pointers) {
+        ENetPeer *peer = _clientinternal(client)->peer;
+        
+        const char *display_name = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(client->identity, "display_name"));
+        offset += snprintf(buffer + offset, bufferlen - offset,
+            "Client %s (agent %s, avatar %s):\n"
+            "\tPackets lost\t%d\n"
+            "\tRTT\t%dms\t\n"
+            "\tPacket throttle\t%d\n"
+            ,
+            display_name, client->agent_id, client->avatar_entity_id,
+            peer->packetsLost,
+            peer->roundTripTime,
+            peer->packetThrottle
+        );
+    }
 }
 
 wanted_asset *_asset_is_wanted(const char *asset_id, alloserver *server) {

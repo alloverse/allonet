@@ -14,6 +14,7 @@ typedef struct alloserver_client {
     allo_client_intent *intent;
     char *avatar_entity_id;
     char agent_id[AGENT_ID_LENGTH+1];
+    cJSON *identity;
 
     // private
     void *_internal;
@@ -55,6 +56,8 @@ void alloserv_stop(alloserver* serv);
 // disconnect one client for one reason, first transmitting all its messages.
 // clients_callback() is called once the disconnection is successful.
 void alloserv_disconnect(alloserver *serv, alloserver_client *client, int reason_code);
+
+void alloserv_get_stats(alloserver* serv, char *buffer, size_t bufferlen);
 
 // run a minimal standalone C server. returns when it shuts down. false means it broke.
 bool alloserv_run_standalone(int listenhost, int port, const char *placename);

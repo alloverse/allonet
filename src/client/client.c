@@ -645,7 +645,7 @@ static double _alloclient_get_time(alloclient* client)
     return get_ts_monod() + client->clock_deltaToServer;
 }
 
-static char *
+
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
     client->alloclient_get_stats(client, buffer, bufferlen);

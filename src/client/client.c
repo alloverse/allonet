@@ -661,7 +661,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
         "ch4-clock\ts:%u r:%u\n"
         "State: set:%u delta:%u\n"
         "Packets lost\t%d\n"
-        "RTT\t%dms\t"
+        "RTT\t%dms\t\n"
         "Packet throttle\t%d\n"
         ,
         allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0],

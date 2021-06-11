@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <enet/enet.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <allonet/allonet.h>
 #include "util.h"
@@ -498,7 +499,7 @@ bool alloserv_poll_standalone(int allosocket)
   int dtmillis = dt*1000;
 
   int selectr = enet_socketset_select(allosocket, &set, NULL, dtmillis);
-  if (selectr < 0) {
+  if (selectr < 0 && errno != EINTR) {
     perror("select failed, terminating");
     return false;
   }

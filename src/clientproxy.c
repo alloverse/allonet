@@ -130,9 +130,11 @@ typedef struct {
     mtx_t bridge_to_proxy_mtx;
     bool running;
     int exit_code;
-    proxy_message_stailq proxy_to_bridge;
+    proxy_message_stailq *proxy_to_bridge;
+    proxy_message_stailq *proxy_to_bridge_shadow;
     int32_t proxy_to_bridge_len;
-    proxy_message_stailq bridge_to_proxy;
+    proxy_message_stailq *bridge_to_proxy;
+    proxy_message_stailq *bridge_to_proxy_shadow;
     int32_t bridge_to_proxy_len;
 } clientproxy_internal;
 
@@ -144,7 +146,7 @@ static clientproxy_internal *_internal(alloclient *client)
 static void enqueue_proxy_to_bridge(clientproxy_internal *internal, proxy_message *msg)
 {
     mtx_lock(&internal->proxy_to_bridge_mtx);
-    STAILQ_INSERT_TAIL(&internal->proxy_to_bridge, msg, entries);
+    STAILQ_INSERT_TAIL(internal->proxy_to_bridge, msg, entries);
     internal->proxy_to_bridge_len++;
     mtx_unlock(&internal->proxy_to_bridge_mtx);
 }
@@ -152,7 +154,7 @@ static void enqueue_proxy_to_bridge(clientproxy_internal *internal, proxy_messag
 static void enqueue_bridge_to_proxy(clientproxy_internal *internal, proxy_message *msg)
 {
     mtx_lock(&internal->bridge_to_proxy_mtx);
-    STAILQ_INSERT_TAIL(&internal->bridge_to_proxy, msg, entries);
+    STAILQ_INSERT_TAIL(internal->bridge_to_proxy, msg, entries);
     internal->bridge_to_proxy_len++;
     mtx_unlock(&internal->bridge_to_proxy_mtx);
 }
@@ -190,6 +192,10 @@ static void proxy_alloclient_disconnect(alloclient *proxyclient, int reason)
     thrd_join(_internal(proxyclient)->thr, NULL);
     mtx_destroy(&_internal(proxyclient)->bridge_to_proxy_mtx);
     mtx_destroy(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    free(_internal(proxyclient)->bridge_to_proxy);
+    free(_internal(proxyclient)->bridge_to_proxy_shadow);
+    free(_internal(proxyclient)->proxy_to_bridge);
+    free(_internal(proxyclient)->proxy_to_bridge_shadow);
     free(proxyclient->_internal2);
     // TODO: clean out the message queues, goddammit.
     original_alloclient_disconnect(proxyclient, reason);
@@ -547,11 +553,24 @@ static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
 static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
 {
     (void)timeout_ms;
+    
+    // 1. take lock
     mtx_lock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    // 2. swap the front and back queues, so that we can start processing the back queue (which was front queue)
+    //    while front queue can start queueing up new messages
+    proxy_message_stailq *queue_to_process = _internal(proxyclient)->bridge_to_proxy;
+    _internal(proxyclient)->bridge_to_proxy = _internal(proxyclient)->bridge_to_proxy_shadow;
+    _internal(proxyclient)->bridge_to_proxy_shadow = queue_to_process;
+    // 3. clear state that pertained to the front queue (because it's now the back queue)
+    int messagecount = _internal(proxyclient)->bridge_to_proxy_len; (void)messagecount;
+    _internal(proxyclient)->bridge_to_proxy_len = 0;
+    mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    
+    // 4. Okay, no lock held. Start processing messages.
     proxy_message *msg = NULL;
-    while((msg = STAILQ_FIRST(&_internal(proxyclient)->bridge_to_proxy))) {
-        STAILQ_REMOVE_HEAD(&_internal(proxyclient)->bridge_to_proxy, entries);
-        _internal(proxyclient)->bridge_to_proxy_len--;
+    while((msg = STAILQ_FIRST(queue_to_process))) {
+        STAILQ_REMOVE_HEAD(queue_to_process, entries);
+        
         bool was_disconnect = msg->type == msg_disconnect;
         void (*callback)(alloclient*, proxy_message*) = proxy_message_lookup_table[msg->type];
         assert(callback != NULL && "missing proxy callback");
@@ -562,7 +581,7 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
             break;
         }
     }
-    mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
+    
     return true;
 }
 
@@ -572,18 +591,27 @@ static bool proxy_alloclient_poll(alloclient *proxyclient, int timeout_ms)
 // thread: bridge
 static void bridge_check_for_messages(alloclient *bridgeclient)
 {
+    
     alloclient *proxyclient = bridgeclient->_backref;
+    
+    // same dance as in proxy_alloclient_poll
     mtx_lock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    proxy_message_stailq *queue_to_process = _internal(proxyclient)->proxy_to_bridge;
+    _internal(proxyclient)->proxy_to_bridge = _internal(proxyclient)->proxy_to_bridge_shadow;
+    _internal(proxyclient)->proxy_to_bridge_shadow = queue_to_process;
+    int messagecount = _internal(proxyclient)->proxy_to_bridge_len; (void)messagecount;
+    _internal(proxyclient)->proxy_to_bridge_len = 0;
+    mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
+    
     proxy_message *msg = NULL;
-    while((msg = STAILQ_FIRST(&_internal(proxyclient)->proxy_to_bridge))) {
-        STAILQ_REMOVE_HEAD(&_internal(proxyclient)->proxy_to_bridge, entries);
+    while((msg = STAILQ_FIRST(queue_to_process))) {
+        STAILQ_REMOVE_HEAD(queue_to_process, entries);
         _internal(proxyclient)->proxy_to_bridge_len--;
         void (*callback)(alloclient*, proxy_message*) = bridge_message_lookup_table[msg->type];
         assert(callback != NULL && "missing bridge callback");
         callback(bridgeclient, msg);
         free(msg);
     }
-    mtx_unlock(&_internal(proxyclient)->proxy_to_bridge_mtx);
 }
 
 // thread: bridge
@@ -622,8 +650,14 @@ alloclient *clientproxy_create(alloclient *target)
     _internal(proxyclient)->bridgeclient->asset_request_bytes_callback = bridge_asset_request_bytes_callback;
     _internal(proxyclient)->running = true;
 
-    STAILQ_INIT(&_internal(proxyclient)->proxy_to_bridge);
-    STAILQ_INIT(&_internal(proxyclient)->bridge_to_proxy);
+    _internal(proxyclient)->proxy_to_bridge = calloc(1, sizeof(proxy_message_stailq));
+    STAILQ_INIT(_internal(proxyclient)->proxy_to_bridge);
+    _internal(proxyclient)->proxy_to_bridge_shadow = calloc(1, sizeof(proxy_message_stailq));
+    STAILQ_INIT(_internal(proxyclient)->proxy_to_bridge_shadow);
+    _internal(proxyclient)->bridge_to_proxy = calloc(1, sizeof(proxy_message_stailq));
+    STAILQ_INIT(_internal(proxyclient)->bridge_to_proxy);
+    _internal(proxyclient)->bridge_to_proxy_shadow = calloc(1, sizeof(proxy_message_stailq));
+    STAILQ_INIT(_internal(proxyclient)->bridge_to_proxy_shadow);
 
     original_alloclient_disconnect = proxyclient->alloclient_disconnect;
     original_alloclient_set_intent = proxyclient->alloclient_set_intent;

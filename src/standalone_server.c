@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include <allonet/allonet.h>
+#include "media/media.h"
 #include "util.h"
 #include "delta.h"
 
@@ -12,6 +13,7 @@ static alloserver* serv;
 static allo_entity* place;
 static double last_simulate_at = 0;
 static char *g_placename;
+static allo_media_track_list mediatracks;
 
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
@@ -25,20 +27,34 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
 
 static void clients_changed(alloserver* serv, alloserver_client* added, alloserver_client* removed)
 {
-  (void)added;
-  if (removed) {
-    allo_entity* entity = serv->state.entities.lh_first;
-    while (entity)
-    {
-      allo_entity* to_delete = entity;
-      entity = entity->pointers.le_next;
-      if (strcmp(to_delete->owner_agent_id, removed->agent_id) == 0)
-      {
-        LIST_REMOVE(to_delete, pointers);
-        entity_destroy(to_delete);
-      }
+    (void)added;
+    if (removed) {
+        allo_entity* entity = serv->state.entities.lh_first;
+        while (entity) {
+            allo_entity* to_delete = entity;
+            entity = entity->pointers.le_next;
+            if (strcmp(to_delete->owner_agent_id, removed->agent_id) == 0) {
+                LIST_REMOVE(to_delete, pointers);
+                entity_destroy(to_delete);
+            }
+        }
+        
+        for (size_t i = 0; i < mediatracks.length; i++) {
+            /// Remove the client from any track recipient lists
+            allo_media_track *track = &mediatracks.data[i];
+            for (size_t j = 0; j < track->recipients.length; j++) {
+                if (track->recipients.data[j] == removed) {
+                    arr_splice(&track->recipients, j, 1);
+                    break;
+                }
+            }
+            // Remove tracks where client is the origin
+            if (track->origin == removed) {
+                arr_splice(&mediatracks, i, 1);
+                --i;
+            }
+        }
     }
-  }
 }
 
 static void handle_intent(alloserver* serv, alloserver_client* client, allo_client_intent *intent)
@@ -152,30 +168,40 @@ static int next_free_track_id = 1;
 
 static void handle_place_allocate_track_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  cJSON *media_type = cJSON_GetArrayItem(body, 1);
-  cJSON *media_format = cJSON_GetArrayItem(body, 2);
-  cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
+    cJSON *media_type = cJSON_GetArrayItem(body, 1);
+    cJSON *media_format = cJSON_GetArrayItem(body, 2);
+    cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
 
-  int track_id = next_free_track_id++;
-  cJSON *mediacomp = cjson_create_object(
-    "track_id", cJSON_CreateNumber(track_id),
-    "type", cJSON_Duplicate(media_type, false),
-    "format", cJSON_Duplicate(media_format, false),
-    "metadata", cJSON_Duplicate(media_metadata, true),
-    NULL
-  );
+    int track_id = next_free_track_id++;
+    cJSON *mediacomp = cjson_create_object(
+        "track_id", cJSON_CreateNumber(track_id),
+        "type", cJSON_Duplicate(media_type, false),
+        "format", cJSON_Duplicate(media_format, false),
+        "metadata", cJSON_Duplicate(media_metadata, true),
+        NULL
+    );
+    
+    allo_media_track *track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
+    track->origin = client;
+    alloserver_client *cl;
+    // TODO: should be opt-in but until visor opts in:
+    LIST_FOREACH(cl, &serv->clients, pointers) {
+        if (cl != client) {
+            arr_push(&track->recipients, cl);
+        }
+    }
+    
+    allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
 
-  allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
+    cJSON_AddItemToObject(entity->components, "live_media", mediacomp);
 
-  cJSON_AddItemToObject(entity->components, "live_media", mediacomp);
-
-  cJSON* respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
-  char* respbodys = cJSON_Print(respbody);
-  cJSON_Delete(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
-  free(respbodys);
-  send_interaction_to_client(serv, client, response);
-  allo_interaction_free(response);
+    cJSON* respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+    char* respbodys = cJSON_Print(respbody);
+    cJSON_Delete(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
@@ -245,32 +271,56 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   free((void*)json);
 }
 
+static void handle_media(alloserver *serv, alloserver_client *client, const uint8_t *data, size_t length)
+{
+    // get the track_id from the top of data
+    uint32_t track_id;
+    assert(length >= sizeof(track_id) + 3);
+    memcpy(&track_id, data, sizeof(track_id));
+    track_id = ntohl(track_id);
+    
+    // check agains list of open tracks
+    allo_media_track *track = _media_track_find(&mediatracks, track_id);
+    
+    // ignore this data if track was never allocated
+    if (track == NULL) {
+        return;
+    }
+    
+    // igore if the sender is not client that allocated the track
+    if (track->origin != client) {
+        return;
+    }
+    
+    // pass information on to all peers in track recipient list
+    for (size_t i = 0; i < track->recipients.length; i++) {
+        ENetPacket *packet = enet_packet_create(data, length, 0);
+        alloserv_send_enet(serv, track->recipients.data[i], CHANNEL_MEDIA, packet);
+    }
+}
+
 static void received_from_client(alloserver* serv, alloserver_client* client, allochannel channel, const uint8_t* data, size_t data_length)
 {
-  if (channel == CHANNEL_STATEDIFFS)
-  {
-    cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
-    const cJSON* ntvintent = cJSON_GetObjectItemCaseSensitive(cmd, "intent");
-    allo_client_intent *intent = allo_client_intent_parse_cjson(ntvintent);
-    handle_intent(serv, client, intent);
-    allo_client_intent_free(intent);
-    cJSON_Delete(cmd);
-  }
-  else if (channel == CHANNEL_COMMANDS)
-  {
-    cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
-    allo_interaction* interaction = allo_interaction_parse_cjson(cmd);
-    handle_interaction(serv, client, interaction);
-    allo_interaction_free(interaction);
-    cJSON_Delete(cmd);
-  }
-  else if (channel == CHANNEL_CLOCK)
-  {
-    cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
-    handle_clock(serv, client, cmd);
-    cJSON_Delete(cmd);
-  }
-  
+    if (channel == CHANNEL_STATEDIFFS) {
+        cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
+        const cJSON* ntvintent = cJSON_GetObjectItemCaseSensitive(cmd, "intent");
+        allo_client_intent *intent = allo_client_intent_parse_cjson(ntvintent);
+        handle_intent(serv, client, intent);
+        allo_client_intent_free(intent);
+        cJSON_Delete(cmd);
+    } else if (channel == CHANNEL_COMMANDS) {
+        cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
+        allo_interaction* interaction = allo_interaction_parse_cjson(cmd);
+        handle_interaction(serv, client, interaction);
+        allo_interaction_free(interaction);
+        cJSON_Delete(cmd);
+    } else if (channel == CHANNEL_CLOCK) {
+        cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
+        handle_clock(serv, client, cmd);
+        cJSON_Delete(cmd);
+    } else if (channel == CHANNEL_MEDIA) {
+        handle_media(serv, client, data, data_length);
+    }
 }
 
 static statehistory_t hist;
@@ -424,25 +474,26 @@ static allo_entity* add_place(alloserver *serv)
 
 bool alloserv_run_standalone(int host, int port, const char *placename)
 {
-  alloserver *serv = alloserv_start_standalone(host, port, placename);
+    alloserver *serv = alloserv_start_standalone(host, port, placename);
+    arr_init(&mediatracks);
   
-  if (serv == NULL)
-  {
-    return false;
-  }
-  int allosocket = allo_socket_for_select(serv);
-
-  while (1) {
-    if (alloserv_poll_standalone(allosocket) == false)
+    if (serv == NULL)
     {
-      alloserv_stop_standalone();
-      return false;
+        return false;
     }
-  }
+    int allosocket = allo_socket_for_select(serv);
 
-  alloserv_stop_standalone();
+    while (1) {
+        if (alloserv_poll_standalone(allosocket) == false)
+        {
+            alloserv_stop_standalone();
+            return false;
+        }
+    }
 
-  return true;
+    alloserv_stop_standalone();
+
+    return true;
 }
 
 alloserver *alloserv_start_standalone(int listenhost, int port, const char *placename)

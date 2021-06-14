@@ -8,6 +8,7 @@
 #include "util.h"
 #include <allonet/arr.h>
 #include "asset.h"
+#include "media/media.h"
 #include <allonet/assetstore.h>
 
 #if 0
@@ -32,6 +33,7 @@ typedef struct {
     /// map from asset_id to list of client peers
     arr_t(wanted_asset*) wanted_assets;
     assetstore assetstore;
+    allo_media_track_list media_tracks;
 } alloserv_internal;
 
 typedef struct {
@@ -231,17 +233,7 @@ static void handle_incoming_data(alloserver *serv, alloserver_client *client, al
         allo_statistics.bytes_recv[1+channel] += packet->dataLength;
     }
     
-    if(channel == CHANNEL_MEDIA)
-    {
-        alloserver_client *other;
-        LIST_FOREACH(other, &serv->clients, pointers)
-        {
-            if(other == client) continue;
-
-            allo_send(serv, other, CHANNEL_MEDIA, packet->data, packet->dataLength);
-        }
-        return;
-    } else if (channel == CHANNEL_ASSETS) {
+    if (channel == CHANNEL_ASSETS) {
         handle_assets(packet->data, packet->dataLength, serv, client);
         return;
     }
@@ -342,6 +334,7 @@ alloserver *allo_listen(int listenhost, int port)
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     arr_init(&_servinternal(serv)->wanted_assets);
+    arr_init(&_servinternal(serv)->media_tracks);
     
     assetstore *assetstore = &(_servinternal(serv)->assetstore);
     asset_memstore_init(assetstore);

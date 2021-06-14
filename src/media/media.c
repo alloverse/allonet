@@ -9,9 +9,9 @@
 #define DEBUG_AUDIO 0
 
 
-allo_media_track *__track_find(alloclient_internal_shared *shared, uint32_t track_id) {
-    for(size_t i = 0; i < shared->media_tracks.length; i++) {
-        allo_media_track *track = &shared->media_tracks.data[i];
+allo_media_track *_media_track_find(allo_media_track_list *tracklist, uint32_t track_id) {
+    for(size_t i = 0; i < tracklist->length; i++) {
+        allo_media_track *track = &tracklist->data[i];
         if (track->track_id == track_id) {
             return track;
         }
@@ -19,13 +19,73 @@ allo_media_track *__track_find(alloclient_internal_shared *shared, uint32_t trac
     return NULL;
 }
 
-void __track_create(alloclient_internal_shared *shared, uint32_t track_id, allo_media_track_type type, cJSON *comp) {
-    allo_media_track_list *tracks = &shared->media_tracks;
+allo_media_track *_media_track_create(allo_media_track_list *tracklist, uint32_t track_id, allo_media_track_type type) {
     // reserve 1 extra and use that as our track data
-    arr_reserve(tracks, tracks->length+1);
-    allo_media_track *track = &tracks->data[tracks->length++];
+    arr_reserve(tracklist, tracklist->length + 1);
+    allo_media_track *track = &tracklist->data[tracklist->length++];
     track->track_id = track_id;
     track->type = type;
+    arr_init(&track->recipients);
+    return track;
+}
+
+allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, uint32_t track_id, allo_media_track_type type) {
+    allo_media_track *track = _media_track_find(tracklist, track_id);
+    if (track) {
+        return track;
+    } else {
+        return _media_track_create(tracklist, track_id, type);
+    }
+}
+
+void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track) {
+    if (!track) return;
+    
+    if (track->type == allo_media_type_audio) {
+        assert(track->info.audio.decoder);
+
+        if (DEBUG_AUDIO) {
+            char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
+            fprintf(stderr, "Closing decoder for %s\n", name);
+            if (track->info.audio.debug) {
+                fclose(track->info.audio.debug);
+                track->info.audio.debug = NULL;
+            }
+        }
+        opus_decoder_destroy(track->info.audio.decoder);
+        track->info.audio.decoder = NULL;
+    } else {
+        //TODO: video stuff
+    }
+    
+    // remove from the list
+    for (size_t i = 0; i < tracklist->length; i++) {
+        if (track == &tracklist->data[i]) {
+            arr_splice(tracklist, i, 1);
+            break;
+        }
+    }
+}
+
+allo_media_track_type _media_track_type_from_string(const char *string) {
+    if (string == NULL) return allo_media_type_invalid;
+    if (strcmp("video", string) == 0) {
+        return allo_media_type_video;
+    } else if (strcmp("audio", string) == 0) {
+        return allo_media_type_audio;
+    } else {
+        fprintf(stderr, "skipping unknown media track type %s\n", string);
+        return allo_media_type_invalid;
+    }
+}
+
+
+static inline allo_media_track *__track_find(alloclient_internal_shared *shared, uint32_t track_id) {
+    return _media_track_find(&shared->media_tracks, track_id);
+}
+
+static inline void __track_create(alloclient_internal_shared *shared, uint32_t track_id, allo_media_track_type type, cJSON *comp) {
+    allo_media_track *track = _media_track_create(&shared->media_tracks, track_id, type);
     cJSON *jformat = cJSON_GetObjectItemCaseSensitive(comp, "format");
     if (type == allo_media_type_audio) {
         int err;
@@ -48,35 +108,8 @@ void __track_create(alloclient_internal_shared *shared, uint32_t track_id, allo_
     }
 }
 
-void __track_destroy(alloclient_internal_shared *shared, allo_media_track *track) {
-    if (!track) return;
-    
-    allo_media_track_list *tracks = &shared->media_tracks;
-    
-    if (track->type == allo_media_type_audio) {
-        assert(track->info.audio.decoder);
-
-        if (DEBUG_AUDIO) {
-            char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
-            fprintf(stderr, "Closing decoder for %s\n", name);
-            if (track->info.audio.debug) {
-                fclose(track->info.audio.debug);
-                track->info.audio.debug = NULL;
-            }
-        }
-        opus_decoder_destroy(track->info.audio.decoder);
-        track->info.audio.decoder = NULL;
-    } else {
-        //TODO: video stuff
-    }
-    
-    // remove from the list
-    for (size_t i = 0; i < tracks->length; i++) {
-        if (track == &tracks->data[i]) {
-            arr_splice(tracks, i, 1);
-            break;
-        }
-    }
+static inline void __track_destroy(alloclient_internal_shared *shared, allo_media_track *track) {
+    _media_track_destroy(&shared->media_tracks, track);
 }
 
 

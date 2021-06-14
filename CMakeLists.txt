@@ -70,6 +70,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/simulation/simulation.c
     ${SOURCE_FILES_PREFIX}/simulation/simulation.h
     ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
+    ${SOURCE_FILES_PREFIX}/media/media.h
     ${SOURCE_FILES_PREFIX}/media/media.c
     ${SOURCE_FILES_PREFIX}/media/audio/audio.c
     ${SOURCE_FILES_PREFIX}/media/video/video.c

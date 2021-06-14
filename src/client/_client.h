@@ -4,6 +4,7 @@
 #include <enet/enet.h>
 #include <cJSON/cJSON.h>
 #include "../delta.h"
+#include "../media/media.h"
 #include <allonet/assetstore.h>
 
 typedef struct interaction_queue {
@@ -11,40 +12,6 @@ typedef struct interaction_queue {
     LIST_ENTRY(interaction_queue) pointers;
 } interaction_queue;
 
-
-typedef enum {
-    allo_media_type_invalid = -1,
-    allo_media_type_audio,
-    allo_media_type_video,
-} allo_media_track_type;
-
-typedef enum allo_audio_format {
-    allo_audio_format_invalid = -1,
-    allo_audio_format_opus,
-} allo_audio_format;
-
-typedef enum allo_video_format {
-    allo_video_format_invalid = -1,
-    allo_video_format_mjpeg
-} allo_video_format;
-
-
-typedef struct {
-    uint32_t track_id;
-    allo_media_track_type type;
-    union {
-        struct {
-            OpusDecoder *decoder;
-            FILE *debug;
-            allo_audio_format format;
-        } audio;
-        struct {
-            allo_video_format format;
-        } video;
-    } info;
-} allo_media_track;
-
-typedef arr_t(allo_media_track) allo_media_track_list;
 
 typedef struct {
     mtx_t lock;

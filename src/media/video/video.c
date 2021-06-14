@@ -1,5 +1,5 @@
-#include "../client/_client.h"
-#include "../util.h"
+#include "../../client/_client.h"
+#include "../../util.h"
 #include "mjpeg.h"
 #include <string.h>
 #include <assert.h>

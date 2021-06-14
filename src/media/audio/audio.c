@@ -1,8 +1,8 @@
-#include "_client.h"
+#include "../../client/_client.h"
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "../util.h"
+#include "../../util.h"
 #include "../video/mjpeg.h"
 
 #define DEBUG_AUDIO 0

@@ -65,14 +65,14 @@ set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/client/_client.h
     ${SOURCE_FILES_PREFIX}/client/client.c
-    ${SOURCE_FILES_PREFIX}/client/audio.c
     ${SOURCE_FILES_PREFIX}/simulation/grabbing.c
     ${SOURCE_FILES_PREFIX}/simulation/pose_movement.c
     ${SOURCE_FILES_PREFIX}/simulation/simulation.c
     ${SOURCE_FILES_PREFIX}/simulation/simulation.h
     ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
-    ${SOURCE_FILES_PREFIX}/video/mjpeg.cpp
-    ${SOURCE_FILES_PREFIX}/video/video.c
+    ${SOURCE_FILES_PREFIX}/media/audio/audio.c
+    ${SOURCE_FILES_PREFIX}/media/video/mjpeg.cpp
+    ${SOURCE_FILES_PREFIX}/media/video/video.c
     ${SOURCE_FILES_PREFIX}/_asset.h
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/asset.c

@@ -44,7 +44,7 @@ static void audio_track_destroy(allo_media_track *track)
     track->info.audio.decoder = NULL;
 }
 
-static void parse_audio(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length)
+static void parse_audio(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length, mtx_t *unlock_me)
 {    
     uint32_t track_id = track->track_id;
     OpusDecoder *decoder = track->info.audio.decoder;
@@ -60,7 +60,7 @@ static void parse_audio(alloclient *client, allo_media_track *track, unsigned ch
         fflush(debugFile);
     }
 
-    _alloclient_internal_shared_end(client);
+    mtx_unlock(unlock_me);
     
     if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
         free(pcm);

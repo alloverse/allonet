@@ -120,7 +120,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         return;
     }
     
-    allo_media_subsystems[track->type].parse(client, track, data, length);
+    allo_media_subsystems[track->type].parse(client, track, data, length, &shared->lock);
 }
 
 allo_media_subsystem allo_media_subsystems[allo_media_type_count];

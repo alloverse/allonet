@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <opus.h>
 #include <enet/enet.h>
+#include <tinycthread.h>
 #include "allonet/arr.h"
 
 typedef enum {
@@ -48,7 +49,7 @@ typedef struct alloclient alloclient;
 typedef struct allo_media_subsystem {
     void(*track_initialize)(allo_media_track *track, cJSON *component);
     void(*track_destroy)(allo_media_track *track);
-    void(*parse)(alloclient *client, allo_media_track *track, unsigned char *data, size_t length);
+    void(*parse)(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, mtx_t *unlock_me);
 } allo_media_subsystem;
 extern allo_media_subsystem allo_audio_subsystem;
 extern allo_media_subsystem allo_video_subsystem;

@@ -19,12 +19,12 @@ static void video_track_destroy(allo_media_track *track)
     (void)track; // no state to destroy
 }
 
-static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length)
+static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length, mtx_t *unlock_me)
 {
     uint32_t track_id = track->track_id;
     int32_t wide, high;
     if (!client->video_callback) {
-        _alloclient_internal_shared_end(client);
+        mtx_unlock(unlock_me);
         return;
     }
 
@@ -32,7 +32,7 @@ static void parse_video(alloclient *client, allo_media_track *track, unsigned ch
     if(track->info.video.format == allo_video_format_mjpeg) {
         pixels = allo_mjpeg_decode(mediadata, length, &wide, &high);
     }
-    _alloclient_internal_shared_end(client);
+    mtx_unlock(unlock_me);
     
     if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
         free(pixels);

@@ -9,12 +9,39 @@
 
 static void audio_track_initialize(allo_media_track *track, cJSON *component)
 {
-
+    int err;
+    cJSON *jformat = cJSON_GetObjectItemCaseSensitive(component, "format");
+    if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "opus") == 0) {
+        track->info.audio.format = allo_audio_format_opus;
+        track->info.audio.decoder = opus_decoder_create(48000, 1, &err);
+    } else {
+        fprintf(stderr, "Unknown video format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
+        assert(false);
+    }
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
+        track->info.audio.debug = fopen(name, "wb");
+        fprintf(stderr, "Opening decoder for %s\n", name);
+    } else {
+        track->info.audio.debug = NULL;
+    }
+    
 }
 
 static void audio_track_destroy(allo_media_track *track)
 {
+    assert(track->info.audio.decoder);
 
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
+        fprintf(stderr, "Closing decoder for %s\n", name);
+        if (track->info.audio.debug) {
+            fclose(track->info.audio.debug);
+            track->info.audio.debug = NULL;
+        }
+    }
+    opus_decoder_destroy(track->info.audio.decoder);
+    track->info.audio.decoder = NULL;
 }
 
 static void parse_audio(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length)
@@ -88,4 +115,4 @@ allo_media_subsystem allo_audio_subsystem =
     .parse = parse_audio,
     .track_initialize = audio_track_initialize,
     .track_destroy = audio_track_destroy,
-}
+};

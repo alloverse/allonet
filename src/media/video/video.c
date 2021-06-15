@@ -4,14 +4,19 @@
 #include <string.h>
 #include <assert.h>
 
-static void audio_track_initialize(allo_media_track *track, cJSON *component)
+static void video_track_initialize(allo_media_track *track, cJSON *component)
 {
-
+    cJSON *jformat = cJSON_GetObjectItemCaseSensitive(component, "format");
+    if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
+        track->info.video.format = allo_video_format_mjpeg;
+    } else {
+        fprintf(stderr, "Unknown video format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
+    }
 }
 
-static void audio_track_destroy(allo_media_track *track)
+static void video_track_destroy(allo_media_track *track)
 {
-
+    (void)track; // no state to destroy
 }
 
 static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length)
@@ -76,4 +81,4 @@ allo_media_subsystem allo_video_subsystem =
     .parse = parse_video,
     .track_initialize = video_track_initialize,
     .track_destroy = video_track_destroy,
-}
+};

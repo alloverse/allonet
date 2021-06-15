@@ -457,6 +457,8 @@ extern bool allo_initialize(bool redirect_stdout)
     }
     atexit (enet_deinitialize);
 
+    _allo_media_initialize();
+
     return true;
 }
 

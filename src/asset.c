@@ -219,7 +219,7 @@ void asset_handle(
             return;
         }
         
-        printf("Asset: Got a request for %s\n", asset_id);
+        printf("Asset: Got a request for %s at %d+%d\n", asset_id, offset, length);
         
         // If we can't read we just fail early.
         if (request == NULL) {
@@ -242,7 +242,7 @@ void asset_handle(
             // request more?
             // TODO: check missing ranges instead
             if (offset + length < total_length) {
-                _asset_request(asset_id, NULL, offset + length, total_length - offset - length, send, user);
+                _asset_request(asset_id, NULL, offset + length, MIN(ASSET_CHUNK_SIZE, total_length - offset - length), send, user);
             } else {
                 callback(asset_id, asset_state_now_available, user);
             }

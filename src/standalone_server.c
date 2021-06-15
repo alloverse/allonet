@@ -212,7 +212,7 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     allo_media_track *track = _media_track_find(&mediatracks, track_id);
     if (strcmp(jsub->valuestring, "subscribe") == 0) {
         arr_push(&track->recipients, client);
-    } else if (strcmp(jsub->valuestring, "subscribe") == 0) {
+    } else if (strcmp(jsub->valuestring, "unsubscribe") == 0) {
         for (size_t i = 0; i < track->recipients.length; i++) {
             if (track->recipients.data[i] == client) {
                 arr_splice(&track->recipients, i, 1);

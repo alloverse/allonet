@@ -168,42 +168,10 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         return;
     }
     
-    if (track->type == allo_media_type_audio) {
-        // todo: decode on another tread
-        OpusDecoder *decoder = track->info.audio.decoder;
-        FILE *debugFile = track->info.audio.debug;
-        
-        const int maximumFrameCount = 5760; // 120ms as per documentation
-        int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
-        int samples_decoded = opus_decode(decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
-
-        assert(samples_decoded >= 0);
-        if (debugFile) {
-            fwrite(pcm, sizeof(int16_t), samples_decoded, debugFile);
-            fflush(debugFile);
-        }
-
-        _alloclient_internal_shared_end(client);
-        
-        if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
-            free(pcm);
-        }
-        return;
-    } else if (track->type == allo_media_type_video) {
-        int32_t wide, high;
-        if (client->video_callback) {
-            allopixel *pixels = NULL;
-            if(track->info.video.format == allo_video_format_mjpeg) {
-                pixels = allo_mjpeg_decode(data, length, &wide, &high);
-            }
-            _alloclient_internal_shared_end(client);
-            
-            if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
-                free(pixels);
-            }
-            return;
-        }
-    }
-    
-    _alloclient_internal_shared_end(client);
+    allo_media_subsystems[track->type].parse(client, track, data, length);
 }
+
+allo_media_subsystem allo_media_subsystems[] = {
+    [allo_media_type_audio] = NULL,
+    [allo_media_type_video] = NULL,
+};

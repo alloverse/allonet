@@ -4,6 +4,36 @@
 #include <string.h>
 #include <assert.h>
 
+static void audio_track_initialize(allo_media_track *track, cJSON *component)
+{
+
+}
+
+static void audio_track_destroy(allo_media_track *track)
+{
+
+}
+
+static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length)
+{
+    uint32_t track_id = track->track_id;
+    int32_t wide, high;
+    if (!client->video_callback) {
+        _alloclient_internal_shared_end(client);
+        return;
+    }
+
+    allopixel *pixels = NULL;
+    if(track->info.video.format == allo_video_format_mjpeg) {
+        pixels = allo_mjpeg_decode(mediadata, length, &wide, &high);
+    }
+    _alloclient_internal_shared_end(client);
+    
+    if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
+        free(pixels);
+    }
+}
+
 static void create_packet(ENetPacket **packet, void* encoded, int size)
 {
     if (*packet) {
@@ -35,8 +65,15 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pix
     int32_t big_track_id = htonl(track_id);
     memcpy(packet->data, &big_track_id, headerlen);
 
-    int ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
+    int ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet); (void)ok;
     allo_statistics.bytes_sent[0] += packet->dataLength;
     allo_statistics.bytes_sent[1+CHANNEL_MEDIA] += packet->dataLength;
     assert(ok == 0);
+}
+
+allo_media_subsystem allo_video_subsystem =
+{
+    .parse = parse_video,
+    .track_initialize = video_track_initialize,
+    .track_destroy = video_track_destroy,
 }

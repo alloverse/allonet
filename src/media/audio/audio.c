@@ -7,6 +7,39 @@
 
 #define DEBUG_AUDIO 0
 
+static void audio_track_initialize(allo_media_track *track, cJSON *component)
+{
+
+}
+
+static void audio_track_destroy(allo_media_track *track)
+{
+
+}
+
+static void parse_audio(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length)
+{    
+    uint32_t track_id = track->track_id;
+    OpusDecoder *decoder = track->info.audio.decoder;
+    FILE *debugFile = track->info.audio.debug;
+    
+    const int maximumFrameCount = 5760; // 120ms as per documentation
+    int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
+    int samples_decoded = opus_decode(decoder, (unsigned char*)mediadata, length, pcm, maximumFrameCount, 0);
+
+    assert(samples_decoded >= 0);
+    if (debugFile) {
+        fwrite(pcm, sizeof(int16_t), samples_decoded, debugFile);
+        fflush(debugFile);
+    }
+
+    _alloclient_internal_shared_end(client);
+    
+    if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
+        free(pcm);
+    }
+}
+
 void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
 {
     assert(frameCount == 480 || frameCount == 960);
@@ -48,4 +81,11 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
     allo_statistics.bytes_sent[0] += packet->dataLength;
     allo_statistics.bytes_sent[1+CHANNEL_MEDIA] += packet->dataLength;
     assert(ok == 0);
+}
+
+allo_media_subsystem allo_audio_subsystem =
+{
+    .parse = parse_audio,
+    .track_initialize = audio_track_initialize,
+    .track_destroy = audio_track_destroy,
 }

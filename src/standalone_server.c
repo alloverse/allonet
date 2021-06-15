@@ -183,13 +183,6 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     
     allo_media_track *track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
     track->origin = client;
-    alloserver_client *cl;
-    // TODO: should be opt-in but until visor opts in:
-    LIST_FOREACH(cl, &serv->clients, pointers) {
-        if (cl != client) {
-            arr_push(&track->recipients, cl);
-        }
-    }
     
     allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
 
@@ -204,29 +197,60 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     allo_interaction_free(response);
 }
 
+static void handle_place_media_track_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body) {
+    cJSON *jTrackId = cJSON_GetArrayItem(body, 1);
+    cJSON *jsub = cJSON_GetArrayItem(body, 2);
+    
+    if (!cJSON_IsNumber(jTrackId) || !cJSON_IsString(jsub)) {
+        fprintf(stderr, "malformed media_track interaction");
+        return;
+    }
+    
+    uint32_t track_id = jTrackId->valueint;
+    
+    // find the track and add or remove client to list of recipients
+    allo_media_track *track = _media_track_find(&mediatracks, track_id);
+    if (strcmp(jsub->valuestring, "subscribe") == 0) {
+        arr_push(&track->recipients, client);
+    } else if (strcmp(jsub->valuestring, "subscribe") == 0) {
+        for (size_t i = 0; i < track->recipients.length; i++) {
+            if (track->recipients.data[i] == client) {
+                arr_splice(&track->recipients, i, 1);
+                break;
+            }
+        }
+    } else {
+        // error
+        fprintf(stderr, "malformed media_track interaction. Needs either 'subscribe' or 'unsubscribe'");
+        return;
+    }
+    
+    cJSON* respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+    char* respbodys = cJSON_Print(respbody);
+    cJSON_Delete(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+}
+
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
 {
-  cJSON* body = cJSON_Parse(interaction->body);
-  if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "announce") == 0)
-  {
-    handle_place_announce_interaction(serv, client, interaction, body);
-  }
-  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "change_components") == 0)
-  {
-    handle_place_change_components_interaction(serv, client, interaction, body);
-  }
-  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "spawn_entity") == 0)
-  {
-    handle_place_spawn_entity_interaction(serv, client, interaction, body);
-  }
-  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "remove_entity") == 0)
-  {
-    handle_place_remove_entity_interaction(serv, client, interaction, body);
-  }
-  else if (strcmp(cJSON_GetArrayItem(body, 0)->valuestring, "allocate_track") == 0)
-  {
-    handle_place_allocate_track_interaction(serv, client, interaction, body);
-  }
+    cJSON* body = cJSON_Parse(interaction->body);
+    const char *name = cJSON_GetArrayItem(body, 0)->valuestring;
+    if (strcmp(name, "announce") == 0) {
+        handle_place_announce_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "change_components") == 0) {
+        handle_place_change_components_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "spawn_entity") == 0) {
+        handle_place_spawn_entity_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "remove_entity") == 0) {
+        handle_place_remove_entity_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "allocate_track") == 0) {
+        handle_place_allocate_track_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "media_track") == 0) {
+        handle_place_media_track_interaction(serv, client, interaction, body);
+    }
 
   // force sending delta, since the above was likely an important change
   last_simulate_at = 0;

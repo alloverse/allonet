@@ -10,6 +10,8 @@ jobs:
   steps:
   - script: sudo sh install-cmake.sh
     displayName: 'Install CMake'
+  - script: sudo apt-get install nasm
+    displayName: 'Install nasm for x264'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -38,6 +40,8 @@ jobs:
   pool:
     vmImage: 'macOS-latest'
   steps:
+  - script: brew install nasm
+    displayName: 'Install nasm for x264'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -99,6 +103,8 @@ jobs:
   pool:
     vmImage: 'macOS-latest'
   steps:
+  - script: sudo apt-get install nasm
+    displayName: 'Install nasm for x264'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'

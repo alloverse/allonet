@@ -19,3 +19,6 @@
 [submodule "lib/tinycthread"]
 	path = lib/tinycthread
 	url = https://github.com/tinycthread/tinycthread
+[submodule "lib/x264"]
+	path = lib/x264
+	url = https://code.videolan.org/videolan/x264.git

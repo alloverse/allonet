@@ -169,7 +169,7 @@ endif()
 IF(WIN32)
   SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/x264.dll)
   add_custom_command(OUTPUT ${LIBX264}
-    COMMAND make x264.dll
+    COMMAND ./configure --disable-asm && make x264.dll
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
   )
 ELSE()

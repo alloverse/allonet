@@ -103,7 +103,7 @@ jobs:
   pool:
     vmImage: 'macOS-latest'
   steps:
-  - script: sudo apt-get install nasm
+  - script: brew install nasm
     displayName: 'Install nasm for x264'
   - task: CMake@1
     inputs:

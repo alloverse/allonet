@@ -42,7 +42,7 @@ jobs:
   steps:
   - script: brew install nasm
     displayName: 'Install nasm for x264'
-  - script: cd lib && sh build-x265.sh
+  - script: cd lib && sh build-x264.sh
     displayName: 'Build x265 FAT lib'
   - task: CMake@1
     inputs:

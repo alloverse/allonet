@@ -1,6 +1,6 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
-#include "inlinesys/queue.h"
+#include <inlinesys/queue.h>
 #include "math.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -8,6 +8,10 @@
 
 #pragma pack(push)
 #pragma pack(1)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct allo_client_pose_grab
 {
@@ -136,6 +140,10 @@ extern bool allo_initialize(bool redirect_stdout);
  * Will run the number of world iterations needed to get to server_time (or skip if too many)
  */
 extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #pragma pack(pop)
 #endif

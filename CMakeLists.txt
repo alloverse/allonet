@@ -172,11 +172,26 @@ IF(WIN32)
     COMMAND ./configure --disable-asm && make x264.dll
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
   )
+  include_directories(USER
+    "${PROJECT_SOURCE_DIR}/lib/x264"
+  )
+ELSEIF(APPLE)
+  SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/build/lib/lib/libx264.a)
+  # add_custom_command(OUTPUT ${LIBX264}
+  #   COMMAND sh build-x264.sh
+  #   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+  # )
+  include_directories(USER
+    "${PROJECT_SOURCE_DIR}/lib/x264/build/lib/include"
+  )
 ELSE()
   SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/libx264.a)
   add_custom_command(OUTPUT ${LIBX264}
     COMMAND make libx264.a
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
+  )
+  include_directories(USER
+    "${PROJECT_SOURCE_DIR}/lib/x264"
   )
 ENDIF(WIN32)
 add_custom_target(

@@ -4,7 +4,7 @@
 #include <string.h>
 #include "../../util.h"
 #include "../video/mjpeg.h"
-#include <x264/x264.h>
+
 #define DEBUG_AUDIO 0
 
 void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)

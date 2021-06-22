@@ -5,6 +5,7 @@
 #include <string.h>
 #include "../util.h"
 #include "video/mjpeg.h"
+#include <x264/x264.h>
 
 #define DEBUG_AUDIO 0
 
@@ -100,8 +101,39 @@ static inline void __track_create(alloclient_internal_shared *shared, uint32_t t
         }
         assert(track->info.audio.decoder);
     } else if(type == allo_media_type_video) {
-        if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
+        if (jformat == NULL || jformat->valuestring == NULL) {
+            
+        }
+        if (strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
             track->info.video.format = allo_video_format_mjpeg;
+        } else if (strcmp(cJSON_GetStringValue(jformat), "h264") == 0) {
+            cJSON *jwidth = cJSON_GetObjectItemCaseSensitive(comp, "width");
+            cJSON *jheight = cJSON_GetObjectItemCaseSensitive(comp, "width");
+            
+            track->info.video.format = allo_video_format_h264;
+            track->info.video.x264.params = malloc(sizeof(x264_param_t));
+            x264_param_t *param = track->info.video.x264.params;
+            /* Get default params for preset/tuning */
+            x264_param_default_preset( param, "medium", NULL );
+            /* Configure non-default params */
+            param->i_bitdepth = 8;
+            param->i_csp = X264_CSP_BGRA;
+            param->i_width  = jwidth->valueint;
+            param->i_height = jheight->valueint;
+            param->b_vfr_input = 0;
+            param->b_repeat_headers = 1;
+            param->b_annexb = 1;
+            
+            track->info.video.x264.encoder = x264_encoder_open(param);
+            track->info.video.x264.nal = NULL;
+            track->info.video.x264.pic_in = malloc(sizeof(x264_picture_t));
+            track->info.video.x264.pic_out = malloc(sizeof(x264_picture_t));
+            track->info.video.x264.i_nal = 0;
+            track->info.video.x264.i_frame = 0;
+            
+            x264_param_apply_profile( param, "high" );
+            
+            x264_picture_alloc(track->info.video.x264.pic_in, param->i_csp, param->i_width, param->i_height);
         } else {
             fprintf(stderr, "Unknown video format for track %d: %s\n", track_id, cJSON_GetStringValue(jformat));
         }
@@ -109,6 +141,17 @@ static inline void __track_create(alloclient_internal_shared *shared, uint32_t t
 }
 
 static inline void __track_destroy(alloclient_internal_shared *shared, allo_media_track *track) {
+    if (track->type == allo_media_type_video) {
+        if (track->info.video.format == allo_video_format_h264 && track->info.video.x264.encoder) {
+            x264_encoder_close(track->info.video.x264.encoder);
+            x264_picture_clean(track->info.video.x264.pic_in);
+            
+            free(track->info.video.x264.pic_in);
+            free(track->info.video.x264.pic_out);
+            free(track->info.video.x264.params);
+            track->info.video.x264.encoder = NULL;
+        }
+    }
     _media_track_destroy(&shared->media_tracks, track);
 }
 

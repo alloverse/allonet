@@ -21,10 +21,10 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   // for now, slow down simulation if we're given a larger dt than a 20fps equivalent
   double dt = server_time - old_time;
   dt = dt < 1/5.0 ? dt : 1/5.0;
-  allo_simulate_iteration(state, intents, intent_count, dt);
+  allo_simulate_iteration(state, intents, intent_count, server_time, dt);
 }
 
-void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double dt)
+void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, double dt)
 {
   for (int i = 0; i < intent_count; i++)
   {
@@ -37,6 +37,8 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
     allosim_pose_movements(state, avatar, intent, intents, intent_count, dt);
     allosim_handle_grabs(state, avatar, intent, dt);
   }
+
+  allosim_animate(state, server_time);
 }
 
 allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name)

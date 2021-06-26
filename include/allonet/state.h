@@ -55,6 +55,9 @@ extern void allo_client_intent_clone(const allo_client_intent* original, allo_cl
 extern cJSON* allo_client_intent_to_cjson(const allo_client_intent *intent);
 extern allo_client_intent *allo_client_intent_parse_cjson(const cJSON* from);
 
+// generate an identifier of 'len'-1 chars, and null the last byte in str.
+extern void allo_generate_id(char *str, size_t len);
+
 typedef struct allo_entity
 {
     // Place-unique ID for this entity

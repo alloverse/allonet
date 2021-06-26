@@ -54,11 +54,7 @@ static alloserver_client *_client_create()
 {
     alloserver_client *client = (alloserver_client*)calloc(1, sizeof(alloserver_client));
     client->_internal = (void*)calloc(1, sizeof(alloserv_client_internal));
-    for(int i = 0; i < AGENT_ID_LENGTH; i++)
-    {
-        client->agent_id[i] = 'a' + rand() % 25;
-    }
-    client->agent_id[AGENT_ID_LENGTH] = '\0';
+    allo_generate_id(client->agent_id, AGENT_ID_LENGTH+1);
     client->intent = allo_client_intent_create();
     _clientinternal(client)->peer = NULL;
 

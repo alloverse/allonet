@@ -6,7 +6,14 @@
 #include "util.h"
 #include "asset.h"
 
-#define min(a, b) a < b ? a : b;
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
+#if 0
+#define LOG_ASSET_D(...) printf("ASSET "__VA_ARGS__)
+#else
+#define LOG_ASSET_D(...)
+#endif
+
 
 // try to use a decent size. enets default max waiting data is 32Mb (ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA)
 #define ASSET_CHUNK_SIZE 1024*1024
@@ -242,8 +249,10 @@ void asset_handle(
             // request more?
             // TODO: check missing ranges instead
             if (offset + length < total_length) {
+                LOG_ASSET_D("We need more asset data (got %d, need %d) of %s.\n", offset+length, total_length, asset_id);
                 _asset_request(asset_id, NULL, offset + length, MIN(ASSET_CHUNK_SIZE, total_length - offset - length), send, user);
             } else {
+                LOG_ASSET_D("We're done with asset %s\n", asset_id);
                 callback(asset_id, asset_state_now_available, user);
             }
             assert(offset + length <= total_length);
@@ -292,6 +301,7 @@ void _asset_request(
     if (entity_id) {
         cJSON_AddStringToObject(header, "published_by", entity_id);
     }
+    LOG_ASSET_D("Sending a request for %s %d+%d from %s/%p\n", asset_id, offset, length, entity_id, user);
     send(asset_mid_request, header, NULL, 0, user);
     cJSON_Delete(header);
 }

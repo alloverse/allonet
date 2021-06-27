@@ -13,11 +13,17 @@ void allosim_animate(allo_state *state, double server_time)
         if(comp)
         {
             cJSON *anims = cJSON_GetObjectItemCaseSensitive(comp, "animations");
-            cJSON *anim = NULL;
-            cJSON_ArrayForEach(anim, anims) {
+            cJSON *anim = anims->child;
+            while(anim) {
+                cJSON *remove = NULL;
                 if(allosim_animate_process(entity, anim, server_time))
                 {
-                    // todo: remove the animation
+                    remove = anim;
+                }
+                anim = anim->next;
+                if(remove)
+                {
+                    cJSON_Delete(cJSON_DetachItemViaPointer(anims, remove));
                 }
             }
         }
@@ -43,8 +49,14 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     double progress = seconds_into / duration;
     if(progress > 1.0)
     {
+        // do one final update pass at exactly 1.0 and then delete the animation
         done = true;
         progress = 1.0;
+    }
+    else if(progress < 0.0)
+    {
+        // don't update any props until we're inside the animation's period
+        return false;
     }
 
     double easedProgress = _ease(progress, easing);

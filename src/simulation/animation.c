@@ -4,6 +4,257 @@
 static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time);
 static double _ease(double value, const char *easing);
 
+enum MathVariantType
+{
+    TypeInvalid,
+    TypeDouble,
+    TypeVec3,
+    TypeRotation,
+    TypeMat4
+};
+
+struct MathVariant
+{
+    enum MathVariantType type;
+    union {
+        double d;
+        allo_vector v;
+        allo_rotation r;
+        allo_m4x4 m;
+    } value;
+};
+
+static struct MathVariant json2variant(cJSON *json)
+{
+    struct MathVariant ret;
+    if(cJSON_IsNumber(json))
+    {
+        ret.type = TypeDouble;
+        ret.value.d = cJSON_GetNumberValue(json);
+    }
+    else if(cJSON_GetArraySize(json) == 3)
+    {
+        ret.type = TypeVec3;
+        ret.value.v = cjson2vec(json);
+    }
+    else if(cJSON_GetArraySize(json) == 4)
+    {
+        ret.type = TypeRotation;
+        ret.value.r = (allo_rotation){
+            .angle = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 0)),
+            .axis = (allo_vector){
+                .x = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 1)),
+                .y = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 2)),
+                .z = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 3)),
+            }
+        };
+    }
+    else if(cJSON_GetArraySize(json) == 16)
+    {
+        ret.type = TypeMat4;
+        ret.value.m = cjson2m(json);
+    }
+    else
+    {
+        ret.type = TypeInvalid;
+    }
+    return ret;
+}
+
+static void variant_replace_json(struct MathVariant variant, cJSON *toreplace)
+{
+    cJSON *child = toreplace->child;
+    switch(variant.type)
+    {
+        case TypeDouble:
+            toreplace->valuedouble = variant.value.d;
+            break;
+        case TypeRotation:
+            child->valuedouble = variant.value.r.angle;
+            child = child->next;
+            /* FALLTHRU */
+        case TypeVec3:
+            for(int i = 0; i < 3 && child; i++, child = child->next)
+            {
+                child->valuedouble = variant.value.v.v[i];
+            }
+            break;
+        case TypeMat4:
+            for(int i = 0; i < 16 && child; i++, child = child->next)
+            {
+                child->valuedouble = variant.value.v.v[i];
+            }
+            break;
+        default: break;
+    }
+}
+
+enum AnimationPropertyUsage
+{
+    UsageInvalid,
+    UsageStandard,
+    UsageMatRot,
+    UsageMatTrans,
+    UsageMatScale
+};
+
+struct AnimationProperty
+{
+    cJSON *act_on;
+    struct MathVariant current;
+    struct MathVariant from;
+    struct MathVariant to;
+    enum AnimationPropertyUsage usage;
+};
+
+static bool variant_is_compatible(struct MathVariant *src, struct MathVariant *dest, enum AnimationPropertyUsage usage)
+{
+    if(usage == UsageStandard && src->type == dest->type) return true;
+    if(usage == UsageMatRot   && src->type == TypeRotation && dest->type == TypeMat4) return true;
+    if(usage == UsageMatTrans && src->type == TypeVec3 && dest->type == TypeMat4) return true;
+    if(usage == UsageMatScale && src->type == TypeVec3 && dest->type == TypeMat4) return true;
+    return false;
+}
+
+static void derive_property(struct AnimationProperty *prop, const char *path)
+{
+    char this_prop[255] = {0};
+    int i = 0;
+    while(*path && *path != '.' && i<255) {
+        this_prop[i++] = *path++;
+    }
+    if(*path != 0 && *path != '.')
+    {
+        // didn't land on null termination or dot separator?
+        // probably property length overflow or just weird path :S ignore this prop.
+        prop->usage = UsageInvalid;
+        return;
+    }
+
+    // find out how to apply this current key in the path
+    int index;
+    bool is_index = sscanf(this_prop, "%d", &index) == 1;
+    if(is_index)
+    {
+        prop->act_on = cJSON_GetArrayItem(prop->act_on, index);
+    }
+    else if(prop->current.type == TypeMat4 && strcmp(this_prop, "rotation") == 0)
+    {
+        prop->usage = UsageMatRot;
+    }
+    else if(prop->current.type == TypeMat4 && strcmp(this_prop, "translation") == 0)
+    {
+        prop->usage = UsageMatTrans;
+    }
+    else if(prop->current.type == TypeMat4 && strcmp(this_prop, "scale") == 0)
+    {
+        prop->usage = UsageMatScale;
+    }
+    else
+    {
+        prop->act_on = cJSON_GetObjectItemCaseSensitive(prop->act_on, this_prop);
+    }
+
+    // didn't find anything usable?
+    if(!prop->act_on)
+    {
+        // missing property in ECS, don't do anything.
+        prop->usage = UsageInvalid;
+        return;
+    }
+
+    // parse what we've got in case we need it when we recurse
+    prop->current = json2variant(prop->act_on);
+
+    // if we found a value, and the current usage is undetermined, set it to standard.
+    if(prop->current.type != TypeInvalid && prop->usage == UsageInvalid)
+    {
+        prop->usage = UsageStandard;
+    }
+
+    // if path contains more keys, recurse
+    if(*path == '.')
+    {
+        derive_property(prop, path+1);
+    }
+    else
+    {
+        // finish up
+        if(!variant_is_compatible(&prop->from, &prop->current, prop->usage))
+            prop->usage = UsageInvalid;
+        if(prop->from.type == TypeInvalid || prop->to.type == TypeInvalid || prop->current.type == TypeInvalid)
+            prop->usage = UsageInvalid;
+    }
+}
+
+static struct MathVariant interpolate_property(struct AnimationProperty *prop, double fraction)
+{
+    // Figure out how to interpolate from `from` to `to`. Usage or current value doesn't matter yet,
+    // so just go ahead and interpolate.
+    struct MathVariant ret;
+    if(prop->from.type == TypeDouble)
+    {
+        double range = prop->to.value.d - prop->from.value.d;
+        ret.type = TypeDouble;
+        ret.value.d = prop->from.value.d + fraction * range;
+    }
+    else if(prop->from.type == TypeVec3)
+    {
+        ret.type = TypeVec3;
+        vec3_lerp(ret.value.v.v, prop->from.value.v.v, prop->to.value.v.v, fraction);
+    }
+    else if(prop->from.type == TypeRotation)
+    {
+        // this is extremely inefficient :S going from axis-angle to
+        // quat to matrix to axis-angle :S
+        // FIXME: also, rotations >180deg are folded back to <180deg? :(((
+        mfloat_t fromq[4];
+        mfloat_t toq[4];
+        quat_from_axis_angle(fromq, prop->from.value.r.axis.v, prop->from.value.r.angle);
+        quat_from_axis_angle(toq, prop->to.value.r.axis.v, prop->to.value.r.angle);
+        mfloat_t retq[4];
+        quat_slerp(retq, fromq, toq, fraction);
+        allo_m4x4 retm;
+        mat4_rotation_quat(retm.v, retq);
+
+        ret.type = TypeRotation;
+        ret.value.r =allo_m4x4_get_rotation(retm);
+    }
+    else if(prop->from.type == TypeMat4)
+    {
+        ret.type = TypeMat4;
+        ret.value.m = allo_m4x4_interpolate(prop->from.value.m, prop->to.value.m, fraction);
+    }
+
+    // Now, if usage is standard, we can use this value as-is.
+    if(prop->usage == UsageStandard)
+    {
+        return ret;
+    }
+
+    // But if it's not standard usage, the usage means we're modifying the 
+    // current value with the interpolated value.
+    struct MathVariant ret2 = prop->current;
+    if(prop->usage == UsageMatRot)
+    {
+        // replace with an axis-angle rotation...
+        mat4_rotation_axis(ret2.value.m.v, ret.value.r.axis.v, ret.value.r.angle);
+        // but restore previous translation
+        ret2.value.m.v[12] = prop->current.value.m.v[12];
+        ret2.value.m.v[13] = prop->current.value.m.v[13];
+        ret2.value.m.v[14] = prop->current.value.m.v[14];
+    }
+    else if(prop->usage == UsageMatTrans)
+    {
+        mat4_translation(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
+    }
+    else if(prop->usage == UsageMatScale)
+    {
+        mat4_scaling(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
+    }
+    return ret2;
+}
+
 void allosim_animate(allo_state *state, double server_time)
 {
     allo_entity* entity = NULL;
@@ -32,15 +283,19 @@ void allosim_animate(allo_state *state, double server_time)
 
 static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time)
 {
+    // all the inputs
     const char *path = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "path"));
     cJSON *from = cJSON_GetObjectItemCaseSensitive(anim, "from");
     cJSON *to = cJSON_GetObjectItemCaseSensitive(anim, "to");
     double start_at = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(anim, "start_at"));
     double duration = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(anim, "duration"));
-    const char *easing = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "easing")) ?: "linear";
+    const char *easing = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "easing"));
+    if(!easing) easing = "linear"; 
     bool repeats = !cJSON_IsFalse(cJSON_GetObjectItemCaseSensitive(anim, "repeats"));
+    // state
     bool done = false;
 
+    // figure out how far we've gotten into the animation
     double seconds_into = server_time - start_at;
     if(repeats)
     {
@@ -58,26 +313,26 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
         // don't update any props until we're inside the animation's period
         return false;
     }
+    // and ease the progress
+    double eased_progress = _ease(progress, easing);
 
-    double easedProgress = _ease(progress, easing);
-
-    // todo: we can interpolate vectors too. but for now, assume double
-    double fromd = cJSON_GetNumberValue(from);
-    double tod = cJSON_GetNumberValue(to);
-    double range = tod - fromd;
-    double value = fromd + easedProgress * range;
-
-    //printf("Animating %s: progress %f eased(%s) %f value %f\n", anim->string, progress, easing, easedProgress, value);
-
-
-    if(strcmp(path, "transform.matrix.rotation.y") == 0)
+    // great. now figure out what values we're interpolating based on from, to and path.
+    struct AnimationProperty prop;
+    prop.act_on = entity->components;
+    prop.from = json2variant(from);
+    prop.to = json2variant(to);
+    derive_property(&prop, path);
+    if(prop.usage == UsageInvalid)
     {
-        allo_m4x4 mat = entity_get_transform(entity);
-        mat4_rotation_y(mat.v, value);
-        entity_set_transform(entity, mat);
+        // something is off and we can't apply this animation
+        return false;
     }
-    // ':D yes, we'll generalize this later...
 
+    // okay, go interpolate
+    struct MathVariant new_value = interpolate_property(&prop, eased_progress);
+    
+    // apply the new value into state
+    variant_replace_json(new_value, prop.act_on);
 
     return done;
 }

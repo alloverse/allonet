@@ -1,7 +1,8 @@
 #include "simulation.h"
 #include "mathc.h"
 
-bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time);
+static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time);
+static double _ease(double value, const char *easing);
 
 void allosim_animate(allo_state *state, double server_time)
 {
@@ -23,7 +24,7 @@ void allosim_animate(allo_state *state, double server_time)
     }
 }
 
-bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time)
+static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time)
 {
     const char *path = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "path"));
     cJSON *from = cJSON_GetObjectItemCaseSensitive(anim, "from");
@@ -46,14 +47,7 @@ bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_tim
         progress = 1.0;
     }
 
-    double easedProgress = progress;
-         if(strcmp(easing, "quadInOut") == 0) easedProgress = quadratic_ease_in_out(progress);
-    else if(strcmp(easing, "quadIn") == 0) easedProgress = quadratic_ease_in(progress);
-    else if(strcmp(easing, "quadOut") == 0) easedProgress = quadratic_ease_out(progress);
-    else if(strcmp(easing, "bounceInOut") == 0) easedProgress = bounce_ease_in_out(progress);
-    else if(strcmp(easing, "bounceIn") == 0) easedProgress = bounce_ease_in(progress);
-    else if(strcmp(easing, "bounceOut") == 0) easedProgress = bounce_ease_out(progress);
-    // ... etc etc
+    double easedProgress = _ease(progress, easing);
 
     // todo: we can interpolate vectors too. but for now, assume double
     double fromd = cJSON_GetNumberValue(from);
@@ -74,4 +68,40 @@ bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_tim
 
 
     return done;
+}
+
+static double _ease(double value, const char *easing)
+{
+         if(strcmp(easing, "linear") == 0)          return value;
+    else if(strcmp(easing, "quadInOut") == 0)       return quadratic_ease_in_out(value);
+    else if(strcmp(easing, "quadIn") == 0)          return quadratic_ease_in(value);
+    else if(strcmp(easing, "quadOut") == 0)         return quadratic_ease_out(value);
+    else if(strcmp(easing, "bounceInOut") == 0)     return bounce_ease_in_out(value);
+    else if(strcmp(easing, "bounceIn") == 0)        return bounce_ease_in(value);
+    else if(strcmp(easing, "bounceOut") == 0)       return bounce_ease_out(value);
+    else if(strcmp(easing, "backInOut") == 0)       return back_ease_in_out(value);
+    else if(strcmp(easing, "backIn") == 0)          return back_ease_in(value);
+    else if(strcmp(easing, "backOut") == 0)         return back_ease_out(value);
+    else if(strcmp(easing, "sineInOut") == 0)       return sine_ease_in_out(value);
+    else if(strcmp(easing, "sineIn") == 0)          return sine_ease_in(value);
+    else if(strcmp(easing, "sineOut") == 0)         return sine_ease_out(value);
+    else if(strcmp(easing, "cubicInOut") == 0)      return cubic_ease_in_out(value);
+    else if(strcmp(easing, "cubicIn") == 0)         return cubic_ease_in(value);
+    else if(strcmp(easing, "cubicOut") == 0)        return cubic_ease_out(value);
+    else if(strcmp(easing, "quartInOut") == 0)      return quartic_ease_in_out(value);
+    else if(strcmp(easing, "quartIn") == 0)         return quartic_ease_in(value);
+    else if(strcmp(easing, "quartOut") == 0)        return quartic_ease_out(value);
+    else if(strcmp(easing, "quintInOut") == 0)      return quintic_ease_in_out(value);
+    else if(strcmp(easing, "quintIn") == 0)         return quintic_ease_in(value);
+    else if(strcmp(easing, "quintOut") == 0)        return quintic_ease_out(value);
+    else if(strcmp(easing, "elasticInOut") == 0)    return elastic_ease_in_out(value);
+    else if(strcmp(easing, "elasticIn") == 0)       return elastic_ease_in(value);
+    else if(strcmp(easing, "elasticOut") == 0)      return elastic_ease_out(value);
+    else if(strcmp(easing, "circularInOut") == 0)   return circular_ease_in_out(value);
+    else if(strcmp(easing, "circularIn") == 0)      return circular_ease_in(value);
+    else if(strcmp(easing, "circularOut") == 0)     return circular_ease_out(value);
+    else if(strcmp(easing, "expInOut") == 0)        return exponential_ease_in_out(value);
+    else if(strcmp(easing, "expIn") == 0)           return exponential_ease_in(value);
+    else if(strcmp(easing, "expOut") == 0)          return exponential_ease_out(value);
+    return value;
 }

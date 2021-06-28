@@ -89,27 +89,44 @@ static void variant_replace_json(struct MathVariant variant, cJSON *toreplace)
     }
 }
 
+// how should the values in the AnimationProperty be used to interpolate the value?
 enum AnimationPropertyUsage
 {
+    // the entire animation property is invalid for some reason and cannot be used
     UsageInvalid,
+    // please interpolate `from` and `to` and use the resulting value directly
     UsageStandard,
+    // change only rotation, translation or scale in the target matrix value
     UsageMatRot,
     UsageMatTrans,
-    UsageMatScale
+    UsageMatScale,
 };
 
 struct AnimationProperty
 {
+    // the cJSON value to change with this animation
     cJSON *act_on;
+    // the parsed value out of act_on
     struct MathVariant current;
+    // the parsed starting value
     struct MathVariant from;
+    // the parsed ending value
     struct MathVariant to;
+    // how to put from->to into current (see AnimationPropertyUsage)
     enum AnimationPropertyUsage usage;
+    // if >0, UsageMat* will mean to only change x(1), y(2) or z(3) of rot, trans or scale
+    int component_index;
 };
 
-static bool variant_is_compatible(struct MathVariant *src, struct MathVariant *dest, enum AnimationPropertyUsage usage)
+static bool variants_are_compatible(struct AnimationProperty *prop)
 {
+    struct MathVariant *src = &prop->from;
+    struct MathVariant *dest = &prop->current;
+    enum AnimationPropertyUsage usage = prop->usage;
+    int idx = prop->component_index;
+
     if(usage == UsageStandard && src->type == dest->type) return true;
+    if(usage >= UsageMatRot && idx > 0 && src->type == TypeDouble) return true;
     if(usage == UsageMatRot   && src->type == TypeRotation && dest->type == TypeMat4) return true;
     if(usage == UsageMatTrans && src->type == TypeVec3 && dest->type == TypeMat4) return true;
     if(usage == UsageMatScale && src->type == TypeVec3 && dest->type == TypeMat4) return true;
@@ -150,6 +167,18 @@ static void derive_property(struct AnimationProperty *prop, const char *path)
     {
         prop->usage = UsageMatScale;
     }
+    else if(prop->usage >= UsageMatRot && strcmp(this_prop, "x") == 0)
+    {
+        prop->component_index = 1;
+    }
+    else if(prop->usage >= UsageMatRot && strcmp(this_prop, "y") == 0)
+    {
+        prop->component_index = 2;
+    }
+    else if(prop->usage >= UsageMatRot && strcmp(this_prop, "z") == 0)
+    {
+        prop->component_index = 3;
+    }
     else
     {
         prop->act_on = cJSON_GetObjectItemCaseSensitive(prop->act_on, this_prop);
@@ -180,7 +209,7 @@ static void derive_property(struct AnimationProperty *prop, const char *path)
     else
     {
         // finish up
-        if(!variant_is_compatible(&prop->from, &prop->current, prop->usage))
+        if(!variants_are_compatible(prop))
             prop->usage = UsageInvalid;
         if(prop->from.type == TypeInvalid || prop->to.type == TypeInvalid || prop->current.type == TypeInvalid)
             prop->usage = UsageInvalid;
@@ -235,10 +264,19 @@ static struct MathVariant interpolate_property(struct AnimationProperty *prop, d
     // But if it's not standard usage, the usage means we're modifying the 
     // current value with the interpolated value.
     struct MathVariant ret2 = prop->current;
+    int ci = prop->component_index;
     if(prop->usage == UsageMatRot)
     {
-        // replace with an axis-angle rotation...
-        mat4_rotation_axis(ret2.value.m.v, ret.value.r.axis.v, ret.value.r.angle);
+        if(ci > 0)
+        {
+            allo_vector axis = {ci==1, ci==2, ci==3};
+            mat4_rotation_axis(ret2.value.m.v, axis.v, ret.value.d);
+        }
+        else
+        {
+            // replace with an axis-angle rotation...
+            mat4_rotation_axis(ret2.value.m.v, ret.value.r.axis.v, ret.value.r.angle);
+        }
         // but restore previous translation
         ret2.value.m.v[12] = prop->current.value.m.v[12];
         ret2.value.m.v[13] = prop->current.value.m.v[13];
@@ -246,11 +284,25 @@ static struct MathVariant interpolate_property(struct AnimationProperty *prop, d
     }
     else if(prop->usage == UsageMatTrans)
     {
-        mat4_translation(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
+        if(ci > 0)
+        {
+            ret2.value.m.v[11+ci] = ret.value.d;
+        }
+        else
+        {
+            mat4_translation(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
+        }
     }
     else if(prop->usage == UsageMatScale)
     {
-        mat4_scaling(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
+        if(ci > 0)
+        {
+            ret2.value.m.v[(ci-1)*5] = ret.value.d;
+        }
+        else
+        {
+            mat4_scaling(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
+        }
     }
     return ret2;
 }
@@ -317,10 +369,14 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     double eased_progress = _ease(progress, easing);
 
     // great. now figure out what values we're interpolating based on from, to and path.
-    struct AnimationProperty prop;
+    struct AnimationProperty prop = {0};
     prop.act_on = entity->components;
     prop.from = json2variant(from);
     prop.to = json2variant(to);
+    if(prop.from.type != prop.to.type)
+    {
+        return false;
+    }
     derive_property(&prop, path);
     if(prop.usage == UsageInvalid)
     {

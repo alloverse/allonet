@@ -43,7 +43,8 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     double duration = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(anim, "duration"));
     const char *easing = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "easing"));
     if(!easing) easing = "linear"; 
-    bool repeats = !cJSON_IsFalse(cJSON_GetObjectItemCaseSensitive(anim, "repeats"));
+    bool repeats = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(anim, "repeats"));
+    bool autoreverses = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(anim, "autoreverses"));
     // state
     bool done = false;
 
@@ -64,6 +65,18 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     {
         // don't update any props until we're inside the animation's period
         return false;
+    }
+    // reverse every other iteration if requested
+    int64_t iteration = (server_time-start_at)/duration;
+    if(repeats && autoreverses && iteration%2 == 1)
+    {
+        // if we invert progress, easing will also play in reverse. which might make sense...
+        // but... I feel like, if you're bouncing an animation, you want the same easing in the
+        // other direction? I might be wrong, in which case, swap the swap for the inversion.
+        //progress = 1.0 - progress;
+        cJSON *swap = to;
+        to = from;
+        from = swap;
     }
     // and ease the progress
     double eased_progress = _ease(progress, easing);

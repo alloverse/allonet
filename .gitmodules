@@ -22,3 +22,6 @@
 [submodule "lib/x264"]
 	path = lib/x264
 	url = https://code.videolan.org/videolan/x264.git
+[submodule "lib/libav"]
+	path = lib/libav
+	url = https://github.com/libav/libav.git

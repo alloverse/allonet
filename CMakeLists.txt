@@ -165,6 +165,19 @@ else()
   SET(TINYCTHREAD )
 endif()
 
+#LIBAV/ffmpeg
+target_include_directories(allonet INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavcodec
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavutil
+)
+include_directories(USER
+  "${PROJECT_SOURCE_DIR}/lib/libav"
+)
+include_directories(SYSTEM
+  "${PROJECT_SOURCE_DIR}/lib/libav"
+)
+
+
 # h264
 IF(WIN32)
   SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/x264.dll)
@@ -200,7 +213,12 @@ add_custom_target(
 )
 add_dependencies(allonet libx264)
 
-target_link_libraries(allonet enet cjson-static cjson_utils-static opus ${TINYCTHREAD} ${PLATFORM_LIBS} ${LIBX264} ${LUA_LINKER_FLAGS})
+target_link_libraries(allonet 
+  enet cjson-static cjson_utils-static opus 
+  ${TINYCTHREAD} ${PLATFORM_LIBS} ${LIBX264} ${LUA_LINKER_FLAGS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavutil/libavutil.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavcodec/libavcodec.a
+  )
 
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)

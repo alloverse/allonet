@@ -647,6 +647,10 @@ void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 }
 static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
+    if (_internal(client)->peer == NULL) {
+        buffer[0] = 0;
+        return;
+    }
     snprintf(buffer, bufferlen,
         "total\ts:%u r:%u\n"
         "ch0-diffs\ts:%u r:%u\n"

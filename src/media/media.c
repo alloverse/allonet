@@ -119,7 +119,6 @@ static inline void __track_create(alloclient_internal_shared *shared, uint32_t t
             // Let's not create encoder/decoder until they are used
             track->info.video.width = jwidth->valueint;
             track->info.video.height = jheight->valueint;
-            
         } else {
             track->info.video.format = allo_video_format_invalid;
             fprintf(stderr, "Unknown video format for track %d: %s\n", track_id, cJSON_GetStringValue(jformat));

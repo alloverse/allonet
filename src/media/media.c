@@ -297,24 +297,24 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
                 }
                 
                 pixels = malloc(track->info.video.libav.picture->width * track->info.video.libav.picture->height * sizeof(allopixel));
-//                for (int h = 0; h < track->info.video.libav.picture->height; h++) {
-//                    for (int w = 0; w < track->info.video.libav.picture->width; w++) {
-//                        int i = h*track->info.video.libav.picture->width + w;
-//                        allopixel *p = &pixels[i];
-//                        p->r = track->info.video.libav.picture->data[0][i];
-//                        p->g = track->info.video.libav.picture->data[1][i];
-//                        p->b = track->info.video.libav.picture->data[2][i];
-//                        p->a = 255;
-//                    }
-//                }
-                yuv420p_to_rgb32(
-                    track->info.video.libav.picture->data[0],
-                    track->info.video.libav.picture->data[1],
-                    track->info.video.libav.picture->data[2],
-                    (uint8_t*)pixels,
-                    track->info.video.libav.picture->width,
-                    track->info.video.libav.picture->height
-                );
+                for (int h = 0; h < track->info.video.libav.picture->height; h++) {
+                    for (int w = 0; w < track->info.video.libav.picture->width; w++) {
+                        int i = h*track->info.video.libav.picture->width + w;
+                        allopixel *p = &pixels[i];
+                        p->r = track->info.video.libav.picture->data[2][i];
+                        p->g = p->r;//track->info.video.libav.picture->data[1][i];
+                        p->b = p->r;//track->info.video.libav.picture->data[2][i];
+                        p->a = 255;
+                    }
+                }
+//                yuv420p_to_rgb32(
+//                    track->info.video.libav.picture->data[0],
+//                    track->info.video.libav.picture->data[1],
+//                    track->info.video.libav.picture->data[2],
+//                    (uint8_t*)pixels,
+//                    track->info.video.libav.picture->width,
+//                    track->info.video.libav.picture->height
+//                );
             }
             _alloclient_internal_shared_end(client);
             

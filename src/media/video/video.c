@@ -3,7 +3,6 @@
 #include "mjpeg.h"
 #include <string.h>
 #include <assert.h>
-#include <x264/x264.h>
 
 static void create_packet(ENetPacket **packet, void* encoded, int size)
 {
@@ -46,22 +45,45 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pix
     if (track->info.video.format == allo_video_format_mjpeg) {
         allo_mjpeg_encode(pixels, pixels_wide, pixels_high, (allo_mjpeg_encode_func*)create_packet, &packet);
     } else if (track->info.video.format == allo_video_format_h264) {
-        track->info.video.x264.pic_in->i_pts = track->info.video.x264.i_frame++;
-        int frame_size = x264_encoder_encode(
-            track->info.video.x264.encoder,
-            &track->info.video.x264.nal,
-            &track->info.video.x264.i_nal,
-            track->info.video.x264.pic_in,
-            track->info.video.x264.pic_out
-        );
         
-        if( frame_size < 0 ) {
-            fprintf(stderr, "alloclient: Something went wrong in the h264 encoding\n");
-            goto end;
+        if (track->info.video.encoder.codec == NULL) {
+            track->info.video.encoder.codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+            if (track->info.video.encoder.codec == NULL) {
+                fprintf(stderr, "No encoder\n");
+            }
+            track->info.video.encoder.context = avcodec_alloc_context3(track->info.video.encoder.codec);
+            track->info.video.picture = av_frame_alloc();
+            
+            track->info.video.encoder.context->width = track->info.video.width;
+            track->info.video.encoder.context->height = track->info.video.height;
+            int ret = avcodec_open2(track->info.video.encoder.context, track->info.video.encoder.codec, NULL);
+            if (ret != 0) {
+                fprintf(stderr, "avcodec_open2 return %d when opening encoder\n", ret);
+            }
         }
         
-        packet = enet_packet_create(NULL, frame_size + 4, 0);
-        memcpy(packet->data + 4, track->info.video.x264.nal->p_payload, frame_size);
+        AVFrame *frame = av_frame_alloc();
+        frame->format = AV_PIX_FMT_RGBA;
+        frame->width = track->info.video.width;
+        frame->height = track->info.video.height;
+        
+        assert(av_frame_get_buffer(frame, 0));
+        assert(av_frame_make_writable(frame));
+        memcpy(frame->data[0], pixels, frame->width * frame->height * sizeof(allopixel));
+        
+        assert(avcodec_send_frame(track->info.video.encoder.context, frame));
+        
+        AVPacket avpacket;
+        av_init_packet(&avpacket);
+        int ret = 0;
+        // TODO: Might need to loop and receive multiple packets (because encoded frames can come out of order)
+        ret = avcodec_receive_packet(track->info.video.encoder.context, &avpacket);
+        if (ret >= 0) {
+            packet = enet_packet_create(NULL, avpacket.size + 4, 0);
+            memcpy(packet->data + 4, avpacket.data, avpacket.size);
+        } else {
+            fprintf(stderr, "alloclient: Something went wrong in the h264 encoding\n");
+        }
     }
     
     const int headerlen = sizeof(int32_t); // track id header

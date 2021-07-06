@@ -39,21 +39,15 @@ typedef struct {
         struct {
             allo_video_format format;
             struct {
-                struct x264_t *encoder;
-                struct x264_param_t *params;
-                struct x264_nal_t *nal;
-                struct x264_picture_t *pic_in;
-                struct x264_picture_t *pic_out;
-                int i_nal;
-                int i_frame;
-            } x264;
+                AVCodec *codec;
+                AVCodecContext *context;
+            } encoder;
             struct {
                 AVCodec *codec;
                 AVCodecContext *context;
-                int frame, len;
-                AVFrame *picture;
-                
-            } libav;
+            } decoder;
+            int width, height;
+            AVFrame *picture;
         } video;
     } info;
 } allo_media_track;

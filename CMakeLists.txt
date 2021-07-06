@@ -167,16 +167,22 @@ endif()
 
 #LIBAV/ffmpeg
 target_include_directories(allonet INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavcodec
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavutil
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav
 )
 include_directories(USER
   "${PROJECT_SOURCE_DIR}/lib/libav"
 )
-include_directories(SYSTEM
-  "${PROJECT_SOURCE_DIR}/lib/libav"
-)
 
+
+
+# System libs
+find_library(SYSTEM_LIBRARY NAMES VideoDecodeAcceleration)
+find_library(X264 NAMES x264)
+target_link_libraries (allonet 
+    ${ALLO_LINK_LIBS}
+    ${SYSTEM_LIBRARY}
+    ${X264}
+)
 
 # h264
 IF(WIN32)
@@ -218,6 +224,7 @@ target_link_libraries(allonet
   ${TINYCTHREAD} ${PLATFORM_LIBS} ${LIBX264} ${LUA_LINKER_FLAGS}
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavutil/libavutil.a
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavcodec/libavcodec.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libswscale/libswscale.a
   )
 
 # client example

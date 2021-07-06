@@ -353,7 +353,16 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
   allo_entity* e = entity_create(eid);
   e->owner_agent_id = strdup(agent_id ? agent_id : "place");
   cJSON* children = cJSON_DetachItemFromObjectCaseSensitive(spec, "children");
-  e->components = spec;
+
+  // components can be under ["components"] or just loose in the root dict
+  cJSON *components = cJSON_DetachItemFromObjectCaseSensitive(spec, "components");
+  if(components)
+  {
+    cJSON_Delete(spec);
+  } else {
+    components = spec;
+  }
+  e->components = components;
 
   if (parent)
   {

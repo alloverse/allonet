@@ -3,6 +3,10 @@
 #include "state.h"
 #include "net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum alloerror
 {
     alloerror_connection_lost = 1000,
@@ -257,4 +261,10 @@ double alloclient_get_time(alloclient* client);
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
 
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif
+

@@ -5,6 +5,8 @@
 #include <string.h>
 #include "../util.h"
 #include "video/mjpeg.h"
+#include <x264/x264.h>
+#include <libavcodec/decode.h>
 
 #define DEBUG_AUDIO 0
 
@@ -23,6 +25,7 @@ allo_media_track *_media_track_create(allo_media_track_list *tracklist, uint32_t
     // reserve 1 extra and use that as our track data
     arr_reserve(tracklist, tracklist->length + 1);
     allo_media_track *track = &tracklist->data[tracklist->length++];
+    memset(track, 0, sizeof(allo_media_track));
     track->track_id = track_id;
     track->type = type;
     arr_init(&track->recipients);
@@ -100,15 +103,35 @@ static inline void __track_create(alloclient_internal_shared *shared, uint32_t t
         }
         assert(track->info.audio.decoder);
     } else if(type == allo_media_type_video) {
-        if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
+        if (jformat == NULL || jformat->valuestring == NULL) {
+            
+        }
+        if (strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
             track->info.video.format = allo_video_format_mjpeg;
+        } else if (strcmp(cJSON_GetStringValue(jformat), "h264") == 0) {
+            cJSON *jmeta = cJSON_GetObjectItemCaseSensitive(comp, "metadata");
+            cJSON *jwidth = cJSON_GetObjectItemCaseSensitive(jmeta, "width");
+            cJSON *jheight = cJSON_GetObjectItemCaseSensitive(jmeta, "height");
+            
+            avcodec_register_all();
+            
+            track->info.video.format = allo_video_format_h264;
+            // Let's not create encoder/decoder until they are used
+            track->info.video.width = jwidth->valueint;
+            track->info.video.height = jheight->valueint;
         } else {
+            track->info.video.format = allo_video_format_invalid;
             fprintf(stderr, "Unknown video format for track %d: %s\n", track_id, cJSON_GetStringValue(jformat));
         }
     }
 }
 
 static inline void __track_destroy(alloclient_internal_shared *shared, allo_media_track *track) {
+    if (track->type == allo_media_type_video) {
+        if (track->info.video.format == allo_video_format_h264 && track->info.video.decoder.codec) {
+            // TODO: cleanup libav decoder
+        }
+    }
     _media_track_destroy(&shared->media_tracks, track);
 }
 
@@ -146,6 +169,31 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
     }
     
     _alloclient_internal_shared_end(client);
+}
+
+static void yuv2rgb(uint8_t yValue, uint8_t uValue, uint8_t vValue,
+        uint8_t *r, uint8_t *g, uint8_t *b) {
+    int rTmp = yValue + (1.370705 * (vValue-128));
+    // or fast integer computing with a small approximation
+    // rTmp = yValue + (351*(vValue-128))>>8;
+    int gTmp = yValue - (0.698001 * (vValue-128)) - (0.337633 * (uValue-128));
+    // gTmp = yValue - (179*(vValue-128) + 86*(uValue-128))>>8;
+    int bTmp = yValue + (1.732446 * (uValue-128));
+//    int bTmp = yValue + (443*(uValue-128))>>8;
+    *r = MIN(MAX(rTmp, 0), 255);
+    *g = MIN(MAX(gTmp, 0), 255);
+    *b = MIN(MAX(bTmp, 0), 255);
+}
+
+static inline void yuv420p_to_rgb32(uint8_t* y, uint8_t* u, uint8_t* v, uint8_t *rgb, uint32_t width, uint32_t height) {
+    for (uint32_t j = 0; j < height; j++) {
+        for (uint32_t k = 0; k < width; k++) {
+            yuv2rgb(*y, *u, *v, &rgb[0], &rgb[1], &rgb[2]);
+            rgb[3] = 255;
+            rgb += 4;
+            y++;u++;v++;
+        }
+    }
 }
 
 void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length)
@@ -193,9 +241,65 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         int32_t wide, high;
         if (client->video_callback) {
             allopixel *pixels = NULL;
-            if(track->info.video.format == allo_video_format_mjpeg) {
+            if (track->info.video.format == allo_video_format_mjpeg) {
                 pixels = allo_mjpeg_decode(data, length, &wide, &high);
+            } else if (track->info.video.format == allo_video_format_h264) {
+                
+                if (track->info.video.decoder.codec == NULL) {
+                    track->info.video.decoder.codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+                    if (track->info.video.decoder.codec == NULL) {
+                        fprintf(stderr, "No decoder\n");
+                    }
+                    track->info.video.decoder.context = avcodec_alloc_context3(track->info.video.decoder.codec);
+                    track->info.video.picture = av_frame_alloc();
+                    
+                    track->info.video.decoder.context->width = track->info.video.width;
+                    track->info.video.decoder.context->height = track->info.video.height;
+                    int ret = avcodec_open2(track->info.video.decoder.context, track->info.video.decoder.codec, NULL);
+                    if (ret != 0) {
+                        fprintf(stderr, "avcodec_open2 return %d when opening decoder\n", ret);
+                    }
+                }
+                
+                
+                AVPacket avpacket;
+                avpacket.size = length;
+                avpacket.data = data;
+                avpacket.pts = ++track->info.video.framenr;
+                int ret = avcodec_send_packet(track->info.video.decoder.context, &avpacket);
+                
+                if (ret != 0) {
+                    fprintf(stderr, "avcodec_send_packet return %d\n", ret);
+                    goto fail;
+                }
+                ret = avcodec_receive_frame(track->info.video.decoder.context, track->info.video.picture);
+                if (ret != 0) {
+                    fprintf(stderr, "avcodec_receive_frame return %d\n", ret);
+                    goto fail;
+                }
+                
+                pixels = malloc(track->info.video.picture->width * track->info.video.picture->height * sizeof(allopixel));
+                for (int h = 0; h < track->info.video.picture->height; h++) {
+                    for (int w = 0; w < track->info.video.picture->width; w++) {
+                        int i = h*track->info.video.picture->width + w;
+                        allopixel *p = &pixels[i];
+                        p->r = track->info.video.picture->data[0][i];
+                        p->g = p->r;//track->info.video.picture->data[1][i];
+                        p->b = p->r;//track->info.video.picture->data[2][i];
+                        p->a = 255;
+                    }
+                }
+//                yuv420p_to_rgb32(
+//                    track->info.video.picture->data[0],
+//                    track->info.video.picture->data[1],
+//                    track->info.video.picture->data[2],
+//                    (uint8_t*)pixels,
+//                    track->info.video.picture->width,
+//                    track->info.video.picture->height
+//                );
             }
+            
+        fail:
             _alloclient_internal_shared_end(client);
             
             if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {

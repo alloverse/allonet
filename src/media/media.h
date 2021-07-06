@@ -5,6 +5,7 @@
 #include <opus.h>
 #include <enet/enet.h>
 #include "allonet/arr.h"
+#include <libavcodec/decode.h>
 
 typedef enum {
     allo_media_type_invalid = -1,
@@ -19,7 +20,8 @@ typedef enum allo_audio_format {
 
 typedef enum allo_video_format {
     allo_video_format_invalid = -1,
-    allo_video_format_mjpeg
+    allo_video_format_mjpeg,
+    allo_video_format_h264
 } allo_video_format;
 
 
@@ -36,6 +38,17 @@ typedef struct {
         } audio;
         struct {
             allo_video_format format;
+            struct {
+                AVCodec *codec;
+                AVCodecContext *context;
+            } encoder;
+            struct {
+                AVCodec *codec;
+                AVCodecContext *context;
+            } decoder;
+            int width, height;
+            AVFrame *picture;
+            int framenr;
         } video;
     } info;
 } allo_media_track;

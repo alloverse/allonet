@@ -48,6 +48,7 @@ typedef struct {
             } decoder;
             int width, height;
             AVFrame *picture;
+            int framenr;
         } video;
     } info;
 } allo_media_track;

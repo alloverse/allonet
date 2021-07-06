@@ -25,6 +25,7 @@ allo_media_track *_media_track_create(allo_media_track_list *tracklist, uint32_t
     // reserve 1 extra and use that as our track data
     arr_reserve(tracklist, tracklist->length + 1);
     allo_media_track *track = &tracklist->data[tracklist->length++];
+    memset(track, 0, sizeof(allo_media_track));
     track->track_id = track_id;
     track->type = type;
     arr_init(&track->recipients);
@@ -114,11 +115,13 @@ static inline void __track_create(alloclient_internal_shared *shared, uint32_t t
             
             avcodec_register_all();
             
+            track->info.video.format = allo_video_format_h264;
             // Let's not create encoder/decoder until they are used
             track->info.video.width = jwidth->valueint;
             track->info.video.height = jheight->valueint;
             
         } else {
+            track->info.video.format = allo_video_format_invalid;
             fprintf(stderr, "Unknown video format for track %d: %s\n", track_id, cJSON_GetStringValue(jformat));
         }
     }
@@ -263,14 +266,17 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
                 AVPacket avpacket;
                 avpacket.size = length;
                 avpacket.data = data;
+                avpacket.pts = ++track->info.video.framenr;
                 int ret = avcodec_send_packet(track->info.video.decoder.context, &avpacket);
                 
                 if (ret != 0) {
                     fprintf(stderr, "avcodec_send_packet return %d\n", ret);
+                    goto fail;
                 }
                 ret = avcodec_receive_frame(track->info.video.decoder.context, track->info.video.picture);
                 if (ret != 0) {
                     fprintf(stderr, "avcodec_receive_frame return %d\n", ret);
+                    goto fail;
                 }
                 
                 pixels = malloc(track->info.video.picture->width * track->info.video.picture->height * sizeof(allopixel));
@@ -278,7 +284,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
                     for (int w = 0; w < track->info.video.picture->width; w++) {
                         int i = h*track->info.video.picture->width + w;
                         allopixel *p = &pixels[i];
-                        p->r = track->info.video.picture->data[2][i];
+                        p->r = track->info.video.picture->data[0][i];
                         p->g = p->r;//track->info.video.picture->data[1][i];
                         p->b = p->r;//track->info.video.picture->data[2][i];
                         p->a = 255;
@@ -293,6 +299,8 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
 //                    track->info.video.picture->height
 //                );
             }
+            
+        fail:
             _alloclient_internal_shared_end(client);
             
             if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {

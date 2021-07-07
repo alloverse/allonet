@@ -268,6 +268,38 @@ static void handle_place_add_property_animation_interaction(alloserver* serv, al
     allo_interaction_free(response);
 }
 
+static void handle_place_remove_property_animation_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+    allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
+    const char *animation_id = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
+    cJSON* respbody;
+    bool ok = animation_id != NULL;
+    const char *errstr = "missing animation ID";
+
+    if(ok) {
+      cJSON *comp = cJSON_GetObjectItemCaseSensitive(entity->components, "property_animations");
+      cJSON *anims = cJSON_GetObjectItemCaseSensitive(comp, "animations");
+      cJSON *anim = cJSON_DetachItemFromObjectCaseSensitive(anims, animation_id);
+      ok = anim != NULL;
+      errstr = "can't remove that animation because it doesn't exist";
+      cJSON_Delete(anim);
+    }
+
+    if(ok)
+    {
+        respbody = cjson_create_list(cJSON_CreateString("remove_property_animation"), cJSON_CreateString("ok"), cJSON_CreateString(animation_id), NULL);
+    } else {
+        respbody = cjson_create_list(cJSON_CreateString("remove_property_animation"), cJSON_CreateString("failed"), cJSON_CreateString(errstr), NULL);
+    }
+    
+    char* respbodys = cJSON_Print(respbody);
+    cJSON_Delete(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+}
+
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
 {
     cJSON* body = cJSON_Parse(interaction->body);
@@ -286,6 +318,8 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
         handle_place_media_track_interaction(serv, client, interaction, body);
     } else if (strcmp(name, "add_property_animation") == 0) {
         handle_place_add_property_animation_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "remove_property_animation") == 0) {
+        handle_place_remove_property_animation_interaction(serv, client, interaction, body);
     }
 
   // force sending delta, since the above was likely an important change

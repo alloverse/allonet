@@ -647,6 +647,11 @@ void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 }
 static void _alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen)
 {
+    if (client == NULL || _internal(client) == NULL || _internal(client)->peer == NULL)
+    {
+        snprintf(buffer, bufferlen, "(disconnected, no stats available)");
+        return;
+    }
     snprintf(buffer, bufferlen,
         "total\ts:%u r:%u\n"
         "ch0-diffs\ts:%u r:%u\n"

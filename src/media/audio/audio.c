@@ -7,6 +7,66 @@
 
 #define DEBUG_AUDIO 0
 
+static void audio_track_initialize(allo_media_track *track, cJSON *component)
+{
+    int err;
+    cJSON *jformat = cJSON_GetObjectItemCaseSensitive(component, "format");
+    if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "opus") == 0) {
+        track->info.audio.format = allo_audio_format_opus;
+        track->info.audio.decoder = opus_decoder_create(48000, 1, &err);
+    } else {
+        fprintf(stderr, "Unknown video format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
+        assert(false);
+    }
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
+        track->info.audio.debug = fopen(name, "wb");
+        fprintf(stderr, "Opening decoder for %s\n", name);
+    } else {
+        track->info.audio.debug = NULL;
+    }
+    
+}
+
+static void audio_track_destroy(allo_media_track *track)
+{
+    assert(track->info.audio.decoder);
+
+    if (DEBUG_AUDIO) {
+        char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
+        fprintf(stderr, "Closing decoder for %s\n", name);
+        if (track->info.audio.debug) {
+            fclose(track->info.audio.debug);
+            track->info.audio.debug = NULL;
+        }
+    }
+    opus_decoder_destroy(track->info.audio.decoder);
+    track->info.audio.decoder = NULL;
+}
+
+static void parse_audio(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length, mtx_t *unlock_me)
+{    
+    uint32_t track_id = track->track_id;
+    OpusDecoder *decoder = track->info.audio.decoder;
+    FILE *debugFile = track->info.audio.debug;
+    
+    const int maximumFrameCount = 5760; // 120ms as per documentation
+    int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
+    int samples_decoded = opus_decode(decoder, (unsigned char*)mediadata, length, pcm, maximumFrameCount, 0);
+
+    assert(samples_decoded >= 0);
+    if (debugFile) {
+        fwrite(pcm, sizeof(int16_t), samples_decoded, debugFile);
+        fflush(debugFile);
+    }
+
+    mtx_unlock(unlock_me);
+    
+    if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
+        free(pcm);
+    }
+}
+
 void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount)
 {
     assert(frameCount == 480 || frameCount == 960);
@@ -49,3 +109,10 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
     allo_statistics.bytes_sent[1+CHANNEL_MEDIA] += packet->dataLength;
     assert(ok == 0);
 }
+
+allo_media_subsystem allo_audio_subsystem =
+{
+    .parse = parse_audio,
+    .track_initialize = audio_track_initialize,
+    .track_destroy = audio_track_destroy,
+};

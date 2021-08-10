@@ -176,52 +176,50 @@ include_directories(USER
 
 
 # System libs
-find_library(SYSTEM_LIBRARY NAMES VideoDecodeAcceleration)
+find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
 find_library(X264 NAMES x264)
-target_link_libraries (allonet 
-    ${ALLO_LINK_LIBS}
-    ${SYSTEM_LIBRARY}
-    ${X264}
-)
 
-# h264
-IF(WIN32)
-  SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/x264.dll)
-  add_custom_command(OUTPUT ${LIBX264}
-    COMMAND ./configure --disable-asm && make x264.dll
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
-  )
-  include_directories(USER
-    "${PROJECT_SOURCE_DIR}/lib/x264"
-  )
-ELSEIF(APPLE)
-  SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/build/lib/lib/libx264.a)
-  # add_custom_command(OUTPUT ${LIBX264}
-  #   COMMAND sh build-x264.sh
-  #   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
-  # )
-  include_directories(USER
-    "${PROJECT_SOURCE_DIR}/lib/x264/build/lib/include"
-  )
-ELSE()
-  SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/libx264.a)
-  add_custom_command(OUTPUT ${LIBX264}
-    COMMAND make libx264.a
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
-  )
-  include_directories(USER
-    "${PROJECT_SOURCE_DIR}/lib/x264"
-  )
-ENDIF(WIN32)
-add_custom_target(
-    libx264 ALL
-    DEPENDS ${LIBX264}
-)
-add_dependencies(allonet libx264)
+# # h264
+# IF(WIN32)
+#   SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/x264.dll)
+#   add_custom_command(OUTPUT ${LIBX264}
+#     COMMAND ./configure --disable-asm && make x264.dll
+#     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
+#   )
+#   include_directories(USER
+#     "${PROJECT_SOURCE_DIR}/lib/x264"
+#   )
+# ELSEIF(APPLE)
+#   SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/build/lib/lib/libx264.a)
+#   # add_custom_command(OUTPUT ${LIBX264}
+#   #   COMMAND sh build-x264.sh
+#   #   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+#   # )
+#   include_directories(USER
+#     "${PROJECT_SOURCE_DIR}/lib/x264/build/lib/include"
+#   )
+# ELSE()
+#   SET(LIBX264 ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264/libx264.a)
+#   add_custom_command(OUTPUT ${LIBX264}
+#     COMMAND make libx264.a
+#     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/x264
+#   )
+#   include_directories(USER
+#     "${PROJECT_SOURCE_DIR}/lib/x264"
+#   )
+# ENDIF(WIN32)
+# add_custom_target(
+#     libx264 ALL
+#     DEPENDS ${LIBX264}
+# )
+# add_dependencies(allonet libx264)
 
 target_link_libraries(allonet 
   enet cjson-static cjson_utils-static opus 
-  ${TINYCTHREAD} ${PLATFORM_LIBS} ${LIBX264} ${LUA_LINKER_FLAGS}
+  ${TINYCTHREAD} ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
+  ${ALLO_LINK_LIBS}
+  ${VIDEO_DECODE_ACCELERATION}
+  ${X264}
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavutil/libavutil.a
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavcodec/libavcodec.a
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libswscale/libswscale.a

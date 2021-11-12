@@ -200,16 +200,23 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
 static void handle_place_media_track_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body) {
     cJSON *jTrackId = cJSON_GetArrayItem(body, 1);
     cJSON *jsub = cJSON_GetArrayItem(body, 2);
-    
+    cJSON* respbody;
+
     if (!cJSON_IsNumber(jTrackId) || !cJSON_IsString(jsub)) {
-        fprintf(stderr, "malformed media_track interaction");
-        return;
+      respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("missing id or verb"), NULL);
+      fprintf(stderr, "malformed media_track interaction");
+      goto done;
     }
     
     uint32_t track_id = jTrackId->valueint;
     
     // find the track and add or remove client to list of recipients
     allo_media_track *track = _media_track_find(&mediatracks, track_id);
+    if(!track) {
+      respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("invalid track id"), NULL);
+      fprintf(stderr, "media_track: invalid track id");
+      goto done;
+    }
     if (strcmp(jsub->valuestring, "subscribe") == 0) {
         arr_push(&track->recipients, client);
     } else if (strcmp(jsub->valuestring, "unsubscribe") == 0) {
@@ -220,12 +227,13 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
             }
         }
     } else {
-        // error
-        fprintf(stderr, "malformed media_track interaction. Needs either 'subscribe' or 'unsubscribe'");
-        return;
+      respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("incorrect verb"), NULL);
+      fprintf(stderr, "media_track: neither sub nor unsub");
+      goto done;
     }
-    
-    cJSON* respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+    respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+  
+done:;
     char* respbodys = cJSON_Print(respbody);
     cJSON_Delete(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);

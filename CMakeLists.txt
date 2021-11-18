@@ -178,14 +178,14 @@ include_directories(USER
 
 
 # System libs
-find_library(X264 NAMES x264)
+find_library(X264 NAMES x264 REQUIRED)
 
 # h264
 IF(APPLE)
   find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
-  SET(X264_WITH_DEPS X264 VIDEO_DECODE_ACCELERATION)
+  SET(X264_WITH_DEPS ${X264} ${VIDEO_DECODE_ACCELERATION})
 ELSE()
-  SET(X264_WITH_DEPS X264)
+  SET(X264_WITH_DEPS ${X264})
 ENDIF()
 
 target_link_libraries(allonet 

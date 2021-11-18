@@ -5,8 +5,7 @@
 #include <string.h>
 #include "../util.h"
 #include "video/mjpeg.h"
-#include <x264/x264.h>
-#include <libavcodec/decode.h>
+#include <libavcodec/avcodec.h>
 
 #define DEBUG_AUDIO 0
 

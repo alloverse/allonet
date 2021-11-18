@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.0)
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
@@ -167,20 +168,10 @@ else()
   SET(TINYCTHREAD )
 endif()
 
-#LIBAV/ffmpeg
-target_include_directories(allonet INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav
-)
-include_directories(USER
-  "${PROJECT_SOURCE_DIR}/lib/libav"
-)
 
-
-
-# System libs
+# Media libs
 find_library(X264 NAMES x264 REQUIRED)
-
-# h264
+find_package(LIBAV REQUIRED)
 IF(APPLE)
   find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
   SET(X264_WITH_DEPS ${X264} ${VIDEO_DECODE_ACCELERATION})
@@ -188,13 +179,15 @@ ELSE()
   SET(X264_WITH_DEPS ${X264})
 ENDIF()
 
+include_directories(SYSTEM
+  ${LIBAV_INCLUDE_DIR}
+)
+
 target_link_libraries(allonet 
   enet cjson-static cjson_utils-static opus 
   ${TINYCTHREAD} ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
   ${X264_WITH_DEPS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavutil/libavutil.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libavcodec/libavcodec.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/libav/libswscale/libswscale.a
+  ${LIBAV_LIBRARIES}
 )
 
 # client example

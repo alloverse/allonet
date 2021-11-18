@@ -5,7 +5,7 @@
 #include <opus.h>
 #include <enet/enet.h>
 #include "allonet/arr.h"
-#include <libavcodec/decode.h>
+#include <libavcodec/avcodec.h>
 
 typedef enum {
     allo_media_type_invalid = -1,

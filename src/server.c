@@ -54,11 +54,7 @@ static alloserver_client *_client_create()
 {
     alloserver_client *client = (alloserver_client*)calloc(1, sizeof(alloserver_client));
     client->_internal = (void*)calloc(1, sizeof(alloserv_client_internal));
-    for(int i = 0; i < AGENT_ID_LENGTH; i++)
-    {
-        client->agent_id[i] = 'a' + rand() % 25;
-    }
-    client->agent_id[AGENT_ID_LENGTH] = '\0';
+    allo_generate_id(client->agent_id, AGENT_ID_LENGTH+1);
     client->intent = allo_client_intent_create();
     _clientinternal(client)->peer = NULL;
 
@@ -403,15 +399,25 @@ void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
 
     LIST_FOREACH(client, &server->clients, pointers) {
         ENetPeer *peer = _clientinternal(client)->peer;
+
+        int entity_count = 0;
+        allo_entity *ent;
+        LIST_FOREACH(ent, &server->state.entities, pointers) {
+            if(strcmp(ent->owner_agent_id, client->agent_id) == 0)
+                entity_count++;
+        }
+
         
         const char *display_name = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(client->identity, "display_name"));
         offset += snprintf(buffer + offset, bufferlen - offset,
             "Client %s (agent %s, avatar %s):\n"
+            "\tEntities\t%d\n"
             "\tPackets lost\t%d\n"
             "\tRTT\t%dms\t\n"
             "\tPacket throttle\t%d\n"
             ,
             display_name, client->agent_id, client->avatar_entity_id,
+            entity_count,
             peer->packetsLost,
             peer->roundTripTime,
             peer->packetThrottle

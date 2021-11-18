@@ -65,6 +65,8 @@ set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/client/_client.h
     ${SOURCE_FILES_PREFIX}/client/client.c
+    ${SOURCE_FILES_PREFIX}/simulation/animation.c
+    ${SOURCE_FILES_PREFIX}/simulation/animation_prop.c
     ${SOURCE_FILES_PREFIX}/simulation/grabbing.c
     ${SOURCE_FILES_PREFIX}/simulation/pose_movement.c
     ${SOURCE_FILES_PREFIX}/simulation/simulation.c

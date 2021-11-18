@@ -7,6 +7,15 @@
 #include <assert.h>
 #include <math.h>
 
+void allo_generate_id(char *str, size_t len)
+{
+  for (int i = 0; i < len-1; i++)
+  {
+    str[i] = 'a' + rand() % 25;
+  }
+  str[len-1] = 0;
+}
+
 allo_client_intent* allo_client_intent_create()
 {
   allo_client_intent* intent = calloc(1, sizeof(allo_client_intent));
@@ -333,19 +342,27 @@ void entity_set_transform(allo_entity* entity, allo_m4x4 m)
   }
 }
 
+
+
 allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agent_id, cJSON* spec, const char* parent)
 {
   char generated_eid[11] = { 0 };
-  for (int i = 0; i < 10; i++)
-  {
-    generated_eid[i] = 'a' + rand() % 25;
-  }
+  allo_generate_id(generated_eid, 11);
   const char *eid = generated_eid;
 
   allo_entity* e = entity_create(eid);
   e->owner_agent_id = strdup(agent_id ? agent_id : "place");
   cJSON* children = cJSON_DetachItemFromObjectCaseSensitive(spec, "children");
-  e->components = spec;
+
+  // components can be under ["components"] or just loose in the root dict
+  cJSON *components = cJSON_DetachItemFromObjectCaseSensitive(spec, "components");
+  if(components)
+  {
+    cJSON_Delete(spec);
+  } else {
+    components = spec;
+  }
+  e->components = components;
 
   if (parent)
   {

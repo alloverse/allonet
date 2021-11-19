@@ -43,22 +43,7 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track) {
     if (!track) return;
     
-    if (track->type == allo_media_type_audio) {
-        assert(track->info.audio.decoder);
-
-        if (DEBUG_AUDIO) {
-            char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
-            fprintf(stderr, "Closing decoder for %s\n", name);
-            if (track->info.audio.debug) {
-                fclose(track->info.audio.debug);
-                track->info.audio.debug = NULL;
-            }
-        }
-        opus_decoder_destroy(track->info.audio.decoder);
-        track->info.audio.decoder = NULL;
-    } else {
-        //TODO: video stuff
-    }
+    allo_media_subsystems[track->type].track_destroy(track);
     
     // remove from the list
     for (size_t i = 0; i < tracklist->length; i++) {
@@ -81,68 +66,15 @@ allo_media_track_type _media_track_type_from_string(const char *string) {
     }
 }
 
-
-static inline allo_media_track *__track_find(alloclient_internal_shared *shared, uint32_t track_id) {
-    return _media_track_find(&shared->media_tracks, track_id);
-}
-
-static inline void __track_create(alloclient_internal_shared *shared, uint32_t track_id, allo_media_track_type type, cJSON *comp) {
-    allo_media_track *track = _media_track_create(&shared->media_tracks, track_id, type);
-    cJSON *jformat = cJSON_GetObjectItemCaseSensitive(comp, "format");
-    if (type == allo_media_type_audio) {
-        int err;
-        track->info.audio.format = allo_audio_format_opus;
-        track->info.audio.decoder = opus_decoder_create(48000, 1, &err);
-        if (DEBUG_AUDIO) {
-            char name[255]; snprintf(name, 254, "track_%04d.pcm", track_id);
-            track->info.audio.debug = fopen(name, "wb");
-            fprintf(stderr, "Opening decoder for %s\n", name);
-        } else {
-            track->info.audio.debug = NULL;
-        }
-        assert(track->info.audio.decoder);
-    } else if(type == allo_media_type_video) {
-        if (jformat == NULL || jformat->valuestring == NULL) {
-            
-        }
-        if (strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
-            track->info.video.format = allo_video_format_mjpeg;
-        } else if (strcmp(cJSON_GetStringValue(jformat), "h264") == 0) {
-            cJSON *jmeta = cJSON_GetObjectItemCaseSensitive(comp, "metadata");
-            cJSON *jwidth = cJSON_GetObjectItemCaseSensitive(jmeta, "width");
-            cJSON *jheight = cJSON_GetObjectItemCaseSensitive(jmeta, "height");
-            
-            avcodec_register_all();
-            
-            track->info.video.format = allo_video_format_h264;
-            // Let's not create encoder/decoder until they are used
-            track->info.video.width = jwidth->valueint;
-            track->info.video.height = jheight->valueint;
-        } else {
-            track->info.video.format = allo_video_format_invalid;
-            fprintf(stderr, "Unknown video format for track %d: %s\n", track_id, cJSON_GetStringValue(jformat));
-        }
-    }
-}
-
-static inline void __track_destroy(alloclient_internal_shared *shared, allo_media_track *track) {
-    if (track->type == allo_media_type_video) {
-        if (track->info.video.format == allo_video_format_h264 && track->info.video.decoder.codec) {
-            // TODO: cleanup libav decoder
-        }
-    }
-    _media_track_destroy(&shared->media_tracks, track);
-}
-
-
 void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type, cJSON *comp) {
     alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
     
-    allo_media_track *track = __track_find(shared, track_id);
+    allo_media_track *track = _media_track_find(&shared->media_tracks, track_id);
     if (track) {
         assert(track->type == type);
     } else {
-        __track_create(shared, track_id, type, comp);
+        allo_media_track *track = _media_track_create(&shared->media_tracks, track_id, type);
+        allo_media_subsystems[type].track_initialize(track, comp);
     }
     
     _alloclient_internal_shared_end(client);
@@ -154,10 +86,10 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
     alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
     
     allo_media_track_list *tracks = &shared->media_tracks;
-    allo_media_track *track = __track_find(shared, track_id);
+    allo_media_track *track = _media_track_find(&shared->media_tracks, track_id);
     
     if (track) {
-        __track_destroy(shared, track);
+        _media_track_destroy(&shared->media_tracks, track);
     } else {
         fprintf(stderr, "A decoder for track_id %d was not found\n", track_id);
         fprintf(stderr, "Active decoder tracks:\n ");
@@ -208,105 +140,20 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
     length -= sizeof(track_id);
     
     // see if we have allocated a media object for this
-    allo_media_track *track = __track_find(shared, track_id);
+    allo_media_track *track = _media_track_find(&shared->media_tracks, track_id);
     if (!track) {
         // it is possible to receive data before the track exists in components
         _alloclient_internal_shared_end(client);
         return;
     }
     
-    if (track->type == allo_media_type_audio) {
-        // todo: decode on another tread
-        OpusDecoder *decoder = track->info.audio.decoder;
-        FILE *debugFile = track->info.audio.debug;
-        
-        const int maximumFrameCount = 5760; // 120ms as per documentation
-        int16_t *pcm = calloc(maximumFrameCount, sizeof(int16_t));
-        int samples_decoded = opus_decode(decoder, (unsigned char*)data, length, pcm, maximumFrameCount, 0);
+    allo_media_subsystems[track->type].parse(client, track, data, length, &shared->lock);
+}
 
-        assert(samples_decoded >= 0);
-        if (debugFile) {
-            fwrite(pcm, sizeof(int16_t), samples_decoded, debugFile);
-            fflush(debugFile);
-        }
+allo_media_subsystem allo_media_subsystems[allo_media_type_count];
 
-        _alloclient_internal_shared_end(client);
-        
-        if(!client->audio_callback || client->audio_callback(client, track_id, pcm, samples_decoded)) {
-            free(pcm);
-        }
-        return;
-    } else if (track->type == allo_media_type_video) {
-        int32_t wide, high;
-        if (client->video_callback) {
-            allopixel *pixels = NULL;
-            if (track->info.video.format == allo_video_format_mjpeg) {
-                pixels = allo_mjpeg_decode(data, length, &wide, &high);
-            } else if (track->info.video.format == allo_video_format_h264) {
-                
-                if (track->info.video.decoder.codec == NULL) {
-                    track->info.video.decoder.codec = avcodec_find_decoder(AV_CODEC_ID_H264);
-                    if (track->info.video.decoder.codec == NULL) {
-                        fprintf(stderr, "No decoder\n");
-                    }
-                    track->info.video.decoder.context = avcodec_alloc_context3(track->info.video.decoder.codec);
-                    track->info.video.picture = av_frame_alloc();
-                    
-                    track->info.video.decoder.context->width = track->info.video.width;
-                    track->info.video.decoder.context->height = track->info.video.height;
-                    int ret = avcodec_open2(track->info.video.decoder.context, track->info.video.decoder.codec, NULL);
-                    if (ret != 0) {
-                        fprintf(stderr, "avcodec_open2 return %d when opening decoder\n", ret);
-                    }
-                }
-                
-                
-                AVPacket avpacket;
-                avpacket.size = length;
-                avpacket.data = data;
-                avpacket.pts = ++track->info.video.framenr;
-                int ret = avcodec_send_packet(track->info.video.decoder.context, &avpacket);
-                
-                if (ret != 0) {
-                    fprintf(stderr, "avcodec_send_packet return %d\n", ret);
-                    goto fail;
-                }
-                ret = avcodec_receive_frame(track->info.video.decoder.context, track->info.video.picture);
-                if (ret != 0) {
-                    fprintf(stderr, "avcodec_receive_frame return %d\n", ret);
-                    goto fail;
-                }
-                
-                pixels = malloc(track->info.video.picture->width * track->info.video.picture->height * sizeof(allopixel));
-                for (int h = 0; h < track->info.video.picture->height; h++) {
-                    for (int w = 0; w < track->info.video.picture->width; w++) {
-                        int i = h*track->info.video.picture->width + w;
-                        allopixel *p = &pixels[i];
-                        p->r = track->info.video.picture->data[0][i];
-                        p->g = p->r;//track->info.video.picture->data[1][i];
-                        p->b = p->r;//track->info.video.picture->data[2][i];
-                        p->a = 255;
-                    }
-                }
-//                yuv420p_to_rgb32(
-//                    track->info.video.picture->data[0],
-//                    track->info.video.picture->data[1],
-//                    track->info.video.picture->data[2],
-//                    (uint8_t*)pixels,
-//                    track->info.video.picture->width,
-//                    track->info.video.picture->height
-//                );
-            }
-            
-        fail:
-            _alloclient_internal_shared_end(client);
-            
-            if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
-                free(pixels);
-            }
-            return;
-        }
-    }
-    
-    _alloclient_internal_shared_end(client);
+void _allo_media_initialize(void)
+{
+    allo_media_subsystems[allo_media_type_audio] = allo_audio_subsystem;
+    allo_media_subsystems[allo_media_type_video] = allo_video_subsystem;
 }

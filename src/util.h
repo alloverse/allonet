@@ -41,7 +41,7 @@ char *allo_strdup(const char *src); // null-safe
 char *allo_strndup(const char *src, size_t n);
 void allo_free(void *mallocd);
 
-
+void _allo_media_initialize(void);
 
 
 #endif /* util_h */

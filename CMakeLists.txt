@@ -78,6 +78,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/media/audio/audio.c
     ${SOURCE_FILES_PREFIX}/media/video/video.c
     ${SOURCE_FILES_PREFIX}/media/video/mjpeg.cpp
+    ${SOURCE_FILES_PREFIX}/media/video/h264.c
     ${SOURCE_FILES_PREFIX}/_asset.h
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/asset.c

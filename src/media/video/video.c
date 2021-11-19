@@ -4,6 +4,41 @@
 #include <string.h>
 #include <assert.h>
 
+static void video_track_initialize(allo_media_track *track, cJSON *component)
+{
+    cJSON *jformat = cJSON_GetObjectItemCaseSensitive(component, "format");
+    if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "mjpeg") == 0) {
+        track->info.video.format = allo_video_format_mjpeg;
+    } else {
+        fprintf(stderr, "Unknown video format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
+    }
+}
+
+static void video_track_destroy(allo_media_track *track)
+{
+    (void)track; // no state to destroy
+}
+
+static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length, mtx_t *unlock_me)
+{
+    uint32_t track_id = track->track_id;
+    int32_t wide, high;
+    if (!client->video_callback) {
+        mtx_unlock(unlock_me);
+        return;
+    }
+
+    allopixel *pixels = NULL;
+    if(track->info.video.format == allo_video_format_mjpeg) {
+        pixels = allo_mjpeg_decode(mediadata, length, &wide, &high);
+    }
+    mtx_unlock(unlock_me);
+    
+    if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
+        free(pixels);
+    }
+}
+
 static void create_packet(ENetPacket **packet, void* encoded, int size)
 {
     if (*packet) {
@@ -35,8 +70,15 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pix
     int32_t big_track_id = htonl(track_id);
     memcpy(packet->data, &big_track_id, headerlen);
 
-    int ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
+    int ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet); (void)ok;
     allo_statistics.bytes_sent[0] += packet->dataLength;
     allo_statistics.bytes_sent[1+CHANNEL_MEDIA] += packet->dataLength;
     assert(ok == 0);
 }
+
+allo_media_subsystem allo_video_subsystem =
+{
+    .parse = parse_video,
+    .track_initialize = video_track_initialize,
+    .track_destroy = video_track_destroy,
+};

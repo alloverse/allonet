@@ -30,6 +30,28 @@ static inline void yuv420p_to_rgb32(uint8_t* y, uint8_t* u, uint8_t* v, uint8_t 
     }
 }
 
+static inline void rgb32_to_yuv420p(uint8_t *rgb, uint8_t* y, uint8_t* u, uint8_t* v, uint32_t width, uint32_t height) {
+    for (uint32_t j = 0; j < height; j++) {
+        for (uint32_t k = 0; k < width; k++) {
+            uint8_t sR = (uint8_t)(rgb[0]);
+            uint8_t sG = (uint8_t)(rgb[1]);
+            uint8_t sB = (uint8_t)(rgb[2]);
+            
+            *y = (uint8_t)((66 * sR + 129 * sG + 25 * sB + 128) >> 8) + 16;
+            
+            if (0 == j % 2 && 0 == k % 2) {
+                *u = (uint8_t)((-38 * sR - 74 * sG + 112 * sB + 128) >> 8) + 128;
+                *v = (uint8_t)((112 * sR - 94 * sG - 18 * sB + 128) >> 8) + 128;
+                
+                u++;
+                v++;
+            }
+            y++;
+            rgb += 4; // 4 bytes
+        }
+    }
+}
+
 
 ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
 {

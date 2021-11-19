@@ -102,31 +102,6 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
     _alloclient_internal_shared_end(client);
 }
 
-static void yuv2rgb(uint8_t yValue, uint8_t uValue, uint8_t vValue,
-        uint8_t *r, uint8_t *g, uint8_t *b) {
-    int rTmp = yValue + (1.370705 * (vValue-128));
-    // or fast integer computing with a small approximation
-    // rTmp = yValue + (351*(vValue-128))>>8;
-    int gTmp = yValue - (0.698001 * (vValue-128)) - (0.337633 * (uValue-128));
-    // gTmp = yValue - (179*(vValue-128) + 86*(uValue-128))>>8;
-    int bTmp = yValue + (1.732446 * (uValue-128));
-//    int bTmp = yValue + (443*(uValue-128))>>8;
-    *r = MIN(MAX(rTmp, 0), 255);
-    *g = MIN(MAX(gTmp, 0), 255);
-    *b = MIN(MAX(bTmp, 0), 255);
-}
-
-static inline void yuv420p_to_rgb32(uint8_t* y, uint8_t* u, uint8_t* v, uint8_t *rgb, uint32_t width, uint32_t height) {
-    for (uint32_t j = 0; j < height; j++) {
-        for (uint32_t k = 0; k < width; k++) {
-            yuv2rgb(*y, *u, *v, &rgb[0], &rgb[1], &rgb[2]);
-            rgb[3] = 255;
-            rgb += 4;
-            y++;u++;v++;
-        }
-    }
-}
-
 void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length)
 {
     alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);

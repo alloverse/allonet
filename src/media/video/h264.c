@@ -115,7 +115,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     }
 }
 
-allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, unsigned char *data, size_t length)
+allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, int32_t *pixels_wide, int32_t *pixels_high)
 {
     if (track->info.video.decoder.codec == NULL) {
         track->info.video.decoder.codec = avcodec_find_decoder(AV_CODEC_ID_H264);
@@ -160,6 +160,8 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
             p->a = 255;
         }
     }
+    *pixels_wide = track->info.video.picture->width;
+    *pixels_high = track->info.video.picture->height;
 //                yuv420p_to_rgb32(
 //                    track->info.video.picture->data[0],
 //                    track->info.video.picture->data[1],

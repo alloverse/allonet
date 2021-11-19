@@ -48,7 +48,7 @@ static void parse_video(alloclient *client, allo_media_track *track, unsigned ch
     if(track->info.video.format == allo_video_format_mjpeg) {
         pixels = allo_mjpeg_decode(mediadata, length, &wide, &high);
     } else if (track->info.video.format == allo_video_format_h264) {
-        pixels = allo_video_parse_h264(client, track, mediadata, length);
+        pixels = allo_video_parse_h264(client, track, mediadata, length, &wide, &high);
     }
     mtx_unlock(unlock_me);
     

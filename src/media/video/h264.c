@@ -77,9 +77,10 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     }
     
     AVFrame *frame = av_frame_alloc();
-    frame->format = AV_PIX_FMT_YUV422P;
+    frame->format = AV_PIX_FMT_YUV420P;
     frame->width = track->info.video.width;
     frame->height = track->info.video.height;
+    frame->pts = ++track->info.video.framenr;
     
     assert(av_frame_get_buffer(frame, 0) == 0);
     assert(av_frame_make_writable(frame) == 0);
@@ -100,17 +101,18 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     
     assert(avcodec_send_frame(track->info.video.encoder.context, frame) == 0);
     
-    AVPacket avpacket;
-    av_init_packet(&avpacket);
+    AVPacket *avpacket = av_packet_alloc();
     int ret = 0;
     // TODO: Might need to loop and receive multiple packets (because encoded frames can come out of order)
-    ret = avcodec_receive_packet(track->info.video.encoder.context, &avpacket);
+    ret = avcodec_receive_packet(track->info.video.encoder.context, avpacket);
     if (ret >= 0) {
-        ENetPacket *packet = enet_packet_create(NULL, avpacket.size + 4, 0);
-        memcpy(packet->data + 4, avpacket.data, avpacket.size);
+        ENetPacket *packet = enet_packet_create(NULL, avpacket->size + 4, 0);
+        memcpy(packet->data + 4, avpacket->data, avpacket->size);
+        av_packet_free(&avpacket);
         return packet;
     } else {
-        fprintf(stderr, "alloclient: Something went wrong in the h264 encoding\n");
+        fprintf(stderr, "alloclient: Something went wrong in the h264 encoding: %d\n", ret);
+        av_packet_free(&avpacket);
         return NULL;
     }
 }

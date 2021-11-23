@@ -68,7 +68,8 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         track->info.video.encoder.context->width = track->info.video.width;
         track->info.video.encoder.context->height = track->info.video.height;
         track->info.video.encoder.context->time_base = av_d2q(1.0, 10);
-        track->info.video.encoder.context->pix_fmt = AV_PIX_FMT_YUV422P;
+        track->info.video.encoder.context->pix_fmt = AV_PIX_FMT_YUV420P;
+        
         int ret = avcodec_open2(track->info.video.encoder.context, track->info.video.encoder.codec, NULL);
         if (ret != 0) {
             fprintf(stderr, "avcodec_open2 return %d when opening encoder\n", ret);
@@ -76,45 +77,52 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         }
     }
     
-    AVFrame *frame = av_frame_alloc();
-    frame->format = AV_PIX_FMT_YUV420P;
-    frame->width = track->info.video.width;
-    frame->height = track->info.video.height;
-    frame->pts = ++track->info.video.framenr;
+    int ret = 0;
     
-    assert(av_frame_get_buffer(frame, 0) == 0);
-    assert(av_frame_make_writable(frame) == 0);
+    AVFrame *frame = av_frame_alloc();
+    frame->format = track->info.video.encoder.context->pix_fmt;
+    frame->width = track->info.video.encoder.context->width;
+    frame->height = track->info.video.encoder.context->height;
+    frame->pts = ++track->info.video.framenr;
+    ret = av_frame_get_buffer(frame, 0);
+    assert(ret == 0);
+    ret = av_frame_make_writable(frame);
+    assert(ret == 0);
     
     // Convert from pixels RGBA into frame->data YUV
     struct SwsContext *sws_ctx = sws_getContext(
-                pixels_wide,
-                pixels_high,
-                AV_PIX_FMT_RGBA,
-                frame->width,
-                frame->height,
-                AV_PIX_FMT_YUV420P,
-                SWS_BILINEAR, NULL, NULL, NULL
-                );
-    int stride = pixels_wide * 4;
-    int height = sws_scale(sws_ctx, (const uint8_t* const *)&pixels, &stride, 0, pixels_high, frame->data, frame->linesize);
+        pixels_wide,
+        pixels_high,
+        AV_PIX_FMT_RGBA,
+        frame->width,
+        frame->height,
+        frame->format,
+        SWS_BILINEAR, NULL, NULL, NULL
+    );
+    uint8_t *srcData[3] = { (uint8_t*)pixels, NULL, NULL };
+    int srcStrides[3] = { pixels_wide * sizeof(allopixel), 0, 0 };
+    int height = sws_scale(sws_ctx, srcData, srcStrides, 0, pixels_high, frame->data, frame->linesize);
     
     
-    assert(avcodec_send_frame(track->info.video.encoder.context, frame) == 0);
+    ret = avcodec_send_frame(track->info.video.encoder.context, frame);
+    assert(ret == 0);
     
     AVPacket *avpacket = av_packet_alloc();
-    int ret = 0;
     // TODO: Might need to loop and receive multiple packets (because encoded frames can come out of order)
     ret = avcodec_receive_packet(track->info.video.encoder.context, avpacket);
+    
+    ENetPacket *packet = NULL;
     if (ret >= 0) {
-        ENetPacket *packet = enet_packet_create(NULL, avpacket->size + 4, 0);
+        packet = enet_packet_create(NULL, avpacket->size + 4, 0);
         memcpy(packet->data + 4, avpacket->data, avpacket->size);
-        av_packet_free(&avpacket);
-        return packet;
     } else {
         fprintf(stderr, "alloclient: Something went wrong in the h264 encoding: %d\n", ret);
-        av_packet_free(&avpacket);
-        return NULL;
     }
+    
+    av_packet_free(&avpacket);
+    av_frame_free(&frame);
+    
+    return packet;
 }
 
 allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, int32_t *pixels_wide, int32_t *pixels_high)

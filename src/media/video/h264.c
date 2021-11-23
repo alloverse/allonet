@@ -120,20 +120,18 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
     AVFrame *frame = track->info.video.picture;
     // Convert from frame->data YUV into pixels RGBA
     struct SwsContext *sws_ctx = sws_getContext(
-                *pixels_wide,
-                *pixels_high,
-                AV_PIX_FMT_YUV420P,
-                frame->width,
-                frame->height,
-                AV_PIX_FMT_RGBA,
-                SWS_BILINEAR, NULL, NULL, NULL
-                );
+        frame->width,
+        frame->height,
+        frame->format,
+        *pixels_wide,
+        *pixels_high,
+        AV_PIX_FMT_RGBA,
+        SWS_BILINEAR, NULL, NULL, NULL
+    );
     
-    
-    
-    allopixel *pixels = (allopixel*)malloc(track->info.video.picture->width * track->info.video.picture->height * sizeof(allopixel));
-    uint8_t *dstData[1] = { (uint8_t*)pixels };
-    int dstStrides[1] = { (*pixels_high) * 4 };
+    allopixel *pixels = (allopixel*)malloc((*pixels_wide) * (*pixels_high) * sizeof(allopixel));
+    uint8_t *dstData[4] = { (uint8_t*)pixels, NULL, NULL, NULL };
+    int dstStrides[4] = { (*pixels_wide) * sizeof(allopixel), 0, 0, 0 };
     
     int height = sws_scale(
        sws_ctx,
@@ -145,15 +143,6 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
        dstStrides
    );
 
-    
-//                yuv420p_to_rgb32(
-//                    track->info.video.picture->data[0],
-//                    track->info.video.picture->data[1],
-//                    track->info.video.picture->data[2],
-//                    (uint8_t*)pixels,
-//                    track->info.video.picture->width,
-//                    track->info.video.picture->height
-//                );
     av_packet_free(&avpacket);
     return pixels;
 }

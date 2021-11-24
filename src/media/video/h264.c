@@ -22,10 +22,10 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         track->info.video.encoder.context->width = track->info.video.width;
         track->info.video.encoder.context->height = track->info.video.height;
 //        track->info.video.encoder.context->time_base = av_d2q(1.0, 10);
-        track->info.video.encoder.context->time_base = (AVRational){1, 1};
-        track->info.video.encoder.context->pix_fmt = AV_PIX_FMT_YUV420P;
+        track->info.video.encoder.context->time_base = (AVRational){9000, 1};
+        track->info.video.encoder.context->pix_fmt = AV_PIX_FMT_YUV422P;
         track->info.video.encoder.context->bit_rate = 10 * 1000 * 1000;
-        track->info.video.encoder.context->gop_size = 5;
+        track->info.video.encoder.context->gop_size = 15;
         track->info.video.encoder.context->max_b_frames = 0;
 //        track->info.video.encoder.context->rc_buffer_size = 0;
 //        track->info.video.encoder.context->rc_max_rate = 0;
@@ -46,7 +46,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         
         av_opt_set(track->info.video.encoder.context->priv_data, "preset", "ultrafast", 0);
         av_opt_set(track->info.video.encoder.context->priv_data, "tune", "zerolatency", 0);
-//        av_opt_set(track->info.video.encoder.context->priv_data, "g", "300", 0);
+        av_opt_set(track->info.video.encoder.context->priv_data, "g", "30", 0);
                    
         int ret = avcodec_open2(track->info.video.encoder.context, track->info.video.encoder.codec, NULL);
         if (ret != 0) {
@@ -57,6 +57,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     
     int ret = 0;
     
+    /// encoder may hold on to frame data pointer so no cheating
     AVFrame *frame = av_frame_alloc();
     frame->format = track->info.video.encoder.context->pix_fmt;
     frame->width = track->info.video.encoder.context->width;
@@ -76,7 +77,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         frame->width,
         frame->height,
         frame->format,
-        SWS_BILINEAR, NULL, NULL, NULL
+        SWS_FAST_BILINEAR, NULL, NULL, NULL
     );
     uint8_t *srcData[3] = { (uint8_t*)pixels, NULL, NULL };
     int srcStrides[3] = { pixels_wide * sizeof(allopixel), 0, 0 };

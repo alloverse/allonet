@@ -22,21 +22,26 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         track->info.video.encoder.context->width = track->info.video.width;
         track->info.video.encoder.context->height = track->info.video.height;
 //        track->info.video.encoder.context->time_base = av_d2q(1.0, 10);
-        track->info.video.encoder.context->time_base = (AVRational){90000, 1};
+        track->info.video.encoder.context->time_base = (AVRational){5, 1};
         track->info.video.encoder.context->pix_fmt = AV_PIX_FMT_YUV420P;
-        track->info.video.encoder.context->bit_rate = 10 * 1000 * 10000;
-        track->info.video.encoder.context->gop_size = 5;
-        track->info.video.encoder.context->max_b_frames = 1;
+        track->info.video.encoder.context->bit_rate = 5000;
+        track->info.video.encoder.context->gop_size = 50;
+        track->info.video.encoder.context->max_b_frames = 0;
         track->info.video.encoder.context->rc_buffer_size = 0;
         track->info.video.encoder.context->rc_max_rate = 0;
         track->info.video.encoder.context->me_cmp = 1;
         track->info.video.encoder.context->me_range = 0;
+        track->info.video.encoder.context->thread_count = 1;
+        track->info.video.encoder.context->codec_type = AVMEDIA_TYPE_VIDEO;
 //        track->info.video.encoder.context->qmin = 10;
 //        track->info.video.encoder.context->qmin = 50; // these affects quality a lot
         track->info.video.encoder.context->flags |= AV_CODEC_FLAG_LOOP_FILTER;
 //        track->info.video.encoder.context->qcompress = 0.6;
 //        track->info.video.encoder.context->i_quant_factor = 0.71; // no notable change
 //        track->info.video.encoder.context->me_subpel_quality = 5; // no notable change
+        track->info.video.encoder.context->refs = 3;
+        track->info.video.encoder.context->trellis = 0;
+        
         
         
         av_opt_set(track->info.video.encoder.context->priv_data, "preset", "ultrafast", 0);

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <libswscale/swscale.h>
+#include <libavutil/opt.h>
 
 
 ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
@@ -20,9 +21,28 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         
         track->info.video.encoder.context->width = track->info.video.width;
         track->info.video.encoder.context->height = track->info.video.height;
-        track->info.video.encoder.context->time_base = av_d2q(1.0, 10);
+//        track->info.video.encoder.context->time_base = av_d2q(1.0, 10);
+        track->info.video.encoder.context->time_base = (AVRational){90000, 1};
         track->info.video.encoder.context->pix_fmt = AV_PIX_FMT_YUV420P;
+        track->info.video.encoder.context->bit_rate = 10 * 1000 * 10000;
+        track->info.video.encoder.context->gop_size = 5;
+        track->info.video.encoder.context->max_b_frames = 1;
+        track->info.video.encoder.context->rc_buffer_size = 0;
+        track->info.video.encoder.context->rc_max_rate = 0;
+        track->info.video.encoder.context->me_cmp = 1;
+        track->info.video.encoder.context->me_range = 0;
+//        track->info.video.encoder.context->qmin = 10;
+//        track->info.video.encoder.context->qmin = 50; // these affects quality a lot
+        track->info.video.encoder.context->flags |= AV_CODEC_FLAG_LOOP_FILTER;
+//        track->info.video.encoder.context->qcompress = 0.6;
+//        track->info.video.encoder.context->i_quant_factor = 0.71; // no notable change
+//        track->info.video.encoder.context->me_subpel_quality = 5; // no notable change
         
+        
+        av_opt_set(track->info.video.encoder.context->priv_data, "preset", "ultrafast", 0);
+        av_opt_set(track->info.video.encoder.context->priv_data, "tune", "zerolatency", 0);
+//        av_opt_set(track->info.video.encoder.context->priv_data, "g", "300", 0);
+                   
         int ret = avcodec_open2(track->info.video.encoder.context, track->info.video.encoder.codec, NULL);
         if (ret != 0) {
             fprintf(stderr, "avcodec_open2 return %d when opening encoder\n", ret);
@@ -36,7 +56,8 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     frame->format = track->info.video.encoder.context->pix_fmt;
     frame->width = track->info.video.encoder.context->width;
     frame->height = track->info.video.encoder.context->height;
-    frame->pts = ++track->info.video.framenr;
+    frame->pts = track->info.video.framenr += 1;
+    
     ret = av_frame_get_buffer(frame, 0);
     assert(ret == 0);
     ret = av_frame_make_writable(frame);

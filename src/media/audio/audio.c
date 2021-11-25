@@ -15,7 +15,7 @@ static void audio_track_initialize(allo_media_track *track, cJSON *component)
         track->info.audio.format = allo_audio_format_opus;
         track->info.audio.decoder = opus_decoder_create(48000, 1, &err);
     } else {
-        fprintf(stderr, "Unknown video format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
+        fprintf(stderr, "Unknown audio format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
         assert(false);
     }
     if (DEBUG_AUDIO) {

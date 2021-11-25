@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <opus.h>
 #include <enet/enet.h>
-#include <allonet/threading.h>
 #include "allonet/arr.h"
 #include <libavcodec/avcodec.h>
+#include "../threading.h"
 
 typedef enum {
     allo_media_type_invalid = -1,

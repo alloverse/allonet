@@ -155,19 +155,28 @@ target_sources(allonet
 )
 add_subdirectory (lib/tinycthread)
 
+# Threading libs and various system libs
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)
 ELSEIF(ANDROID)
   SET(PLATFORM_LIBS "")
 ELSE()
-  SET(PLATFORM_LIBS m pthread)
+  SET(PLATFORM_LIBS m)
 ENDIF(WIN32)
 
-if(ALLONET_LINK_TINYCTHREAD)
-  SET(TINYCTHREAD tinycthread)
-else()
-  SET(TINYCTHREAD )
+find_package(Threads REQUIRED)
+SET(PLATFORM_LIBS ${PLATFORM_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+
+# if threads.h compatible API is not available on this system, use tinycthread.
+# Except if parent target already linked tinychtread (indicated by ALLONET_LINK_TINYCTHREAD being false),
+# then use tinycthread even if threads.h is available to avoid symbol collisions.
+if(NOT CMAKE_USE_PTHREADS_INIT OR NOT ALLONET_LINK_TINYCTHREAD)
+  add_definitions(-DUSE_TINYCTHREAD)
+  if(ALLONET_LINK_TINYCTHREAD)
+    SET(PLATFORM_LIBS ${PLATFORM_LIBS} tinycthread)
+  endif()
 endif()
+message("Using platform libs ${PLATFORM_LIBS}")
 
 
 # Media libs
@@ -183,7 +192,7 @@ include_directories(SYSTEM
 
 target_link_libraries(allonet 
   enet cjson-static cjson_utils-static opus 
-  ${TINYCTHREAD} ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
+  ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
   ${LIBAV_LIBRARIES}
 )
 

@@ -13,7 +13,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <cJSON/cJSON.h>
-#include <allonet/threading.h>
 
 /// Api for asset handling
 typedef struct assetstore {
@@ -70,7 +69,7 @@ typedef struct assetstore {
     /// Cache pruning is done now and then. This tracks the next invocation.
     double next_state_prune;
     
-    mtx_t lock;
+    void *lock;
 } assetstore;
 
 

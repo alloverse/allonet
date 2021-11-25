@@ -118,6 +118,8 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         track->info.video.decoder.context = avcodec_alloc_context3(track->info.video.decoder.codec);
         track->info.video.picture = av_frame_alloc();
         
+        track->info.video.decoder.packet = av_packet_alloc();
+        
         track->info.video.decoder.context->width = track->info.video.width;
         track->info.video.decoder.context->height = track->info.video.height;
         
@@ -129,21 +131,18 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         }
     }
     
-    AVPacket *avpacket = av_packet_alloc();
+    AVPacket *avpacket = track->info.video.decoder.packet;
     avpacket->size = length;
     avpacket->data = data;
-    avpacket->pts = avpacket->dts = ++track->info.video.framenr;
     int ret = avcodec_send_packet(track->info.video.decoder.context, avpacket);
     
     if (ret != 0) {
         fprintf(stderr, "avcodec_send_packet return %d\n", ret);
-        av_packet_free(&avpacket);
         return NULL;
     }
     ret = avcodec_receive_frame(track->info.video.decoder.context, track->info.video.picture);
     if (ret != 0) {
         fprintf(stderr, "avcodec_receive_frame return %d\n", ret);
-        av_packet_free(&avpacket);
         return NULL;
     }
     
@@ -172,6 +171,7 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
     int dstStrides[4] = { (*pixels_wide) * sizeof(allopixel), 0, 0, 0 };
     int height = sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dstData, dstStrides);
 
-    av_packet_free(&avpacket);
+    av_frame_unref(frame);
+    av_packet_unref(avpacket);
     return pixels;
 }

@@ -52,6 +52,7 @@ typedef struct {
                 AVCodec *codec;
                 AVCodecContext *context;
                 struct SwsContext *scale_context;
+                AVPacket *packet;
             } decoder;
             int width, height;
             AVFrame *picture;

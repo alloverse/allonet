@@ -42,7 +42,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         track->info.video.encoder.context->refs = 3;
         track->info.video.encoder.context->trellis = 0;
         
-        
+        track->info.video.encoder.packet = av_packet_alloc();
         
         av_opt_set(track->info.video.encoder.context->priv_data, "preset", "ultrafast", 0);
         av_opt_set(track->info.video.encoder.context->priv_data, "tune", "zerolatency", 0);
@@ -87,7 +87,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     ret = avcodec_send_frame(track->info.video.encoder.context, frame);
     assert(ret == 0);
     
-    AVPacket *avpacket = av_packet_alloc();
+    AVPacket *avpacket = track->info.video.encoder.packet;
     // TODO: Might need to loop and receive multiple packets (because encoded frames can come out of order)
     ret = avcodec_receive_packet(track->info.video.encoder.context, avpacket);
     
@@ -98,8 +98,10 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     } else {
         fprintf(stderr, "alloclient: Something went wrong in the h264 encoding: %d\n", ret);
     }
+    av_packet_unref(avpacket);
+    av_frame_unref(frame);
     
-    av_packet_free(&avpacket);
+    
     av_frame_free(&frame);
     
     return packet;

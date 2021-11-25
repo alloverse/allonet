@@ -44,6 +44,7 @@ typedef struct {
             struct {
                 AVCodec *codec;
                 AVCodecContext *context;
+                AVPacket *packet;
             } encoder;
             struct {
                 AVCodec *codec;

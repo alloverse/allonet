@@ -174,9 +174,7 @@ endif()
 find_package(LIBAV REQUIRED)
 IF(APPLE)
   find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
-  SET(X264_WITH_DEPS ${X264} ${VIDEO_DECODE_ACCELERATION})
 ELSE()
-  SET(X264_WITH_DEPS ${X264})
 ENDIF()
 
 include_directories(SYSTEM
@@ -186,7 +184,6 @@ include_directories(SYSTEM
 target_link_libraries(allonet 
   enet cjson-static cjson_utils-static opus 
   ${TINYCTHREAD} ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
-  ${X264_WITH_DEPS}
   ${LIBAV_LIBRARIES}
 )
 

@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <cJSON/cJSON.h>
-#include <tinycthread.h>
+#include <allonet/threading.h>
 
 /// Api for asset handling
 typedef struct assetstore {

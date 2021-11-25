@@ -53,9 +53,9 @@ typedef struct {
                 AVCodecContext *context;
                 struct SwsContext *scale_context;
                 AVPacket *packet;
+                AVFrame *frame;
             } decoder;
             int width, height;
-            AVFrame *picture;
             int framenr;
         } video;
     } info;

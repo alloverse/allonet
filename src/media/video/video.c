@@ -38,7 +38,7 @@ static void video_track_destroy(allo_media_track *track)
 static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length, mtx_t *unlock_me)
 {
     uint32_t track_id = track->track_id;
-    int32_t wide, high;
+    int32_t wide = track->info.video.width, high = track->info.video.height;
     if (!client->video_callback) {
         mtx_unlock(unlock_me);
         return;

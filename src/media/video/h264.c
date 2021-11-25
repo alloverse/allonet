@@ -116,7 +116,7 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
             fprintf(stderr, "No decoder\n");
         }
         track->info.video.decoder.context = avcodec_alloc_context3(track->info.video.decoder.codec);
-        track->info.video.picture = av_frame_alloc();
+        track->info.video.decoder.frame = av_frame_alloc();
         
         track->info.video.decoder.packet = av_packet_alloc();
         
@@ -140,16 +140,13 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         fprintf(stderr, "avcodec_send_packet return %d\n", ret);
         return NULL;
     }
-    ret = avcodec_receive_frame(track->info.video.decoder.context, track->info.video.picture);
+    
+    AVFrame *frame = track->info.video.decoder.frame;
+    ret = avcodec_receive_frame(track->info.video.decoder.context, frame);
     if (ret != 0) {
         fprintf(stderr, "avcodec_receive_frame return %d\n", ret);
         return NULL;
     }
-    
-    *pixels_wide = track->info.video.picture->width;
-    *pixels_high = track->info.video.picture->height;
-    
-    AVFrame *frame = track->info.video.picture;
     
     // Convert from frame->data YUV into pixels RGBA
     struct SwsContext *sws_ctx = track->info.video.decoder.scale_context;

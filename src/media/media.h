@@ -27,6 +27,7 @@ typedef enum allo_video_format {
     allo_video_format_h264
 } allo_video_format;
 
+struct SwsContext;
 
 typedef struct {
     uint32_t track_id;
@@ -45,10 +46,12 @@ typedef struct {
                 AVCodec *codec;
                 AVCodecContext *context;
                 AVPacket *packet;
+                struct SwsContext *scale_context;
             } encoder;
             struct {
                 AVCodec *codec;
                 AVCodecContext *context;
+                struct SwsContext *scale_context;
             } decoder;
             int width, height;
             AVFrame *picture;

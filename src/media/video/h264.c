@@ -17,7 +17,6 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
             return NULL;
         }
         track->info.video.encoder.context = avcodec_alloc_context3(track->info.video.encoder.codec);
-        track->info.video.picture = av_frame_alloc();
         
         track->info.video.encoder.context->width = track->info.video.width;
         track->info.video.encoder.context->height = track->info.video.height;
@@ -44,6 +43,8 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         
         track->info.video.encoder.packet = av_packet_alloc();
         
+        track->info.video.encoder.scale_context = NULL;
+        
         av_opt_set(track->info.video.encoder.context->priv_data, "preset", "ultrafast", 0);
         av_opt_set(track->info.video.encoder.context->priv_data, "tune", "zerolatency", 0);
         av_opt_set(track->info.video.encoder.context->priv_data, "g", "30", 0);
@@ -66,11 +67,11 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     
     ret = av_frame_get_buffer(frame, 0);
     assert(ret == 0);
-    ret = av_frame_make_writable(frame);
-    assert(ret == 0);
     
     // Convert from pixels RGBA into frame->data YUV
-    struct SwsContext *sws_ctx = sws_getContext(
+    struct SwsContext *sws_ctx = track->info.video.encoder.scale_context;
+    sws_ctx = sws_getCachedContext(
+        sws_ctx,
         pixels_wide,
         pixels_high,
         AV_PIX_FMT_RGBA,
@@ -79,10 +80,10 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
         frame->format,
         SWS_FAST_BILINEAR, NULL, NULL, NULL
     );
+    track->info.video.encoder.scale_context = sws_ctx;
     uint8_t *srcData[3] = { (uint8_t*)pixels, NULL, NULL };
     int srcStrides[3] = { pixels_wide * sizeof(allopixel), 0, 0 };
     int height = sws_scale(sws_ctx, srcData, srcStrides, 0, pixels_high, frame->data, frame->linesize);
-    
     
     ret = avcodec_send_frame(track->info.video.encoder.context, frame);
     assert(ret == 0);
@@ -119,6 +120,9 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         
         track->info.video.decoder.context->width = track->info.video.width;
         track->info.video.decoder.context->height = track->info.video.height;
+        
+        track->info.video.decoder.scale_context = NULL;
+        
         int ret = avcodec_open2(track->info.video.decoder.context, track->info.video.decoder.codec, NULL);
         if (ret != 0) {
             fprintf(stderr, "avcodec_open2 return %d when opening decoder\n", ret);
@@ -147,8 +151,11 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
     *pixels_high = track->info.video.picture->height;
     
     AVFrame *frame = track->info.video.picture;
+    
     // Convert from frame->data YUV into pixels RGBA
-    struct SwsContext *sws_ctx = sws_getContext(
+    struct SwsContext *sws_ctx = track->info.video.decoder.scale_context;
+    sws_ctx = sws_getCachedContext(
+        sws_ctx,
         frame->width,
         frame->height,
         frame->format,
@@ -157,20 +164,13 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         AV_PIX_FMT_RGBA,
         SWS_BILINEAR, NULL, NULL, NULL
     );
+    track->info.video.decoder.scale_context = sws_ctx;
     
+    // Convert pixel formats
     allopixel *pixels = (allopixel*)malloc((*pixels_wide) * (*pixels_high) * sizeof(allopixel));
     uint8_t *dstData[4] = { (uint8_t*)pixels, NULL, NULL, NULL };
     int dstStrides[4] = { (*pixels_wide) * sizeof(allopixel), 0, 0, 0 };
-    
-    int height = sws_scale(
-       sws_ctx,
-       frame->data,
-       frame->linesize,
-       0,
-       frame->height,
-       dstData,
-       dstStrides
-   );
+    int height = sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dstData, dstStrides);
 
     av_packet_free(&avpacket);
     return pixels;

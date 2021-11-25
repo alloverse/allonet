@@ -110,6 +110,9 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
 
 allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, int32_t *pixels_wide, int32_t *pixels_high)
 {
+    assert(pixels_high != NULL);
+    assert(pixels_wide != NULL);
+    
     if (track->info.video.decoder.codec == NULL) {
         track->info.video.decoder.codec = avcodec_find_decoder(AV_CODEC_ID_H264);
         if (track->info.video.decoder.codec == NULL) {
@@ -148,6 +151,9 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         return NULL;
     }
     
+    if (*pixels_wide == 0) *pixels_wide = frame->width;
+    if (*pixels_high == 0) *pixels_high = frame->height;
+    
     // Convert from frame->data YUV into pixels RGBA
     struct SwsContext *sws_ctx = track->info.video.decoder.scale_context;
     sws_ctx = sws_getCachedContext(
@@ -158,7 +164,7 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
         *pixels_wide,
         *pixels_high,
         AV_PIX_FMT_RGBA,
-        SWS_BILINEAR, NULL, NULL, NULL
+        SWS_BICUBIC, NULL, NULL, NULL
     );
     track->info.video.decoder.scale_context = sws_ctx;
     

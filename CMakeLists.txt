@@ -171,7 +171,6 @@ endif()
 
 
 # Media libs
-find_library(X264 NAMES x264 REQUIRED)
 find_package(LIBAV REQUIRED)
 IF(APPLE)
   find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)

@@ -11,7 +11,7 @@ jobs:
   - script: sudo sh install-cmake.sh
     displayName: 'Install CMake'
   - script: sudo apt-get install nasm
-    displayName: 'Install nasm for x264'
+    displayName: 'Install nasm'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -41,9 +41,7 @@ jobs:
     vmImage: 'macOS-latest'
   steps:
   - script: brew install nasm
-    displayName: 'Install nasm for x264'
-  - script: cd lib && sh build-x264.sh
-    displayName: 'Build x265 FAT lib'
+    displayName: 'Install nasm'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -106,7 +104,7 @@ jobs:
     vmImage: 'macOS-latest'
   steps:
   - script: brew install nasm
-    displayName: 'Install nasm for x264'
+    displayName: 'Install nasm'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'

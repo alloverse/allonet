@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <opus.h>
 #include <enet/enet.h>
-#include <tinycthread.h>
+#include <allonet/threading.h>
 #include "allonet/arr.h"
 #include <libavcodec/avcodec.h>
 

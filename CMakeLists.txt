@@ -6,7 +6,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
-option(ALLONET_LINK_TINYCTHREAD "Whether to link with tinycthread. say off if you already have it in the process." ON)
+set(ALLONET_THREADING_STRATEGY "native_if_available" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
 
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
@@ -161,22 +161,24 @@ IF(WIN32)
 ELSEIF(ANDROID)
   SET(PLATFORM_LIBS "")
 ELSE()
-  SET(PLATFORM_LIBS m)
+  SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
 find_package(Threads REQUIRED)
-SET(PLATFORM_LIBS ${PLATFORM_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
+# use threads.h only if it's available AND we're allowed to by our parent project.
+# else, fallback to tinycthread.
 # if threads.h compatible API is not available on this system, use tinycthread.
-# Except if parent target already linked tinychtread (indicated by ALLONET_LINK_TINYCTHREAD being false),
-# then use tinycthread even if threads.h is available to avoid symbol collisions.
-if(NOT CMAKE_USE_PTHREADS_INIT OR NOT ALLONET_LINK_TINYCTHREAD)
+# even if it's available, use tinycthread if parent project forces us to.
+if(CMAKE_USE_PTHREADS_INIT AND ${ALLONET_THREADING_STRATEGY} MATCHES "native_if_available")
+  SET(PLATFORM_LIBS ${PLATFORM_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+else()
   add_definitions(-DUSE_TINYCTHREAD)
-  if(ALLONET_LINK_TINYCTHREAD)
+  if(NOT ${ALLONET_THREADING_STRATEGY} MATCHES "force_use_tinycthread")
     SET(PLATFORM_LIBS ${PLATFORM_LIBS} tinycthread)
   endif()
 endif()
-message("Using platform libs ${PLATFORM_LIBS}")
+message("With threading strategy ${ALLONET_THREADING_STRATEGY}, using platform libs ${PLATFORM_LIBS}")
 
 
 # Media libs

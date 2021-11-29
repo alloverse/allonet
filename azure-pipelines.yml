@@ -28,6 +28,7 @@ jobs:
         lang/**/README.md
       targetFolder: $(Build.ArtifactStagingDirectory)/version
   - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) linux-x64
+    displayName: "Adjust staging directory"
   - task: S3Upload@1
     inputs:
       awsCredentials: 'aws-ci'
@@ -63,8 +64,9 @@ jobs:
         build/*.dylib
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
   - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) mac-universal
+    displayName: "Adjust staging directory"
   - task: S3Upload@1
     inputs:
       awsCredentials: 'aws-ci'
@@ -105,8 +107,9 @@ jobs:
         build/**/allo*.pdb
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
   - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) windows-x64
+    displayName: "Adjust staging directory"
   - task: S3Upload@1
     inputs:
       awsCredentials: 'aws-ci'
@@ -141,8 +144,9 @@ jobs:
         build/*.so
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
   - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) android-x64
+    displayName: "Adjust staging directory"
   - task: S3Upload@1
     inputs:
       awsCredentials: 'aws-ci'

@@ -3,7 +3,6 @@ set -ex
 VERSION=`cat build/include/allonet_version.txt | xargs echo -n`
 STAGE=$1
 PLATFORM=$2
-BRANCH=`git rev-parse --abbrev-ref HEAD`
 
 if [ -z "$STAGE/version" ];
 then
@@ -17,17 +16,16 @@ generate_metadata()
 {
   "version": "${VERSION}",
   "platform": "${PLATFORM}",
-  "branch": "${BRANCH}",
+  "branch": "${BUILD_SOURCEBRANCHNAME}",
   "buildid": "${BUILD_BUILDID}",
   "buildnumber": "${BUILD_BUILDNUMBER}",
-  "sourcebranch": "${BUILD_SOURCEBRANCHNAME}",
   "githash": "${BUILD_SOURCEVERSION}",
   "changemsg": "${BUILD_SOURCEVERSIONMESSAGE}"
 }
 EOF
 }
 
-echo "$(generate_metadata)" > $STAGE/${BRANCH}_${PLATFORM}.json
+echo "$(generate_metadata)" > $STAGE/${BUILD_SOURCEBRANCHNAME}_${PLATFORM}.json
 exit 0
 mv "$STAGE/version/build" "$STAGE/version/$PLATFORM"
 mv "$STAGE/version" "$STAGE/$VERSION"

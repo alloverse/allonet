@@ -25,7 +25,7 @@ generate_metadata()
 EOF
 }
 
-echo "$(generate_metadata)" > $STAGE/${BUILD_SOURCEBRANCHNAME}_${PLATFORM}.json
+echo "$(generate_metadata)" > $STAGE/latest_${BUILD_SOURCEBRANCHNAME}_${PLATFORM}.json
 exit 0
 mv "$STAGE/version/build" "$STAGE/version/$PLATFORM"
 mv "$STAGE/version" "$STAGE/$VERSION"

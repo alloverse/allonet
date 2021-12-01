@@ -26,7 +26,8 @@ EOF
 }
 
 if [ "$PLATFORM" = "windows-x64" ]; then
-  mv $STAGE/version/build/Release/* $STAGE/version/build/
+  mv $STAGE/version/build/Release/allonet.dll $STAGE/version/build/allonet.dll
+  mv $STAGE/version/build/Release/allonet.lib $STAGE/version/build/allonet.lib
   rm -d $STAGE/version/build/Release
 fi
 

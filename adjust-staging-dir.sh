@@ -25,7 +25,12 @@ generate_metadata()
 EOF
 }
 
+if [ "$PLATFORM" = "win-x64" ]; then
+  mv $STAGE/version/build/Release/* $STAGE/version/build/
+  rm -d $STAGE/version/build/Release
+fi
+
+
 echo "$(generate_metadata)" > $STAGE/latest_${BUILD_SOURCEBRANCHNAME}_${PLATFORM}.json
-exit 0
 mv "$STAGE/version/build" "$STAGE/version/$PLATFORM"
 mv "$STAGE/version" "$STAGE/$VERSION"

@@ -25,7 +25,7 @@ generate_metadata()
 EOF
 }
 
-if [ "$PLATFORM" = "win-x64" ]; then
+if [ "$PLATFORM" = "windows-x64" ]; then
   mv $STAGE/version/build/Release/* $STAGE/version/build/
   rm -d $STAGE/version/build/Release
 fi

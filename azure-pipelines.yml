@@ -28,7 +28,17 @@ jobs:
         build/*.so
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
+  - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) linux-x64
+    displayName: "Adjust staging directory"
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'aws-ci'
+      regionName: 'eu-north-1'
+      bucketName: 'alloverse-downloads-prod'
+      targetFolder: 'allonet'
+      filesAcl: 'public-read'
+      sourceFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
     inputs:
@@ -58,7 +68,17 @@ jobs:
         build/*.dylib
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
+  - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) mac-universal
+    displayName: "Adjust staging directory"
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'aws-ci'
+      regionName: 'eu-north-1'
+      bucketName: 'alloverse-downloads-prod'
+      targetFolder: 'allonet'
+      filesAcl: 'public-read'
+      sourceFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
     inputs:
@@ -91,7 +111,17 @@ jobs:
         build/**/allo*.pdb
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
+  - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) windows-x64
+    displayName: "Adjust staging directory"
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'aws-ci'
+      regionName: 'eu-north-1'
+      bucketName: 'alloverse-downloads-prod'
+      targetFolder: 'allonet'
+      filesAcl: 'public-read'
+      sourceFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
     inputs:
@@ -120,7 +150,17 @@ jobs:
         build/*.so
         lang/**/*.lua
         lang/**/README.md
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      targetFolder: $(Build.ArtifactStagingDirectory)/version
+  - script: bash adjust-staging-dir.sh $(Build.ArtifactStagingDirectory) android-x64
+    displayName: "Adjust staging directory"
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'aws-ci'
+      regionName: 'eu-north-1'
+      bucketName: 'alloverse-downloads-prod'
+      targetFolder: 'allonet'
+      filesAcl: 'public-read'
+      sourceFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: "Publish artifacts"
     inputs:

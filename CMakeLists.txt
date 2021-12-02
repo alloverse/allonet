@@ -170,7 +170,7 @@ find_package(Threads REQUIRED)
 # else, fallback to tinycthread.
 # if threads.h compatible API is not available on this system, use tinycthread.
 # even if it's available, use tinycthread if parent project forces us to.
-if(CMAKE_USE_PTHREADS_INIT AND ${ALLONET_THREADING_STRATEGY} MATCHES "native_if_available")
+if(CMAKE_USE_PTHREADS_INIT AND ${ALLONET_THREADING_STRATEGY} MATCHES "native_if_available" AND NOT APPLE)
   SET(PLATFORM_LIBS ${PLATFORM_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 else()
   add_definitions(-DUSE_TINYCTHREAD)

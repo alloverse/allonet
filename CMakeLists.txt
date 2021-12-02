@@ -8,6 +8,18 @@ option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instea
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 set(ALLONET_THREADING_STRATEGY "native_if_available" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
 
+IF(APPLE)
+  SET(PLATSTR "mac-universal")
+ELSEIF(ANDROID)
+  SET(PLATSTR "android-arm64")
+ELSEIF(UNIX)
+  SET(PLATSTR "linux-x64")
+ELSEIF(WIN32)
+  SET(PLATSTR "windows-x64")
+ELSE()
+  FATAL_ERROR("Unsupported platform")
+ENDIF()
+
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "lib/mathc"
@@ -182,10 +194,13 @@ message("With threading strategy ${ALLONET_THREADING_STRATEGY}, using platform l
 
 
 # Media libs
-find_package(LIBAV REQUIRED)
+set(LIBAV_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/include)
+file(GLOB LIBAV_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/${PLATSTR}/lib/*)
+file(GLOB LIBAV_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/${PLATSTR}/bin/*)
+set(LIBAV_DLLS ${LIBAV_DLLS} PARENT_SCOPE)
 IF(APPLE)
   find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
-ELSE()
+  set(LIBAV_LIBRARIES ${LIBAV_LIBRARIES} ${VIDEO_DECODE_ACCELERATION})
 ENDIF()
 
 include_directories(SYSTEM

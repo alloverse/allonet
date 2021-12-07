@@ -11,7 +11,7 @@ set(ALLONET_THREADING_STRATEGY "native_if_available" CACHE STRING "Whether to us
 IF(APPLE)
   SET(PLATSTR "mac-universal")
 ELSEIF(ANDROID)
-  SET(PLATSTR "android-arm64")
+  SET(PLATSTR "android-arm64-v8a")
 ELSEIF(UNIX)
   SET(PLATSTR "linux-x64")
 ELSEIF(WIN32)

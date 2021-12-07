@@ -106,7 +106,14 @@ function build_ffmpeg {
 build_ffmpeg arm64-v8a 26
 ```
 
+## Linux
+
+Very similar to Android, except I didn't bother with a script:
+
+    git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
+    cd ffmpeg; git checkout release/4.4
+    ./configure --enable-small --disable-programs --disable-doc --enable-shared --disable-static
+    make -j12
 
 ## macOS
 
-## Linux

@@ -90,6 +90,15 @@ jobs:
   pool:
     vmImage: 'vs2017-win2016'
   steps:
+  - script: |
+      git config --global --add filter.lfs.required true
+      git config --global --add filter.lfs.smudge "git-lfs smudge -- %f"
+      git config --global --add filter.lfs.process "git-lfs filter-process"
+      git config --global --add filter.lfs.clean "git-lfs clean -- %f"
+    displayName: Configure LFS for use with submodules
+  - checkout: self
+    lfs: true
+    submodules: true
   - task: CMake@1
     inputs:
       workingDirectory: 'build'

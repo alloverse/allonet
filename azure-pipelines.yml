@@ -16,7 +16,7 @@ jobs:
     inputs:
       workingDirectory: 'build'
       cmakeArgs: ".."
-  - script: make allonet
+  - script: env VERBOSE=1 make allonet
     workingDirectory: build
     displayName: "Make"
   - task: CopyFiles@2

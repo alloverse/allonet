@@ -197,11 +197,15 @@ message("With threading strategy ${ALLONET_THREADING_STRATEGY}, using platform l
 set(LIBAV_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/include)
 file(GLOB LIBAV_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/${PLATSTR}/lib/*)
 file(GLOB LIBAV_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/${PLATSTR}/bin/*)
-set(LIBAV_DLLS ${LIBAV_DLLS} PARENT_SCOPE)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+  set(LIBAV_DLLS ${LIBAV_DLLS} PARENT_SCOPE)
+endif()
 IF(APPLE)
   find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
   set(LIBAV_LIBRARIES ${LIBAV_LIBRARIES} ${VIDEO_DECODE_ACCELERATION})
 ENDIF()
+message("allonet/libav: linking with ${LIBAV_LIBRARIES} and bundling ${LIBAV_DLLS}")
 
 include_directories(SYSTEM
   ${LIBAV_INCLUDE_DIR}

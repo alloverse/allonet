@@ -6,7 +6,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
-set(ALLONET_THREADING_STRATEGY "native_if_available" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
+set(ALLONET_THREADING_STRATEGY "force_link_tinycthread" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
 
 IF(APPLE)
   SET(PLATSTR "mac-universal")

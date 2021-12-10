@@ -1,4 +1,4 @@
-#include "h264.h"
+#include "../media.h"
 #include "../../client/_client.h"
 #include "../../util.h"
 #include <string.h>
@@ -7,7 +7,7 @@
 #include <libavutil/opt.h>
 
 
-ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+static ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
 {
 
     if (track->info.video.encoder.codec == NULL) {
@@ -83,7 +83,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     track->info.video.encoder.scale_context = sws_ctx;
     uint8_t *srcData[3] = { (uint8_t*)pixels, NULL, NULL };
     int srcStrides[3] = { pixels_wide * sizeof(allopixel), 0, 0 };
-    int height = sws_scale(sws_ctx, srcData, srcStrides, 0, pixels_high, frame->data, frame->linesize);
+    int height = sws_scale(sws_ctx, (const uint8_t *const*)srcData, srcStrides, 0, pixels_high, frame->data, frame->linesize);
     
     ret = avcodec_send_frame(track->info.video.encoder.context, frame);
     assert(ret == 0);
@@ -108,7 +108,7 @@ ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, in
     return packet;
 }
 
-allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, int32_t *pixels_wide, int32_t *pixels_high)
+static allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, int32_t *pixels_wide, int32_t *pixels_high)
 {
     assert(pixels_high != NULL);
     assert(pixels_wide != NULL);
@@ -172,9 +172,69 @@ allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *track, un
     allopixel *pixels = (allopixel*)malloc((*pixels_wide) * (*pixels_high) * sizeof(allopixel));
     uint8_t *dstData[4] = { (uint8_t*)pixels, NULL, NULL, NULL };
     int dstStrides[4] = { (*pixels_wide) * sizeof(allopixel), 0, 0, 0 };
-    int height = sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dstData, dstStrides);
+    int height = sws_scale(sws_ctx, (const uint8_t *const*)frame->data, frame->linesize, 0, frame->height, dstData, dstStrides);
 
     av_frame_unref(frame);
     av_packet_unref(avpacket);
     return pixels;
+}
+
+
+
+
+static bool video_track_initialize(allo_media_track *track, cJSON *comp)
+{
+    if(track->type != allo_media_type_video) return false;
+    
+    cJSON *jformat = cJSON_GetObjectItemCaseSensitive(comp, "format");
+    if (strcmp(cJSON_GetStringValue(jformat), "h264") == 0) {
+        cJSON *jmeta = cJSON_GetObjectItemCaseSensitive(comp, "metadata");
+        cJSON *jwidth = cJSON_GetObjectItemCaseSensitive(jmeta, "width");
+        cJSON *jheight = cJSON_GetObjectItemCaseSensitive(jmeta, "height");
+        
+        avcodec_register_all();
+        
+        track->info.video.format = allo_video_format_h264;
+        // Let's not create encoder/decoder until they are used
+        track->info.video.width = jwidth->valueint;
+        track->info.video.height = jheight->valueint;
+        return true;
+    }
+    return false;
+}
+
+static void video_track_destroy(allo_media_track *track)
+{
+    if (track->info.video.format == allo_video_format_h264 && track->info.video.decoder.codec) {
+        // TODO: cleanup libav decoder
+    }
+}
+
+static void parse_video(alloclient *client, allo_media_track *track, unsigned char *mediadata, size_t length, mtx_t *unlock_me)
+{
+    uint32_t track_id = track->track_id;
+    int32_t wide = track->info.video.width, high = track->info.video.height;
+    if (!client->video_callback) {
+        mtx_unlock(unlock_me);
+        return;
+    }
+
+    allopixel *pixels = allo_video_parse_h264(client, track, mediadata, length, &wide, &high);
+    
+    mtx_unlock(unlock_me);
+    
+    if (pixels && client->video_callback(client, track_id, pixels, wide, high)) {
+        free(pixels);
+    }
+}
+
+void allo_libav_initialize(void)
+{
+    allo_media_subsystem *sys = malloc(sizeof(allo_media_subsystem));
+    sys->parse = parse_video;
+    sys->track_initialize = video_track_initialize;
+    sys->track_destroy = video_track_destroy;
+    sys->create_video_packet = allo_video_write_h264;
+    allo_media_subsystem_register(sys);
+    printf("allonet: initialized libav media subsystem\n"); 
 }

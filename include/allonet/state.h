@@ -137,6 +137,10 @@ extern void allo_interaction_free(allo_interaction *interaction);
  * Initialize the Allonet library. Must be called before any other Allonet calls.
  */
 extern bool allo_initialize(bool redirect_stdout);
+/**
+ * If you're linking liballonet_av, you also have to initialize that sub-library.
+ */
+extern void allo_libav_initialize(void);
 
 /**
  * Run world simulation for a given state and known intents. Modifies state inline.

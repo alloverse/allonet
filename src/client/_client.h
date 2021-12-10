@@ -28,7 +28,7 @@ typedef struct {
     char *avatar_id;
     statehistory_t history;
     scheduler jobs;
-    assetstore assetstore; // asset state tracking
+    assetstore assets; // asset state tracking
     alloclient_internal_shared *shared; // only use this and derivates thereof within a  _alloclient_internal_shared_begin/_alloclient_internal_shared_end block
 } alloclient_internal;
 

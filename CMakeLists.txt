@@ -90,7 +90,6 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/media/audio/audio.c
     ${SOURCE_FILES_PREFIX}/media/video/video.c
     ${SOURCE_FILES_PREFIX}/media/video/mjpeg.cpp
-    ${SOURCE_FILES_PREFIX}/media/video/h264.c
     ${SOURCE_FILES_PREFIX}/_asset.h
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/asset.c
@@ -120,6 +119,12 @@ set(SOURCE_FILES
     lib/tinyjpeg/tiny_jpeg.c
 )
 
+set(AV_SOURCE_FILES
+  ${SOURCE_FILES_PREFIX}/media/video/libav.c
+)
+
+
+
 if(ALLONET_USE_LUA)
 	LIST(APPEND SOURCE_FILES
 		lang/lua/allonet-lua.c
@@ -138,6 +143,8 @@ else()
 endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
+
+add_library(allonet_av ${ALLONET_BUILDTYPE})
 
 # Versioning
 # crazy relative-path hack courtesy of running bash on windows and having mixed path types...
@@ -165,9 +172,15 @@ target_sources(allonet
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
 )
-add_subdirectory (lib/tinycthread)
+
+target_sources(allonet_av
+  PRIVATE
+    ${AV_SOURCE_FILES}
+)
 
 # Threading libs and various system libs
+add_subdirectory (lib/tinycthread)
+
 IF(WIN32)
   SET(PLATFORM_LIBS ws2_32 winmm)
 ELSEIF(ANDROID)
@@ -214,7 +227,10 @@ include_directories(SYSTEM
 target_link_libraries(allonet 
   enet cjson-static cjson_utils-static opus 
   ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
-  ${LIBAV_LIBRARIES}
+)
+
+target_link_libraries(allonet_av
+  allonet ${PLATFORM_LIBS} ${LIBAV_LIBRARIES}
 )
 
 # client example

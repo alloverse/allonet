@@ -214,7 +214,7 @@ static void _asset_request_bytes_func(const char *asset_id, size_t offset, size_
         uint8_t *buffer = malloc(length);
         assert(buffer);
         size_t total_size = 0;
-        int read_bytes = assetstore_read(&(_internal(client)->assetstore), asset_id, offset, buffer, length, &total_size);
+        int read_bytes = assetstore_read(&(_internal(client)->assets), asset_id, offset, buffer, length, &total_size);
         
         if (read_bytes > 0) {
             asset_deliver_bytes(asset_id, buffer, offset, read_bytes, total_size, _asset_send_func, user);
@@ -232,7 +232,7 @@ static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t
         client->asset_receive_callback(client, asset_id, buffer, offset, length, total_size);
         return length;
     } else {
-        return assetstore_write(&(_internal(client)->assetstore), asset_id, offset, buffer, length, total_size);
+        return assetstore_write(&(_internal(client)->assets), asset_id, offset, buffer, length, total_size);
     }
 }
 
@@ -697,7 +697,7 @@ alloclient *_alloclient_create()
     alloclient *client = (alloclient*)calloc(1, sizeof(alloclient));
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
-    assetstore_init(&(_internal(client)->assetstore));
+    assetstore_init(&(_internal(client)->assets));
     
     scheduler_init(&_internal(client)->jobs);
     

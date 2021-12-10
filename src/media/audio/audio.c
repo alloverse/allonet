@@ -7,8 +7,10 @@
 
 #define DEBUG_AUDIO 0
 
-static void audio_track_initialize(allo_media_track *track, cJSON *component)
+static bool audio_track_initialize(allo_media_track *track, cJSON *component)
 {
+    if(track->type != allo_media_type_audio) return false;
+
     int err;
     cJSON *jformat = cJSON_GetObjectItemCaseSensitive(component, "format");
     if(jformat && jformat->valuestring && strcmp(cJSON_GetStringValue(jformat), "opus") == 0) {
@@ -16,7 +18,7 @@ static void audio_track_initialize(allo_media_track *track, cJSON *component)
         track->info.audio.decoder = opus_decoder_create(48000, 1, &err);
     } else {
         fprintf(stderr, "Unknown audio format for track %d: %s\n", track->track_id, cJSON_GetStringValue(jformat));
-        assert(false);
+        return false;
     }
     if (DEBUG_AUDIO) {
         char name[255]; snprintf(name, 254, "track_%04d.pcm", track->track_id);
@@ -26,6 +28,7 @@ static void audio_track_initialize(allo_media_track *track, cJSON *component)
         track->info.audio.debug = NULL;
     }
     
+    return true;
 }
 
 static void audio_track_destroy(allo_media_track *track)
@@ -110,9 +113,12 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
     assert(ok == 0);
 }
 
-allo_media_subsystem allo_audio_subsystem =
+void allo_media_audio_register(void)
 {
-    .parse = parse_audio,
-    .track_initialize = audio_track_initialize,
-    .track_destroy = audio_track_destroy,
-};
+    allo_media_subsystem *sys = malloc(sizeof(allo_media_subsystem));
+    sys->parse = parse_audio;
+    sys->track_initialize = audio_track_initialize;
+    sys->track_destroy = audio_track_destroy;
+    allo_media_subsystem_register(sys);
+    printf("allonet: initialized audio media subsystem\n");
+}

@@ -136,3 +136,12 @@ Similar to Linux, except we have to lipo `arm64` and `x86_64` binaries. On an Ap
     for $b in `ls` do;
         lipo -create -output ../uni/$b $b ../x64/$b
     fi
+    install_name_tool -id @executable_path/libswscale.dylib libswscale.dylib
+    install_name_tool -id @executable_path/libavformat.dylib libavformat.dylib
+    install_name_tool -id @executable_path/libavutil.dylib libavutil.dylib
+    install_name_tool -id @executable_path/libavcodec.dylib libavcodec.dylib
+    install_name_tool -id @executable_path/libswresample.dylib libswresample.dylib
+    for tool in *.dylib; install_name_tool -change /usr/local/lib/libavcodec.58.dylib @executable_path/libavcodec.dylib $tool; end
+    for tool in *.dylib; install_name_tool -change /usr/local/lib/libswresample.3.dylib @executable_path/libswresample.dylib $tool; end
+    for tool in *.dylib; install_name_tool -change /usr/local/lib/libavutil.56.dylib @executable_path/libavutil.dylib $tool; end
+    

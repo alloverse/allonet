@@ -117,3 +117,22 @@ Very similar to Android, except I didn't bother with a script:
 
 ## macOS
 
+Similar to Linux, except we have to lipo `arm64` and `x86_64` binaries. On an Apple Silicon mac:
+
+    git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
+    cd ffmpeg; git checkout release/4.4
+    ./configure --enable-small --disable-programs --disable-doc --enable-shared --disable-static
+    make -j12
+    mkdir ../arm
+    cp */*.dylib ../arm/
+    git clean -dffx
+    arch --x86_64 bash
+    ./configure --enable-small --disable-programs --disable-doc --enable-shared --disable-static --arch=x86_64
+    make -j12
+    mkdir ../x64
+    cp */*.dylib ../x64
+    mkdir ../uni
+    cd ../arm
+    for $b in `ls` do;
+        lipo -create -output ../uni/$b $b ../x64/$b
+    fi

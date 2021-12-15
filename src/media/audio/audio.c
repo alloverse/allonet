@@ -101,8 +101,8 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
         }
         return;
     }
-    // +1 because stupid server code assumes all packets end with a newline... FIX THE DAMN PROTOCOL
-    int ok = enet_packet_resize(packet, headerlen + len+1);
+    
+    int ok = enet_packet_resize(packet, headerlen + len);
     assert(ok == 0); (void)ok;
     ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
     allo_statistics.bytes_sent[0] += packet->dataLength;

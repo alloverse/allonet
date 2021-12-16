@@ -5,6 +5,8 @@
 #include <string.h>
 #include "../util.h"
 #include "video/mjpeg.h"
+#include "audio/audio.h"
+#include <libavcodec/avcodec.h>
 
 #define DEBUG_AUDIO 0
 
@@ -23,6 +25,7 @@ allo_media_track *_media_track_create(allo_media_track_list *tracklist, uint32_t
     // reserve 1 extra and use that as our track data
     arr_reserve(tracklist, tracklist->length + 1);
     allo_media_track *track = &tracklist->data[tracklist->length++];
+    memset(track, 0, sizeof(allo_media_track));
     track->track_id = track_id;
     track->type = type;
     arr_init(&track->recipients);
@@ -41,7 +44,8 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track) {
     if (!track) return;
     
-    allo_media_subsystems[track->type].track_destroy(track);
+    if(track->subsystem)
+        track->subsystem->track_destroy(track);
     
     // remove from the list
     for (size_t i = 0; i < tracklist->length; i++) {
@@ -72,7 +76,18 @@ void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_i
         assert(track->type == type);
     } else {
         allo_media_track *track = _media_track_create(&shared->media_tracks, track_id, type);
-        allo_media_subsystems[type].track_initialize(track, comp);
+        int i = 0;
+        allo_media_subsystem *subsystem;
+        while((subsystem = allo_media_subsystems[i++])) {
+            if(subsystem->track_initialize(track, comp)) {
+                track->subsystem = subsystem;
+                break;
+            }
+        }
+        if(!track->subsystem) {
+            fprintf(stderr, "allonet/media: track %d has unknown media format, skipping.\n", track->track_id);
+            _media_track_destroy(&shared->media_tracks, track);
+        }
     }
     
     _alloclient_internal_shared_end(client);
@@ -119,14 +134,25 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         _alloclient_internal_shared_end(client);
         return;
     }
-    
-    allo_media_subsystems[track->type].parse(client, track, data, length, &shared->lock);
+
+    track->subsystem->parse(client, track, data, length, &shared->lock);
 }
 
-allo_media_subsystem allo_media_subsystems[allo_media_type_count];
+allo_media_subsystem *allo_media_subsystems[255];
+
+void allo_media_subsystem_register(allo_media_subsystem *subsystem)
+{
+    for(int i = 0; i < 255; i++) {
+        if(allo_media_subsystems[i] == NULL) {
+            allo_media_subsystems[i] = subsystem;
+            return;
+        }
+    }
+    fprintf(stderr, "allonet/media: subsystem not registered because we're out of slots\n");
+}
 
 void _allo_media_initialize(void)
 {
-    allo_media_subsystems[allo_media_type_audio] = allo_audio_subsystem;
-    allo_media_subsystems[allo_media_type_video] = allo_video_subsystem;
+    allo_media_audio_register();
+    allo_media_ffmpeg_register();
 }

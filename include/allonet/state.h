@@ -1,6 +1,6 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
-#include "inlinesys/queue.h"
+#include <inlinesys/queue.h>
 #include "math.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -8,6 +8,10 @@
 
 #pragma pack(push)
 #pragma pack(1)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct allo_client_pose_grab
 {
@@ -133,12 +137,20 @@ extern void allo_interaction_free(allo_interaction *interaction);
  * Initialize the Allonet library. Must be called before any other Allonet calls.
  */
 extern bool allo_initialize(bool redirect_stdout);
+/**
+ * If you're linking liballonet_av, you also have to initialize that sub-library.
+ */
+extern void allo_libav_initialize(void);
 
 /**
  * Run world simulation for a given state and known intents. Modifies state inline.
  * Will run the number of world iterations needed to get to server_time (or skip if too many)
  */
 extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #pragma pack(pop)
 #endif

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <allonet/threading.h>
+#include "threading.h"
 #include "util.h"
 #include "inlinesys/queue.h"
 

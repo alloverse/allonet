@@ -2,10 +2,23 @@ cmake_minimum_required(VERSION 3.10.0)
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
-option(ALLONET_LINK_TINYCTHREAD "Whether to link with tinycthread. say off if you already have it in the process." ON)
+set(ALLONET_THREADING_STRATEGY "force_link_tinycthread" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
+
+IF(APPLE)
+  SET(PLATSTR "mac-universal")
+ELSEIF(ANDROID)
+  SET(PLATSTR "android-arm64-v8a")
+ELSEIF(UNIX)
+  SET(PLATSTR "linux-x64")
+ELSEIF(WIN32)
+  SET(PLATSTR "windows-x64")
+ELSE()
+  FATAL_ERROR("Unsupported platform")
+ENDIF()
 
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
@@ -106,6 +119,12 @@ set(SOURCE_FILES
     lib/tinyjpeg/tiny_jpeg.c
 )
 
+set(AV_SOURCE_FILES
+  ${SOURCE_FILES_PREFIX}/media/video/libav.c
+)
+
+
+
 if(ALLONET_USE_LUA)
 	LIST(APPEND SOURCE_FILES
 		lang/lua/allonet-lua.c
@@ -124,6 +143,8 @@ else()
 endif()
 
 add_library(allonet ${ALLONET_BUILDTYPE})
+
+add_library(allonet_av ${ALLONET_BUILDTYPE})
 
 # Versioning
 # crazy relative-path hack courtesy of running bash on windows and having mixed path types...
@@ -151,6 +172,13 @@ target_sources(allonet
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
 )
+
+target_sources(allonet_av
+  PRIVATE
+    ${AV_SOURCE_FILES}
+)
+
+# Threading libs and various system libs
 add_subdirectory (lib/tinycthread)
 
 IF(WIN32)
@@ -161,13 +189,49 @@ ELSE()
   SET(PLATFORM_LIBS m pthread)
 ENDIF(WIN32)
 
-if(ALLONET_LINK_TINYCTHREAD)
-  SET(TINYCTHREAD tinycthread)
-else()
-  SET(TINYCTHREAD )
-endif()
+find_package(Threads REQUIRED)
 
-target_link_libraries(allonet enet cjson-static cjson_utils-static opus ${TINYCTHREAD} ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS})
+# use threads.h only if it's available AND we're allowed to by our parent project.
+# else, fallback to tinycthread.
+# if threads.h compatible API is not available on this system, use tinycthread.
+# even if it's available, use tinycthread if parent project forces us to.
+if(CMAKE_USE_PTHREADS_INIT AND ${ALLONET_THREADING_STRATEGY} MATCHES "native_if_available" AND NOT APPLE)
+  SET(PLATFORM_LIBS ${PLATFORM_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+else()
+  add_definitions(-DUSE_TINYCTHREAD)
+  if(NOT ${ALLONET_THREADING_STRATEGY} MATCHES "force_use_tinycthread")
+    SET(PLATFORM_LIBS ${PLATFORM_LIBS} tinycthread)
+  endif()
+endif()
+message("With threading strategy ${ALLONET_THREADING_STRATEGY}, using platform libs ${PLATFORM_LIBS}")
+
+
+# Media libs
+set(LIBAV_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/include)
+file(GLOB LIBAV_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/${PLATSTR}/lib/*)
+file(GLOB LIBAV_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/bindeps/ffmpeg/${PLATSTR}/bin/*)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+  set(LIBAV_DLLS ${LIBAV_DLLS} PARENT_SCOPE)
+endif()
+IF(APPLE)
+  find_library(VIDEO_DECODE_ACCELERATION NAMES VideoDecodeAcceleration)
+  set(LIBAV_LIBRARIES ${LIBAV_LIBRARIES} ${VIDEO_DECODE_ACCELERATION})
+ENDIF()
+message("allonet/libav: linking with ${LIBAV_LIBRARIES} and bundling ${LIBAV_DLLS}")
+
+include_directories(SYSTEM
+  ${LIBAV_INCLUDE_DIR}
+)
+
+target_link_libraries(allonet 
+  enet cjson-static cjson_utils-static opus 
+  ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
+)
+
+target_link_libraries(allonet_av
+  allonet ${PLATFORM_LIBS} ${LIBAV_LIBRARIES}
+)
 
 # client example
 add_executable (allodummyclient examples/dummyclient/dummyclient.c)

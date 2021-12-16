@@ -8,13 +8,24 @@ jobs:
   pool:
     vmImage: 'ubuntu-18.04'
   steps:
+  - script: |
+      git config --global --add filter.lfs.required true
+      git config --global --add filter.lfs.smudge "git-lfs smudge -- %f"
+      git config --global --add filter.lfs.process "git-lfs filter-process"
+      git config --global --add filter.lfs.clean "git-lfs clean -- %f"
+    displayName: Configure LFS for use with submodules
+  - checkout: self
+    lfs: true
+    submodules: true
   - script: sudo sh install-cmake.sh
     displayName: 'Install CMake'
+  - script: sudo apt-get install nasm
+    displayName: 'Install nasm'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
       cmakeArgs: ".."
-  - script: make allonet
+  - script: env VERBOSE=1 make allonet
     workingDirectory: build
     displayName: "Make"
   - task: CopyFiles@2
@@ -48,6 +59,8 @@ jobs:
   pool:
     vmImage: 'macOS-latest'
   steps:
+  - script: brew install nasm
+    displayName: 'Install nasm'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -86,6 +99,15 @@ jobs:
   pool:
     vmImage: 'vs2017-win2016'
   steps:
+  - script: |
+      git config --global --add filter.lfs.required true
+      git config --global --add filter.lfs.smudge "git-lfs smudge -- %f"
+      git config --global --add filter.lfs.process "git-lfs filter-process"
+      git config --global --add filter.lfs.clean "git-lfs clean -- %f"
+    displayName: Configure LFS for use with submodules
+  - checkout: self
+    lfs: true
+    submodules: true
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
@@ -129,6 +151,17 @@ jobs:
   pool:
     vmImage: 'macOS-latest'
   steps:
+  - script: |
+      git config --global --add filter.lfs.required true
+      git config --global --add filter.lfs.smudge "git-lfs smudge -- %f"
+      git config --global --add filter.lfs.process "git-lfs filter-process"
+      git config --global --add filter.lfs.clean "git-lfs clean -- %f"
+    displayName: Configure LFS for use with submodules
+  - checkout: self
+    lfs: true
+    submodules: true
+  - script: brew install nasm
+    displayName: 'Install nasm'
   - task: CMake@1
     inputs:
       workingDirectory: 'build'

@@ -168,6 +168,22 @@ static int next_free_track_id = 1;
 
 static void handle_place_allocate_track_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+    allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
+    cJSON *existing_comp = entity ? cJSON_GetObjectItem(entity->components, "live_media") : NULL;
+
+    if(!entity || existing_comp != NULL)
+    {
+      fprintf(stderr, "Disallowed creating allocating track for %s: entity already has track\n", interaction->sender_entity_id);
+      cJSON* respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("failed"), cJSON_CreateString("only one track allowed per entity"), NULL);
+      char* respbodys = cJSON_Print(respbody);
+      cJSON_Delete(respbody);
+      allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+      free(respbodys);
+      send_interaction_to_client(serv, client, response);
+      allo_interaction_free(response);
+      return;
+    }
+
     cJSON *media_type = cJSON_GetArrayItem(body, 1);
     cJSON *media_format = cJSON_GetArrayItem(body, 2);
     cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
@@ -180,11 +196,12 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
         "metadata", cJSON_Duplicate(media_metadata, true),
         NULL
     );
+
+    fprintf(stderr, "Allocated track %d for %s.\n", track_id, interaction->sender_entity_id);
+
     
     allo_media_track *track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
     track->origin = client;
-    
-    allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
 
     cJSON_AddItemToObject(entity->components, "live_media", mediacomp);
 

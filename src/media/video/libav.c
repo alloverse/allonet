@@ -205,8 +205,40 @@ static bool video_track_initialize(allo_media_track *track, cJSON *comp)
 
 static void video_track_destroy(allo_media_track *track)
 {
-    if (track->info.video.format == allo_video_format_h264 && track->info.video.decoder.codec) {
-        // TODO: cleanup libav decoder
+    if (track->info.video.format == allo_video_format_h264) {
+        // cleanup encoder
+        if (track->info.video.encoder.context) {
+            avcodec_close(track->info.video.encoder.context);
+            avcodec_free_context(&track->info.video.encoder.context);
+        }
+        
+        if (track->info.video.encoder.packet) {
+            av_packet_free(&track->info.video.encoder.packet);
+        }
+        
+        if (track->info.video.encoder.scale_context) {
+            sws_freeContext(track->info.video.encoder.scale_context);
+            track->info.video.encoder.scale_context = NULL;
+        }
+        
+        // cleanup decoder
+        if (track->info.video.decoder.context) {
+            avcodec_close(track->info.video.decoder.context);
+            avcodec_free_context(&track->info.video.decoder.context);
+        }
+        
+        if (track->info.video.decoder.frame) {
+            av_frame_free(&track->info.video.decoder.frame);
+        }
+        
+        if (track->info.video.decoder.packet) {
+            av_packet_free(&track->info.video.decoder.packet);
+        }
+        
+        if (track->info.video.decoder.scale_context) {
+            sws_freeContext(track->info.video.decoder.scale_context);
+            track->info.video.decoder.scale_context = NULL;
+        }
     }
 }
 

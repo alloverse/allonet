@@ -391,14 +391,17 @@ allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agen
   return e;
 }
 
-bool allo_state_remove_entity(allo_state *state, const char *eid, allo_removal_mode mode)
+bool allo_state_remove_entity_id(allo_state *state, const char *eid, allo_removal_mode mode)
 {
   allo_entity* removed_entity = state_get_entity(state, eid);
   if(!removed_entity)
   {
     return false;
   }
-
+  return allo_state_remove_entity(state, removed_entity, mode);
+}
+bool allo_state_remove_entity(allo_state *state, allo_entity *removed_entity, allo_removal_mode mode)
+{
   LIST_REMOVE(removed_entity, pointers);
 
   // remove or reparent children too
@@ -422,7 +425,7 @@ bool allo_state_remove_entity(allo_state *state, const char *eid, allo_removal_m
     allo_entity *child = children.data[i];
     if(mode == AlloRemovalCascade)
     {
-      allo_state_remove_entity(state, child->id, mode);
+      allo_state_remove_entity(state, child, mode);
     }
     else if(mode == AlloRemovalReparent)
     {

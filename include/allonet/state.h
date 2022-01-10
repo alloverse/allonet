@@ -101,7 +101,8 @@ typedef enum allo_removal_mode
 ///             NOTE!! this reference is stolen, so you must not reference or free it!
 /// @param parent: entity ID of parent. will create "relationships" component if set.
 extern allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agent_id, cJSON* spec, const char* parent);
-extern bool allo_state_remove_entity(allo_state *state, const char *eid, allo_removal_mode mode);
+extern bool allo_state_remove_entity_id(allo_state *state, const char *eid, allo_removal_mode mode);
+extern bool allo_state_remove_entity(allo_state *state, allo_entity *removed_entity, allo_removal_mode mode);
 extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
 extern allo_m4x4 entity_get_transform_in_coordinate_space(allo_state* state, allo_entity* entity, allo_entity* space);

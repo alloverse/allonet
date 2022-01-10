@@ -35,7 +35,7 @@ static void clients_changed(alloserver* serv, alloserver_client* added, alloserv
             entity = entity->pointers.le_next;
             if (strcmp(to_delete->owner_agent_id, removed->agent_id) == 0) {
                 LIST_REMOVE(to_delete, pointers);
-                entity_destroy(to_delete);
+                allo_state_remove_entity(&serv->state, to_delete, AlloRemovalCascade);
             }
         }
         
@@ -110,7 +110,7 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
   {
     mode = AlloRemovalReparent;
   }
-  bool ok = allo_state_remove_entity(&serv->state, eid, mode);
+  bool ok = allo_state_remove_entity_id(&serv->state, eid, mode);
   cJSON_Delete(jeid);
   cJSON_Delete(jmodes);
 

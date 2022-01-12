@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.12.0)
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -25,6 +25,13 @@ include_directories(
   "lib/mathc"
   "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
+set(CPACK_GENERATOR NuGet)
+set(CPACK_PACKAGE_NAME "Allonet")
+set(CPACK_PACKAGE_VENDOR "Alloverse")
+set(CPACK_PACKAGE_DESCRIPTION "Alloverse's low-level network library for implementing Alloverse apps")
+set(CPACK_PACKAGE_VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}")
+
+
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
     "${PROJECT_SOURCE_DIR}/lib/tinycthread/source"
@@ -245,7 +252,13 @@ target_link_libraries (allocubeappliance allonet)
 add_executable (standalone_server examples/standalone_server/standalone.c)
 target_link_libraries (standalone_server allonet)
 
-install(TARGETS allonet LIBRARY DESTINATION lib)
+set_target_properties(allonet PROPERTIES
+  COMMON_LANGUAGE_RUNTIME ""
+  DOTNET_TARGET_FRAMEWORK_VERSION "v5.0.0"
+  VS_DOTNET_REFERENCES "mscorlib;System;System.Data"
+)
+
+install(TARGETS allonet LIBRARY DESTINATION lib/net50)
 
 # tests
 add_definitions(-DUNITY_INCLUDE_DOUBLE)
@@ -270,3 +283,5 @@ add_test(NAME allonet_jobs_test COMMAND allonet_jobs_test)
 add_executable(allonet_delta_test test/delta_test.c)
 target_link_libraries(allonet_delta_test allonet unity cjson)
 add_test(NAME allonet_delta_test COMMAND allonet_delta_test)
+
+include(CPack)

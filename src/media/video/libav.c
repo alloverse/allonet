@@ -7,7 +7,7 @@
 #include <libavutil/opt.h>
 
 
-static ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+static ENetPacket *allo_video_write_h264(allo_media_track *track, allopicture *picture)
 {
 
     if (track->info.video.encoder.codec == NULL) {
@@ -67,23 +67,38 @@ static ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pix
     
     ret = av_frame_get_buffer(frame, 0);
     assert(ret == 0);
+
+    enum AVPixelFormat sourceFormat = AV_PIX_FMT_RGBA;
+    switch(picture->format)
+    {
+        case allopicture_format_rgb1555:
+            sourceFormat = AV_PIX_FMT_RGB555; break;
+        case allopicture_format_rgb565:
+            sourceFormat = AV_PIX_FMT_RGB565; break;
+        case allopicture_format_rgba8888:
+            sourceFormat = AV_PIX_FMT_RGBA; break;
+        case allopicture_format_bgra8888:
+            sourceFormat = AV_PIX_FMT_BGRA; break;
+        case allopicture_format_xrgb8888:
+            sourceFormat = AV_PIX_FMT_0RGB; break;
+    }
     
     // Convert from pixels RGBA into frame->data YUV
     struct SwsContext *sws_ctx = track->info.video.encoder.scale_context;
     sws_ctx = sws_getCachedContext(
         sws_ctx,
-        pixels_wide,
-        pixels_high,
-        AV_PIX_FMT_RGBA,
+        picture->width,
+        picture->height,
+        sourceFormat,
         frame->width,
         frame->height,
         frame->format,
         SWS_FAST_BILINEAR, NULL, NULL, NULL
     );
     track->info.video.encoder.scale_context = sws_ctx;
-    uint8_t *srcData[3] = { (uint8_t*)pixels, NULL, NULL };
-    int srcStrides[3] = { pixels_wide * sizeof(allopixel), 0, 0 };
-    int height = sws_scale(sws_ctx, (const uint8_t *const*)srcData, srcStrides, 0, pixels_high, frame->data, frame->linesize);
+    uint8_t **srcData = (uint8_t **)picture->planes;
+    int *srcStrides = picture->plane_strides;
+    int height = sws_scale(sws_ctx, (const uint8_t *const*)srcData, srcStrides, 0, frame->height, frame->data, frame->linesize);
     
     ret = avcodec_send_frame(track->info.video.encoder.context, frame);
     assert(ret == 0);
@@ -104,6 +119,7 @@ static ENetPacket *allo_video_write_h264(allo_media_track *track, allopixel *pix
     
     
     av_frame_free(&frame);
+    allopicture_free(picture);
     
     return packet;
 }

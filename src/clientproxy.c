@@ -74,9 +74,7 @@ typedef struct proxy_message
         struct
         {
             uint32_t track_id;
-            int32_t pixels_wide;
-            int32_t pixels_high;
-            allopixel *pixels;
+            allopicture *picture;
         } video;
         struct 
         {
@@ -245,21 +243,16 @@ static void bridge_alloclient_send_audio(alloclient *bridgeclient, proxy_message
     free(msg->value.audio.pcm);
 }
 
-static void proxy_alloclient_send_video(alloclient *proxyclient, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+static void proxy_alloclient_send_video(alloclient *proxyclient, int32_t track_id, allopicture *picture)
 {
     proxy_message *msg = proxy_message_create(msg_video);
-    msg->value.video.pixels = calloc(pixels_wide * pixels_high, sizeof(allopixel));
-    memcpy(msg->value.video.pixels, pixels, sizeof(allopixel)*pixels_wide*pixels_high);
-    msg->value.video.pixels_wide = pixels_wide;
-    msg->value.video.pixels_high = pixels_high;
+    msg->value.video.picture = picture;
     msg->value.video.track_id = track_id;
     enqueue_proxy_to_bridge(_internal(proxyclient), msg);
 }
 static void bridge_alloclient_send_video(alloclient *bridgeclient, proxy_message *msg)
 {
-    alloclient_send_video(bridgeclient, msg->value.video.track_id, msg->value.video.pixels, msg->value.video.pixels_wide, msg->value.video.pixels_high);
-    // in the best of worlds, we'd use a pool of buffers here to avoid malloc churn
-    free(msg->value.video.pixels);
+    alloclient_send_video(bridgeclient, msg->value.video.track_id, msg->value.video.picture);
 }
 
 static void bridge_alloclient_ack(alloclient *bridgeclient, proxy_message *msg)
@@ -481,17 +474,19 @@ static bool bridge_video_callback(alloclient *bridgeclient, uint32_t track_id, a
     alloclient *proxyclient = bridgeclient->_backref;
     proxy_message *msg = proxy_message_create(msg_video);
     msg->value.video.track_id = track_id;
-    msg->value.video.pixels_wide = pixels_wide;
-    msg->value.video.pixels_high = pixels_high;
-    msg->value.video.pixels = pixels;
+    msg->value.video.picture = calloc(1, sizeof(allopicture));
+    msg->value.video.picture->planes[0].rgba = pixels;
+    msg->value.video.picture->width = pixels_wide;
+    msg->value.video.picture->height = pixels_high;
     enqueue_bridge_to_proxy(_internal(proxyclient), msg);
     return false;
 }
 static void proxy_video_callback(alloclient *proxyclient, proxy_message *msg)
 {
-    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.pixels, msg->value.video.pixels_wide, msg->value.video.pixels_high))
+    if(!proxyclient->video_callback || proxyclient->video_callback(proxyclient, msg->value.video.track_id, msg->value.video.picture->planes[0].rgba, msg->value.video.picture->width, msg->value.video.picture->height))
     {
-        free(msg->value.video.pixels);
+        free(msg->value.video.picture->planes[0].rgba);
+        free(msg->value.video.picture);
     }
 }
 

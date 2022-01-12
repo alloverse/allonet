@@ -207,50 +207,26 @@ static int l_alloclient_send_video(lua_State *L)
     size_t width = luaL_checkint(L, 4);
     size_t height = luaL_checkint(L, 5);
     const char *format = luaL_optstring(L, 6, "rgba");
-    size_t stride = luaL_optint(L, 7, (int)(width * 4));
-    if (strcmp(format, "rgba") == 0) {
-        alloclient_send_video(lclient->client, track_id, (allopixel*)data, width, height);
-    } else if (strcmp(format, "xrgb8") == 0) {
-        allopixel *pixels = malloc(sizeof(allopixel) * width * height);
-        uint8_t *ptr = (uint8_t*)data;
-        allopixel *pixel = pixels;
-        for (size_t y = 0; y < height; y++) {
-            uint8_t *start = ptr;
-            uint8_t *end = ptr + width * 4;
-            while (ptr < end) {
-                pixel->r = ptr[1];
-                pixel->g = ptr[2];
-                pixel->b = ptr[3];
-                pixel->a = 255;
-                ptr += 4;
-                pixel += 1;
-            }
-            ptr = start + stride;
-        }
-        alloclient_send_video(lclient->client, track_id, pixels, width, height);
-        free(pixels);
-    } else if (strcmp(format, "bgrx8") == 0) {
-        allopixel *pixels = malloc(sizeof(allopixel) * width * height);
-        uint8_t *ptr = (uint8_t*)data;
-        allopixel *pixel = pixels;
-        for (size_t y = 0; y < height; y++) {
-            uint8_t *start = ptr;
-            uint8_t *end = ptr + width * 4;
-            while (ptr < end) {
-                pixel->r = ptr[2];
-                pixel->g = ptr[1];
-                pixel->b = ptr[0];
-                pixel->a = 255;
-                ptr += 4;
-                pixel += 1;
-            }
-            ptr = start + stride;
-        }
-        alloclient_send_video(lclient->client, track_id, pixels, width, height);
-        free(pixels);
-    } else {
-        assert(false);
-    }
+    allopicture *picture = calloc(1, sizeof(allopicture));
+    picture->format = 
+        strcmp(format, "rgba") == 0 ? allopicture_format_rgba8888 :
+        strcmp(format, "bgra") == 0 ? allopicture_format_bgra8888 :
+        strcmp(format, "xrgb8") == 0 ? allopicture_format_xrgb8888 :
+        strcmp(format, "rgb1555") == 0 ? allopicture_format_rgb1555 :
+        strcmp(format, "rgb565") == 0 ? allopicture_format_rgb565 : 255;
+    assert(picture->format != 255 && "invalid allopicture format");
+    int bytes_per_pixel = allopicture_bpp(picture->format);
+    size_t stride = luaL_optint(L, 7, (int)(width * bytes_per_pixel));
+
+    picture->plane_strides[0] = stride;
+    picture->plane_byte_lengths[0] = stride * height;
+    picture->planes[0].monochrome = malloc(picture->plane_byte_lengths[0]);
+    memcpy(picture->planes[0].monochrome, data, picture->plane_byte_lengths[0]);
+    picture->height = height;
+    picture->width = width;
+    picture->plane_count = 1;
+
+    alloclient_send_video(lclient->client, track_id, picture);
     
     return 0;
 }

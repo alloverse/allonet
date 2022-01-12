@@ -29,6 +29,39 @@ typedef struct allopixel {
   uint8_t r, g, b, a;
 } allopixel;
 
+typedef enum allopicture_format {
+  allopicture_format_rgba8888,
+  allopicture_format_bgra8888,
+  allopicture_format_rgb1555,
+  allopicture_format_xrgb8888,
+  allopicture_format_rgb565,
+} allopicture_format;
+
+#define ALLOPICTURE_MAX_PLANE_COUNT 4
+typedef struct allopicture {
+  // actual pixel data (separately allocated).
+  // If non-planar, set only planes[0] and set plane_count=1
+  union {
+    allopixel *rgba;
+    uint16_t *rgb1555;
+    uint32_t *xrgb;
+    uint16_t *rgb565;
+    uint8_t *monochrome;
+  } planes[ALLOPICTURE_MAX_PLANE_COUNT];
+  allopicture_format format;
+  int width, height;
+  int plane_count;
+  // how many bytes per plane?
+  int plane_byte_lengths[ALLOPICTURE_MAX_PLANE_COUNT];
+  // how many bytes per row for a given plane?
+  int plane_strides[ALLOPICTURE_MAX_PLANE_COUNT];
+  // if null, planes[1-4] and the picture itself is free()d after use
+  void (*free)(struct allopicture *p); 
+  void *userdata;
+} allopicture;
+void allopicture_free(allopicture *picture);
+int allopicture_bpp(allopicture_format fmt);
+
 typedef struct alloclient alloclient;
 typedef struct alloclient {
     /** set this to get a callback when state changes. 
@@ -160,7 +193,7 @@ typedef struct alloclient {
     void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
     void (*alloclient_set_intent)(alloclient *client, const allo_client_intent *intent);
     void (*alloclient_send_audio)(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
-    void (*alloclient_send_video)(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high);
+    void (*alloclient_send_video)(alloclient *client, int32_t track_id, allopicture *picture);
     void (*alloclient_simulate)(alloclient* client);
     double (*alloclient_get_time)(alloclient* client);
     void (*alloclient_get_stats)(alloclient* client, char *buffer, size_t bufferlen);
@@ -220,9 +253,11 @@ void alloclient_send_interaction(alloclient *client, allo_interaction *interacti
  */
 void alloclient_set_intent(alloclient *client, const allo_client_intent *intent);
 
-/** Transmit audio from your avatar, e g microphone audio for
-  * voice communication.
-  * Everyone nearby you avatar will hear the audio.
+/** Transmit audio from an entity, e g microphone audio for
+  * voice communication. You must send the interaction `allocate_track` to receive a
+  * track_id to send from beforehand, to associate a particular audio stream with a specific
+  * entity.
+  * Everyone nearby your entity will hear the audio.
   * @param track_id Track allocated from `allocate_track` interaction on which to send audio
   * @param pcm 48000 Hz mono PCM audio data
   * @param sample_count Number of samples in `pcm`. Must be 480 or 960 (10ms or 20ms worth of audio)
@@ -230,7 +265,17 @@ void alloclient_set_intent(alloclient *client, const allo_client_intent *intent)
   */
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
 
-void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high);
+/** Transmit video from an entity, e g camera video or screen sharing.
+ *  Like alloclient_send_audio, you must `allocate_track` first to receive
+ *  a track_id.
+ * 
+ * @param track_id  Track allocated from `allocate_track` interaction on which to send video
+ * @param picture   Picture data for this frame. On memory management: calling this method transfers
+ *                  memory ownership to this library. The picture will later either be free()'d if
+ *                  the `free` callback is null, or the callback is called to give you a chance to
+ *                  recycle the memory or use some custom method of freeing it.
+ */
+void alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture);
 
 /*!
  * Request an asset. This might be a texture, a model, a sound or something that

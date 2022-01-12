@@ -4,7 +4,7 @@
 #include <string.h>
 #include <assert.h>
 
-void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+void _alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture)
 {
     if (_internal(client)->peer == NULL) {
         fprintf(stderr, "alloclient: Skipping send video as we don't even have a peer\n");
@@ -29,7 +29,7 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pix
         goto end;
     }
     
-    ENetPacket *packet = track->subsystem->create_video_packet(track, pixels, pixels_wide, pixels_high);
+    ENetPacket *packet = track->subsystem->create_video_packet(track, picture);
     
     if(packet) {
         const int headerlen = sizeof(int32_t); // track id header

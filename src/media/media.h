@@ -75,7 +75,7 @@ typedef struct allo_media_subsystem {
     void (*parse)(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, mtx_t *unlock_me);
 
     // only one of these should be set for a subsystem
-    ENetPacket* (*create_video_packet)(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high);
+    ENetPacket* (*create_video_packet)(allo_media_track *track, allopicture *picture);
     ENetPacket* (*create_audio_packet)(allo_media_track *track, const int16_t *pcm, size_t frameCount);
 } allo_media_subsystem;
 extern allo_media_subsystem *allo_media_subsystems[];

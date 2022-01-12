@@ -21,11 +21,21 @@ static void create_packet(ENetPacket **packet, void* encoded, int size)
     }
 }
 
-static ENetPacket* allo_mjpeg_encode(allo_media_track *track, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+static ENetPacket* allo_mjpeg_encode(allo_media_track *track, allopicture *picture)
 {
-    (void)track;
     ENetPacket *packet = NULL;
-    tje_encode_with_func((tje_write_func*)create_packet, &packet, 1, pixels_wide, pixels_high, 4, (const unsigned char*)pixels);
+    assert(picture->format == allopicture_format_rgba8888 && "mjpeg encoder only supports RGBA picture data");
+    if(picture->format != allopicture_format_rgba8888)
+    {
+        fprintf(stderr, "allonet/mjpeg: dropping frame: picture is format %d, only rgba supported\n", picture->format);
+        goto end;
+    }
+
+    (void)track;
+    tje_encode_with_func((tje_write_func*)create_packet, &packet, 1, picture->width, picture->height, 4, (const unsigned char*)picture->planes[0].rgba);
+
+end:
+    allopicture_free(picture);
     return packet;
 }
 

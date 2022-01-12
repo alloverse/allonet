@@ -608,9 +608,9 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
     client->alloclient_send_audio(client, track_id, pcm, frameCount);
 }
 
-void alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high)
+void alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture)
 {
-    client->alloclient_send_video(client, track_id, pixels, pixels_wide, pixels_high);
+    client->alloclient_send_video(client, track_id, picture);
 }
 
 
@@ -741,4 +741,34 @@ alloclient *alloclient_create(bool threaded) {
     _internal(client)->shared = shared;
     
     return client;
+}
+
+
+void allopicture_free(allopicture *picture)
+{
+    if(picture->free)
+    {
+        picture->free(picture);
+    }
+    else
+    {
+        for(int i = 0; i < ALLOPICTURE_MAX_PLANE_COUNT; i++)
+        {
+            free(picture->planes[i].monochrome);
+        }
+        free(picture);
+    }
+}
+
+int allopicture_bpp(allopicture_format fmt)
+{
+    switch(fmt)
+    {
+        case allopicture_format_rgb1555:
+        case allopicture_format_rgb565:
+            return 2;
+        case allopicture_format_rgba8888:
+        case allopicture_format_xrgb8888:
+            return 4;
+    }
 }

@@ -43,7 +43,7 @@ extern void _alloclient_media_track_find_or_create(alloclient *client, uint32_t 
 extern void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id);
 extern void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length);
 extern void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t frameCount);
-extern void _alloclient_send_video(alloclient *client, int32_t track_id, allopixel *pixels, int32_t pixels_wide, int32_t pixels_high);
+extern void _alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture);
 
 
 static inline alloclient_internal_shared *_alloclient_internal_shared_begin(alloclient *client) {

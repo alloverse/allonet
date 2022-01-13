@@ -414,13 +414,13 @@ void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
             "\tEntities\t%d\n"
             "\tPackets lost\t%d\n"
             "\tRTT\t%dms\t\n"
-            "\tPacket throttle\t%d\n"
+            "\tPacket throttle\t%.0f%%\n"
             ,
             display_name, client->agent_id, client->avatar_entity_id,
             entity_count,
             peer->packetsLost,
             peer->roundTripTime,
-            peer->packetThrottle
+            (peer->packetThrottle / (double)ENET_PEER_PACKET_THROTTLE_SCALE)*100.0
         );
     }
 }

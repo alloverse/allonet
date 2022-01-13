@@ -662,7 +662,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
         "State: set:%u delta:%u\n"
         "Packets lost\t%d\n"
         "RTT\t%dms\t\n"
-        "Packet throttle\t%d\n"
+        "Packet throttle\t%.0f%%\n"
         ,
         allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0],
         allo_statistics.bytes_sent[1], allo_statistics.bytes_recv[1],
@@ -673,7 +673,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
         allo_statistics.ndelta_set, allo_statistics.ndelta_merge,
         _internal(client)->peer->packetsLost,
         _internal(client)->peer->roundTripTime,
-        _internal(client)->peer->packetThrottle
+        (_internal(client)->peer->packetThrottle / (double)ENET_PEER_PACKET_THROTTLE_SCALE)*100.0
     );
 }
 

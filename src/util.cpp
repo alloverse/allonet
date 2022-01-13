@@ -24,16 +24,10 @@ get_ts_mono(void)
 #ifdef _WIN32
   return GetTickCount64();
 #else
-#ifdef _DARWIN
-  unsigned int lo, hi;
-  // RDTSC copies contents of 64-bit TSC into EDX:EAX
-  asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
-  return (unsigned long long)hi << 32 | lo;
-#endif
-#endif
   struct timespec tv;
   clock_gettime(CLOCK_MONOTONIC, &tv);
   return (int64_t)tv.tv_sec * 1000LL + (tv.tv_nsec / 1000000);
+#endif
 }
 
 extern "C" double get_ts_monod(void)

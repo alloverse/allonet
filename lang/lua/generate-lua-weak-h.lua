@@ -63,23 +63,39 @@ local funcs = {
 	luaL_optinteger = "lua_Integer luaL_optinteger(lua_State *L, int nArg, lua_Integer def)",
 }
 
--- MacOS: Uses -Wl,-undefined,dynamic_lookup, so we can just use regular old lua.h
 header("#ifdef __APPLE__")
--- do nothing
-header("#endif")
+source("#ifdef __APPLE__")
+for name, signature in pairs(funcs) do
+	
+	header("extern "..signature:gsub(name, "(*"..name.."_weak)")..";")
+	header("#define "..name.." "..name.."_weak")
+	source(signature:gsub(name, "(*"..name.."_weak)").." = NULL;")
+end
+
+source([[
+#include <dlfcn.h>
+#include <assert.h>
+void load_weak_lua_symbols() 
+{
+	void* proc = dlopen(NULL, RTLD_NOW);
+	assert(proc && "proc not found");
+]])
+for name, signature in pairs(funcs) do
+	source("	" .. name .. "_weak = (" .. signature:gsub(name, "(*)") .. ")dlsym(proc, \"" .. name .. "\");")
+end
+source("}")
 
 -- Linux: I can't get undefined dynamic lookup to work, so we need explict weak prototypes
-header("#if __clang__ || defined(__GNUC__)")
+header("#elif __clang__ || defined(__GNUC__)")
 header("#define WEAK_ATTRIBUTE __attribute__((weak))")
 for name, signature in pairs(funcs) do
 	header(signature.." WEAK_ATTRIBUTE;")
 end
-header("#endif")
 
 -- Windows: Doesn't have weak linking, so we need to frickin manually GetProcAddress for each
 -- lua function unless we want to depend on lua.dll (which is its own nightmare)
-header("#ifdef WIN32")
-source("#ifdef WIN32")
+header("#elif defined(WIN32)")
+source("#elif defined(WIN32)")
 for name, signature in pairs(funcs) do
 	
 	header("extern "..signature:gsub(name, "(*"..name.."_weak)")..";")
@@ -117,6 +133,7 @@ header("#endif")
 source("#else")
 source("void load_weak_lua_symbols() {}") -- always available	
 source("#endif")
+
 header("extern void load_weak_lua_symbols();") -- always available
 
 f = io.open("lua-weak.h", "w+")

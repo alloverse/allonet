@@ -98,7 +98,7 @@ static ENetPacket *allo_video_write_h264(allo_media_track *track, allopicture *p
     track->info.video.encoder.scale_context = sws_ctx;
     uint8_t **srcData = (uint8_t **)picture->planes;
     int *srcStrides = picture->plane_strides;
-    int height = sws_scale(sws_ctx, (const uint8_t *const*)srcData, srcStrides, 0, frame->height, frame->data, frame->linesize);
+    int height = sws_scale(sws_ctx, (const uint8_t *const*)srcData, srcStrides, 0, picture->height, frame->data, frame->linesize);
     
     ret = avcodec_send_frame(track->info.video.encoder.context, frame);
     assert(ret == 0);

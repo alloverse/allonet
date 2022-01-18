@@ -151,8 +151,8 @@ typedef struct alloclient {
      *  receiving this callback.
      */
     void (*disconnected_callback)(
-       alloclient *client,
-       alloerror code,
+       void *client,
+       int code,
        const char *message
     );
 
@@ -216,12 +216,12 @@ typedef struct alloclient {
     void *_backref; // use this as a backref for callbacks  
 
     // void (*raw_state_delta_callback)(alloclient *client, cJSON *delta);
-    void (*clock_callback)(alloclient *client, double latency, double server_delta);
+    void (*clock_callback)(void *client, double latency, double server_delta);
     double clock_latency;
     double clock_deltaToServer;
 
     bool (*alloclient_connect)(alloclient *client, const char *url, const char *identity, const char *avatar_desc);
-    void (*alloclient_disconnect)(alloclient *client, int reason);
+    void (*alloclient_disconnect)(void *client, int reason);
     bool (*alloclient_poll)(alloclient *client, int timeout_ms);
     void (*alloclient_send_interaction)(alloclient *client, allo_interaction *interaction);
     void (*alloclient_set_intent)(alloclient *client, const allo_client_intent *intent);

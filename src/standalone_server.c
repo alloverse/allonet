@@ -129,13 +129,15 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
   cJSON* entity_id = cJSON_GetArrayItem(body, 1);
   cJSON* comps = cJSON_DetachItemFromArray(body, 3);
   cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
+  cJSON* respbody = NULL;
 
   allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
   if(entity == NULL)
   {
     cJSON_Delete(comps);
     fprintf(stderr, "warning: trying to change comp on non-existing entity %s\n", entity_id->valuestring);
-    return;
+    respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("error"), cJSON_CreateString("no such entity"), NULL);
+    goto end;
   }
   for (cJSON* comp = comps->child; comp != NULL;) 
   {
@@ -155,7 +157,8 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
     cJSON_DeleteItemFromObject(entity->components, compname->valuestring);
   }
 
-  cJSON* respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
+  respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
+end:;
   char* respbodys = cJSON_Print(respbody);
   cJSON_Delete(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);

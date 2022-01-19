@@ -1,31 +1,46 @@
-from mimetypes import init
-from .lib import allonet, ffi, cb, clock
+from .lib import allonet, ffi
+import json
 
-def b(str):
-    return ffi.new('char[]', str.encode('ascii'))
+def b(string):
+    return ffi.new('char[]', string.encode('ascii'))
 
+def e(string):
+    return string.replace('"','\\"')
 
 class Client(object):
 
     def __init__(self, threaded = False):
-        self.client = allonet.alloclient_create(threaded)
-        # self.client.disconnected_callback = cb
-        # self.client.clock_callback = clock
-        print(self.client.disconnected_callback)
+        allonet.alloclient_simple_init(False)
+
+    def call(self, command):
+        if not isinstance(command, str):
+            command = json.dumps(command)
+        result = ffi.string(allonet.alloclient_simple_communicate(b(command))).decode('utf-8')
+        print(result)
+        return json.loads(result)
         
     """ 
     Connect to a place
     
     Blocking. Returns true if connection was successful
     """
-    def connect(self, host, display_name, avatar_spec):
-        return allonet.alloclient_connect(self.client, b(host), b(display_name), b(avatar_spec))
-
+    def connect(self, host, identity, avatar_spec):
+        self.call({
+            "op": "connect",
+            "url": host,
+            "identity": identity,
+            "avatar_spec": avatar_spec
+        })
+        
     """
     Poll the internal message queues
     """
     def poll(self, timeout = 100):
-        allonet.alloclient_poll(self.client, timeout)
+        self.call({
+            "op": 0,
+            "timeout": 100
+        })
+        
 
     def onDisconnected(self):
         print("did connect")

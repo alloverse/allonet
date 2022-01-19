@@ -13,33 +13,13 @@ def script_home(file):
 def allo_home(file):
     return os.path.join(ALLONET_PATH, file)
 
-os.environ['CFLAGS'] = f"""
--I{allo_home("lib")}
-""".replace ("\n", " ")
-os.environ['LDFLAGS'] = f"""
--L{ALLONET_BIN_PATH}
-""".replace ("\n", " ")
-
 ffi = FFI()
-# ffi.include(queue)
-ffi.set_source("allonet", f"""
- #include "{allo_home("include/allonet/allonet.h")}"
-""", libraries = ["allonet"])
-
-ffi.compile(verbose=True)
 ffi.cdef(
-    open(script_home("client.h"), "r").read()
+"""
+int alloclient_simple_init(int threaded);
+int alloclient_simple_free();
+char *alloclient_simple_communicate(const char * const command);
+"""
 )
-
-
-@ffi.callback("void (void *, int, const char *)")
-def cb(client, error, message):
-    print("cb {client}, {error}, {message}")
-
-
-@ffi.callback("void (void *, double, double)")
-def clock(client, latency, server_delta):
-    print("clock {client}, {latency}, {server_delta}")
-
 
 allonet = ffi.dlopen(os.path.join(ALLONET_BIN_PATH, "liballonet.dylib"))

@@ -7,4 +7,4 @@ if __name__ == "__main__":
 	client.connect('alloplace://localhost', '{"display_name": "~>^~~~~~"}', open("avatar.json", "r").read())
 
 	while True:
-		client.poll(100)
+		client.poll(500)

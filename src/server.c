@@ -562,7 +562,7 @@ const char *alloserv_describe_client(alloserver_client *client)
     static char desc[255];
     snprintf(desc, 255, "%s (ava %s/agent %s)", 
         cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(client->identity, "display_name")),
-        client->agent_id, client->avatar_entity_id
+        client->avatar_entity_id, client->agent_id
     );
     return desc;
 }

@@ -202,7 +202,10 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
         NULL
     );
 
-    fprintf(stderr, "Allocated track %d (%s.%s) for %s.\n", track_id, cJSON_GetStringValue(media_type), cJSON_GetStringValue(media_format), interaction->sender_entity_id);
+    fprintf(stderr, "Allocated track %d (%s.%s) for %s/%s.\n", 
+      track_id, cJSON_GetStringValue(media_type), cJSON_GetStringValue(media_format),
+      interaction->sender_entity_id, alloserv_describe_client(client)
+    );
 
     
     allo_media_track *track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));

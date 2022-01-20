@@ -69,6 +69,8 @@ bool alloserv_poll_standalone(int allosocket);
 // and then call this to stop and clean up state.
 void alloserv_stop_standalone();
 
+const char *alloserv_describe_client(alloserver_client *client);
+
 
 // internal
 int allo_socket_for_select(alloserver *server);

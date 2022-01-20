@@ -75,6 +75,8 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   client->avatar_entity_id = allo_strdup(ava->id);
   client->identity = cJSON_Duplicate(identity, true);
 
+  fprintf(stderr, "Client announced: %s\n", alloserv_describe_client(client));
+
   cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString(g_placename), NULL);
   char* respbodys = cJSON_Print(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
@@ -200,7 +202,7 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
         NULL
     );
 
-    fprintf(stderr, "Allocated track %d for %s.\n", track_id, interaction->sender_entity_id);
+    fprintf(stderr, "Allocated track %d (%s.%s) for %s.\n", track_id, cJSON_GetStringValue(media_type), cJSON_GetStringValue(media_format), interaction->sender_entity_id);
 
     
     allo_media_track *track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
@@ -234,12 +236,14 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     allo_media_track *track = _media_track_find(&mediatracks, track_id);
     if(!track) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("invalid track id"), NULL);
-      fprintf(stderr, "media_track: invalid track id");
+      fprintf(stderr, "media_track interaction: %s/%s requested unavailable track id %d\n", interaction->sender_entity_id, alloserv_describe_client(client), track_id);
       goto done;
     }
     if (strcmp(jsub->valuestring, "subscribe") == 0) {
+        fprintf(stderr, "media_track interaction: %s/%s subscribed to track %d\n", interaction->sender_entity_id, alloserv_describe_client(client), track_id);
         arr_push(&track->recipients, client);
     } else if (strcmp(jsub->valuestring, "unsubscribe") == 0) {
+        fprintf(stderr, "media_track interaction: %s/%s UNsubscribed to track %d\n", interaction->sender_entity_id, alloserv_describe_client(client), track_id);
         for (size_t i = 0; i < track->recipients.length; i++) {
             if (track->recipients.data[i] == client) {
                 arr_splice(&track->recipients, i, 1);
@@ -409,7 +413,7 @@ static void handle_media(alloserver *serv, alloserver_client *client, const uint
         return;
     }
     
-    // igore if the sender is not client that allocated the track
+    // ignore if the sender is not client that allocated the track
     if (track->origin != client) {
         return;
     }

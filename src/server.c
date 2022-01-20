@@ -252,7 +252,7 @@ static void handle_lost_connection(alloserver *serv, alloserver_client *client)
     char host[255] = {0};
     ENetPeer *peer = _clientinternal(client)->peer;
     enet_address_get_host_ip(&peer->address, host, 254);
-    printf("%s/%p from %s:%d disconnected.\n", client->agent_id, (void*)client, host, peer->address.port);
+    printf("%s/%p from %s:%d disconnected.\n", alloserv_describe_client(client), (void*)client, host, peer->address.port);
 
     // scan through the list of asset->peers and remove the peer where peeresent
     _remove_client_from_wanted(serv, client);
@@ -407,16 +407,14 @@ void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
                 entity_count++;
         }
 
-        
-        const char *display_name = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(client->identity, "display_name"));
         offset += snprintf(buffer + offset, bufferlen - offset,
-            "Client %s (agent %s, avatar %s):\n"
+            "Client %s:\n"
             "\tEntities\t%d\n"
             "\tPackets lost\t%d\n"
             "\tRTT\t%dms\t\n"
             "\tPacket throttle\t%.0f%%\n"
             ,
-            display_name, client->agent_id, client->avatar_entity_id,
+            alloserv_describe_client(client),
             entity_count,
             peer->packetsLost,
             peer->roundTripTime,
@@ -557,4 +555,14 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
             --i;
         }
     }
+}
+
+const char *alloserv_describe_client(alloserver_client *client)
+{
+    static char desc[255];
+    snprintf(desc, 255, "%s (ava %s/agent %s)", 
+        cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(client->identity, "display_name")),
+        client->agent_id, client->avatar_entity_id
+    );
+    return desc;
 }

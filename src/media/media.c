@@ -154,5 +154,5 @@ void allo_media_subsystem_register(allo_media_subsystem *subsystem)
 void _allo_media_initialize(void)
 {
     allo_media_audio_register();
-    allo_media_ffmpeg_register();
+    allo_media_mjpeg_register();
 }

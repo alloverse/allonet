@@ -4,7 +4,7 @@
  extern "C" { 
 #endif
 
-void allo_media_ffmpeg_register(void);
+void allo_media_mjpeg_register(void);
 
 #ifdef __cplusplus
 } // extern "C"

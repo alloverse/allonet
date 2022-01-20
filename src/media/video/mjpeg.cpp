@@ -84,7 +84,7 @@ static void parse_video(alloclient *client, allo_media_track *track, unsigned ch
 }
 
 
-extern "C" void allo_media_ffmpeg_register(void)
+extern "C" void allo_media_mjpeg_register(void)
 {
     allo_media_subsystem *sys = (allo_media_subsystem*)malloc(sizeof(allo_media_subsystem));
     sys->parse = parse_video;

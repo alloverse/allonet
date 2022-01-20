@@ -85,7 +85,9 @@ void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_i
             }
         }
         if(!track->subsystem) {
-            fprintf(stderr, "allonet/media: track %d has unknown media format, skipping.\n", track->track_id);
+            const char *type = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(comp, "type"));
+            const char *fmt = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(comp, "format"));
+            fprintf(stderr, "allonet/media: track %d has unknown media format %s.%s, skipping.\n", track->track_id, type, fmt);
             _media_track_destroy(&shared->media_tracks, track);
         }
     }

@@ -120,7 +120,7 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
 void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length)
 {
     alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
-    
+    size_t datalength = length;
     // get the track_id from the top of data
     uint32_t track_id;
     assert(length >= sizeof(track_id) + 3);
@@ -136,7 +136,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         _alloclient_internal_shared_end(client);
         return;
     }
-
+    bitrate_increment(&track->bitrates, 0, datalength);
     track->subsystem->parse(client, track, data, length, &shared->lock);
 }
 
@@ -157,4 +157,31 @@ void _allo_media_initialize(void)
 {
     allo_media_audio_register();
     allo_media_mjpeg_register();
+}
+
+
+void allo_media_get_stats(alloclient *client, char *buffer, size_t buffersize) {
+    alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
+
+    char *cur = buffer;
+    size_t size = buffersize;
+    double time = alloclient_get_time(client);
+    for(size_t i = 0; i < shared->media_tracks.length; i++) {
+        allo_media_track *track = &shared->media_tracks.data[i];
+        struct bitrate_deltas_t deltas = bitrate_deltas(&track->bitrates, time);
+        
+        snprintf(cur, size,
+                 "%s track %d\t%.2f/%.2fkb/s\n"
+                 ,
+                 track->type == allo_media_type_audio ? "audio" : "video",
+                 track->track_id,
+                 deltas.sent,
+                 deltas.received
+                 );
+        int l = strlen(cur);
+        cur += l;
+        size -= l;
+    }
+    
+    _alloclient_internal_shared_end(client);
 }

@@ -10,15 +10,7 @@
 #include <stdint.h>
 #include <cJSON/cJSON.h>
 #include <allonet/state.h>
-
-typedef struct allo_statistics_t {
-    unsigned int ndelta_set;
-    unsigned int ndelta_merge;
-    unsigned int bytes_sent[6];//total + per channel
-    unsigned int bytes_recv[6];//total + per channel
-} allo_statistics_t;
-// because of threading without sync these values are just ballpark figures.
-extern allo_statistics_t allo_statistics;
+#include <allonet/net.h>
 
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
@@ -43,5 +35,55 @@ void allo_free(void *mallocd);
 
 void _allo_media_initialize(void);
 
+
+
+struct bitrate_t {
+    double time;
+    size_t send_count;
+    size_t receive_count;
+    size_t bps_sent;
+    size_t bps_received;
+    size_t count;
+    size_t bps_count;
+};
+
+typedef struct allo_statistics_t {
+    unsigned int ndelta_set;
+    unsigned int ndelta_merge;
+    struct bitrate_t channel_rates[CHANNEL_COUNT+1];
+} allo_statistics_t;
+// because of threading without sync these values are just ballpark figures.
+extern allo_statistics_t allo_statistics;
+
+
+struct bitrate_deltas_t {
+    double time;
+    double count;
+    double sent;
+    double received;
+};
+
+static inline void bitrate_increment(struct bitrate_t *br, size_t bytes_sent, size_t bytes_received) {
+    br->send_count += bytes_sent;
+    br->receive_count += bytes_received;
+}
+static inline struct bitrate_deltas_t bitrate_deltas(struct bitrate_t *br, double time) {
+    struct bitrate_deltas_t delta;
+    double dtime = time - br->time;
+
+    delta.time = dtime;
+    delta.count = 0;
+    delta.sent = (br->send_count - br->bps_sent)/dtime/1024.0;
+    delta.received = (br->send_count - br->bps_sent)/dtime/1024.0;
+    
+    if (dtime > 5 || dtime < 0) {
+        br->bps_sent = br->send_count;
+        br->bps_received = br->receive_count;
+        br->time = time;
+        br->bps_count = br->count;
+    }
+    
+    return delta;
+}
 
 #endif /* util_h */

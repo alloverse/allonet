@@ -202,8 +202,8 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
-    allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength, 0);
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
 }
 
 static void _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
@@ -256,9 +256,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloclient *c
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
-    allo_statistics.bytes_recv[0] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], 0, packet->dataLength);
     if (channel < CHANNEL_COUNT) {
-        allo_statistics.bytes_recv[1+channel] += packet->dataLength;
+        bitrate_increment(&allo_statistics.channel_rates[channel], 0, packet->dataLength);
     }
     
     switch(channel) {
@@ -382,8 +382,8 @@ static void send_latest_intent(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
-    allo_statistics.bytes_sent[1+CHANNEL_STATEDIFFS] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_STATEDIFFS], packet->dataLength, 0);
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
     free((void*)json);
 }
 
@@ -400,8 +400,8 @@ static void send_clock_request(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
-    allo_statistics.bytes_sent[1+CHANNEL_CLOCK] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_CLOCK], packet->dataLength, 0);
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
     free((void*)json);
 }
 
@@ -427,8 +427,8 @@ static void _alloclient_send_interaction(alloclient *client, allo_interaction *i
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
-    allo_statistics.bytes_sent[1+CHANNEL_COMMANDS] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COMMANDS], packet->dataLength, 0);
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
     free((void*)json);
 }
 
@@ -653,28 +653,35 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
         return;
     }
     snprintf(buffer, bufferlen,
-        "total\ts:%u r:%u\n"
-        "ch0-diffs\ts:%u r:%u\n"
-        "ch1-cmd\ts:%u r:%u\n"
-        "ch2-asset\ts:%u r:%u\n"
-        "ch3-media\ts:%u r:%u\n"
-        "ch4-clock\ts:%u r:%u\n"
         "State: set:%u delta:%u\n"
         "Packets lost\t%d\n"
         "RTT\t%dms\t\n"
         "Packet throttle\t%.0f%%\n"
         ,
-        allo_statistics.bytes_sent[0], allo_statistics.bytes_recv[0],
-        allo_statistics.bytes_sent[1], allo_statistics.bytes_recv[1],
-        allo_statistics.bytes_sent[2], allo_statistics.bytes_recv[2],
-        allo_statistics.bytes_sent[3], allo_statistics.bytes_recv[3],
-        allo_statistics.bytes_sent[4], allo_statistics.bytes_recv[4],
-        allo_statistics.bytes_sent[5], allo_statistics.bytes_recv[5],
         allo_statistics.ndelta_set, allo_statistics.ndelta_merge,
         _internal(client)->peer->packetsLost,
         _internal(client)->peer->roundTripTime,
         (_internal(client)->peer->packetThrottle / (double)ENET_PEER_PACKET_THROTTLE_SCALE)*100.0
     );
+    
+    double time = alloclient_get_time(client);
+    static char*names[6] = {"diff", "cmd", "asset", "media", "clock", "total"};
+    for (int i = 0; i < CHANNEL_COUNT+1; i++) {
+        int len = strlen(buffer);
+        bufferlen -= len;
+        buffer += len;
+        struct bitrate_deltas_t deltas = bitrate_deltas(&allo_statistics.channel_rates[i], time);
+        snprintf(buffer, bufferlen,
+                 "ch%d-%s\t%.2f/%.2fkbps\n"
+                 ,
+                 i, names[i], deltas.sent, deltas.received
+                 );
+    }
+    
+    int len = strlen(buffer);
+    bufferlen -= len;
+    buffer += len;
+    allo_media_get_stats(client, buffer, bufferlen);
 }
 
 void alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id) {

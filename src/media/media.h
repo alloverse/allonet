@@ -7,6 +7,7 @@
 #include "allonet/arr.h"
 #include <libavcodec/avcodec.h>
 #include "../threading.h"
+#include "../util.h"
 #include <allonet/client.h>
 
 typedef struct allo_media_subsystem allo_media_subsystem;
@@ -38,6 +39,7 @@ typedef struct {
     void *origin; // client that allocated the track
     arr_t(void *) recipients; // clients that want the track
     allo_media_subsystem *subsystem; // subsystem managing this track
+    struct bitrate_t bitrates;
     union {
         struct {
             OpusDecoder *decoder;
@@ -93,5 +95,7 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 
 /// Remove a track from tracklist
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track);
+
+void allo_media_get_stats(alloclient *client, char *buffer, size_t buffersize);
 
 #endif

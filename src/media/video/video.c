@@ -30,6 +30,7 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopicture *p
     }
     
     ENetPacket *packet = track->subsystem->create_video_packet(track, picture);
+    bitrate_increment(&track->bitrates, packet->dataLength, 0);
     
     if(packet) {
         const int headerlen = sizeof(int32_t); // track id header
@@ -37,8 +38,8 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopicture *p
         memcpy(packet->data, &big_track_id, headerlen);
 
         int ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet); (void)ok;
-        allo_statistics.bytes_sent[0] += packet->dataLength;
-        allo_statistics.bytes_sent[1+CHANNEL_MEDIA] += packet->dataLength;
+        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_MEDIA], packet->dataLength, 0);
+        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
         assert(ok == 0);
     }
 end:

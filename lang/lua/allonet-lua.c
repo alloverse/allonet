@@ -409,8 +409,8 @@ static int l_alloclient_get_clock_delta(lua_State *L)
 static int l_alloclient_get_stats(lua_State *L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
-    char buf[255];
-    alloclient_get_stats(lclient->client, buf, 255);
+    char buf[1024];
+    alloclient_get_stats(lclient->client, buf, 1024);
     lua_pushstring(L, buf);
     return 1;
 }

@@ -120,8 +120,8 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
         ENetPeer *peer = _clientinternal(other)->peer;
         
         enet_peer_send(peer, CHANNEL_ASSETS, packet);
-        allo_statistics.bytes_sent[0] += packet->dataLength;
-        allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
+        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength, 0);
+        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
     }
 }
 void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
@@ -129,8 +129,8 @@ void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *da
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
-    allo_statistics.bytes_sent[1+CHANNEL_ASSETS] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength, 0);
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
 }
 void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     // Extract peer if one is not already set.
@@ -224,9 +224,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloserver *s
 
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
 {
-    allo_statistics.bytes_recv[0] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], 0, packet->dataLength);
     if (channel < CHANNEL_COUNT) {
-        allo_statistics.bytes_recv[1+channel] += packet->dataLength;
+        bitrate_increment(&allo_statistics.channel_rates[channel], 0, packet->dataLength);
     }
     
     if (channel == CHANNEL_ASSETS) {
@@ -309,9 +309,9 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
     );
     memcpy(packet->data, buf, len);
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
     if (channel < CHANNEL_COUNT) {
-        allo_statistics.bytes_sent[1+channel] += packet->dataLength;
+        bitrate_increment(&allo_statistics.channel_rates[channel], packet->dataLength, 0);
     }
 }
 
@@ -319,9 +319,9 @@ void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel
 {
     (void)serv;
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
     if (channel < CHANNEL_COUNT) {
-        allo_statistics.bytes_sent[1+channel] += packet->dataLength;
+        bitrate_increment(&allo_statistics.channel_rates[channel], packet->dataLength, 0);
     }
 }
 

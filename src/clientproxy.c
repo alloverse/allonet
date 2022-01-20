@@ -274,8 +274,8 @@ static void proxy_alloclient_get_stats(alloclient *proxyclient, char *buffer, si
     int b2p = _internal(proxyclient)->bridge_to_proxy_len;
     mtx_unlock(&_internal(proxyclient)->bridge_to_proxy_mtx);
     
-    char extra[255];
-    _internal(proxyclient)->bridgeclient->alloclient_get_stats(_internal(proxyclient)->bridgeclient, extra, 255);
+    char extra[1024];
+    _internal(proxyclient)->bridgeclient->alloclient_get_stats(_internal(proxyclient)->bridgeclient, extra, 1024);
 
     snprintf(buffer, bufferlen, 
         "p2b %d\nb2p %d\n"

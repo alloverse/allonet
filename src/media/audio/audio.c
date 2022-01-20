@@ -108,8 +108,16 @@ void _alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t 
     int ok = enet_packet_resize(packet, headerlen + len);
     assert(ok == 0); (void)ok;
     ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet);
-    allo_statistics.bytes_sent[0] += packet->dataLength;
-    allo_statistics.bytes_sent[1+CHANNEL_MEDIA] += packet->dataLength;
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_MEDIA], packet->dataLength, 0);
+    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    
+    alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
+    allo_media_track *track = _media_track_find(&shared->media_tracks, track_id);
+    if (track) {
+        bitrate_increment(&track->bitrates, packet->dataLength, 0);
+    }
+    _alloclient_internal_shared_end(client);
+    
     assert(ok == 0);
 }
 

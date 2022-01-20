@@ -32,14 +32,38 @@ void _clock(alloclient *client, double latency, double delta) {
                                    "latency", cJSON_CreateNumber(latency),
                                    "delta", cJSON_CreateNumber(delta),
                                    NULL));
-                                   
 }
 
+void _state(alloclient *client, allo_state *state) {
+    cJSON *json = allo_state_to_json(state, true);
+    push_event(cjson_create_object("event", cJSON_CreateString("state"),
+                                   "state", json,
+                                   NULL));
+}
+
+bool _interaction(alloclient *client, allo_interaction *interaction) {
+    cJSON *json = allo_interaction_to_cjson(interaction);
+    push_event(cjson_create_object("event", cJSON_CreateString("interaction"),
+                                   "interaction", json,
+                                   NULL));
+    return true;
+}
+
+void _asset_receive(alloclient *client, char *name, uint8_t *bytes, size_t offset, size_t length, size_t total_size) {
+    push_event(cjson_create_object("event", cJSON_CreateString("asset_receive"),
+                                   "name", cJSON_CreateString(name),
+                                   "offset", cJSON_CreateNumber(offset),
+                                   "length", cJSON_CreateNumber(length),
+                                   "total_size", cJSON_CreateNumber(total_size),
+                                   NULL));
+}
 
 enum {
     JOP_INVALID = -1,
     JOP_POLL,
-    JOP_CONNECT
+    JOP_CONNECT,
+    JOP_INTERACTION,
+    JOP_INTENT
 };
 
 int jopcode(cJSON *jop) {
@@ -51,6 +75,10 @@ int jopcode(cJSON *jop) {
             return JOP_POLL;
         } else if (strcmp(op, "connect") == 0) {
             return JOP_CONNECT;
+        } else if (strcmp(op, "interaction") == 0) {
+            return JOP_INTERACTION;
+        } else if (strcmp(op, "intent") == 0) {
+            return JOP_INTENT;
         }
     } else {
         return (int)cJSON_GetNumberValue(jop);
@@ -74,11 +102,13 @@ void push_event(cJSON *jevent) {
 
 int alloclient_simple_init(int threaded) {
     if (_simple.client != NULL) return 1;
+    allo_initialize(false);
     _simple.client = alloclient_create(threaded);
     
     _simple.client->disconnected_callback = _disconnected;
     _simple.client->clock_callback = _clock;
-    
+    _simple.client->state_callback = _state;
+    _simple.client->interaction_callback = _interaction;
     return 1;
 }
 
@@ -116,6 +146,18 @@ char *alloclient_simple_communicate(const char * const command) {
             char *avatar_spec = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(jcommand, "avatar_spec"));
             int ret = alloclient_connect(client, url, identity, avatar_spec);
             cJSON_AddItemToObject(result, "return", cJSON_CreateBool(ret));
+        } break;
+        case JOP_INTERACTION: {
+            cJSON *jinteraction = cJSON_GetObjectItemCaseSensitive(jcommand, "interaction");
+            allo_interaction *interaction = allo_interaction_parse_cjson(jinteraction);
+            alloclient_send_interaction(client, interaction);
+            allo_interaction_free(interaction);
+        } break;
+        case JOP_INTENT: {
+            cJSON *jintent = cJSON_GetObjectItemCaseSensitive(jcommand, "intent");
+            allo_client_intent *intent = allo_client_intent_parse_cjson(jintent);
+            alloclient_set_intent(client, intent);
+            allo_client_intent_free(intent);
         } break;
         default:
             printf("Unhandled jop '%s'\n", command);

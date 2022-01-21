@@ -38,13 +38,14 @@ void _allo_media_initialize(void);
 
 
 struct bitrate_t {
-    double time;
-    size_t send_count;
-    size_t receive_count;
-    size_t bps_sent;
-    size_t bps_received;
-    size_t count;
-    size_t bps_count;
+    size_t sent_bytes;
+    size_t received_bytes;
+    size_t sample_count;
+    
+    double shapshot_time;
+    size_t snapshot_sent_bytes;
+    size_t shapshot_received_bytes;
+    size_t snapshot_sample_count;
 };
 
 typedef struct allo_statistics_t {
@@ -58,29 +59,29 @@ extern allo_statistics_t allo_statistics;
 
 struct bitrate_deltas_t {
     double time;
-    double count;
-    double sent;
-    double received;
+    double sample_count;
+    double sent_bytes;
+    double received_bytes;
 };
 
 static inline void bitrate_increment(struct bitrate_t *br, size_t bytes_sent, size_t bytes_received) {
-    br->send_count += bytes_sent;
-    br->receive_count += bytes_received;
+    br->sent_bytes += bytes_sent;
+    br->received_bytes += bytes_received;
 }
 static inline struct bitrate_deltas_t bitrate_deltas(struct bitrate_t *br, double time) {
     struct bitrate_deltas_t delta;
-    double dtime = time - br->time;
+    double dtime = time - br->shapshot_time;
 
     delta.time = dtime;
-    delta.count = 0;
-    delta.sent = (br->send_count - br->bps_sent)/dtime/1024.0;
-    delta.received = (br->send_count - br->bps_sent)/dtime/1024.0;
+    delta.sample_count = 0;
+    delta.sent_bytes = (br->sent_bytes - br->snapshot_sent_bytes)/dtime;
+    delta.received_bytes = (br->received_bytes - br->shapshot_received_bytes)/dtime;
     
     if (dtime > 5 || dtime < 0) {
-        br->bps_sent = br->send_count;
-        br->bps_received = br->receive_count;
-        br->time = time;
-        br->bps_count = br->count;
+        br->snapshot_sent_bytes = br->sent_bytes;
+        br->shapshot_received_bytes = br->received_bytes;
+        br->shapshot_time = time;
+        br->snapshot_sample_count = br->sample_count;
     }
     
     return delta;

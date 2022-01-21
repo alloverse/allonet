@@ -674,7 +674,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
         snprintf(buffer, bufferlen,
                  "ch%d-%s\t%.3f/%.3fkbps\n"
                  ,
-                 i, names[i], deltas.sent, deltas.received
+                 i, names[i], deltas.sent_bytes/1024.0, deltas.received_bytes/1024.0
                  );
     }
     

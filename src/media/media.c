@@ -137,6 +137,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         return;
     }
     bitrate_increment(&track->bitrates, 0, datalength);
+
     track->subsystem->parse(client, track, data, length, &shared->lock);
 }
 
@@ -176,8 +177,8 @@ void allo_media_get_stats(alloclient *client, char *buffer, size_t buffersize) {
                  ,
                  track->type == allo_media_type_audio ? "audio" : "video",
                  track->track_id,
-                 deltas.sent,
-                 deltas.received
+                 deltas.sent_bytes/1024.0,
+                 deltas.received_bytes/1024.0
                  );
     }
     

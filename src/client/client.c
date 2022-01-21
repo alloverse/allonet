@@ -672,7 +672,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
         buffer += len;
         struct bitrate_deltas_t deltas = bitrate_deltas(&allo_statistics.channel_rates[i], time);
         snprintf(buffer, bufferlen,
-                 "ch%d-%s\t%.2f/%.2fkbps\n"
+                 "ch%d-%s\t%.3f/%.3fkbps\n"
                  ,
                  i, names[i], deltas.sent, deltas.received
                  );

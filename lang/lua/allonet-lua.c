@@ -448,8 +448,11 @@ static void state_callback(alloclient *client, allo_state *state)
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->state_callback_index))
     {
+        // every lua operation runs a gc step so stop it while we do this
+        lua_gc(lclient->L, LUA_GCSTOP, 0);
         push_state_table(lclient->L, state);
         lua_call(lclient->L, 1, 0);
+        lua_gc(lclient->L, LUA_GCRESTART, 0);
     }
 }
 

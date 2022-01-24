@@ -306,6 +306,8 @@ void push_interaction_table(lua_State *L, allo_interaction *inter)
 
 void push_state_table(lua_State *L, allo_state *state)
 {
+    // every lua operation runs a gc step so stop it while we do this
+    lua_gc(L, LUA_GCSTOP, 0);
     lua_newtable(L); // state table
     set_table_number(L, "revision", state->revision);
 
@@ -325,6 +327,7 @@ void push_state_table(lua_State *L, allo_state *state)
         lua_settable(L, -3);
     }
     lua_settable(L, -3);
+    lua_gc(L, LUA_GCRESTART, 0);
 }
 
 void push_matrix_table(lua_State *L, allo_m4x4 m)

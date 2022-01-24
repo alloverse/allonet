@@ -21,6 +21,7 @@ end
 
 -- if you want to use more lua functions, add them here.
 local funcs = {
+    lua_gc = "int lua_gc(lua_State *L, int what, int data)",
 	luaL_checkinteger = "lua_Integer luaL_checkinteger (lua_State *L, int narg)",
 	lua_toboolean = "int lua_toboolean (lua_State *L, int index)",
 	lua_settop = "void  lua_settop (lua_State *L, int idx)",

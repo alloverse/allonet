@@ -423,7 +423,7 @@ void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
     }
     
     double time = get_ts_monod();
-    static char*names[CHANNEL_COUNT+1] = {"audio", "cmd", "diff", "asset", "clock", "video", "total"};
+    static char*names[CHANNEL_COUNT+1] = {"diff", "cmd", "asset", "media", "clock", "total"};
     for (int i = 0; i < CHANNEL_COUNT+1; i++) {
         int len = strlen(buffer);
         bufferlen -= len;

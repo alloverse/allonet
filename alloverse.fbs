@@ -1,0 +1,85 @@
+// Schema file for the Alloverse network protocol
+
+namespace Alloverse;
+
+///////////////////////////////////////////////////////////////
+// Legacy Stucture
+///////////////////////////////////////////////////////////////
+
+table State {
+    revision:uint64;
+    entities:[Entity];
+}
+
+table Entity {
+    id:string;
+    owner_agent_id:string;
+    components:Components;
+}
+
+table Components {
+    transform:TransformComponent;
+    relationships:RelationshipsComponent;
+    flex:FlexComponent;
+}
+
+///////////////////////////////////////////////////////////////
+// Hopefully the new structure, after refactors:
+///////////////////////////////////////////////////////////////
+
+table State2 {
+    revision:uint64;
+    entities:[Entity2];
+    components:[Components2];
+}
+
+table Entity2 {
+    id:string;
+    owner_agent_id:string;
+}
+
+table Components2 {
+    transform:[TransformComponent];
+    relationships:[RelationshipsComponent];
+    flex:[FlexComponent];
+}
+
+///////////////////////////////////////////////////////////////
+// Shared structure
+///////////////////////////////////////////////////////////////
+
+// Every Component has to start with one of these
+table ComponentBase {
+    eid:string;
+}
+
+// If a Component has any non-standard fields (or perhaps doesn't
+// have a definition at all), it is dynamically typed with a flexbuffer
+table FlexComponent {
+    c:ComponentBase;
+    custom:[ubyte]; // (flexbuffer)
+}
+
+///////////////////////////////////////////////////////////////
+// Components
+/////////////////////////////////////////////////////////////// 
+
+table TransformComponent {
+    c:ComponentBase;
+    matrix:Mat4;
+}
+
+table RelationshipsComponent {
+    parent:string;
+}
+
+///////////////////////////////////////////////////////////////
+// Types
+/////////////////////////////////////////////////////////////// 
+
+struct Mat4 {
+    m:[float:16];
+}
+
+
+root_type Entity;

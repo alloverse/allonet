@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.10.0)
+
+###################
+## Settings
+###################
+
 project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -19,6 +24,10 @@ ELSEIF(WIN32)
 ELSE()
   FATAL_ERROR("Unsupported platform")
 ENDIF()
+
+###################
+## Dependencies
+###################
 
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
@@ -59,8 +68,28 @@ add_subdirectory (lib/cJSON)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 
+###################
+## Schema
+###################
 
-# shared library
+add_subdirectory(lib/flatcc)
+set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(FBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
+include_directories("${GEN_DIR}")
+
+add_custom_target(gen_alloverse_fbs ALL) 
+add_custom_command (
+    TARGET gen_alloverse_fbs
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
+    COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/alloverse.fbs"
+    DEPENDS flatcc_cli "${FBS_DIR}/alloverse.fbs" 
+)
+
+
+###################
+## Target 'allonet'
+###################
 
 set(INCLUDE_FILES_PREFIX include/allonet)
 set(INCLUDE_FILES
@@ -146,6 +175,8 @@ add_library(allonet ${ALLONET_BUILDTYPE})
 
 add_library(allonet_av ${ALLONET_BUILDTYPE})
 
+add_dependencies(allonet gen_alloverse_fbs)
+
 # Versioning
 # crazy relative-path hack courtesy of running bash on windows and having mixed path types...
 file(RELATIVE_PATH GENERATE_VERSION_SH ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh)
@@ -225,7 +256,7 @@ include_directories(SYSTEM
 )
 
 target_link_libraries(allonet 
-  enet cjson-static cjson_utils-static opus 
+  enet cjson-static cjson_utils-static opus flatccrt
   ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
 )
 

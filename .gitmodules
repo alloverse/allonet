@@ -19,3 +19,6 @@
 [submodule "lib/tinycthread"]
 	path = lib/tinycthread
 	url = https://github.com/tinycthread/tinycthread
+[submodule "lib/flatcc"]
+	path = lib/flatcc
+	url = https://github.com/dvidelabs/flatcc.git

@@ -37,9 +37,9 @@ void _alloclient_send_video(alloclient *client, int32_t track_id, allopicture *p
         memcpy(packet->data, &big_track_id, headerlen);
 
         int ok = enet_peer_send(_internal(client)->peer, CHANNEL_MEDIA, packet); (void)ok;
-        bitrate_increment(&track->bitrates, packet->dataLength, 0);
-        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_MEDIA], packet->dataLength, 0);
-        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+        bitrate_increment_sent(&track->bitrates, packet->dataLength);
+        bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_MEDIA], packet->dataLength);
+        bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
         assert(ok == 0);
     }
 end:

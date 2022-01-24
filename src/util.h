@@ -37,15 +37,17 @@ void _allo_media_initialize(void);
 
 
 
-struct bitrate_t {
+struct bitrate_data_t {
     size_t sent_bytes;
+    size_t sent_packet_count;
     size_t received_bytes;
-    size_t sample_count;
-    
+    size_t received_packet_count;
+};
+
+struct bitrate_t {
+    struct bitrate_data_t data;
+    struct bitrate_data_t snapshot;
     double shapshot_time;
-    size_t snapshot_sent_bytes;
-    size_t shapshot_received_bytes;
-    size_t snapshot_sample_count;
 };
 
 typedef struct allo_statistics_t {
@@ -59,29 +61,35 @@ extern allo_statistics_t allo_statistics;
 
 struct bitrate_deltas_t {
     double time;
-    double sample_count;
     double sent_bytes;
     double received_bytes;
+    
+    size_t sent_packet_count;
+    size_t received_packet_count;
 };
 
-static inline void bitrate_increment(struct bitrate_t *br, size_t bytes_sent, size_t bytes_received) {
-    br->sent_bytes += bytes_sent;
-    br->received_bytes += bytes_received;
+static inline void bitrate_increment_sent(struct bitrate_t *br, size_t bytes_sent) {
+    br->data.sent_bytes += bytes_sent;
+    br->data.sent_packet_count ++;
 }
+
+static inline void bitrate_increment_received(struct bitrate_t *br, size_t bytes_received) {
+    br->data.received_bytes += bytes_received;
+    br->data.received_packet_count ++;
+}
+
 static inline struct bitrate_deltas_t bitrate_deltas(struct bitrate_t *br, double time) {
     struct bitrate_deltas_t delta;
     double dtime = time - br->shapshot_time;
 
     delta.time = dtime;
-    delta.sample_count = 0;
-    delta.sent_bytes = (br->sent_bytes - br->snapshot_sent_bytes)/dtime;
-    delta.received_bytes = (br->received_bytes - br->shapshot_received_bytes)/dtime;
-    
+    delta.sent_bytes = (br->data.sent_bytes - br->snapshot.sent_bytes)/dtime;
+    delta.received_bytes = (br->data.received_bytes - br->snapshot.received_bytes)/dtime;
+    delta.sent_packet_count = (size_t)(br->data.sent_packet_count - br->snapshot.sent_packet_count)/dtime;
+    delta.received_packet_count = (size_t)(br->data.received_packet_count - br->snapshot.received_packet_count)/dtime;
     if (dtime > 5 || dtime < 0) {
-        br->snapshot_sent_bytes = br->sent_bytes;
-        br->shapshot_received_bytes = br->received_bytes;
+        br->snapshot = br->data;
         br->shapshot_time = time;
-        br->snapshot_sample_count = br->sample_count;
     }
     
     return delta;

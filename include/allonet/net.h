@@ -12,9 +12,9 @@ typedef enum allochannel {
     CHANNEL_ASSETS = 2,     // reliable
     CHANNEL_MEDIA = 3,      // unreliable
     CHANNEL_CLOCK = 4,      // unreliable
+    
+    CHANNEL_COUNT
 } allochannel;
-
-#define CHANNEL_COUNT 5
 
 extern const char *GetAllonetVersion(); // 3.1.4.g123abc
 extern const char *GetAllonetNumericVersion(); // 3.1.4

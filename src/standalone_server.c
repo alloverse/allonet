@@ -400,7 +400,7 @@ static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd
   free((void*)json);
 }
 
-static void handle_media(alloserver *serv, alloserver_client *client, const uint8_t *data, size_t length)
+static void handle_media(alloserver *serv, alloserver_client *client, const uint8_t *data, size_t length, int channel)
 {
     // get the track_id from the top of data
     uint32_t track_id;
@@ -424,7 +424,7 @@ static void handle_media(alloserver *serv, alloserver_client *client, const uint
     // pass information on to all peers in track recipient list
     for (size_t i = 0; i < track->recipients.length; i++) {
         ENetPacket *packet = enet_packet_create(data, length, 0);
-        alloserv_send_enet(serv, track->recipients.data[i], CHANNEL_MEDIA, packet);
+        alloserv_send_enet(serv, track->recipients.data[i], channel, packet);
     }
 }
 
@@ -448,7 +448,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
         handle_clock(serv, client, cmd);
         cJSON_Delete(cmd);
     } else if (channel == CHANNEL_MEDIA) {
-        handle_media(serv, client, data, data_length);
+        handle_media(serv, client, data, data_length, channel);
     }
 }
 
@@ -471,6 +471,8 @@ static void broadcast_server_state(alloserver* serv)
   }
 }
 
+double stats_time;
+
 static void step(double goalDt)
 {
   while (serv->interbeat(serv, 1)) {}
@@ -491,6 +493,14 @@ static void step(double goalDt)
   }
   allo_simulate(&serv->state, (const allo_client_intent**)intents, count, now);
   broadcast_server_state(serv);
+    
+    if (get_ts_monod() - stats_time >= 1) {
+        stats_time = get_ts_monod();
+        char statsbuff[512];
+        alloserv_get_stats(serv, statsbuff, 512);
+        allo_media_get_stats(&mediatracks, statsbuff, 512);
+        printf("%s", statsbuff);
+    }
 }
 
 cJSON* cjson3d(double a, double b, double c)

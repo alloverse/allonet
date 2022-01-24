@@ -202,8 +202,8 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength, 0);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
 }
 
 static void _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
@@ -256,9 +256,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloclient *c
 
 static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], 0, packet->dataLength);
+    bitrate_increment_received(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     if (channel < CHANNEL_COUNT) {
-        bitrate_increment(&allo_statistics.channel_rates[channel], 0, packet->dataLength);
+        bitrate_increment_received(&allo_statistics.channel_rates[channel], packet->dataLength);
     }
     
     switch(channel) {
@@ -289,6 +289,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         parse_clock(client, response);
         cJSON_Delete(response);
         break; }
+    case CHANNEL_COUNT: assert(false);
     }
 }
 
@@ -382,8 +383,8 @@ static void send_latest_intent(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_STATEDIFFS], packet->dataLength, 0);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_STATEDIFFS], packet->dataLength);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     free((void*)json);
 }
 
@@ -400,8 +401,8 @@ static void send_clock_request(alloclient *client)
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_CLOCK], packet->dataLength, 0);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_CLOCK], packet->dataLength);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     free((void*)json);
 }
 
@@ -427,8 +428,8 @@ static void _alloclient_send_interaction(alloclient *client, allo_interaction *i
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
     enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COMMANDS], packet->dataLength, 0);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COMMANDS], packet->dataLength);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     free((void*)json);
 }
 
@@ -665,23 +666,25 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     );
     
     double time = alloclient_get_time(client);
-    static char*names[6] = {"diff", "cmd", "asset", "media", "clock", "total"};
+    static char*names[CHANNEL_COUNT+1] = {"diff", "cmd", "asset", "media", "clock", "total"};
     for (int i = 0; i < CHANNEL_COUNT+1; i++) {
         int len = strlen(buffer);
         bufferlen -= len;
         buffer += len;
         struct bitrate_deltas_t deltas = bitrate_deltas(&allo_statistics.channel_rates[i], time);
         snprintf(buffer, bufferlen,
-                 "ch%d-%s\t%.3f/%.3fkbps\n"
+                 "ch%d-%s\t(%zu, %zu) %.3f/%.3fkbps\n"
                  ,
-                 i, names[i], deltas.sent_bytes/1024.0, deltas.received_bytes/1024.0
+                 i, names[i], deltas.sent_packet_count, deltas.received_packet_count, deltas.sent_bytes/1024.0, deltas.received_bytes/1024.0
                  );
     }
     
     int len = strlen(buffer);
     bufferlen -= len;
     buffer += len;
-    allo_media_get_stats(client, buffer, bufferlen);
+    alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
+    allo_media_get_stats(&shared->media_tracks, buffer, bufferlen);
+    _alloclient_internal_shared_end(client);
 }
 
 void alloclient_asset_request(alloclient* client, const char* asset_id, const char* entity_id) {

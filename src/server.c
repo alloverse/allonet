@@ -120,8 +120,8 @@ static void _asset_send_func_broadcast(asset_mid mid, const cJSON *header, const
         ENetPeer *peer = _clientinternal(other)->peer;
         
         enet_peer_send(peer, CHANNEL_ASSETS, packet);
-        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength, 0);
-        bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+        bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength);
+        bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     }
 }
 void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
@@ -129,8 +129,8 @@ void _asset_send_func_peer(asset_mid mid, const cJSON *header, const uint8_t *da
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
     enet_peer_send(peer, CHANNEL_ASSETS, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength, 0);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
 }
 void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *data, size_t data_length, void *user) {
     // Extract peer if one is not already set.
@@ -224,9 +224,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloserver *s
 
 static void handle_incoming_data(alloserver *serv, alloserver_client *client, allochannel channel, ENetPacket *packet)
 {
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], 0, packet->dataLength);
+    bitrate_increment_received(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     if (channel < CHANNEL_COUNT) {
-        bitrate_increment(&allo_statistics.channel_rates[channel], 0, packet->dataLength);
+        bitrate_increment_received(&allo_statistics.channel_rates[channel], packet->dataLength);
     }
     
     if (channel == CHANNEL_ASSETS) {
@@ -309,9 +309,9 @@ void allo_send(alloserver *serv, alloserver_client *client, allochannel channel,
     );
     memcpy(packet->data, buf, len);
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     if (channel < CHANNEL_COUNT) {
-        bitrate_increment(&allo_statistics.channel_rates[channel], packet->dataLength, 0);
+        bitrate_increment_sent(&allo_statistics.channel_rates[channel], packet->dataLength);
     }
 }
 
@@ -319,9 +319,9 @@ void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel
 {
     (void)serv;
     enet_peer_send(_clientinternal(client)->peer, channel, packet);
-    bitrate_increment(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength, 0);
+    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     if (channel < CHANNEL_COUNT) {
-        bitrate_increment(&allo_statistics.channel_rates[channel], packet->dataLength, 0);
+        bitrate_increment_sent(&allo_statistics.channel_rates[channel], packet->dataLength);
     }
 }
 
@@ -420,6 +420,20 @@ void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
             peer->roundTripTime,
             (peer->packetThrottle / (double)ENET_PEER_PACKET_THROTTLE_SCALE)*100.0
         );
+    }
+    
+    double time = get_ts_monod();
+    static char*names[CHANNEL_COUNT+1] = {"audio", "cmd", "diff", "asset", "clock", "video", "total"};
+    for (int i = 0; i < CHANNEL_COUNT+1; i++) {
+        int len = strlen(buffer);
+        bufferlen -= len;
+        buffer += len;
+        struct bitrate_deltas_t deltas = bitrate_deltas(&allo_statistics.channel_rates[i], time);
+        snprintf(buffer, bufferlen,
+                 "ch%d-%s\t(%zu, %zu) %.3f/%.3fkbps\n"
+                 ,
+                 i, names[i], deltas.sent_packet_count, deltas.received_packet_count, deltas.sent_bytes/1024.0, deltas.received_bytes/1024.0
+                 );
     }
 }
 

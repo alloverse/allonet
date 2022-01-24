@@ -96,6 +96,6 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 /// Remove a track from tracklist
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track);
 
-void allo_media_get_stats(alloclient *client, char *buffer, size_t buffersize);
+void allo_media_get_stats(allo_media_track_list *media_tracks, char *buffer, size_t buffersize);
 
 #endif

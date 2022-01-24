@@ -136,7 +136,7 @@ void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t len
         _alloclient_internal_shared_end(client);
         return;
     }
-    bitrate_increment(&track->bitrates, 0, datalength);
+    bitrate_increment_received(&track->bitrates, datalength);
 
     track->subsystem->parse(client, track, data, length, &shared->lock);
 }
@@ -161,12 +161,10 @@ void _allo_media_initialize(void)
 }
 
 
-void allo_media_get_stats(alloclient *client, char *buffer, size_t buffersize) {
-    alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
-
-    double time = alloclient_get_time(client);
-    for(size_t i = 0; i < shared->media_tracks.length; i++) {
-        allo_media_track *track = &shared->media_tracks.data[i];
+void allo_media_get_stats(allo_media_track_list *media_tracks, char *buffer, size_t buffersize) {
+    double time = get_ts_monod();
+    for(size_t i = 0; i < media_tracks->length; i++) {
+        allo_media_track *track = &media_tracks->data[i];
         struct bitrate_deltas_t deltas = bitrate_deltas(&track->bitrates, time);
         
         int len = strlen(buffer);
@@ -181,6 +179,4 @@ void allo_media_get_stats(alloclient *client, char *buffer, size_t buffersize) {
                  deltas.received_bytes/1024.0
                  );
     }
-    
-    _alloclient_internal_shared_end(client);
 }

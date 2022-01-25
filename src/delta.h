@@ -19,12 +19,19 @@ extern void allo_delta_clear(statehistory_t *history);
 /// You own the returned memory and must free it.
 extern char* allo_delta_compute(statehistory_t *history, int64_t old_revision);
 
-/// In a receiving client, apply delta to something in history.
-/// This call takes ownership of delta, and frees it when needed.
-/// If successful, returns new full state and also inserts it into history.
-/// If delta is corrupt or a patch for a state we don't have, returns false. In thiis case,
-/// you should send intent.ack_state_rev=0 to get a new full state.
-/// The returned cJSON has the same restrictions as one that is allo_delta_inserted.
-extern cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta);
+/** In a receiving client, apply delta to something in history.
+ * This call takes ownership of delta, and frees it when needed.
+ * If successful, returns new full state, inserts it into history, and gives you a state_diff
+ * so you know what has changed in the world.
+ * If delta is corrupt or a patch for a state we don't have, returns false. In this case,
+ * you should send intent.ack_state_rev=0 to get a new full state.
+ * The returned cJSON has the same restrictions as one that is allo_delta_inserted.
+ * @param history   History of states, managed internally. You just have to allocate one and sending it to apply
+ * @param delta     The incoming changeset json, from network
+ * @param diff      Out parameter: the difference from the previous state in history. This is for you to use
+ *                  to react to the changes in state. Send NULL if you don't care.
+ */
+extern cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *diff);
 
 extern cJSON *statehistory_get(statehistory_t *history, int64_t revision);
+extern cJSON *statehistory_get_latest(statehistory_t *history);

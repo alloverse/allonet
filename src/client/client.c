@@ -69,8 +69,11 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         return 0;
     }
 
+    allo_state_diff diff;
+    allo_state_diff_init(&diff);
+
     int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
-    cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
+    cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd, &diff);
     if(staterep == NULL)
     {
         fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state\n",
@@ -135,8 +138,10 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 
     if(client->state_callback)
     {
-        client->state_callback(client, &client->_state);
+        client->state_callback(client, &client->_state, diff);
     }
+
+    allo_state_diff_free(&diff);
 
     return rev;
 }

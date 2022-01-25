@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 static void _compute_full_diff(cJSON *latest, cJSON *delta, allo_state_diff *diff);
-static void _compute_merge_diff(cJSON *current, cJSON *latest, cJSON *delta, allo_state_diff *diff);
+static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, cJSON *delta, allo_state_diff *diff);
 
 extern cJSON *statehistory_get(statehistory_t *history, int64_t revision)
 {
@@ -35,18 +35,8 @@ void allo_delta_clear(statehistory_t *history)
     history->latest_revision = 0;
 }
 
-char *allo_delta_compute_cjson(cJSON *latest, cJSON *old, int64_t old_revision)
+cJSON *allo_delta_compute_cjson(cJSON *latest, cJSON *old, int64_t old_revision)
 {
-    
-    int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(old, "revision"));
-    if(!old || old_history_rev != old_revision)
-    {
-        cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
-        char *deltas = cJSON_PrintUnformatted(latest);
-        cJSON_DeleteItemFromObject(latest, "patch_style");
-        return deltas;
-    }
-
     cJSON *mergePatch = cJSONUtils_GenerateMergePatch(old, latest);
     assert(mergePatch); // should never generate a COMPLETELY empty merge. Should at least have a new revision.
     cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
@@ -59,6 +49,16 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     cJSON *latest = statehistory_get_latest(history);
     assert(latest);
     cJSON *old = statehistory_get(history, old_revision);
+    int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(old, "revision"));
+
+    if(!old || old_history_rev != old_revision)
+    {
+        cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
+        char *deltas = cJSON_PrintUnformatted(latest);
+        cJSON_DeleteItemFromObject(latest, "patch_style");
+        return deltas;
+    }
+    
     cJSON *mergePatch = allo_delta_compute_cjson(latest, old, old_revision);
     char *patchs = cJSON_PrintUnformatted(mergePatch);
     cJSON_Delete(mergePatch);
@@ -112,7 +112,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *
             result = cJSON_Duplicate(current, 1);
             result = cJSONUtils_MergePatchCaseSensitive(result, delta);
             if(diff)
-                _compute_merge_diff(current, latest, delta, diff);
+                _compute_merge_diff(latest, current, result, delta, diff);
             cJSON_Delete(delta);
             break;
     }
@@ -125,13 +125,89 @@ static void _compute_full_diff(cJSON *latest, cJSON *newstate, allo_state_diff *
 {
     int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(latest, "revision"));
     cJSON *delta = allo_delta_compute_cjson(latest, newstate, old_history_rev);
-    _compute_merge_diff(latest, latest, delta, diff);
+    _compute_merge_diff(latest, latest, newstate, delta, diff);
+    cJSON_Delete(delta);
 }
 
 // if the server has already computed what has changed, we might as well use it.
-// todo: if the delta is from an older-than-previous revision, the diff will include things
-// that changed LAST frame. Make sure to cover that.
-static void _compute_merge_diff(cJSON *current, cJSON *latest, cJSON *delta, allo_state_diff *diff)
+static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, cJSON *delta, allo_state_diff *diff)
 {
+    if (latest != current)
+    {
+        // if the delta is from an older-than-previous revision, the diff will include things
+        // that we have already covered with diff callbacks. This would be bad (e g calling new_entity or
+        // new_component twice for the same entity/component), so we need to compute the diff
+        // from the last 
+        _compute_full_diff(latest, newstate, diff);
+        return;
+    }
+    const cJSON *delta_entities = cJSON_GetObjectItemCaseSensitive(delta, "entities");
+    const cJSON *current_entities = cJSON_GetObjectItemCaseSensitive(current, "entities");
 
+    cJSON *edesc = NULL;
+    cJSON_ArrayForEach(edesc, delta_entities)
+    {
+        const char *eid = edesc->string;
+        const cJSON *existing_ent = cJSON_GetObjectItemCaseSensitive(current_entities, eid);
+        
+        if(cJSON_IsNull(edesc))
+        {
+            // deleted entity!
+            arr_push(&diff->deleted_entities, eid);
+            // all its components are gone now too
+            const cJSON *existing_comps = cJSON_GetObjectItemCaseSensitive(existing_ent, "components");
+            cJSON *cdesc = NULL;
+            cJSON_ArrayForEach(cdesc, existing_comps)
+            {
+                const char *cname = cdesc->string;
+                allo_component_ref ref = {eid, cname, cdesc};
+                arr_push(&diff->deleted_components, ref);
+            }
+        }
+        else if(!existing_ent)
+        {
+            // completely new entity!
+            arr_push(&diff->new_entities, eid);
+            // all of its components are new
+            const cJSON *new_comps = cJSON_GetObjectItemCaseSensitive(current_entities, "components");
+            cJSON *cdesc = NULL;
+            cJSON_ArrayForEach(cdesc, new_comps)
+            {
+                const char *cname = cdesc->string;
+                allo_component_ref ref = {eid, cname, cdesc};
+                arr_push(&diff->new_components, ref);
+            }
+        }
+        else
+        {
+            // existing and updated entity!
+            
+            // let's figure out the state of the new comps
+            const cJSON *existing_comps = cJSON_GetObjectItemCaseSensitive(existing_ent, "components");
+            const cJSON *new_comps = cJSON_GetObjectItemCaseSensitive(edesc, "components");
+            cJSON *cdesc = NULL;
+            cJSON_ArrayForEach(cdesc, new_comps)
+            {
+                const char *cname = cdesc->string;
+                const cJSON *existing_comp = cJSON_GetObjectItemCaseSensitive(existing_comps, cname);
+                allo_component_ref ref = {eid, cname, cdesc};
+                if(cJSON_IsNull(cdesc)) {
+                    // it's a deleted comp!
+                    ref.data = existing_comp;
+                    arr_push(&diff->deleted_components, ref);
+                }
+                else if(!existing_comp)
+                {
+                    // it's a completely new comp!
+                    arr_push(&diff->new_components, ref);
+                }
+                else
+                {
+                    // the comp has updated somehow.
+                    arr_push(&diff->updated_components, ref);
+                }
+            }
+        }
+
+    }
 }

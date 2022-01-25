@@ -136,9 +136,11 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
     }
     cJSON_Delete(deletes);
 
+    allo_state_diff_dump(&diff);
+
     if(client->state_callback)
     {
-        client->state_callback(client, &client->_state, diff);
+        client->state_callback(client, &client->_state, &diff);
     }
 
     allo_state_diff_free(&diff);
@@ -630,11 +632,13 @@ static void _alloclient_simulate(alloclient *client)
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
   
   double now = alloclient_get_time(client);
+  allo_state_diff diff; allo_state_diff_init(&diff);
   allo_simulate(&client->_state, intents, 1, now);
   if (client->state_callback)
   {
-    client->state_callback(client, &client->_state);
+    client->state_callback(client, &client->_state, &diff);
   }
+  allo_state_diff_free(&diff);
 }
 
 double alloclient_get_time(alloclient* client)

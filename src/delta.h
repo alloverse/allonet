@@ -2,6 +2,7 @@
 #include <cJSON/cJSON_Utils.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <allonet/state.h>
 
 #define allo_statehistory_length 64
 typedef struct statehistory_t

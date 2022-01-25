@@ -9,7 +9,7 @@
 
 void allo_generate_id(char *str, size_t len)
 {
-  for (int i = 0; i < len-1; i++)
+  for (size_t i = 0; i < len-1; i++)
   {
     str[i] = 'a' + rand() % 25;
   }
@@ -334,6 +334,30 @@ extern void allo_state_diff_free(allo_state_diff *diff)
   arr_free(&diff->new_components);
   arr_free(&diff->updated_components);
   arr_free(&diff->deleted_components);
+}
+extern void allo_state_diff_dump(allo_state_diff *diff)
+{
+  printf("=============== Statediff ================\n");
+  for(size_t i = 0; i < diff->new_entities.length; i++)
+  {
+    printf("New entity: %s\n", diff->new_entities.data[i]);
+  }
+  for(size_t i = 0; i < diff->deleted_entities.length; i++)
+  {
+    printf("Deleted entity: %s\n", diff->deleted_entities.data[i]);
+  }
+  for(size_t i = 0; i < diff->new_components.length; i++)
+  {
+    printf("New component: %s.%s\n", diff->new_components.data[i].eid, diff->new_components.data[i].name);
+  }
+  for(size_t i = 0; i < diff->updated_components.length; i++)
+  {
+    printf("Updated component: %s.%s\n", diff->updated_components.data[i].eid, diff->updated_components.data[i].name);
+  }
+  for(size_t i = 0; i < diff->deleted_components.length; i++)
+  {
+    printf("Deleted component: %s.%s\n", diff->deleted_components.data[i].eid, diff->deleted_components.data[i].name);
+  }
 }
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)

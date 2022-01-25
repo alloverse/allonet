@@ -78,23 +78,23 @@ typedef struct allo_entity
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
 
-typedef arr_t(allo_entity) allo_entity_vec;
+typedef arr_t(const char*) allo_entity_id_vec;
 
 typedef struct allo_component_ref
 {
     const char *eid;
     const char *name;
-    cJSON *data;
+    const cJSON *data;
 } allo_component_ref;
 
-typedef arr_t(allo_entity) allo_component_vec;
+typedef arr_t(allo_component_ref) allo_component_vec;
 
 typedef struct allo_state_diff
 {
     /// List of entities that have been created since last callback
-    allo_entity_vec new_entities;
+    allo_entity_id_vec new_entities;
     /// List of entities that have disappeared since last callback
-    allo_entity_vec deleted_entities;
+    allo_entity_id_vec deleted_entities;
     /// List of components that have been created since last callback, including any components of entities that just appeared.
     allo_component_vec new_components;
     /// List of components that have had one or more values changed
@@ -139,6 +139,7 @@ extern cJSON *allo_state_to_json(allo_state *state, bool include_agent_id);
 extern allo_state *allo_state_from_json(cJSON *state);
 extern void allo_state_diff_init(allo_state_diff *diff);
 extern void allo_state_diff_free(allo_state_diff *diff);
+extern void allo_state_diff_dump(allo_state_diff *diff);
 /**
  * Describes an interaction to be sent or as received.
  * @field type: oneway, request, response or publication

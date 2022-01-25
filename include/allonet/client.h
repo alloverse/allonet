@@ -74,7 +74,7 @@ typedef struct alloclient {
     void (*state_callback)(
       alloclient *client, 
       allo_state *state, 
-      allo_state_diff diff
+      allo_state_diff *diff
     );
 
     /** Set this to get a callback when another entity is trying to 

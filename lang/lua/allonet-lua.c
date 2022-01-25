@@ -244,7 +244,7 @@ static int l_alloclient_set_intent (lua_State *L)
     return 0;
 }
 
-static void state_callback(alloclient *client, allo_state *state, allo_state_diff diff);
+static void state_callback(alloclient *client, allo_state *state, allo_state_diff *diff);
 static bool interaction_callback(alloclient *client, allo_interaction *interaction);
 static void disconnected_callback(alloclient *client, alloerror code, const char* message );
 static bool audio_callback(alloclient* client, uint32_t track_id, int16_t pcm[], int32_t bytes_decoded);
@@ -443,7 +443,7 @@ static int l_alloclient_asset_request(lua_State *L)
 
 ////// Callbacks from allonet
 
-static void state_callback(alloclient *client, allo_state *state, allo_state_diff diff)
+static void state_callback(alloclient *client, allo_state *state, allo_state_diff *diff)
 {
     l_alloclient_t *lclient = (l_alloclient_t*)client->_backref;
     if(get_function(lclient->L, lclient->state_callback_index))

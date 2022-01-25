@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void _compute_full_diff(cJSON *latest, cJSON *delta, allo_state_diff *diff);
-static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, cJSON *delta, allo_state_diff *diff);
+static void _compute_full_diff(cJSON *latest, cJSON *delta, allo_state_diff *diff, allo_statediff_handler handler, void *userinfo);
+static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, cJSON *delta, allo_state_diff *diff, allo_statediff_handler handler, void *userinfo);
 
 extern cJSON *statehistory_get(statehistory_t *history, int64_t revision)
 {
@@ -67,7 +67,7 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
 
 typedef enum { Set, Merge } PatchStyle;
 
-cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *diff)
+cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *diff, allo_statediff_handler handler, void *userinfo)
 {
     cJSON *patch_stylej = cJSON_DetachItemFromObject(delta, "patch_style");
     const char *patch_styles = cJSON_GetStringValue(patch_stylej);
@@ -104,7 +104,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *
         case Set:
             allo_statistics.ndelta_set++;
             if(diff)
-                _compute_full_diff(latest, delta, diff);
+                _compute_full_diff(latest, delta, diff, handler, userinfo);
             result = delta;
             break;
         case Merge:
@@ -112,7 +112,7 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *
             result = cJSON_Duplicate(current, 1);
             result = cJSONUtils_MergePatchCaseSensitive(result, delta);
             if(diff)
-                _compute_merge_diff(latest, current, result, delta, diff);
+                _compute_merge_diff(latest, current, result, delta, diff, handler, userinfo);
             cJSON_Delete(delta);
             break;
     }
@@ -121,16 +121,16 @@ cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state_diff *
 }
 
 // if we don't have a server-side computed delta, we'll have to figure it out ourselves
-static void _compute_full_diff(cJSON *latest, cJSON *newstate, allo_state_diff *diff)
+static void _compute_full_diff(cJSON *latest, cJSON *newstate, allo_state_diff *diff, allo_statediff_handler handler, void *userinfo)
 {
     int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(latest, "revision"));
-    cJSON *delta = allo_delta_compute_cjson(latest, newstate, old_history_rev);
-    _compute_merge_diff(latest, latest, newstate, delta, diff);
+    cJSON *delta = allo_delta_compute_cjson(newstate, latest, old_history_rev);
+    _compute_merge_diff(latest, latest, newstate, delta, diff, handler, userinfo);
     cJSON_Delete(delta);
 }
 
 // if the server has already computed what has changed, we might as well use it.
-static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, cJSON *delta, allo_state_diff *diff)
+static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, cJSON *delta, allo_state_diff *diff, allo_statediff_handler handler, void *userinfo)
 {
     if (latest != current)
     {
@@ -138,7 +138,7 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
         // that we have already covered with diff callbacks. This would be bad (e g calling new_entity or
         // new_component twice for the same entity/component), so we need to compute the diff
         // from the last 
-        _compute_full_diff(latest, newstate, diff);
+        _compute_full_diff(latest, newstate, diff, handler, userinfo);
         return;
     }
     const cJSON *delta_entities = cJSON_GetObjectItemCaseSensitive(delta, "entities");
@@ -169,7 +169,7 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
             // completely new entity!
             arr_push(&diff->new_entities, eid);
             // all of its components are new
-            const cJSON *new_comps = cJSON_GetObjectItemCaseSensitive(current_entities, "components");
+            const cJSON *new_comps = cJSON_GetObjectItemCaseSensitive(edesc, "components");
             cJSON *cdesc = NULL;
             cJSON_ArrayForEach(cdesc, new_comps)
             {
@@ -210,4 +210,5 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
         }
 
     }
+    handler(userinfo, delta, newstate, diff);
 }

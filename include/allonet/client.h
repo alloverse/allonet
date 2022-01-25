@@ -62,13 +62,30 @@ typedef struct allopicture {
 void allopicture_free(allopicture *picture);
 int allopicture_bpp(allopicture_format fmt);
 
+
 typedef struct alloclient alloclient;
 typedef struct alloclient {
-    /** set this to get a callback when state changes. 
-     * @param state Full world state. Only valid during duration of callback.
-     * 
+    /** set this to get a callback when state changes. you don't own any of the
+     *  data in the callbacks, and you must copy or use any data you need before
+     *  the callback returns.
+     * @param state               Full world state. Only valid during duration of callback.
+     * @param new_entities        List of entities that have been created since last callback
+     * @param deleted_entities    List of entities that have disappeared since last callback
+     * @param new_components      List of components that have been created since last callback,
+     *                            including any components of entities that just appeared.
+     * @param updated_components  List of components that have had one or more values changed
+     * @param deleted_components  List of components that have disappeared since last callback,
+     *                            including components of recently deleted entities.
      */
-    void (*state_callback)(alloclient *client, allo_state *state);
+    void (*state_callback)(
+      alloclient *client, 
+      allo_state *state, 
+      allo_entity_vec new_entities,
+      allo_entity_vec deleted_entities,
+      allo_component_vec new_components,
+      allo_component_vec updated_components,
+      allo_component_vec deleted_components
+    );
 
     /** Set this to get a callback when another entity is trying to 
       * interact with one of your entities.

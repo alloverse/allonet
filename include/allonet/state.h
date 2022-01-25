@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <cJSON/cJSON.h>
+#include <allonet/arr.h>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -76,6 +77,17 @@ typedef struct allo_entity
 
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
+
+typedef arr_t(allo_entity) allo_entity_vec;
+
+typedef struct allo_component_ref
+{
+    const char *eid;
+    const char *name;
+    cJSON *data;
+} allo_component_ref;
+
+typedef arr_t(allo_entity) allo_component_vec;
 
 allo_entity *entity_create(const char *id);
 void entity_destroy(allo_entity *entity);

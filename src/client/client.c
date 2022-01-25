@@ -27,7 +27,7 @@ void entity_added(alloclient *client, allo_entity *ent) {
         return;
     }
     
-    // if we find a decoder linked to the entity we remove it
+    // Allocate media track if there's a live_media component
     cJSON *jmedia = cJSON_GetObjectItemCaseSensitive(ent->components, "live_media");
     cJSON *jtrack_id = cJSON_GetObjectItemCaseSensitive(jmedia, "track_id");
     if (jmedia && jtrack_id) {
@@ -779,6 +779,7 @@ int allopicture_bpp(allopicture_format fmt)
             return 2;
         case allopicture_format_rgba8888:
         case allopicture_format_xrgb8888:
+        case allopicture_format_bgra8888:
             return 4;
     }
 }

@@ -142,13 +142,15 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
         return;
     }
     const cJSON *delta_entities = cJSON_GetObjectItemCaseSensitive(delta, "entities");
-    const cJSON *current_entities = cJSON_GetObjectItemCaseSensitive(current, "entities");
+    const cJSON *existing_entities = cJSON_GetObjectItemCaseSensitive(current, "entities");
+    const cJSON *newstate_entities = cJSON_GetObjectItemCaseSensitive(newstate, "entities");
 
     cJSON *edesc = NULL;
     cJSON_ArrayForEach(edesc, delta_entities)
     {
         const char *eid = edesc->string;
-        const cJSON *existing_ent = cJSON_GetObjectItemCaseSensitive(current_entities, eid);
+        const cJSON *existing_ent = cJSON_GetObjectItemCaseSensitive(existing_entities, eid);
+        const cJSON *newstate_ent = cJSON_GetObjectItemCaseSensitive(newstate_entities, eid);
         
         if(cJSON_IsNull(edesc))
         {
@@ -182,16 +184,19 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
         {
             // existing and updated entity!
             
+            
             // let's figure out the state of the new comps
             const cJSON *existing_comps = cJSON_GetObjectItemCaseSensitive(existing_ent, "components");
-            const cJSON *new_comps = cJSON_GetObjectItemCaseSensitive(edesc, "components");
-            cJSON *cdesc = NULL;
-            cJSON_ArrayForEach(cdesc, new_comps)
+            const cJSON *new_partial_comps = cJSON_GetObjectItemCaseSensitive(edesc, "components");
+            const cJSON *new_comps = cJSON_GetObjectItemCaseSensitive(newstate_ent, "components");
+            cJSON *partial_cdesc = NULL;
+            cJSON_ArrayForEach(partial_cdesc, new_partial_comps)
             {
-                const char *cname = cdesc->string;
+                const char *cname = partial_cdesc->string;
                 const cJSON *existing_comp = cJSON_GetObjectItemCaseSensitive(existing_comps, cname);
-                allo_component_ref ref = {eid, cname, cdesc};
-                if(cJSON_IsNull(cdesc)) {
+                const cJSON *new_comp = cJSON_GetObjectItemCaseSensitive(new_comps, cname);
+                allo_component_ref ref = {eid, cname, new_comp};
+                if(cJSON_IsNull(partial_cdesc)) {
                     // it's a deleted comp!
                     ref.data = existing_comp;
                     arr_push(&diff->deleted_components, ref);

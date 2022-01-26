@@ -28,6 +28,7 @@ typedef struct l_alloclient
     int asset_request_callback_index;
     int asset_state_callback_index;
     int asset_receive_callback_index;
+    bool wants_full_state_in_callback;
 } l_alloclient_t;
 
 static int l_alloclient_create (lua_State *L)
@@ -256,7 +257,10 @@ static void asset_receive_callback(alloclient *client, const char *asset_id, con
 static int l_alloclient_set_state_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if(store_function(L, &lclient->state_callback_index)) {
+    // default to true for compat
+    lclient->wants_full_state_in_callback = !lua_isboolean(L, 3) || lua_toboolean(L, 3);
+    
+    if(store_function(L, 2, &lclient->state_callback_index)) {
         lclient->client->state_callback = state_callback;
     } else {
         lclient->client->state_callback = NULL;
@@ -267,7 +271,7 @@ static int l_alloclient_set_state_callback (lua_State *L)
 static int l_alloclient_set_asset_state_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if(store_function(L, &lclient->asset_state_callback_index)) {
+    if(store_function(L, 2, &lclient->asset_state_callback_index)) {
         lclient->client->asset_state_callback = asset_state_callback;
     } else {
         lclient->client->asset_state_callback = NULL;
@@ -278,7 +282,7 @@ static int l_alloclient_set_asset_state_callback (lua_State *L)
 static int l_alloclient_set_asset_request_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if(store_function(L, &lclient->asset_request_callback_index)) {
+    if(store_function(L, 2, &lclient->asset_request_callback_index)) {
         lclient->client->asset_request_bytes_callback = asset_request_callback;
     } else {
         lclient->client->asset_request_bytes_callback = NULL;
@@ -289,7 +293,7 @@ static int l_alloclient_set_asset_request_callback (lua_State *L)
 static int l_alloclient_set_asset_receive_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if (store_function(L, &lclient->asset_receive_callback_index)) {
+    if (store_function(L, 2, &lclient->asset_receive_callback_index)) {
         lclient->client->asset_receive_callback = asset_receive_callback;
     } else {
         lclient->client->asset_receive_callback = NULL;
@@ -300,7 +304,7 @@ static int l_alloclient_set_asset_receive_callback (lua_State *L)
 static int l_alloclient_set_interaction_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if(store_function(L, &lclient->interaction_callback_index)) {
+    if(store_function(L, 2, &lclient->interaction_callback_index)) {
         lclient->client->interaction_callback = interaction_callback;
     } else {
         lclient->client->interaction_callback = NULL;
@@ -311,7 +315,7 @@ static int l_alloclient_set_interaction_callback (lua_State *L)
 static int l_alloclient_set_disconnected_callback (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    if(store_function(L, &lclient->disconnected_callback_index)) {
+    if(store_function(L, 2, &lclient->disconnected_callback_index)) {
         lclient->client->disconnected_callback = disconnected_callback;
     } else {
         lclient->client->disconnected_callback = NULL;
@@ -322,7 +326,7 @@ static int l_alloclient_set_disconnected_callback (lua_State *L)
 static int l_alloclient_set_audio_callback(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
-    if (store_function(L, &lclient->audio_callback_index)) {
+    if (store_function(L, 2, &lclient->audio_callback_index)) {
         lclient->client->audio_callback = audio_callback;
     }
     else {
@@ -334,7 +338,7 @@ static int l_alloclient_set_audio_callback(lua_State* L)
 static int l_alloclient_set_video_callback(lua_State *L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
-    if (store_function(L, &lclient->video_callback_index)) {
+    if (store_function(L, 2, &lclient->video_callback_index)) {
         lclient->client->video_callback = video_callback;
     }
     else {
@@ -450,8 +454,16 @@ static void state_callback(alloclient *client, allo_state *state, allo_state_dif
     {
         // every lua operation runs a gc step so stop it while we do this
         lua_gc(lclient->L, LUA_GCSTOP, 0);
-        push_state_table(lclient->L, state);
-        lua_call(lclient->L, 1, 0);
+        if(lclient->wants_full_state_in_callback)
+        {
+            push_state_table(lclient->L, state);
+        }
+        else
+        {
+            lua_pushnil(lclient->L);
+        }
+        push_statediff(lclient->L, state, diff);
+        lua_call(lclient->L, 2, 0);
         lua_gc(lclient->L, LUA_GCRESTART, 0);
     }
 }

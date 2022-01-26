@@ -216,18 +216,19 @@ allo_m4x4 get_table_matrix(lua_State* L, const char* key)
 	return result;
 }
 
-bool store_function(lua_State *L, int *storage)
+bool store_function(lua_State *L, int function_index, int *storage)
 {
     if(*storage) {
         luaL_unref(L, LUA_REGISTRYINDEX, *storage);
     }
 
-    if(lua_type(L, -1) == LUA_TFUNCTION)
+    if(lua_type(L, function_index) == LUA_TFUNCTION)
     {
+        lua_pushvalue(L, function_index);
         *storage = luaL_ref(L, LUA_REGISTRYINDEX);
         return true;
     }
-    else if(lua_type(L, -1) == LUA_TNIL)
+    else if(lua_type(L, function_index) == LUA_TNIL)
     {
         *storage = 0;
         return false;
@@ -253,7 +254,7 @@ bool get_function(lua_State *L, int storage)
     return true;
 }
 
-void allua_push_cjson_value(lua_State *L, cJSON *cjvalue)
+void allua_push_cjson_value(lua_State *L, const cJSON *cjvalue)
 {
     switch(cjvalue->type) {
     case cJSON_False:
@@ -325,6 +326,68 @@ void push_state_table(lua_State *L, allo_state *state)
         lua_settable(L, -3);
     }
     lua_settable(L, -3);
+}
+
+// destination[name] = {eid, ...}
+static void insert_entity_ref_list(lua_State *L, int destination, const char *name, allo_entity_id_vec *list)
+{
+    lua_pushstring(L, name);
+
+    // local eids = {}
+    lua_newtable(L);
+    int table = lua_gettop(L);
+    for(size_t i = 0; i < list->length; i++)
+    {
+        // local eid = ...
+        lua_pushstring(L, list->data[i]);
+        // eids[i+1] = eid
+        lua_rawseti(L, table, i+1);
+    }
+
+    // destination[name] = eids
+    lua_settable(L, destination);
+}
+
+// destination[name] = {{eid, cname, cjson}, ...}
+static void insert_component_ref_list(lua_State *L, int destination, const char *name, allo_component_vec *list)
+{
+    lua_pushstring(L, name);
+
+    // local specs = {}
+    lua_newtable(L);
+    int table = lua_gettop(L);
+    for(size_t i = 0; i < list->length; i++)
+    {
+        // local spec = {eid, name, data}
+        lua_newtable(L);
+        int spec = lua_gettop(L);
+        lua_pushstring(L, list->data[i].eid);
+        lua_rawseti(L, spec, 1);
+        lua_pushstring(L, list->data[i].name);
+        lua_rawseti(L, spec, 2);
+        allua_push_cjson_value(L, list->data[i].data);
+        lua_rawseti(L, spec, 3);
+        
+        // specs[i+1] = spec
+        lua_rawseti(L, table, i+1);
+    }
+    // destination[name] = specs
+    lua_settable(L, destination);
+}
+
+void push_statediff(lua_State *L, allo_state *state, allo_state_diff *diff)
+{
+    // local diffs = {revision= ... }
+    lua_newtable(L);
+    int diffTable = lua_gettop(L);
+    set_table_number(L, "revision", state->revision);
+
+    // diffs.newEntities = ... etc
+    insert_entity_ref_list(L,    diffTable, "newEntities", &diff->new_entities);
+    insert_entity_ref_list(L,    diffTable, "deletedEntities", &diff->deleted_entities);
+    insert_component_ref_list(L, diffTable, "newComponents", &diff->new_components);
+    insert_component_ref_list(L, diffTable, "updatedComponents", &diff->updated_components);
+    insert_component_ref_list(L, diffTable, "deletedComponents", &diff->deleted_components);
 }
 
 void push_matrix_table(lua_State *L, allo_m4x4 m)

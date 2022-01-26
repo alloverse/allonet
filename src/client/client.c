@@ -61,6 +61,7 @@ void entity_removed(alloclient *client, allo_entity *ent) {
     }
 }
 
+static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *staterep, allo_state_diff *diff);
 int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 {
     if(client->raw_state_delta_callback) 
@@ -69,17 +70,27 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         return 0;
     }
 
-    int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
-    cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd);
+    allo_state_diff diff;
+    allo_state_diff_init(&diff);
+    cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd, &diff, (allo_statediff_handler)_handle_parsed_statediff, client);    
+    allo_state_diff_free(&diff);
+
+    int64_t rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(staterep, "revision"));
+    return rev;
+}
+
+static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *staterep, allo_state_diff *diff)
+{
     if(staterep == NULL)
     {
+        int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
         fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state\n",
             _internal(client)->avatar_id,
             (long long int)patch_from,
             (long long int)_internal(client)->history.latest_revision
         );
         _internal(client)->latest_intent->ack_state_rev = 0;
-        return 0;
+        return;
     }
 
     int64_t rev = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "revision"))->valueint;
@@ -87,19 +98,11 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 
     const cJSON *entities = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "entities"));
     
-    // keep track of entities that aren't mentioned in the incoming list
-    cJSON *deletes = cJSON_CreateArray();
-    allo_entity *entity = NULL;
-    LIST_FOREACH(entity, &client->_state.entities, pointers)
-    {
-        cJSON_AddItemToArray(deletes, cJSON_CreateString(entity->id));
-    }
     
     // update or create entities
     cJSON *edesc = NULL;
     cJSON_ArrayForEach(edesc, entities) {
         const char *entity_id = nonnull(cJSON_GetObjectItemCaseSensitive(edesc, "id"))->valuestring;
-        cjson_delete_from_array(deletes, entity_id);
         
         cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(edesc, "components"), 1));
         allo_entity *entity = state_get_entity(&client->_state, entity_id);
@@ -116,29 +119,20 @@ int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
         entity->components = components;
     }
 
-    // now, delete old entities
-    entity = client->_state.entities.lh_first;
-    while(entity)
-    {
-        allo_entity *to_delete = entity;
-        entity = entity->pointers.le_next;
-        if(cjson_find_in_array(deletes, to_delete->id) != -1) {
-            LIST_REMOVE(to_delete, pointers);
-            
-            entity_removed(client, to_delete);
-            
-            
-            entity_destroy(to_delete);
-        }
+    for(size_t i = 0; i < diff->deleted_entities.length; i++) {
+        const char *eid = diff->deleted_entities.data[i];
+        allo_entity *to_delete = state_get_entity(&client->_state, eid);
+        LIST_REMOVE(to_delete, pointers);
+        entity_removed(client, to_delete);
+        entity_destroy(to_delete);
     }
-    cJSON_Delete(deletes);
+
+    //allo_state_diff_dump(diff);
 
     if(client->state_callback)
     {
-        client->state_callback(client, &client->_state);
+        client->state_callback(client, &client->_state, diff);
     }
-
-    return rev;
 }
 
 void alloclient_ack_rev(alloclient *client, int64_t rev)
@@ -625,11 +619,13 @@ static void _alloclient_simulate(alloclient *client)
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
   
   double now = alloclient_get_time(client);
-  allo_simulate(&client->_state, intents, 1, now);
+  allo_state_diff diff; allo_state_diff_init(&diff);
+  allo_simulate(&client->_state, intents, 1, now, &diff);
   if (client->state_callback)
   {
-    client->state_callback(client, &client->_state);
+    client->state_callback(client, &client->_state, &diff);
   }
+  allo_state_diff_free(&diff);
 }
 
 double alloclient_get_time(alloclient* client)

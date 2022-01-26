@@ -42,6 +42,8 @@ typedef struct AlloPropertyAnimation
 {
     // the cJSON value to change with this animation
     cJSON *act_on;
+    // the component name that it's affecting (i e the root of the path)
+    cJSON *component;
     // the parsed value out of act_on
     struct MathVariant current;
     // the parsed starting value

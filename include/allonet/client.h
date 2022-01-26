@@ -62,13 +62,20 @@ typedef struct allopicture {
 void allopicture_free(allopicture *picture);
 int allopicture_bpp(allopicture_format fmt);
 
+
 typedef struct alloclient alloclient;
 typedef struct alloclient {
-    /** set this to get a callback when state changes. 
-     * @param state Full world state. Only valid during duration of callback.
-     * 
+    /** set this to get a callback when state changes. you don't own any of the
+     *  data in the callbacks, and you must copy or use any data you need before
+     *  the callback returns.
+     * @param state     Full world state. Only valid during duration of callback.
+     * @param diff      Changes in entities and components since last callback.
      */
-    void (*state_callback)(alloclient *client, allo_state *state);
+    void (*state_callback)(
+      alloclient *client, 
+      allo_state *state, 
+      allo_state_diff *diff
+    );
 
     /** Set this to get a callback when another entity is trying to 
       * interact with one of your entities.

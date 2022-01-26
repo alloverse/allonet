@@ -19,7 +19,7 @@ static allo_m4x4 create_movement(allo_m4x4 heading_transform, double yaw, double
   return constrained_movement;
 }
 
-allo_m4x4 allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt, bool write)
+allo_m4x4 allosim_stick_movement(allo_entity* avatar, allo_entity* head, const allo_client_intent *intent, double dt, bool write, allo_state_diff *diff)
 {
   // if client doesn't actually want us to stick-move their avatar, then return early.
   // except if this is is a simulate call (indicated by write=false), in which case DO return that simulated stick movement.
@@ -54,8 +54,10 @@ allo_m4x4 allosim_stick_movement(allo_entity* avatar, allo_entity* head, const a
   allo_m4x4 new_transform = allo_m4x4_concat(old_positional_transform, movement);
   allo_m4x4 new_transform2 = allo_m4x4_concat(keep_head_centered, new_transform);
 
-  if(write)
+  if(write) {
     entity_set_transform(avatar, new_transform2);
+    allo_state_diff_mark_component_updated(diff, avatar->id, "transform", cJSON_GetObjectItemCaseSensitive(avatar->components, "transform"));
+  }
   
   return new_transform2;
 }

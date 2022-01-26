@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <cJSON/cJSON.h>
+#include <allonet/arr.h>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -77,6 +78,31 @@ typedef struct allo_entity
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
 
+typedef arr_t(const char*) allo_entity_id_vec;
+
+typedef struct allo_component_ref
+{
+    const char *eid;
+    const char *name;
+    const cJSON *data;
+} allo_component_ref;
+
+typedef arr_t(allo_component_ref) allo_component_vec;
+
+typedef struct allo_state_diff
+{
+    /// List of entities that have been created since last callback
+    allo_entity_id_vec new_entities;
+    /// List of entities that have disappeared since last callback
+    allo_entity_id_vec deleted_entities;
+    /// List of components that have been created since last callback, including any components of entities that just appeared.
+    allo_component_vec new_components;
+    /// List of components that have had one or more values changed
+    allo_component_vec updated_components;
+    /// List of components that have disappeared since last callback, including components of recently deleted entities.
+    allo_component_vec deleted_components;
+} allo_state_diff;
+
 allo_entity *entity_create(const char *id);
 void entity_destroy(allo_entity *entity);
 
@@ -111,6 +137,11 @@ extern void allo_state_init(allo_state *state);
 extern void allo_state_destroy(allo_state *state);
 extern cJSON *allo_state_to_json(allo_state *state, bool include_agent_id);
 extern allo_state *allo_state_from_json(cJSON *state);
+extern void allo_state_diff_init(allo_state_diff *diff);
+extern void allo_state_diff_free(allo_state_diff *diff);
+extern void allo_state_diff_dump(allo_state_diff *diff);
+extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
+extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
 /**
  * Describes an interaction to be sent or as received.
  * @field type: oneway, request, response or publication
@@ -147,7 +178,7 @@ extern void allo_libav_initialize(void);
  * Run world simulation for a given state and known intents. Modifies state inline.
  * Will run the number of world iterations needed to get to server_time (or skip if too many)
  */
-extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time);
+extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff);
 
 #ifdef __cplusplus
 }

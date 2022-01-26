@@ -1,6 +1,6 @@
 #include "simulation.h"
 
-void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt)
+void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt, allo_state_diff *diff)
 {
   (void)dt;
   allo_entity* entity = NULL;
@@ -50,5 +50,6 @@ void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_c
       continue;
 
     entity_set_transform(entity, new_transform);
+    allo_state_diff_mark_component_updated(diff, entity->id, "transform", cJSON_GetObjectItemCaseSensitive(entity->components, "transform"));
   }
 }

@@ -67,7 +67,7 @@ void test_basic(void)
 
   // ... and pretend-receive it
   cJSON *patch = cJSON_Parse(delta);
-  cJSON *merged = allo_delta_apply(recvhistory, patch);
+  cJSON *merged = allo_delta_apply(recvhistory, patch, NULL, NULL, NULL);
   TEST_ASSERT_NOT_NULL_MESSAGE(merged, "expected applying patch to succeed");
   free(delta);
   TEST_ASSERT_TRUE_MESSAGE(cJSON_Compare(second, merged, true), "expected patch to bring state up to speed");

@@ -471,8 +471,6 @@ static void broadcast_server_state(alloserver* serv)
   }
 }
 
-double stats_time;
-
 static void step(double goalDt)
 {
   while (serv->interbeat(serv, 1)) {}
@@ -493,14 +491,6 @@ static void step(double goalDt)
   }
   allo_simulate(&serv->state, (const allo_client_intent**)intents, count, now, NULL);
   broadcast_server_state(serv);
-    
-    if (get_ts_monod() - stats_time >= 1) {
-        stats_time = get_ts_monod();
-        char statsbuff[512];
-        alloserv_get_stats(serv, statsbuff, 512);
-        allo_media_get_stats(&mediatracks, statsbuff, 512);
-        printf("%s", statsbuff);
-    }
 }
 
 cJSON* cjson3d(double a, double b, double c)

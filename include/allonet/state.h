@@ -140,6 +140,8 @@ extern allo_state *allo_state_from_json(cJSON *state);
 extern void allo_state_diff_init(allo_state_diff *diff);
 extern void allo_state_diff_free(allo_state_diff *diff);
 extern void allo_state_diff_dump(allo_state_diff *diff);
+extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
+extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
 /**
  * Describes an interaction to be sent or as received.
  * @field type: oneway, request, response or publication
@@ -176,7 +178,7 @@ extern void allo_libav_initialize(void);
  * Run world simulation for a given state and known intents. Modifies state inline.
  * Will run the number of world iterations needed to get to server_time (or skip if too many)
  */
-extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time);
+extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff);
 
 #ifdef __cplusplus
 }

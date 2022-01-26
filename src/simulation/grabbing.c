@@ -19,7 +19,7 @@ static allo_m4x4 _constrain(allo_m4x4 orig, allo_m4x4 update, allo_vector tconst
   return allo_m4x4_concat(allo_m4x4_translate(constrainedTranslation), allo_m4x4_rotate(newR.angle, constrainedAxis));
 }
 
-void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, const allo_client_intent *const intent, double dt)
+void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, const allo_client_intent *const intent, double dt, allo_state_diff *diff)
 {
   (void)dt;
   const allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
@@ -69,6 +69,7 @@ void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, co
     allo_m4x4 constrained = _constrain(entity_get_transform(actuated), parent_from_actuated_transform, translation_constraint, rotation_constraint);
 
     entity_set_transform(actuated, constrained);
+    allo_state_diff_mark_component_updated(diff, actuated->id, "transform", cJSON_GetObjectItemCaseSensitive(actuated->components, "transform"));
   }
 }
 

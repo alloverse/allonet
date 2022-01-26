@@ -491,7 +491,7 @@ static void step(double goalDt)
     intents[count++] = client->intent;
     if (count == 32) break;
   }
-  allo_simulate(&serv->state, (const allo_client_intent**)intents, count, now);
+  allo_simulate(&serv->state, (const allo_client_intent**)intents, count, now, NULL);
   broadcast_server_state(serv);
     
     if (get_ts_monod() - stats_time >= 1) {

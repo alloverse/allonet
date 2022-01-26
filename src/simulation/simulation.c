@@ -1,6 +1,6 @@
 #include "simulation.h"
 
-void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time)
+void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
 {
   // figure out what time was in pre-sim state
   allo_entity *place = state_get_entity(state, "place");
@@ -14,6 +14,7 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
     cJSON *time =cJSON_GetObjectItemCaseSensitive(clock, "time");
     old_time = time->valuedouble;
     cJSON_SetNumberValue(time, server_time);
+    allo_state_diff_mark_component_updated(diff, "place", "clock", clock);
   }
   // todo: run simulate at fixed-sized steps
   // https://gafferongames.com/post/fix_your_timestep/
@@ -21,10 +22,10 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   // for now, slow down simulation if we're given a larger dt than a 20fps equivalent
   double dt = server_time - old_time;
   dt = dt < 1/5.0 ? dt : 1/5.0;
-  allo_simulate_iteration(state, intents, intent_count, server_time, dt);
+  allo_simulate_iteration(state, intents, intent_count, server_time, dt, diff);
 }
 
-void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, double dt)
+void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, double dt, allo_state_diff *diff)
 {
   for (int i = 0; i < intent_count; i++)
   {
@@ -33,12 +34,12 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
     if (intent->entity_id == NULL || avatar == NULL)
       return;
     allo_entity* head = allosim_get_child_with_pose(state, avatar, "head");
-    allosim_stick_movement(avatar, head, intent, dt, true);
-    allosim_pose_movements(state, avatar, intent, intents, intent_count, dt);
-    allosim_handle_grabs(state, avatar, intent, dt);
+    allosim_stick_movement(avatar, head, intent, dt, true, diff);
+    allosim_pose_movements(state, avatar, intent, intents, intent_count, dt, diff);
+    allosim_handle_grabs(state, avatar, intent, dt, diff);
   }
 
-  allosim_animate(state, server_time);
+  allosim_animate(state, server_time, diff);
 }
 
 allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name)

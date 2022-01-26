@@ -363,7 +363,7 @@ static int l_alloclient_simulate_root_pose(lua_State* L)
     float dt = luaL_checknumber(L, 3);
     allo_client_intent *intent = get_intent(L);
     
-    allo_m4x4 root_pose = allosim_stick_movement(avatar, head, intent, dt, false);
+    allo_m4x4 root_pose = allosim_stick_movement(avatar, head, intent, dt, false, NULL);
     allo_client_intent_free(intent);
     push_matrix_table(L, root_pose);
     return 1;

@@ -620,7 +620,7 @@ static void _alloclient_simulate(alloclient *client)
   
   double now = alloclient_get_time(client);
   allo_state_diff diff; allo_state_diff_init(&diff);
-  allo_simulate(&client->_state, intents, 1, now);
+  allo_simulate(&client->_state, intents, 1, now, &diff);
   if (client->state_callback)
   {
     client->state_callback(client, &client->_state, &diff);

@@ -359,6 +359,18 @@ extern void allo_state_diff_dump(allo_state_diff *diff)
     printf("Deleted component: %s.%s\n", diff->deleted_components.data[i].eid, diff->deleted_components.data[i].name);
   }
 }
+extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp)
+{
+  if(!diff) return;
+  allo_component_ref ref = {eid, cname, comp};
+  arr_push(&diff->new_components, ref);
+}
+extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp)
+{
+  if(!diff) return;
+  allo_component_ref ref = {eid, cname, comp};
+  arr_push(&diff->updated_components, ref);
+}
 
 void entity_set_transform(allo_entity* entity, allo_m4x4 m)
 {

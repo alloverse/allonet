@@ -1,11 +1,11 @@
 #include "animation.h"
 
-static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time);
+static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time, allo_state_diff *diff);
 static double _ease(double value, const char *easing);
 
 // perform all property animations specified in 'state' for where they should be at 'server_time'.
 // Also, delete non-repeating animations that have progressed to completion come `server_time`.
-void allosim_animate(allo_state *state, double server_time)
+void allosim_animate(allo_state *state, double server_time, allo_state_diff *diff)
 {
     allo_entity* entity = NULL;
     LIST_FOREACH(entity, &state->entities, pointers)
@@ -17,7 +17,7 @@ void allosim_animate(allo_state *state, double server_time)
             cJSON *anim = anims->child;
             while(anim) {
                 cJSON *remove = NULL;
-                if(allosim_animate_process(entity, anim, server_time))
+                if(allosim_animate_process(entity, anim, server_time, diff))
                 {
                     remove = anim;
                 }
@@ -33,7 +33,7 @@ void allosim_animate(allo_state *state, double server_time)
 
 // animate a single property for a single entity. Return whether that particular animation
 // has completed 100%.
-static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time)
+static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time, allo_state_diff *diff)
 {
     // all the inputs
     const char *path = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "path"));
@@ -95,6 +95,7 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     
     // apply the new value into state
     mathvariant_replace_json(new_value, prop.act_on);
+    allo_state_diff_mark_component_updated(diff, entity->id, prop.component->string, prop.component);
 
     return done;
 }

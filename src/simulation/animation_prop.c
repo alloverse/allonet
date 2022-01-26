@@ -150,6 +150,13 @@ static void animation_derive_property(AlloPropertyAnimation *prop, const char *p
         prop->usage = UsageStandard;
     }
 
+    if(!prop->component)
+    {
+        // first key in keypath must be component name, so first act_on must be the component
+        assert(prop->act_on);
+        prop->component = prop->act_on;
+    }
+
     // if path contains more keys, recurse
     if(*path == '.')
     {

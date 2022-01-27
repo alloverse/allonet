@@ -37,7 +37,7 @@ void allo_delta_clear(statehistory_t *history)
 
 cJSON *allo_delta_compute_cjson(cJSON *latest, cJSON *old, int64_t old_revision)
 {
-    cJSON *mergePatch = cJSONUtils_GenerateMergePatch(old, latest);
+    cJSON *mergePatch = cJSONUtils_GenerateMergePatchCaseSensitive(old, latest);
     assert(mergePatch); // should never generate a COMPLETELY empty merge. Should at least have a new revision.
     cJSON_AddItemToObject(mergePatch, "patch_style", cJSON_CreateString("merge"));
     cJSON_AddItemToObject(mergePatch, "patch_from", cJSON_CreateNumber(old_revision));

@@ -362,13 +362,13 @@ extern void allo_state_diff_dump(allo_state_diff *diff)
 extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp)
 {
   if(!diff) return;
-  allo_component_ref ref = {eid, cname, comp};
+  allo_component_ref ref = {eid, cname, NULL, comp};
   arr_push(&diff->new_components, ref);
 }
 extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp)
 {
   if(!diff) return;
-  allo_component_ref ref = {eid, cname, comp};
+  allo_component_ref ref = {eid, cname, NULL, comp};
   arr_push(&diff->updated_components, ref);
 }
 

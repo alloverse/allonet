@@ -68,7 +68,7 @@ allo_media_track_type _media_track_type_from_string(const char *string) {
     }
 }
 
-void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type, cJSON *comp) {
+void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type, const cJSON *comp) {
     alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
     
     allo_media_track *track = _media_track_find(&shared->media_tracks, track_id);
@@ -115,6 +115,60 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
     }
     
     _alloclient_internal_shared_end(client);
+}
+
+static void _alloclient_media_add_track_from_comp(alloclient *client, const cJSON *cdata)
+{
+    if(!cdata) return;
+    cJSON *jtrack_id = cJSON_GetObjectItemCaseSensitive(cdata, "track_id");
+    cJSON *jmedia_type = cJSON_GetObjectItemCaseSensitive(cdata, "type");
+    allo_media_track_type type = allo_media_type_invalid;
+    char *typeString = cJSON_GetStringValue(jmedia_type);
+    type = _media_track_type_from_string(typeString);
+    if (type == allo_media_type_invalid || !jtrack_id || !cJSON_IsNumber(jtrack_id)) {
+        return;
+    }
+    uint32_t track_id = jtrack_id->valueint;
+    _alloclient_media_track_find_or_create(client, track_id, type, cdata);
+}
+static void _alloclient_media_remove_track_from_comp(alloclient *client, const cJSON *cdata)
+{
+    if(!cdata) return;
+    // if we find a decoder linked to the entity we remove it
+    cJSON *track_id = cJSON_GetObjectItemCaseSensitive(cdata, "track_id");
+    if(track_id) {
+        fprintf(stderr, "Destroying decoder for track %d\n", track_id->valueint);
+        _alloclient_media_track_destroy(client, track_id->valueint);
+    }
+}
+
+void _alloclient_media_handle_statediff(alloclient *client, allo_state_diff *diff)
+{
+    for(size_t i = 0; i < diff->new_components.length; i++)
+    {
+        allo_component_ref ref = diff->new_components.data[i];
+        if(strcmp(ref.name, "live_media") == 0)
+        {
+            _alloclient_media_add_track_from_comp(client, ref.newdata);
+        }     
+    }
+    for(size_t i = 0; i < diff->updated_components.length; i++)
+    {
+        allo_component_ref ref = diff->updated_components.data[i];
+        if(strcmp(ref.name, "live_media") == 0)
+        {
+            _alloclient_media_remove_track_from_comp(client, ref.olddata);
+            _alloclient_media_add_track_from_comp(client, ref.newdata);
+        }     
+    }
+    for(size_t i = 0; i < diff->deleted_components.length; i++)
+    {
+        allo_component_ref ref = diff->deleted_components.data[i];
+        if(strcmp(ref.name, "live_media") == 0)
+        {
+            _alloclient_media_remove_track_from_comp(client, ref.olddata);
+        }     
+    }
 }
 
 void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length)

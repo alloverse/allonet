@@ -72,7 +72,7 @@ typedef struct alloclient alloclient;
 
 typedef struct allo_media_subsystem {
     /// each subsystem is tested to see if it wants to manage this track. return true if successful.
-    bool (*track_initialize)(allo_media_track *track, cJSON *component);
+    bool (*track_initialize)(allo_media_track *track, const cJSON *component);
     void (*track_destroy)(allo_media_track *track);
     void (*parse)(alloclient *client, allo_media_track *track, unsigned char *data, size_t length, mtx_t *unlock_me);
 
@@ -97,5 +97,8 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track);
 
 void allo_media_get_stats(allo_media_track_list *media_tracks, char *buffer, size_t buffersize);
+
+// watch changes in state and add/remove tracks accordingly
+void _alloclient_media_handle_statediff(alloclient *client, allo_state_diff *diff);
 
 #endif

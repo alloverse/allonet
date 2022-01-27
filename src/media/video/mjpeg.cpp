@@ -49,7 +49,7 @@ static allopixel *allo_mjpeg_decode(uint8_t *jpegdata, size_t jpegdata_size, int
 
 
 
-static bool video_track_initialize(allo_media_track *track, cJSON *comp)
+static bool video_track_initialize(allo_media_track *track, const cJSON *comp)
 {
     if(track->type != allo_media_type_video) return false;
     cJSON *jformat = cJSON_GetObjectItemCaseSensitive(comp, "format");

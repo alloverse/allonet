@@ -22,45 +22,6 @@ static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 void alloclient_ack_rev(alloclient *client, int64_t rev);
 
-void entity_added(alloclient *client, allo_entity *ent) {
-    if (!ent->components) {
-        return;
-    }
-    
-    // Allocate media track if there's a live_media component
-    cJSON *jmedia = cJSON_GetObjectItemCaseSensitive(ent->components, "live_media");
-    cJSON *jtrack_id = cJSON_GetObjectItemCaseSensitive(jmedia, "track_id");
-    if (jmedia && jtrack_id) {
-        cJSON *jmedia_type = cJSON_GetObjectItemCaseSensitive(jmedia, "type");
-        allo_media_track_type type = allo_media_type_invalid;
-        char *typeString = cJSON_GetStringValue(jmedia_type);
-        type = _media_track_type_from_string(typeString);
-        if (type == allo_media_type_invalid) {
-            return;
-        }
-        uint32_t track_id = jtrack_id->valueint;
-        
-        _alloclient_media_track_find_or_create(client, track_id, type, jmedia);
-    }
-}
-
-void entity_changed(alloclient *client, allo_entity *ent) {
-    entity_added(client, ent);
-}
-
-void entity_removed(alloclient *client, allo_entity *ent) {
-    if (!ent->components) {
-        return;
-    }
-    // if we find a decoder linked to the entity we remove it
-    cJSON *media = cJSON_GetObjectItemCaseSensitive(ent->components, "live_media");
-    cJSON *track_id = cJSON_GetObjectItemCaseSensitive(media, "track_id");
-    if (media && track_id) {
-        fprintf(stderr, "Destroying a linked decoder\n");
-        _alloclient_media_track_destroy(client, track_id->valueint);
-    }
-}
-
 static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *staterep, allo_state_diff *diff);
 int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
 {
@@ -97,7 +58,18 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
     alloclient_ack_rev(client, rev);
 
     const cJSON *entities = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "entities"));
-    
+
+    for(size_t i = 0; i < diff->new_entities.length; i++)
+    {
+        allo_entity *entity = entity_create(diff->new_entities.data[i]);
+        LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
+    }
+    for(size_t i = 0; i < diff->deleted_entities.length; i++) {
+        const char *eid = diff->deleted_entities.data[i];
+        allo_entity *to_delete = state_get_entity(&client->_state, eid);
+        LIST_REMOVE(to_delete, pointers);
+        entity_destroy(to_delete);
+    }
     
     // update or create entities
     cJSON *edesc = NULL;
@@ -106,29 +78,13 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
         
         cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(edesc, "components"), 1));
         allo_entity *entity = state_get_entity(&client->_state, entity_id);
-        if(entity) {
-            if (!cJSON_Compare(entity->components, components, true)) {
-                entity_changed(client, entity);
-                cJSON_Delete(entity->components);
-                entity->components = components;
-            }
-        } else {
-            entity = entity_create(entity_id);
-            LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
-            
-            entity_added(client, entity);
-            entity->components = components;
-        }
+        cJSON_Delete(entity->components);
+        entity->components = components;
     }
 
-    for(size_t i = 0; i < diff->deleted_entities.length; i++) {
-        const char *eid = diff->deleted_entities.data[i];
-        allo_entity *to_delete = state_get_entity(&client->_state, eid);
-        LIST_REMOVE(to_delete, pointers);
-        entity_removed(client, to_delete);
-        entity_destroy(to_delete);
-    }
+    _alloclient_media_handle_statediff(client, diff);
 
+    // to debug state changes:
     //allo_state_diff_dump(diff);
 
     if(client->state_callback)
@@ -796,4 +752,5 @@ int allopicture_bpp(allopicture_format fmt)
         case allopicture_format_bgra8888:
             return 4;
     }
+    return 0;
 }

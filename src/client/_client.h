@@ -38,7 +38,7 @@ static inline alloclient_internal *_internal(alloclient *client)
 }
 
 /// Creates a track for track_id unless one is not already created
-extern void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type, cJSON *comp);
+extern void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_id, allo_media_track_type type, const cJSON *comp);
 /// Free up track resources
 extern void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id);
 extern void _alloclient_parse_media(alloclient *client, unsigned char *data, size_t length);

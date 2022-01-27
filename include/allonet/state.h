@@ -84,7 +84,8 @@ typedef struct allo_component_ref
 {
     const char *eid;
     const char *name;
-    const cJSON *data;
+    const cJSON *olddata;
+    const cJSON *newdata;
 } allo_component_ref;
 
 typedef arr_t(allo_component_ref) allo_component_vec;

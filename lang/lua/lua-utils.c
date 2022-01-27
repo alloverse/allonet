@@ -256,6 +256,11 @@ bool get_function(lua_State *L, int storage)
 
 void allua_push_cjson_value(lua_State *L, const cJSON *cjvalue)
 {
+    if(!cjvalue) 
+    {
+        lua_pushnil(L);
+        return;
+    }
     switch(cjvalue->type) {
     case cJSON_False:
         lua_pushboolean(L, false);
@@ -365,8 +370,10 @@ static void insert_component_ref_list(lua_State *L, int destination, const char 
         lua_rawseti(L, spec, 1);
         lua_pushstring(L, list->data[i].name);
         lua_rawseti(L, spec, 2);
-        allua_push_cjson_value(L, list->data[i].data);
+        allua_push_cjson_value(L, list->data[i].olddata);
         lua_rawseti(L, spec, 3);
+        allua_push_cjson_value(L, list->data[i].newdata);
+        lua_rawseti(L, spec, 4);
         
         // specs[i+1] = spec
         lua_rawseti(L, table, i+1);

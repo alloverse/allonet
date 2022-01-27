@@ -7,7 +7,7 @@
 
 #define DEBUG_AUDIO 0
 
-static bool audio_track_initialize(allo_media_track *track, cJSON *component)
+static bool audio_track_initialize(allo_media_track *track, const cJSON *component)
 {
     if(track->type != allo_media_type_audio) return false;
 

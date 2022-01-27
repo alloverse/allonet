@@ -182,7 +182,7 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
             cJSON_ArrayForEach(cdesc, existing_comps)
             {
                 const char *cname = cdesc->string;
-                allo_component_ref ref = {eid, cname, cdesc};
+                allo_component_ref ref = {eid, cname, cdesc, NULL};
                 arr_push(&diff->deleted_components, ref);
             }
         }
@@ -196,7 +196,7 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
             cJSON_ArrayForEach(cdesc, new_comps)
             {
                 const char *cname = cdesc->string;
-                allo_component_ref ref = {eid, cname, cdesc};
+                allo_component_ref ref = {eid, cname, NULL, cdesc};
                 arr_push(&diff->new_components, ref);
             }
         }
@@ -215,10 +215,9 @@ static void _compute_merge_diff(cJSON *latest, cJSON *current, cJSON *newstate, 
                 const char *cname = partial_cdesc->string;
                 const cJSON *existing_comp = cJSON_GetObjectItemCaseSensitive(existing_comps, cname);
                 const cJSON *new_comp = cJSON_GetObjectItemCaseSensitive(new_comps, cname);
-                allo_component_ref ref = {eid, cname, new_comp};
+                allo_component_ref ref = {eid, cname, existing_comp, new_comp};
                 if(cJSON_IsNull(partial_cdesc)) {
                     // it's a deleted comp!
-                    ref.data = existing_comp;
                     arr_push(&diff->deleted_components, ref);
                 }
                 else if(!existing_comp)

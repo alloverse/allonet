@@ -198,7 +198,7 @@ static allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *tr
 
 
 
-static bool video_track_initialize(allo_media_track *track, cJSON *comp)
+static bool video_track_initialize(allo_media_track *track, const cJSON *comp)
 {
     if(track->type != allo_media_type_video) return false;
     

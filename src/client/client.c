@@ -107,16 +107,18 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
         cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(edesc, "components"), 1));
         allo_entity *entity = state_get_entity(&client->_state, entity_id);
         if(entity) {
-            entity_changed(client, entity);
+            if (!cJSON_Compare(entity->components, components, true)) {
+                entity_changed(client, entity);
+                cJSON_Delete(entity->components);
+                entity->components = components;
+            }
         } else {
             entity = entity_create(entity_id);
             LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
             
             entity_added(client, entity);
+            entity->components = components;
         }
-        
-        cJSON_Delete(entity->components);
-        entity->components = components;
     }
 
     for(size_t i = 0; i < diff->deleted_entities.length; i++) {
@@ -319,13 +321,23 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
     int64_t servicing_timeout = deadline - ts < 0 ? 0 : deadline - ts;
     ENetEvent event;
     bool any_messages = false;
+    ENetPacket *lastDiffPacket = 0;
     while (enet_host_service(_internal(client)->host, & event, servicing_timeout) > 0)
     {
         switch (event.type)
         {
         case ENET_EVENT_TYPE_RECEIVE:
-            parse_packet_from_channel(client, event.packet, (allochannel)event.channelID);
-            enet_packet_destroy (event.packet);
+                // hack: server pushes diffs in a steady pace. If we get some
+                // congestion on network or cpu we might receive a bunch of
+                // diffs with overlapping revisions. So let's just skip all but
+                // the last one.
+                if ((allochannel)event.channelID == CHANNEL_STATEDIFFS) {
+                    if (lastDiffPacket) enet_packet_destroy(lastDiffPacket);
+                    lastDiffPacket = event.packet;
+                } else {
+                    parse_packet_from_channel(client, event.packet, (allochannel)event.channelID);
+                    enet_packet_destroy(event.packet);
+                }
             break;
         
         case ENET_EVENT_TYPE_CONNECT:
@@ -343,6 +355,12 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
         any_messages = true;
         ts = get_ts_mono();
         servicing_timeout = deadline - ts < 0 ? 0 : deadline - ts;
+    }
+    
+    if (lastDiffPacket) {
+        parse_packet_from_channel(client, lastDiffPacket, CHANNEL_STATEDIFFS);
+        enet_packet_destroy(lastDiffPacket);
+        lastDiffPacket = 0;
     }
     return any_messages;
 }

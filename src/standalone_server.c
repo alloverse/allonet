@@ -452,6 +452,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
     }
 }
 
+
 static statehistory_t hist;
 static void broadcast_server_state(alloserver* serv)
 {
@@ -461,13 +462,13 @@ static void broadcast_server_state(alloserver* serv)
 
   cJSON *map = allo_state_to_json(&serv->state, false);
   allo_delta_insert(&hist, map);
-
+    
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
+    /// Note: The returned json is managed by allo_delta_compute
     char *json = allo_delta_compute(&hist, client->intent->ack_state_rev);
     int jsonlength = strlen(json);
     serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength);
-    free(json);
   }
 }
 

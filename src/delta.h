@@ -19,7 +19,7 @@ extern void allo_delta_insert(statehistory_t *history, cJSON *next_state);
 /// Destroy all cached states (but not the history pointer itself; that's on you)
 extern void allo_delta_clear(statehistory_t *history);
 /// Return a state delta that can be transmitted to a client, who can later merge it with their old_revision.
-/// You own the returned memory and must free it.
+/// allo_delta_compute owns the returned memory. Do not free it.
 extern char* allo_delta_compute(statehistory_t *history, int64_t old_revision);
 
 /** In a receiving client, apply delta to something in history.

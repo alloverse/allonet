@@ -50,6 +50,15 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     assert(latest);
     cJSON *old = statehistory_get(history, old_revision);
     int64_t old_history_rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(old, "revision"));
+    
+    
+    static struct diffcache_t {
+        int64_t from;
+        int64_t to;
+        char *json;
+    } diffcache[allo_statehistory_length] = {0};
+    int64_t from = old_revision;
+    int64_t to = history->latest_revision;
 
     if(!old || old_history_rev != old_revision)
     {
@@ -59,9 +68,20 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
         return deltas;
     }
     
+    struct diffcache_t *entry = &diffcache[old_revision % allo_statehistory_length];
+    if (entry->json && entry->to == to && entry->from == from) {
+        return entry->json;
+    }
+    
     cJSON *mergePatch = allo_delta_compute_cjson(latest, old, old_revision);
     char *patchs = cJSON_PrintUnformatted(mergePatch);
     cJSON_Delete(mergePatch);
+    
+    if (entry->json) free(entry->json);
+    entry->from = from;
+    entry->to = to;
+    entry->json = patchs;
+    
     return patchs;
 }
 

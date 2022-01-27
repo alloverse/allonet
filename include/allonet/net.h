@@ -7,11 +7,12 @@ typedef enum {
 } allo_sendmode;
 
 typedef enum allochannel {
-    CHANNEL_STATEDIFFS = 0, // unreliable
+    CHANNEL_AUDIO = 0,      // unreliable
     CHANNEL_COMMANDS = 1,   // reliable
-    CHANNEL_ASSETS = 2,     // reliable
-    CHANNEL_MEDIA = 3,      // unreliable
-    CHANNEL_CLOCK = 4,      // unreliable
+    CHANNEL_STATEDIFFS = 2, // unreliable
+    CHANNEL_ASSETS = 3,     // reliable
+    CHANNEL_VIDEO = 4,      // unreliable
+    CHANNEL_CLOCK = 5,      // unreliable
     
     CHANNEL_COUNT
 } allochannel;

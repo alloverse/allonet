@@ -447,7 +447,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
         cJSON* cmd = cJSON_ParseWithLength((const char*)data, data_length);
         handle_clock(serv, client, cmd);
         cJSON_Delete(cmd);
-    } else if (channel == CHANNEL_MEDIA) {
+    } else if (channel == CHANNEL_VIDEO || channel == CHANNEL_AUDIO) {
         handle_media(serv, client, data, data_length, channel);
     }
 }

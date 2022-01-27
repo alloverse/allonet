@@ -233,7 +233,8 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     case CHANNEL_ASSETS: {
         handle_assets(packet->data, packet->dataLength, client);
         } break;
-    case CHANNEL_MEDIA: {
+    case CHANNEL_AUDIO:
+    case CHANNEL_VIDEO: {
         _alloclient_parse_media(client, (unsigned char*)packet->data, packet->dataLength);
         break; }
     case CHANNEL_CLOCK: {
@@ -636,7 +637,7 @@ static void _alloclient_get_stats(alloclient* client, char *buffer, size_t buffe
     );
     
     double time = alloclient_get_time(client);
-    static char*names[CHANNEL_COUNT+1] = {"diff", "cmd", "asset", "media", "clock", "total"};
+    static char*names[CHANNEL_COUNT+1] = {"audio", "cmd", "diff", "asset", "video", "clock", "total"};
     for (int i = 0; i < CHANNEL_COUNT+1; i++) {
         int len = strlen(buffer);
         bufferlen -= len;

@@ -99,7 +99,7 @@ void alloclient_ack_rev(alloclient *client, int64_t rev)
 }
 
 
-static void parse_interaction(alloclient *client, cJSON *inter_json)
+static bool parse_interaction(alloclient *client, cJSON *inter_json)
 {
     const char *type = nonnull(cJSON_GetArrayItem(inter_json, 1))->valuestring;
     const char *from = nonnull(cJSON_GetArrayItem(inter_json, 2))->valuestring;
@@ -109,7 +109,19 @@ static void parse_interaction(alloclient *client, cJSON *inter_json)
     const char *bodystr = cJSON_Print(body);
     if(strcmp(cJSON_GetStringValue(cJSON_GetArrayItem(body, 0)), "announce") == 0)
     {
-        _internal(client)->avatar_id = allo_strdup(cJSON_GetStringValue(cJSON_GetArrayItem(body, 1)));
+        if(strcmp(cJSON_GetStringValue(cJSON_GetArrayItem(body, 1)), "error") == 0)
+        {
+            int reason = cJSON_GetNumberValue(cJSON_GetArrayItem(body, 2));
+            const char *message = cJSON_GetStringValue(cJSON_GetArrayItem(body, 3));
+            fprintf(stderr, "Place rejected our announce: %s (%d)\n", message, reason);
+            // ask disconnection callback to deallocate us
+            client->disconnected_callback(client, reason, message);
+            return false;
+        }
+        else
+        {
+            _internal(client)->avatar_id = allo_strdup(cJSON_GetStringValue(cJSON_GetArrayItem(body, 1)));
+        }
     }
     allo_interaction *interaction = allo_interaction_create(type, from, to, request_id, bodystr);
     if(!client->interaction_callback || client->interaction_callback(client, interaction))
@@ -117,15 +129,17 @@ static void parse_interaction(alloclient *client, cJSON *inter_json)
         allo_interaction_free(interaction);
     }
     free((void*)bodystr);
+    return true;
 }
 
-static void parse_command(alloclient *client, cJSON *cmdrep)
+static bool parse_command(alloclient *client, cJSON *cmdrep)
 {
     const char *cmdname = nonnull(cJSON_GetArrayItem(cmdrep, 0))->valuestring;
     if(strcmp(cmdname, "interaction") == 0) {
-        parse_interaction(client, cmdrep);
+        return parse_interaction(client, cmdrep);
     } else {
         printf("Unknown command: %s\n", cmdrep->string);
+        return true;
     }
 }
 
@@ -206,8 +220,9 @@ static void handle_assets(const uint8_t *data, size_t data_length, alloclient *c
     );
 }
 
-static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
+static bool parse_packet_from_channel(alloclient *client, ENetPacket *packet, allochannel channel)
 {
+    bool remain = true;
     bitrate_increment_received(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     if (channel < CHANNEL_COUNT) {
         bitrate_increment_received(&allo_statistics.channel_rates[channel], packet->dataLength);
@@ -220,14 +235,14 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
             fprintf(stderr, "alloclient: unparseable statediff:\n");
             fprintf(stderr, "%s\n", packet->data);
             assert(cmdrep);
-            return;
+            return true;
         }
         //printf("alloclient(%s): My latest rev is %zd. Receiving delta %s\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev, packet->data);
         alloclient_parse_statediff(client, cmdrep);
         break; }
     case CHANNEL_COMMANDS: {
         cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
-        parse_command(client, cmdrep);
+        remain = parse_command(client, cmdrep);
         cJSON_Delete(cmdrep);
         break; }
     case CHANNEL_ASSETS: {
@@ -244,6 +259,7 @@ static void parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
         break; }
     case CHANNEL_COUNT: assert(false);
     }
+    return remain;
 }
 
 bool alloclient_poll(alloclient *client, int timeout_ms)
@@ -292,8 +308,15 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
                     if (lastDiffPacket) enet_packet_destroy(lastDiffPacket);
                     lastDiffPacket = event.packet;
                 } else {
-                    parse_packet_from_channel(client, event.packet, (allochannel)event.channelID);
+                    bool remain = parse_packet_from_channel(client, event.packet, (allochannel)event.channelID);
                     enet_packet_destroy(event.packet);
+                    if(!remain)
+                    {
+                        // again disconnected, again deallocated, stop working.
+                        // We might now be deallocated (that's the standard thing to do in the disconnected callback).
+                        // Stop processing events.
+                        return true;
+                    }
                 }
             break;
         
@@ -303,10 +326,10 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
             fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
             if (client->disconnected_callback) {
                 client->disconnected_callback(client, alloerror_connection_lost, "Lost connection to Place");
-                // We might now be deallocated (that's the standard thing to do in the disconnected callback).
-                // Stop processing events.
-                return true;
             }
+            // We might now be deallocated (that's the standard thing to do in the disconnected callback).
+            // Stop processing events.
+            return true;
         default: break;
         }
         any_messages = true;

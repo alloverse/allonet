@@ -67,24 +67,44 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
 
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  const int version = cJSON_GetArrayItem(body, 2)->valueint; (void)version;
+  const int version = cJSON_GetArrayItem(body, 2)->valueint;
   cJSON* identity = cJSON_GetArrayItem(body, 4);
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
+  
 
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
   client->avatar_entity_id = allo_strdup(ava->id);
   client->identity = cJSON_Duplicate(identity, true);
 
-  fprintf(stderr, "Client announced: %s\n", alloserv_describe_client(client));
 
-  cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString(g_placename), NULL);
-  char* respbodys = cJSON_Print(respbody);
-  allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
-  free(respbodys);
-  cJSON_Delete(respbody);
-  send_interaction_to_client(serv, client, response);
-  allo_interaction_free(response);
+  if(version != GetAllonetProtocolVersion())
+  {
+    fprintf(stderr, "Client announced %s incompatible version %d, DISCONNECTING\n", alloserv_describe_client(client), version);
+    cJSON* respbody = cjson_create_list(
+      cJSON_CreateString("announce"), cJSON_CreateString("error"), 
+      cJSON_CreateNumber(alloerror_outdated_version), cJSON_CreateString("Please update your app. Outdated network protocol."), NULL
+    );
+    char* respbodys = cJSON_Print(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    cJSON_Delete(respbody);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+    alloserv_disconnect(serv, client, alloerror_outdated_version);
+  }
+  else
+  {
+    fprintf(stderr, "Client announced: %s version %d\n", alloserv_describe_client(client), version);
+    cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString(g_placename), NULL);
+    char* respbodys = cJSON_Print(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    cJSON_Delete(respbody);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+  }
 }
+
 
 static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {

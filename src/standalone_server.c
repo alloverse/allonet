@@ -355,6 +355,35 @@ static void handle_place_remove_property_animation_interaction(alloserver* serv,
     allo_interaction_free(response);
 }
 
+static void handle_place_list_agents_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+    (void)body;
+    cJSON *agentlist = cJSON_CreateArray();
+    
+    alloserver_client *agent;
+    LIST_FOREACH(agent, &serv->clients, pointers) {
+        allo_entity *ent = state_get_entity(&serv->state, agent->avatar_entity_id);
+        cJSON *visor = cJSON_GetObjectItemCaseSensitive(ent->components, "visor");
+        bool isVisor = visor != NULL;
+
+        cJSON_AddItemToArray(agentlist, cjson_create_object(
+            "display_name", cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(agent->identity, "display_name"), false),
+            "agent_id", cJSON_CreateString(agent->agent_id),
+            "is_visor", cJSON_CreateBool(isVisor),
+            NULL, NULL
+        ));
+    }
+    
+    cJSON *respbody = cjson_create_list(cJSON_CreateString("list_agents"), cJSON_CreateString("ok"), agentlist, NULL);
+    char* respbodys = cJSON_Print(respbody);
+    cJSON_Delete(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+}
+
+
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
 {
     cJSON* body = cJSON_Parse(interaction->body);
@@ -375,6 +404,8 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
         handle_place_add_property_animation_interaction(serv, client, interaction, body);
     } else if (strcmp(name, "remove_property_animation") == 0) {
         handle_place_remove_property_animation_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "list_agents") == 0) {
+        handle_place_list_agents_interaction(serv, client, interaction, body);
     }
 
   // force sending delta, since the above was likely an important change

@@ -57,6 +57,8 @@ void alloserv_stop(alloserver* serv);
 // clients_callback() is called once the disconnection is successful.
 void alloserv_disconnect(alloserver *serv, alloserver_client *client, int reason_code);
 
+size_t alloserv_get_client_stats(alloserver* serv, alloserver_client *client, char *buffer, size_t bufferlen, bool header);
+
 void alloserv_get_stats(alloserver* serv, char *buffer, size_t bufferlen);
 
 // run a minimal standalone C server. returns when it shuts down. false means it broke.

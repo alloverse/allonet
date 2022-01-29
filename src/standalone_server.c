@@ -382,10 +382,13 @@ static void handle_place_list_agents_interaction(alloserver* serv, alloserver_cl
         cJSON *visor = cJSON_GetObjectItemCaseSensitive(ent->components, "visor");
         bool isVisor = visor != NULL;
 
+        char stats[255];
+        alloserv_get_client_stats(serv, agent, stats, 255, false);
         cJSON_AddItemToArray(agentlist, cjson_create_object(
             "display_name", cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(agent->identity, "display_name"), false),
             "agent_id", cJSON_CreateString(agent->agent_id),
             "is_visor", cJSON_CreateBool(isVisor),
+            "stats", cJSON_CreateString(stats),
             NULL, NULL
         ));
     }

@@ -388,6 +388,38 @@ int allo_socket_for_select(alloserver *serv)
     return _servinternal(serv)->enet->socket;
 }
 
+size_t alloserv_get_client_stats(alloserver* serv, alloserver_client *client, char *buffer, size_t bufferlen, bool header)
+{
+    ENetPeer *peer = _clientinternal(client)->peer;
+
+    int entity_count = 0;
+    allo_entity *ent;
+    LIST_FOREACH(ent, &serv->state.entities, pointers) {
+        if(strcmp(ent->owner_agent_id, client->agent_id) == 0)
+            entity_count++;
+    }
+
+    int slen = 0;
+    if(header)
+    {
+        slen += snprintf(buffer, bufferlen, "%s\n", alloserv_describe_client(client));
+    }
+    const char *indent = header?"\t":"";
+
+    slen += snprintf(buffer+slen, bufferlen-slen,
+        "%sEntities\t%d\n"
+        "%sPackets lost\t%d\n"
+        "%sRTT\t%dms\t\n"
+        "%sPacket throttle\t%.0f%%\n"
+        ,
+        indent, entity_count,
+        indent, peer->packetsLost,
+        indent, peer->roundTripTime,
+        indent, (peer->packetThrottle / (double)ENET_PEER_PACKET_THROTTLE_SCALE)*100.0
+    );
+    return slen;
+}
+
 void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
 {
     int offset = snprintf(buffer, bufferlen,
@@ -398,28 +430,7 @@ void alloserv_get_stats(alloserver* server, char *buffer, size_t bufferlen)
     alloserver_client *client;
 
     LIST_FOREACH(client, &server->clients, pointers) {
-        ENetPeer *peer = _clientinternal(client)->peer;
-
-        int entity_count = 0;
-        allo_entity *ent;
-        LIST_FOREACH(ent, &server->state.entities, pointers) {
-            if(strcmp(ent->owner_agent_id, client->agent_id) == 0)
-                entity_count++;
-        }
-
-        offset += snprintf(buffer + offset, bufferlen - offset,
-            "Client %s:\n"
-            "\tEntities\t%d\n"
-            "\tPackets lost\t%d\n"
-            "\tRTT\t%dms\t\n"
-            "\tPacket throttle\t%.0f%%\n"
-            ,
-            alloserv_describe_client(client),
-            entity_count,
-            peer->packetsLost,
-            peer->roundTripTime,
-            (peer->packetThrottle / (double)ENET_PEER_PACKET_THROTTLE_SCALE)*100.0
-        );
+        offset += alloserv_get_client_stats(server, client, buffer+offset, bufferlen-offset, true);
     }
     
     double time = get_ts_monod();

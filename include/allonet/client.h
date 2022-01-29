@@ -14,6 +14,7 @@ typedef enum alloerror
     alloerror_initialization_failure = 1002,
     alloerror_outdated_version = 1003,
     alloerror_failed_to_connect = 1004,
+    alloerror_kicked_by_admin = 1005,
 } alloerror;
 
 typedef enum {

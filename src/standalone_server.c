@@ -65,6 +65,22 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
   client->intent->entity_id = allo_strdup(client->avatar_entity_id);
 }
 
+static void handle_invalid_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+    if(strcmp(interaction->type, "request") != 0){
+        return; // just ignore non-requests
+    }
+
+    cJSON *cmd = cJSON_GetArrayItem(body, 0);
+    cJSON *respbody = cjson_create_list(cJSON_CreateString(cJSON_GetStringValue(cmd)), cJSON_CreateString("error"), cJSON_CreateString("invalid request"), NULL);
+    char* respbodys = cJSON_Print(respbody);
+    cJSON_Delete(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+}
+
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   const int version = cJSON_GetArrayItem(body, 2)->valueint;
@@ -383,14 +399,35 @@ static void handle_place_list_agents_interaction(alloserver* serv, alloserver_cl
     allo_interaction_free(response);
 }
 
-static void handle_invalid_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-    if(strcmp(interaction->type, "request") != 0){
-        return; // just ignore non-requests
+    const char *agent_id = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
+    if(!agent_id) 
+    {
+        handle_invalid_place_interaction(serv, client, interaction, body);
+        return;
     }
-
-    cJSON *cmd = cJSON_GetArrayItem(body, 0);
-    cJSON *respbody = cjson_create_list(cJSON_CreateString(cJSON_GetStringValue(cmd)), cJSON_CreateString("error"), cJSON_CreateString("invalid request"), NULL);
+    
+    bool found = false;
+    alloserver_client *agent;
+    LIST_FOREACH(agent, &serv->clients, pointers) {
+        if(strcmp(agent->agent_id, agent_id) == 0)
+        {
+            alloserv_disconnect(serv, agent, alloerror_kicked_by_admin);
+            found = true;
+            break;
+        }
+    }
+    
+    cJSON *respbody;
+    if(found)
+    {
+        respbody = cjson_create_list(cJSON_CreateString("list_agents"), cJSON_CreateString("ok"), NULL);
+    }
+    else
+    {
+        respbody = cjson_create_list(cJSON_CreateString("list_agents"), cJSON_CreateString("error"), cJSON_CreateString("agent not found"), NULL);
+    }
     char* respbodys = cJSON_Print(respbody);
     cJSON_Delete(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
@@ -398,7 +435,6 @@ static void handle_invalid_place_interaction(alloserver* serv, alloserver_client
     send_interaction_to_client(serv, client, response);
     allo_interaction_free(response);
 }
-
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
 {
@@ -422,6 +458,8 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
         handle_place_remove_property_animation_interaction(serv, client, interaction, body);
     } else if (strcmp(name, "list_agents") == 0) {
         handle_place_list_agents_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "kick_agent") == 0) {
+        handle_place_kick_agent_interaction(serv, client, interaction, body);
     } else {
         handle_invalid_place_interaction(serv, client, interaction, body);
     }

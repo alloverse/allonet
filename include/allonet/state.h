@@ -6,6 +6,9 @@
 #include <stdbool.h>
 #include <cJSON/cJSON.h>
 #include <allonet/arr.h>
+#include <allonet/schema/alloverse_reader.h>
+#include <allonet/schema/alloverse_builder.h>
+#include <allonet/schema/alloverse_verifier.h>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -114,6 +117,7 @@ typedef struct allo_state
 {
     uint64_t revision;
     LIST_HEAD(allo_entity_list, allo_entity) entities;
+    flatbuffer
 } allo_state;
 
 typedef enum allo_removal_mode
@@ -143,6 +147,8 @@ extern void allo_state_diff_free(allo_state_diff *diff);
 extern void allo_state_diff_dump(allo_state_diff *diff);
 extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
 extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
+
+extern void allo_state_to_flat(allo_state *state, flatcc_builder_t *B);
 /**
  * Describes an interaction to be sent or as received.
  * @field type: oneway, request, response or publication

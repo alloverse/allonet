@@ -570,16 +570,18 @@ static void broadcast_server_state(alloserver* serv)
   // roll over revision to 0 before it reaches biggest consecutive integer representable in json
   if(serv->state.revision == 9007199254740990) { serv->state.revision = 0; }
 
-  cJSON *map = allo_state_to_json(&serv->state, false);
-  allo_delta_insert(&hist, map);
-    
+  flatcc_builder_t builder;
+  flatcc_builder_init(&builder);
+  allo_state_to_flat(&serv->state, &builder);
+  int flatlength;
+  void *flatbuf = flatcc_builder_finalize_aligned_buffer(&builder, &flatlength);
+
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
-    /// Note: The returned json is managed by allo_delta_compute
-    char *json = allo_delta_compute(&hist, client->intent->ack_state_rev);
-    int jsonlength = strlen(json);
-    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)json, jsonlength);
+    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)flatbuf, flatlength);
   }
+  flatcc_builder_aligned_free(flatbuf);
+  flatcc_builder_clear(&builder);
 }
 
 static void step(double goalDt)

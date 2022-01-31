@@ -506,6 +506,42 @@ allo_entity* state_get_entity(allo_state* state, const char* entity_id)
   return NULL;
 }
 
+
+void allo_state_to_flat(allo_state *state, flatcc_builder_t *B)
+{
+  Alloverse_State_start_as_root(B);
+  Alloverse_State_revision_add(B, state->revision);
+
+  Alloverse_State_entities_start(B);
+  
+  allo_entity* entity = NULL;
+  LIST_FOREACH(entity, &state->entities, pointers)
+  {
+    Alloverse_State_entities_push_start(B);
+    Alloverse_Entity_id_create_str(B, entity->id);
+
+    Alloverse_Entity_components_start(B);
+
+    cJSON* comp = entity->components->child;
+    while (comp)
+    {
+      
+      comp = comp->next;
+    }
+
+    Alloverse_Entity_components_end(B);
+
+    Alloverse_State_entities_push_end(B);
+  }
+  Alloverse_State2_entities_end(B);
+
+  Alloverse_State_end_as_root(B);
+}
+
+
+
+
+
 // move to allonet.c
 #include <enet/enet.h>
 static bool _has_initialized = false;

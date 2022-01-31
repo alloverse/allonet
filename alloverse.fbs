@@ -20,7 +20,10 @@ table Entity {
 table Components {
     transform:TransformComponent;
     relationships:RelationshipsComponent;
-    flex:FlexComponent;
+
+    // If a Component has any non-standard fields (or perhaps doesn't
+    // have a definition at all), it is dynamically typed with a flexbuffer
+    flex:[ubyte]; // (flexbuffer) of map from compname -> comp
 }
 
 ///////////////////////////////////////////////////////////////
@@ -41,23 +44,12 @@ table Entity2 {
 table Components2 {
     transform:[TransformComponent];
     relationships:[RelationshipsComponent];
-    flex:[FlexComponent];
+    flex:[ubyte]; // (flexbuffer) of map from compname -> comp
 }
-
-///////////////////////////////////////////////////////////////
-// Shared structure
-///////////////////////////////////////////////////////////////
 
 // Every Component has to start with one of these
 table ComponentBase {
     eid:string;
-}
-
-// If a Component has any non-standard fields (or perhaps doesn't
-// have a definition at all), it is dynamically typed with a flexbuffer
-table FlexComponent {
-    c:ComponentBase;
-    custom:[ubyte]; // (flexbuffer)
 }
 
 ///////////////////////////////////////////////////////////////
@@ -65,7 +57,6 @@ table FlexComponent {
 /////////////////////////////////////////////////////////////// 
 
 table TransformComponent {
-    c:ComponentBase;
     matrix:Mat4;
 }
 

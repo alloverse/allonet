@@ -73,7 +73,7 @@ add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 ###################
 
 add_subdirectory(lib/flatcc)
-set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(GEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/allonet/schema")
 set(FBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 include_directories("${GEN_DIR}")

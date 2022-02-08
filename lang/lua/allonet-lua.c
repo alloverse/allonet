@@ -465,6 +465,7 @@ static void state_callback(alloclient *client, allo_state *state, allo_state_dif
         push_statediff(lclient->L, state, diff);
         lua_call(lclient->L, 2, 0);
         lua_gc(lclient->L, LUA_GCRESTART, 0);
+        lua_gc(lclient->L, LUA_GCCOLLECT, 0);
     }
 }
 

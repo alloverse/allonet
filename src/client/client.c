@@ -564,7 +564,7 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     free(justhost);
     free(justport);
 
-    enet_peer_timeout(peer, 3, 2000, 6000);
+    enet_peer_timeout(peer, 0, 10000, 20000);
 
     _internal(client)->host = host;
     _internal(client)->peer = peer;

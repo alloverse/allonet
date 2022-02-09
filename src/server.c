@@ -86,7 +86,7 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
     LIST_INSERT_HEAD(&serv->clients, new_client, pointers);
 
     // very hard timeout limits; change once clients actually send SYN
-    enet_peer_timeout(new_peer, 0, 5000, 5000);
+    enet_peer_timeout(new_peer, 0, 10000, 20000);
     if(serv->clients_callback) {
         serv->clients_callback(serv, new_client, NULL);
     }

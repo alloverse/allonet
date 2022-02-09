@@ -11,6 +11,7 @@
 #include <cJSON/cJSON.h>
 #include <allonet/state.h>
 #include <allonet/net.h>
+#include <enet/enet.h>
 
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
@@ -93,6 +94,17 @@ static inline struct bitrate_deltas_t bitrate_deltas(struct bitrate_t *br, doubl
     }
     
     return delta;
+}
+
+static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet) {
+    int result = enet_peer_send(peer, channelID, packet);
+    if (result == 0) {
+        bitrate_increment_sent(&allo_statistics.channel_rates[channelID], packet->dataLength);
+        bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
+    } else {
+        enet_packet_destroy(packet);
+    }
+    return result;
 }
 
 #endif /* util_h */

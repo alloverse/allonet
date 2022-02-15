@@ -117,7 +117,6 @@ typedef struct allo_state
 {
     uint64_t revision;
     LIST_HEAD(allo_entity_list, allo_entity) entities;
-    flatbuffer
 } allo_state;
 
 typedef enum allo_removal_mode

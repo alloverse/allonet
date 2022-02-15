@@ -525,7 +525,7 @@ void allo_state_to_flat(allo_state *state, flatcc_builder_t *B)
     cJSON* comp = entity->components->child;
     while (comp)
     {
-      
+      // todo: use the bfbs file to parse through into FlatBuffers
       comp = comp->next;
     }
 

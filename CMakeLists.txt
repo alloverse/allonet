@@ -72,7 +72,10 @@ add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 ## Schema
 ###################
 
+SET(SHARED_WAS ${BUILD_SHARED_LIBS})
+SET(BUILD_SHARED_LIBS Off)
 add_subdirectory(lib/flatcc)
+SET(BUILD_SHARED_LIBS "${SHARED_WAS}")
 set(GEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/allonet/schema")
 set(FBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <allonet/arr.h>
+#include <cJSON/cJSON.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -8,6 +8,7 @@ extern "C" {
 #include <allonet/state/diff.h>
 #include <allonet/state/interaction.h>
 #include <allonet/state/state_read.h>
+#include <allonet/state/state_write.h>
 
 
 /**
@@ -24,6 +25,11 @@ extern void allo_libav_initialize(void);
  * Will run the number of world iterations needed to get to server_time (or skip if too many)
  */
 extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff);
+
+
+extern cJSON *allo_state_to_json(allo_state *state, bool include_agent_id);
+extern allo_state *allo_state_from_json(cJSON *state);
+void allo_state_to_flat(allo_state *state, flatcc_builder_t *B);
 
 #ifdef __cplusplus
 }

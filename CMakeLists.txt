@@ -142,7 +142,12 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/sha256.c
     ${SOURCE_FILES_PREFIX}/sha256.h
     ${SOURCE_FILES_PREFIX}/standalone_server.c
-    ${SOURCE_FILES_PREFIX}/state.c
+    ${SOURCE_FILES_PREFIX}/state/diff.c
+    ${SOURCE_FILES_PREFIX}/state/intent.c
+    ${SOURCE_FILES_PREFIX}/state/interaction.c
+    ${SOURCE_FILES_PREFIX}/state/state_read.c
+    ${SOURCE_FILES_PREFIX}/state/state_write.c
+    ${SOURCE_FILES_PREFIX}/state/state.c
     ${SOURCE_FILES_PREFIX}/util.cpp
     ${SOURCE_FILES_PREFIX}/util.h
     lib/mathc/mathc.c

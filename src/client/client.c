@@ -61,14 +61,14 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
 
     for(size_t i = 0; i < diff->new_entities.length; i++)
     {
-        allo_entity *entity = entity_create(diff->new_entities.data[i]);
+        allo_entity *entity = entity_create(&client->_state, diff->new_entities.data[i]);
         LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
     }
     for(size_t i = 0; i < diff->deleted_entities.length; i++) {
         const char *eid = diff->deleted_entities.data[i];
         allo_entity *to_delete = state_get_entity(&client->_state, eid);
         LIST_REMOVE(to_delete, pointers);
-        entity_destroy(to_delete);
+        entity_destroy(&client->_state, to_delete);
     }
     
     // update or create entities

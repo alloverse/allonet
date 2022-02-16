@@ -8,6 +8,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <cJSON/cJSON.h>
+#include <allonet/math.h>
 
 
 

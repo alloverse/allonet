@@ -510,10 +510,12 @@ allo_entity* state_get_entity(allo_state* state, const char* entity_id)
   return NULL;
 }
 
-
+static reflection_Object_vec_t SchemaTables;
 
 void allo_state_to_flat(allo_state *state, flatcc_builder_t *B)
 {
+  reflection_Object_table_t Components = reflection_Object_vec_find_by_name(SchemaTables, "Components");
+
   Alloverse_State_start_as_root(B);
   Alloverse_State_revision_add(B, state->revision);
 
@@ -580,6 +582,7 @@ bool allo_initialize(bool redirect_stdout)
         fprintf(stderr, "Allonet was unable to parse its flatbuffer schema.\n");
         return false;
     }
+    SchemaTables = reflection_Schema_objects(g_alloschema);
 
     return true;
 }

@@ -1,4 +1,5 @@
 #include <allonet/state.h>
+#include <allonet/schema/reflection_reader.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,6 +7,9 @@
 #include <allonet/arr.h>
 #include <assert.h>
 #include <math.h>
+#include "alloverse_binary_schema.h"
+
+static reflection_Schema_table_t g_alloschema;
 
 void allo_generate_id(char *str, size_t len)
 {
@@ -507,6 +511,7 @@ allo_entity* state_get_entity(allo_state* state, const char* entity_id)
 }
 
 
+
 void allo_state_to_flat(allo_state *state, flatcc_builder_t *B)
 {
   Alloverse_State_start_as_root(B);
@@ -567,6 +572,8 @@ extern bool allo_initialize(bool redirect_stdout)
     atexit (enet_deinitialize);
 
     _allo_media_initialize();
+
+    g_alloschema = reflection_Schema_as_root(alloverse_schema_bytes);
 
     return true;
 }

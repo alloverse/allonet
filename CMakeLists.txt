@@ -85,7 +85,7 @@ add_custom_target(gen_alloverse_fbs ALL)
 add_custom_command (
     TARGET gen_alloverse_fbs
     COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
-    COMMAND flatcc_cli --schema -a -o "${GEN_DIR}" "${FBS_DIR}/alloverse.fbs" "${CMAKE_CURRENT_SOURCE_DIR}/lib/flatcc/reflection/reflection.fbs"
+    COMMAND flatcc_cli --schema -a -o "${GEN_DIR}" "${FBS_DIR}/alloverse.fbs" "${CMAKE_CURRENT_SOURCE_DIR}/lib/flatcc/reflection/reflection.fbs" && bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-schema-blob.sh
     DEPENDS flatcc_cli "${FBS_DIR}/alloverse.fbs" 
 )
 

@@ -550,7 +550,7 @@ void allo_state_to_flat(allo_state *state, flatcc_builder_t *B)
 // move to allonet.c
 #include <enet/enet.h>
 static bool _has_initialized = false;
-extern bool allo_initialize(bool redirect_stdout)
+bool allo_initialize(bool redirect_stdout)
 {
     if (_has_initialized) return true;
     _has_initialized = true;
@@ -566,7 +566,7 @@ extern bool allo_initialize(bool redirect_stdout)
     }
     if (enet_initialize () != 0)
     {
-        fprintf (stderr, "An error occurred while initializing ENet.\n");
+        fprintf(stderr, "An error occurred while initializing ENet.\n");
         return false;
     }
     atexit (enet_deinitialize);
@@ -574,6 +574,12 @@ extern bool allo_initialize(bool redirect_stdout)
     _allo_media_initialize();
 
     g_alloschema = reflection_Schema_as_root(alloverse_schema_bytes);
+    assert(g_alloschema);
+    if(!g_alloschema)
+    {
+        fprintf(stderr, "Allonet was unable to parse its flatbuffer schema.\n");
+        return false;
+    }
 
     return true;
 }

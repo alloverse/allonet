@@ -21,24 +21,16 @@ extern "C" {
 typedef struct allo_state
 {
     /// the buffer containing the full state
+    size_t flatlength;
     void *flat;
 
     // parsed world state
     Alloverse_State_table_t state;
     /// parsed revision from buffer
     uint64_t revision; 
-
-    LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
 
-//typedef struct Alloverse_Entity_table allo_entity;
-typedef struct allo_entity{
-    char *id;
-    char *owner_agent_id;
-    cJSON *components;
-    LIST_ENTRY(allo_entity) pointers;
-} allo_entity;
-
+typedef struct Alloverse_Entity_table allo_entity;
 
 // generate an identifier of 'len'-1 chars into str, and null the last byte in str.
 extern void allo_generate_id(char *str, size_t len);

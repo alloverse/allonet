@@ -36,22 +36,6 @@ typedef const struct Alloverse_Components_table *Alloverse_Components_table_t;
 typedef struct Alloverse_Components_table *Alloverse_Components_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_Components_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_Components_mutable_vec_t;
-typedef const struct Alloverse_State2_table *Alloverse_State2_table_t;
-typedef struct Alloverse_State2_table *Alloverse_State2_mutable_table_t;
-typedef const flatbuffers_uoffset_t *Alloverse_State2_vec_t;
-typedef flatbuffers_uoffset_t *Alloverse_State2_mutable_vec_t;
-typedef const struct Alloverse_Entity2_table *Alloverse_Entity2_table_t;
-typedef struct Alloverse_Entity2_table *Alloverse_Entity2_mutable_table_t;
-typedef const flatbuffers_uoffset_t *Alloverse_Entity2_vec_t;
-typedef flatbuffers_uoffset_t *Alloverse_Entity2_mutable_vec_t;
-typedef const struct Alloverse_Components2_table *Alloverse_Components2_table_t;
-typedef struct Alloverse_Components2_table *Alloverse_Components2_mutable_table_t;
-typedef const flatbuffers_uoffset_t *Alloverse_Components2_vec_t;
-typedef flatbuffers_uoffset_t *Alloverse_Components2_mutable_vec_t;
-typedef const struct Alloverse_ComponentBase_table *Alloverse_ComponentBase_table_t;
-typedef struct Alloverse_ComponentBase_table *Alloverse_ComponentBase_mutable_table_t;
-typedef const flatbuffers_uoffset_t *Alloverse_ComponentBase_vec_t;
-typedef flatbuffers_uoffset_t *Alloverse_ComponentBase_mutable_vec_t;
 typedef const struct Alloverse_TransformComponent_table *Alloverse_TransformComponent_table_t;
 typedef struct Alloverse_TransformComponent_table *Alloverse_TransformComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_TransformComponent_vec_t;
@@ -95,54 +79,6 @@ typedef flatbuffers_uoffset_t *Alloverse_RelationshipsComponent_mutable_vec_t;
 #define Alloverse_Components_type_identifier "\x34\x09\xdb\x36"
 #ifndef Alloverse_Components_file_extension
 #define Alloverse_Components_file_extension "bin"
-#endif
-#ifndef Alloverse_State2_file_identifier
-#define Alloverse_State2_file_identifier 0
-#endif
-/* deprecated, use Alloverse_State2_file_identifier */
-#ifndef Alloverse_State2_identifier
-#define Alloverse_State2_identifier 0
-#endif
-#define Alloverse_State2_type_hash ((flatbuffers_thash_t)0xfe9dabe5)
-#define Alloverse_State2_type_identifier "\xe5\xab\x9d\xfe"
-#ifndef Alloverse_State2_file_extension
-#define Alloverse_State2_file_extension "bin"
-#endif
-#ifndef Alloverse_Entity2_file_identifier
-#define Alloverse_Entity2_file_identifier 0
-#endif
-/* deprecated, use Alloverse_Entity2_file_identifier */
-#ifndef Alloverse_Entity2_identifier
-#define Alloverse_Entity2_identifier 0
-#endif
-#define Alloverse_Entity2_type_hash ((flatbuffers_thash_t)0x98adc12b)
-#define Alloverse_Entity2_type_identifier "\x2b\xc1\xad\x98"
-#ifndef Alloverse_Entity2_file_extension
-#define Alloverse_Entity2_file_extension "bin"
-#endif
-#ifndef Alloverse_Components2_file_identifier
-#define Alloverse_Components2_file_identifier 0
-#endif
-/* deprecated, use Alloverse_Components2_file_identifier */
-#ifndef Alloverse_Components2_identifier
-#define Alloverse_Components2_identifier 0
-#endif
-#define Alloverse_Components2_type_hash ((flatbuffers_thash_t)0x60cf3472)
-#define Alloverse_Components2_type_identifier "\x72\x34\xcf\x60"
-#ifndef Alloverse_Components2_file_extension
-#define Alloverse_Components2_file_extension "bin"
-#endif
-#ifndef Alloverse_ComponentBase_file_identifier
-#define Alloverse_ComponentBase_file_identifier 0
-#endif
-/* deprecated, use Alloverse_ComponentBase_file_identifier */
-#ifndef Alloverse_ComponentBase_identifier
-#define Alloverse_ComponentBase_identifier 0
-#endif
-#define Alloverse_ComponentBase_type_hash ((flatbuffers_thash_t)0xd85a4752)
-#define Alloverse_ComponentBase_type_identifier "\x52\x47\x5a\xd8"
-#ifndef Alloverse_ComponentBase_file_extension
-#define Alloverse_ComponentBase_file_extension "bin"
 #endif
 #ifndef Alloverse_TransformComponent_file_identifier
 #define Alloverse_TransformComponent_file_identifier 0
@@ -239,53 +175,8 @@ __flatbuffers_define_table_field(1, Alloverse_Components, relationships, Allover
 __flatbuffers_define_vector_field(2, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
 
 /** ////////////////////////////////////////////////////////////
- * //////////////////////////////////////////////////////////// */
-struct Alloverse_State2_table { uint8_t unused__; };
-
-static inline size_t Alloverse_State2_vec_len(Alloverse_State2_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline Alloverse_State2_table_t Alloverse_State2_vec_at(Alloverse_State2_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(Alloverse_State2_table_t, vec, i, 0)
-__flatbuffers_table_as_root(Alloverse_State2)
-
-__flatbuffers_define_scalar_field(0, Alloverse_State2, revision, flatbuffers_uint64, uint64_t, UINT64_C(0))
-__flatbuffers_define_vector_field(1, Alloverse_State2, entities, Alloverse_Entity2_vec_t, 0)
-__flatbuffers_define_vector_field(2, Alloverse_State2, components, Alloverse_Components2_vec_t, 0)
-
-struct Alloverse_Entity2_table { uint8_t unused__; };
-
-static inline size_t Alloverse_Entity2_vec_len(Alloverse_Entity2_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline Alloverse_Entity2_table_t Alloverse_Entity2_vec_at(Alloverse_Entity2_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(Alloverse_Entity2_table_t, vec, i, 0)
-__flatbuffers_table_as_root(Alloverse_Entity2)
-
-__flatbuffers_define_string_field(0, Alloverse_Entity2, id, 0)
-__flatbuffers_define_string_field(1, Alloverse_Entity2, owner_agent_id, 0)
-
-struct Alloverse_Components2_table { uint8_t unused__; };
-
-static inline size_t Alloverse_Components2_vec_len(Alloverse_Components2_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline Alloverse_Components2_table_t Alloverse_Components2_vec_at(Alloverse_Components2_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(Alloverse_Components2_table_t, vec, i, 0)
-__flatbuffers_table_as_root(Alloverse_Components2)
-
-__flatbuffers_define_vector_field(0, Alloverse_Components2, transform, Alloverse_TransformComponent_vec_t, 0)
-__flatbuffers_define_vector_field(1, Alloverse_Components2, relationships, Alloverse_RelationshipsComponent_vec_t, 0)
-__flatbuffers_define_vector_field(2, Alloverse_Components2, flex, flatbuffers_uint8_vec_t, 0)
-
-struct Alloverse_ComponentBase_table { uint8_t unused__; };
-
-static inline size_t Alloverse_ComponentBase_vec_len(Alloverse_ComponentBase_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline Alloverse_ComponentBase_table_t Alloverse_ComponentBase_vec_at(Alloverse_ComponentBase_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(Alloverse_ComponentBase_table_t, vec, i, 0)
-__flatbuffers_table_as_root(Alloverse_ComponentBase)
-
-__flatbuffers_define_string_field(0, Alloverse_ComponentBase, eid, 0)
-
-/** ////////////////////////////////////////////////////////////
+ * ////////////////////////////////////////////////////////////
+ * ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////  */
 struct Alloverse_TransformComponent_table { uint8_t unused__; };
 

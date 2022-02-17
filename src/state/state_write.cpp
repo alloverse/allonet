@@ -2,7 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../util.h"
-#include "alloverse_generated.h"
+
+using namespace Alloverse;
+using namespace std;
+
+static State *cur(allo_state *state)
+{
+    return (State*)state->_cur;
+}
+
+static StateT *next(allo_state *state)
+{
+    return (StateT*)state->_next;
+}
 
 /** Here's my thinking with using flatbuffers for state:
  *  - Client receives a full worldstate and never creates/adds entities nor components
@@ -18,13 +30,22 @@
 
 void allo_state_reserve(allo_state *state, int entity_count);
 
-void allo_state_init(allo_state *state)
+void allo_state_create_mutable(allo_state *state)
 {
     state->revision = 1;
     LIST_INIT(&state->entities);
+
+    state->_next = new(Alloverse::StateT);
 }
 
-void allo_state_destroy(allo_state *state)
+extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t len)
+{
+    state->flat = buf;
+    // ...
+}
+
+
+extern "C" void allo_state_destroy(allo_state *state)
 {
   allo_entity *entity = state->entities.lh_first;
   while(entity)
@@ -36,30 +57,28 @@ void allo_state_destroy(allo_state *state)
 }
 
 
-allo_entity *entity_create(allo_state *state, const char *id)
+Alloverse::EntityT *entity_create(allo_state *state, const char *id)
 {
-    allo_entity *entity = (allo_entity *)calloc(1, sizeof(allo_entity));
-    entity->id = strdup(id);
-    return entity;
+    auto ent = unique_ptr<EntityT>(new EntityT());
+    ent->id = id;
+    next(state)->entities.push_back(ent);
+    return ent.get();
 }
-void entity_destroy(allo_state *state, allo_entity *entity)
+void entity_destroy(allo_state *state, Alloverse::EntityT *entity)
 {
-    cJSON_Delete(entity->components);
-    free(entity->id);
-    free(entity->owner_agent_id);
-    free(entity);
+
 }
 
 
 
-allo_entity* allo_state_add_entity_from_spec(allo_state* state, const char* agent_id, cJSON* spec, const char* parent)
+Alloverse::EntityT* allo_state_add_entity_from_spec(allo_state* state, const char* agent_id, cJSON* spec, const char* parent)
 {
   char generated_eid[11] = { 0 };
   allo_generate_id(generated_eid, 11);
   const char *eid = generated_eid;
 
-  allo_entity* e = entity_create(state, eid);
-  e->owner_agent_id = strdup(agent_id ? agent_id : "place");
+  Alloverse::EntityT* e = entity_create(state, eid);
+  e->owner_agent_id = agent_id ? agent_id : "place";
   cJSON* children = cJSON_DetachItemFromObjectCaseSensitive(spec, "children");
 
   // components can be under ["components"] or just loose in the root dict

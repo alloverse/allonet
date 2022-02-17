@@ -12,10 +12,6 @@
 static int Alloverse_State_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_Entity_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_Components_verify_table(flatcc_table_verifier_descriptor_t *td);
-static int Alloverse_State2_verify_table(flatcc_table_verifier_descriptor_t *td);
-static int Alloverse_Entity2_verify_table(flatcc_table_verifier_descriptor_t *td);
-static int Alloverse_Components2_verify_table(flatcc_table_verifier_descriptor_t *td);
-static int Alloverse_ComponentBase_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_TransformComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_RelationshipsComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 
@@ -123,119 +119,6 @@ static inline int Alloverse_Components_verify_as_root_with_identifier(const void
 static inline int Alloverse_Components_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
 {
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_Components_verify_table);
-}
-
-static int Alloverse_State2_verify_table(flatcc_table_verifier_descriptor_t *td)
-{
-    int ret;
-    if ((ret = flatcc_verify_field(td, 0, 8, 8) /* revision */)) return ret;
-    if ((ret = flatcc_verify_table_vector_field(td, 1, 0, &Alloverse_Entity2_verify_table) /* entities */)) return ret;
-    if ((ret = flatcc_verify_table_vector_field(td, 2, 0, &Alloverse_Components2_verify_table) /* components */)) return ret;
-    return flatcc_verify_ok;
-}
-
-static inline int Alloverse_State2_verify_as_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_State2_identifier, &Alloverse_State2_verify_table);
-}
-
-static inline int Alloverse_State2_verify_as_typed_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_State2_type_identifier, &Alloverse_State2_verify_table);
-}
-
-static inline int Alloverse_State2_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_State2_verify_table);
-}
-
-static inline int Alloverse_State2_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{
-    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_State2_verify_table);
-}
-
-static int Alloverse_Entity2_verify_table(flatcc_table_verifier_descriptor_t *td)
-{
-    int ret;
-    if ((ret = flatcc_verify_string_field(td, 0, 0) /* id */)) return ret;
-    if ((ret = flatcc_verify_string_field(td, 1, 0) /* owner_agent_id */)) return ret;
-    return flatcc_verify_ok;
-}
-
-static inline int Alloverse_Entity2_verify_as_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_Entity2_identifier, &Alloverse_Entity2_verify_table);
-}
-
-static inline int Alloverse_Entity2_verify_as_typed_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_Entity2_type_identifier, &Alloverse_Entity2_verify_table);
-}
-
-static inline int Alloverse_Entity2_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_Entity2_verify_table);
-}
-
-static inline int Alloverse_Entity2_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{
-    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_Entity2_verify_table);
-}
-
-static int Alloverse_Components2_verify_table(flatcc_table_verifier_descriptor_t *td)
-{
-    int ret;
-    if ((ret = flatcc_verify_table_vector_field(td, 0, 0, &Alloverse_TransformComponent_verify_table) /* transform */)) return ret;
-    if ((ret = flatcc_verify_table_vector_field(td, 1, 0, &Alloverse_RelationshipsComponent_verify_table) /* relationships */)) return ret;
-    if ((ret = flatcc_verify_vector_field(td, 2, 0, 1, 1, INT64_C(4294967295)) /* flex */)) return ret;
-    return flatcc_verify_ok;
-}
-
-static inline int Alloverse_Components2_verify_as_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_Components2_identifier, &Alloverse_Components2_verify_table);
-}
-
-static inline int Alloverse_Components2_verify_as_typed_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_Components2_type_identifier, &Alloverse_Components2_verify_table);
-}
-
-static inline int Alloverse_Components2_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_Components2_verify_table);
-}
-
-static inline int Alloverse_Components2_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{
-    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_Components2_verify_table);
-}
-
-static int Alloverse_ComponentBase_verify_table(flatcc_table_verifier_descriptor_t *td)
-{
-    int ret;
-    if ((ret = flatcc_verify_string_field(td, 0, 0) /* eid */)) return ret;
-    return flatcc_verify_ok;
-}
-
-static inline int Alloverse_ComponentBase_verify_as_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_ComponentBase_identifier, &Alloverse_ComponentBase_verify_table);
-}
-
-static inline int Alloverse_ComponentBase_verify_as_typed_root(const void *buf, size_t bufsiz)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_ComponentBase_type_identifier, &Alloverse_ComponentBase_verify_table);
-}
-
-static inline int Alloverse_ComponentBase_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
-{
-    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_ComponentBase_verify_table);
-}
-
-static inline int Alloverse_ComponentBase_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{
-    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_ComponentBase_verify_table);
 }
 
 static int Alloverse_TransformComponent_verify_table(flatcc_table_verifier_descriptor_t *td)

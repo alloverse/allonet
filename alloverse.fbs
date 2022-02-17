@@ -30,6 +30,7 @@ table Components {
 // Hopefully the new structure, after refactors:
 ///////////////////////////////////////////////////////////////
 
+/*
 table State2 {
     revision:uint64;
     entities:[Entity2];
@@ -51,6 +52,7 @@ table Components2 {
 table ComponentBase {
     eid:string;
 }
+*/
 
 ///////////////////////////////////////////////////////////////
 // Components

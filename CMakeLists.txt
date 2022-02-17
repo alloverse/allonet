@@ -91,7 +91,7 @@ add_custom_command (
     COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
     COMMAND flatcc_cli --schema -a -o "${GEN_DIR}" "${FBS_DIR}/alloverse.fbs" "${CMAKE_CURRENT_SOURCE_DIR}/lib/flatcc/reflection/reflection.fbs"
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-schema-blob.sh
-    COMMAND flatc --cpp --reflect-names -o "${GEN_PRIV_DIR}" "${FBS_DIR}/alloverse.fbs"
+    COMMAND flatc --cpp --reflect-names --gen-object-api -o "${GEN_PRIV_DIR}" "${FBS_DIR}/alloverse.fbs"
     DEPENDS flatcc_cli flatc "${FBS_DIR}/alloverse.fbs" 
 )
 
@@ -147,7 +147,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/sha1.h
     ${SOURCE_FILES_PREFIX}/sha256.c
     ${SOURCE_FILES_PREFIX}/sha256.h
-    ${SOURCE_FILES_PREFIX}/standalone_server.c
+    ${SOURCE_FILES_PREFIX}/standalone_server.cpp
     ${SOURCE_FILES_PREFIX}/state/diff.c
     ${SOURCE_FILES_PREFIX}/state/intent.c
     ${SOURCE_FILES_PREFIX}/state/interaction.c

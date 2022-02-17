@@ -27,7 +27,12 @@ typedef struct allo_state
     // parsed world state
     Alloverse_State_table_t state;
     /// parsed revision from buffer
-    uint64_t revision; 
+    uint64_t revision;
+
+    // internal parsed cpp version of 'state'
+    void *_cur;
+    // internal mutable object tree, only valid on server
+    void *_next;
 
     // Only to be able to compile...
     LIST_HEAD(allo_entity_list, allo_entity) entities;

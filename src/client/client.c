@@ -57,30 +57,7 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
     int64_t rev = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "revision"))->valueint;
     alloclient_ack_rev(client, rev);
 
-    const cJSON *entities = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "entities"));
-
-    for(size_t i = 0; i < diff->new_entities.length; i++)
-    {
-        allo_entity *entity = entity_create(&client->_state, diff->new_entities.data[i]);
-        LIST_INSERT_HEAD(&client->_state.entities, entity, pointers);
-    }
-    for(size_t i = 0; i < diff->deleted_entities.length; i++) {
-        const char *eid = diff->deleted_entities.data[i];
-        allo_entity *to_delete = state_get_entity(&client->_state, eid);
-        LIST_REMOVE(to_delete, pointers);
-        entity_destroy(&client->_state, to_delete);
-    }
-    
-    // update or create entities
-    cJSON *edesc = NULL;
-    cJSON_ArrayForEach(edesc, entities) {
-        const char *entity_id = nonnull(cJSON_GetObjectItemCaseSensitive(edesc, "id"))->valuestring;
-        
-        cJSON *components = nonnull(cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(edesc, "components"), 1));
-        allo_entity *entity = state_get_entity(&client->_state, entity_id);
-        cJSON_Delete(entity->components);
-        entity->components = components;
-    }
+    // .... 
 
     _alloclient_media_handle_statediff(client, diff);
 

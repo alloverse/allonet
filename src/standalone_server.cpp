@@ -1,3 +1,5 @@
+#define ALLO_INTERNALS 1
+
 #include <string.h>
 #include <stdio.h>
 #include <enet/enet.h>

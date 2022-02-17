@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../util.h"
+#include "alloverse_generated.h"
 
 /** Here's my thinking with using flatbuffers for state:
  *  - Client receives a full worldstate and never creates/adds entities nor components
@@ -20,37 +21,7 @@ void allo_state_reserve(allo_state *state, int entity_count);
 void allo_state_init(allo_state *state)
 {
     state->revision = 1;
-    allo_state_reserve(state, 128);
-}
-
-void allo_state_reserve(allo_state *state, int entity_count)
-{
-    flatcc_builder_t builder, *B = &builder;
-    flatcc_builder_init(&B);
-
-    Alloverse_State_start_as_root(B);
-    Alloverse_State_revision_add(B, state->revision);
-
-    Alloverse_State_entities_start(B);
-
-    for(int i = 0; i < entity_count; i++)
-    {
-        Alloverse_State_entities_push_start(B);
-        Alloverse_Entity_id_create_str(B, "          ");
-
-        Alloverse_Entity_components_start(B);
-        // todo: fill entity with maximally allocated but empty components
-        Alloverse_Entity_components_end(B);
-
-        Alloverse_State_entities_push_end(B);
-    }
-    Alloverse_State2_entities_end(B);
-
-    Alloverse_State_end_as_root(B);
-  
-    void *flatbuf = flatcc_builder_finalize_aligned_buffer(B, &state->flatlength);
-
-    flatcc_builder_clear(B);
+    LIST_INIT(&state->entities);
 }
 
 void allo_state_destroy(allo_state *state)

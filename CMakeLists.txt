@@ -74,19 +74,25 @@ add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 
 SET(SHARED_WAS ${BUILD_SHARED_LIBS})
 SET(BUILD_SHARED_LIBS Off)
+SET(FLATBUFFERS_BUILD_TESTS Off)
+SET(FLATBUFFERS_INSTALL Off)
 add_subdirectory(lib/flatcc)
+add_subdirectory(lib/flatbuffers)
 SET(BUILD_SHARED_LIBS "${SHARED_WAS}")
 set(GEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/allonet/schema")
+set(GEN_PRIV_DIR "${CMAKE_CURRENT_BINARY_DIR}/include/")
 set(FBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
-include_directories("${GEN_DIR}")
+include_directories("${GEN_DIR}" "${GEN_PRIV_DIR}" "lib/flatbuffers/include")
 
 add_custom_target(gen_alloverse_fbs ALL) 
 add_custom_command (
     TARGET gen_alloverse_fbs
     COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
-    COMMAND flatcc_cli --schema -a -o "${GEN_DIR}" "${FBS_DIR}/alloverse.fbs" "${CMAKE_CURRENT_SOURCE_DIR}/lib/flatcc/reflection/reflection.fbs" && bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-schema-blob.sh
-    DEPENDS flatcc_cli "${FBS_DIR}/alloverse.fbs" 
+    COMMAND flatcc_cli --schema -a -o "${GEN_DIR}" "${FBS_DIR}/alloverse.fbs" "${CMAKE_CURRENT_SOURCE_DIR}/lib/flatcc/reflection/reflection.fbs"
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-schema-blob.sh
+    COMMAND flatc --cpp --reflect-names -o "${GEN_PRIV_DIR}" "${FBS_DIR}/alloverse.fbs"
+    DEPENDS flatcc_cli flatc "${FBS_DIR}/alloverse.fbs" 
 )
 
 
@@ -145,8 +151,8 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/state/diff.c
     ${SOURCE_FILES_PREFIX}/state/intent.c
     ${SOURCE_FILES_PREFIX}/state/interaction.c
-    ${SOURCE_FILES_PREFIX}/state/state_read.c
-    ${SOURCE_FILES_PREFIX}/state/state_write.c
+    ${SOURCE_FILES_PREFIX}/state/state_read.cpp
+    ${SOURCE_FILES_PREFIX}/state/state_write.cpp
     ${SOURCE_FILES_PREFIX}/state/state.c
     ${SOURCE_FILES_PREFIX}/util.cpp
     ${SOURCE_FILES_PREFIX}/util.h
@@ -264,7 +270,7 @@ include_directories(SYSTEM
 )
 
 target_link_libraries(allonet 
-  enet cjson-static cjson_utils-static opus flatccrt
+  enet cjson-static cjson_utils-static opus flatccrt flatbuffers
   ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
 )
 

@@ -1,15 +1,14 @@
 #ifndef ALLONET_STATE_READ_H
 #define ALLONET_STATE_READ_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <inlinesys/queue.h>
 #include <cJSON/cJSON.h>
 #include <allonet/math.h>
 #include <allonet/schema/alloverse_reader.h>
 #include <allonet/schema/alloverse_builder.h>
 #include <allonet/schema/alloverse_verifier.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // This file has the "mostly read-only" world state API that clients use to interpret
 // the world. A separate "write" API is available for server-side modification of the world.
@@ -31,8 +30,6 @@ typedef struct allo_state
 
     // internal parsed cpp version of 'state'
     void *_cur;
-    // internal mutable object tree, only valid on server
-    void *_next;
 
     // Only to be able to compile...
     LIST_HEAD(allo_entity_list, allo_entity) entities;
@@ -45,6 +42,10 @@ typedef struct allo_entity{
     cJSON *components;
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
+
+extern void allo_state_create_parsed(allo_state *state, void *buf, size_t len);
+extern void allo_state_destroy(allo_state *state);
+
 
 // generate an identifier of 'len'-1 chars into str, and null the last byte in str.
 extern void allo_generate_id(char *str, size_t len);

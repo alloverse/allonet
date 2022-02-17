@@ -3,27 +3,22 @@
 
 #include <allonet/state/state_read.h>
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void allo_state_create_parsed(allo_state *state, void *buf, size_t len);
-extern void allo_state_destroy(allo_state *state);
-
-#ifdef __cplusplus
-}
 #define ALLO_INTERNALS 1
-#ifdef ALLO_INTERNALS
+#if defined(__cplusplus) && defined(ALLO_INTERNALS)
 #include "alloverse_generated.h"
 
-
-extern void allo_state_create_mutable(allo_state *state);
+struct allo_mutable_state : allo_state
+{
+public:
+    allo_mutable_state();
+    // internal mutable object tree, only valid on server
+    Alloverse::StateT next;
+};
 
 // create a new entity in state with the given ID. Might reallocate to make room for it in state->flat.
-Alloverse::EntityT *entity_create(allo_state *state, const char *id);
+Alloverse::EntityT *entity_create(allo_mutable_state *state, const char *id);
 // remove the given entity from state, free its slot, and free and associated resources.
-void entity_destroy(allo_state *state, Alloverse::EntityT *entity);
+void entity_destroy(allo_mutable_state *state, Alloverse::EntityT *entity);
 
 typedef enum allo_removal_mode
 {
@@ -40,8 +35,5 @@ Alloverse::EntityT* allo_state_add_entity_from_spec(allo_state* state, const cha
 bool allo_state_remove_entity_id(allo_state *state, const char *eid, allo_removal_mode mode);
 bool allo_state_remove_entity(allo_state *state, allo_entity *removed_entity, allo_removal_mode mode);
 
-#endif
-
-
-#endif
-#endif
+#endif // _cplusplus && ALLO_INTERNALS
+#endif // ALLONET_STATE_WRITE_H

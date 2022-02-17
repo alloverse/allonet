@@ -1,15 +1,13 @@
 #ifndef ALLONET_STATE_H
 #define ALLONET_STATE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <allonet/state/intent.h>
 #include <allonet/state/diff.h>
 #include <allonet/state/interaction.h>
 #include <allonet/state/state_read.h>
 #include <allonet/state/state_write.h>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Initialize the Allonet library. Must be called before any other Allonet calls.

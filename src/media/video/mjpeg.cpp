@@ -1,10 +1,9 @@
-extern "C" {
 #include "../../client/_client.h"
 #include "../../util.h"
 #include "mjpeg.h"
 #include <string.h>
 #include <assert.h>
-}
+
 #include <tinyjpeg/tiny_jpeg.h>
 #include <richgel9999-jpegcompressor/jpgd.h>
 #include <richgel9999-jpegcompressor/jpge.h>

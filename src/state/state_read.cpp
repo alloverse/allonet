@@ -3,6 +3,29 @@
 #include <string.h>
 #include "../util.h"
 
+static State *cur(allo_state *state)
+{
+    return (State*)state->_cur;
+}
+
+extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t len)
+{
+    state->flat = buf;
+    // ...
+}
+
+extern "C" void allo_state_destroy(allo_state *state)
+{
+  allo_entity *entity = state->entities.lh_first;
+  while(entity)
+  {
+    allo_entity *to_delete = entity;
+    entity = entity->pointers.le_next;
+    entity_destroy(state, to_delete);
+  }
+}
+
+
 void allo_generate_id(char *str, size_t len)
 {
   for (size_t i = 0; i < len-1; i++)

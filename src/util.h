@@ -12,6 +12,10 @@
 #include <allonet/state.h>
 #include <allonet/net.h>
 
+#ifdef __cplusplus
+ extern "C" { 
+#endif
+
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
 double get_ts_monod(void);
@@ -95,4 +99,7 @@ static inline struct bitrate_deltas_t bitrate_deltas(struct bitrate_t *br, doubl
     return delta;
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif /* util_h */

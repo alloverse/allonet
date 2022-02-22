@@ -35,7 +35,7 @@ struct alloserver {
 
     // internal
     void (*send)(alloserver *serv, alloserver_client *client, allochannel channel, const uint8_t *buf, int len);
-    allo_state state;
+    allo_state *state;
     LIST_HEAD(alloserver_client_list, alloserver_client) clients;
 
     void *_backref; // use this as a backref for callbacks

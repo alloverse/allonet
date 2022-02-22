@@ -44,6 +44,14 @@ typedef const struct Alloverse_RelationshipsComponent_table *Alloverse_Relations
 typedef struct Alloverse_RelationshipsComponent_table *Alloverse_RelationshipsComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_RelationshipsComponent_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_RelationshipsComponent_mutable_vec_t;
+typedef const struct Alloverse_LiveMediaMetadata_table *Alloverse_LiveMediaMetadata_table_t;
+typedef struct Alloverse_LiveMediaMetadata_table *Alloverse_LiveMediaMetadata_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_LiveMediaMetadata_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_LiveMediaMetadata_mutable_vec_t;
+typedef const struct Alloverse_LiveMediaComponent_table *Alloverse_LiveMediaComponent_table_t;
+typedef struct Alloverse_LiveMediaComponent_table *Alloverse_LiveMediaComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_LiveMediaComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_LiveMediaComponent_mutable_vec_t;
 #ifndef Alloverse_State_file_identifier
 #define Alloverse_State_file_identifier 0
 #endif
@@ -104,6 +112,30 @@ typedef flatbuffers_uoffset_t *Alloverse_RelationshipsComponent_mutable_vec_t;
 #ifndef Alloverse_RelationshipsComponent_file_extension
 #define Alloverse_RelationshipsComponent_file_extension "bin"
 #endif
+#ifndef Alloverse_LiveMediaMetadata_file_identifier
+#define Alloverse_LiveMediaMetadata_file_identifier 0
+#endif
+/* deprecated, use Alloverse_LiveMediaMetadata_file_identifier */
+#ifndef Alloverse_LiveMediaMetadata_identifier
+#define Alloverse_LiveMediaMetadata_identifier 0
+#endif
+#define Alloverse_LiveMediaMetadata_type_hash ((flatbuffers_thash_t)0xdd57d477)
+#define Alloverse_LiveMediaMetadata_type_identifier "\x77\xd4\x57\xdd"
+#ifndef Alloverse_LiveMediaMetadata_file_extension
+#define Alloverse_LiveMediaMetadata_file_extension "bin"
+#endif
+#ifndef Alloverse_LiveMediaComponent_file_identifier
+#define Alloverse_LiveMediaComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_LiveMediaComponent_file_identifier */
+#ifndef Alloverse_LiveMediaComponent_identifier
+#define Alloverse_LiveMediaComponent_identifier 0
+#endif
+#define Alloverse_LiveMediaComponent_type_hash ((flatbuffers_thash_t)0xc8acee81)
+#define Alloverse_LiveMediaComponent_type_identifier "\x81\xee\xac\xc8"
+#ifndef Alloverse_LiveMediaComponent_file_extension
+#define Alloverse_LiveMediaComponent_file_extension "bin"
+#endif
 #ifndef Alloverse_Mat4_file_identifier
 #define Alloverse_Mat4_file_identifier 0
 #endif
@@ -116,6 +148,75 @@ typedef flatbuffers_uoffset_t *Alloverse_RelationshipsComponent_mutable_vec_t;
 #ifndef Alloverse_Mat4_file_extension
 #define Alloverse_Mat4_file_extension "bin"
 #endif
+
+typedef int8_t Alloverse_LiveMediaType_enum_t;
+__flatbuffers_define_integer_type(Alloverse_LiveMediaType, Alloverse_LiveMediaType_enum_t, 8)
+#define Alloverse_LiveMediaType_Audio ((Alloverse_LiveMediaType_enum_t)INT8_C(0))
+#define Alloverse_LiveMediaType_Video ((Alloverse_LiveMediaType_enum_t)INT8_C(1))
+
+static inline const char *Alloverse_LiveMediaType_name(Alloverse_LiveMediaType_enum_t value)
+{
+    switch (value) {
+    case Alloverse_LiveMediaType_Audio: return "Audio";
+    case Alloverse_LiveMediaType_Video: return "Video";
+    default: return "";
+    }
+}
+
+static inline int Alloverse_LiveMediaType_is_known_value(Alloverse_LiveMediaType_enum_t value)
+{
+    switch (value) {
+    case Alloverse_LiveMediaType_Audio: return 1;
+    case Alloverse_LiveMediaType_Video: return 1;
+    default: return 0;
+    }
+}
+
+typedef int16_t Alloverse_LiveMediaFormat_enum_t;
+__flatbuffers_define_integer_type(Alloverse_LiveMediaFormat, Alloverse_LiveMediaFormat_enum_t, 16)
+#define Alloverse_LiveMediaFormat_Opus ((Alloverse_LiveMediaFormat_enum_t)INT16_C(0))
+#define Alloverse_LiveMediaFormat_MJPEG ((Alloverse_LiveMediaFormat_enum_t)INT16_C(1))
+#define Alloverse_LiveMediaFormat_H264 ((Alloverse_LiveMediaFormat_enum_t)INT16_C(2))
+
+static inline const char *Alloverse_LiveMediaFormat_name(Alloverse_LiveMediaFormat_enum_t value)
+{
+    switch (value) {
+    case Alloverse_LiveMediaFormat_Opus: return "Opus";
+    case Alloverse_LiveMediaFormat_MJPEG: return "MJPEG";
+    case Alloverse_LiveMediaFormat_H264: return "H264";
+    default: return "";
+    }
+}
+
+static inline int Alloverse_LiveMediaFormat_is_known_value(Alloverse_LiveMediaFormat_enum_t value)
+{
+    switch (value) {
+    case Alloverse_LiveMediaFormat_Opus: return 1;
+    case Alloverse_LiveMediaFormat_MJPEG: return 1;
+    case Alloverse_LiveMediaFormat_H264: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t Alloverse_LiveMediaChannelLayout_enum_t;
+__flatbuffers_define_integer_type(Alloverse_LiveMediaChannelLayout, Alloverse_LiveMediaChannelLayout_enum_t, 8)
+#define Alloverse_LiveMediaChannelLayout_Mono ((Alloverse_LiveMediaChannelLayout_enum_t)INT8_C(0))
+
+static inline const char *Alloverse_LiveMediaChannelLayout_name(Alloverse_LiveMediaChannelLayout_enum_t value)
+{
+    switch (value) {
+    case Alloverse_LiveMediaChannelLayout_Mono: return "Mono";
+    default: return "";
+    }
+}
+
+static inline int Alloverse_LiveMediaChannelLayout_is_known_value(Alloverse_LiveMediaChannelLayout_enum_t value)
+{
+    switch (value) {
+    case Alloverse_LiveMediaChannelLayout_Mono: return 1;
+    default: return 0;
+    }
+}
 
 
 /** ////////////////////////////////////////////////////////////
@@ -172,7 +273,8 @@ __flatbuffers_table_as_root(Alloverse_Components)
 
 __flatbuffers_define_table_field(0, Alloverse_Components, transform, Alloverse_TransformComponent_table_t, 0)
 __flatbuffers_define_table_field(1, Alloverse_Components, relationships, Alloverse_RelationshipsComponent_table_t, 0)
-__flatbuffers_define_vector_field(2, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
+__flatbuffers_define_table_field(2, Alloverse_Components, live_media, Alloverse_LiveMediaComponent_table_t, 0)
+__flatbuffers_define_vector_field(3, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////
@@ -197,6 +299,32 @@ __flatbuffers_offset_vec_at(Alloverse_RelationshipsComponent_table_t, vec, i, 0)
 __flatbuffers_table_as_root(Alloverse_RelationshipsComponent)
 
 __flatbuffers_define_string_field(0, Alloverse_RelationshipsComponent, parent, 0)
+
+struct Alloverse_LiveMediaMetadata_table { uint8_t unused__; };
+
+static inline size_t Alloverse_LiveMediaMetadata_vec_len(Alloverse_LiveMediaMetadata_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_LiveMediaMetadata_table_t Alloverse_LiveMediaMetadata_vec_at(Alloverse_LiveMediaMetadata_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_LiveMediaMetadata_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_LiveMediaMetadata)
+
+__flatbuffers_define_scalar_field(0, Alloverse_LiveMediaMetadata, sample_rate, flatbuffers_int32, int32_t, INT32_C(0))
+__flatbuffers_define_scalar_field(1, Alloverse_LiveMediaMetadata, channel_layout, Alloverse_LiveMediaChannelLayout, Alloverse_LiveMediaChannelLayout_enum_t, INT8_C(0))
+__flatbuffers_define_scalar_field(2, Alloverse_LiveMediaMetadata, width, flatbuffers_int32, int32_t, INT32_C(0))
+__flatbuffers_define_scalar_field(3, Alloverse_LiveMediaMetadata, height, flatbuffers_int32, int32_t, INT32_C(0))
+
+struct Alloverse_LiveMediaComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_LiveMediaComponent_vec_len(Alloverse_LiveMediaComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_LiveMediaComponent_table_t Alloverse_LiveMediaComponent_vec_at(Alloverse_LiveMediaComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_LiveMediaComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_LiveMediaComponent)
+
+__flatbuffers_define_scalar_field(0, Alloverse_LiveMediaComponent, track_id, flatbuffers_int32, int32_t, INT32_C(0))
+__flatbuffers_define_scalar_field(1, Alloverse_LiveMediaComponent, type, Alloverse_LiveMediaType, Alloverse_LiveMediaType_enum_t, INT8_C(0))
+__flatbuffers_define_scalar_field(2, Alloverse_LiveMediaComponent, format, Alloverse_LiveMediaFormat, Alloverse_LiveMediaFormat_enum_t, INT16_C(0))
+__flatbuffers_define_table_field(3, Alloverse_LiveMediaComponent, metadata, Alloverse_LiveMediaMetadata_table_t, 0)
 
 
 #include "flatcc/flatcc_epilogue.h"

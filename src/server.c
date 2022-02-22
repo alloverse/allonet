@@ -365,7 +365,6 @@ alloserver *allo_listen(int listenhost, int port)
     serv->interbeat = allo_poll;
     serv->send = allo_send;
     LIST_INIT(&serv->clients);
-    LIST_INIT(&serv->state.entities);
     
     return serv;
 }
@@ -394,7 +393,7 @@ size_t alloserv_get_client_stats(alloserver* serv, alloserver_client *client, ch
 
     int entity_count = 0;
     allo_entity *ent;
-    LIST_FOREACH(ent, &serv->state.entities, pointers) {
+    LIST_FOREACH(ent, serv->state.entities, pointers) {
         if(strcmp(ent->owner_agent_id, client->agent_id) == 0)
             entity_count++;
     }

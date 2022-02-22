@@ -14,6 +14,8 @@ static int Alloverse_Entity_verify_table(flatcc_table_verifier_descriptor_t *td)
 static int Alloverse_Components_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_TransformComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_RelationshipsComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_LiveMediaMetadata_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_LiveMediaComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 
 static inline int Alloverse_Mat4_verify_as_root(const void *buf, size_t bufsiz)
 {
@@ -97,7 +99,8 @@ static int Alloverse_Components_verify_table(flatcc_table_verifier_descriptor_t 
     int ret;
     if ((ret = flatcc_verify_table_field(td, 0, 0, &Alloverse_TransformComponent_verify_table) /* transform */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 1, 0, &Alloverse_RelationshipsComponent_verify_table) /* relationships */)) return ret;
-    if ((ret = flatcc_verify_vector_field(td, 2, 0, 1, 1, INT64_C(4294967295)) /* flex */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 2, 0, &Alloverse_LiveMediaComponent_verify_table) /* live_media */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 3, 0, 1, 1, INT64_C(4294967295)) /* flex */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -173,6 +176,66 @@ static inline int Alloverse_RelationshipsComponent_verify_as_root_with_identifie
 static inline int Alloverse_RelationshipsComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
 {
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_RelationshipsComponent_verify_table);
+}
+
+static int Alloverse_LiveMediaMetadata_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 4, 4) /* sample_rate */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 1, 1) /* channel_layout */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 4, 4) /* width */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 4, 4) /* height */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_LiveMediaMetadata_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_LiveMediaMetadata_identifier, &Alloverse_LiveMediaMetadata_verify_table);
+}
+
+static inline int Alloverse_LiveMediaMetadata_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_LiveMediaMetadata_type_identifier, &Alloverse_LiveMediaMetadata_verify_table);
+}
+
+static inline int Alloverse_LiveMediaMetadata_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_LiveMediaMetadata_verify_table);
+}
+
+static inline int Alloverse_LiveMediaMetadata_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_LiveMediaMetadata_verify_table);
+}
+
+static int Alloverse_LiveMediaComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 4, 4) /* track_id */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 1, 1) /* type */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 2, 2) /* format */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 3, 0, &Alloverse_LiveMediaMetadata_verify_table) /* metadata */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_LiveMediaComponent_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_LiveMediaComponent_identifier, &Alloverse_LiveMediaComponent_verify_table);
+}
+
+static inline int Alloverse_LiveMediaComponent_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_LiveMediaComponent_type_identifier, &Alloverse_LiveMediaComponent_verify_table);
+}
+
+static inline int Alloverse_LiveMediaComponent_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_LiveMediaComponent_verify_table);
+}
+
+static inline int Alloverse_LiveMediaComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_LiveMediaComponent_verify_table);
 }
 
 #include "flatcc/flatcc_epilogue.h"

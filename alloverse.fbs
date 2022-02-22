@@ -20,6 +20,7 @@ table Entity {
 table Components {
     transform:TransformComponent;
     relationships:RelationshipsComponent;
+    live_media:LiveMediaComponent;
 
     // If a Component has any non-standard fields (or perhaps doesn't
     // have a definition at all), it is dynamically typed with a flexbuffer
@@ -64,6 +65,34 @@ table TransformComponent {
 
 table RelationshipsComponent {
     parent:string;
+}
+
+enum LiveMediaType : byte { 
+    Audio,
+    Video
+}
+enum LiveMediaFormat : short {
+    Opus,
+    MJPEG,
+    H264
+}
+enum LiveMediaChannelLayout : byte {
+    Mono
+}
+table LiveMediaMetadata {
+    // audio
+    sample_rate:int;
+    channel_layout:LiveMediaChannelLayout;
+
+    // video
+    width:int;
+    height:int;
+}
+table LiveMediaComponent {
+    track_id:int;
+    type:LiveMediaType;
+    format:LiveMediaFormat;
+    metadata:LiveMediaMetadata;
 }
 
 ///////////////////////////////////////////////////////////////

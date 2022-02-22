@@ -5,6 +5,9 @@
 #include <enet/enet.h>
 #include <assert.h>
 #include <errno.h>
+#include <vector>
+#include <string>
+using namespace std;
 
 #include <allonet/allonet.h>
 #include "media/media.h"
@@ -12,6 +15,7 @@
 #include "delta.h"
 
 static alloserver* serv;
+static allo_mutable_state state;
 static allo_entity* place;
 static double last_simulate_at = 0;
 static char *g_placename;
@@ -31,15 +35,7 @@ static void clients_changed(alloserver* serv, alloserver_client* added, alloserv
 {
     (void)added;
     if (removed) {
-        allo_entity* entity = serv->state.entities.lh_first;
-        while (entity) {
-            allo_entity* to_delete = entity;
-            entity = entity->pointers.le_next;
-            if (strcmp(to_delete->owner_agent_id, removed->agent_id) == 0) {
-                LIST_REMOVE(to_delete, pointers);
-                allo_state_remove_entity(&serv->state, to_delete, AlloRemovalCascade);
-            }
-        }
+        state.removeEntitiesForAgent(removed->agent_id);
         
         for (size_t i = 0; i < mediatracks.length; i++) {
             /// Remove the client from any track recipient lists
@@ -87,11 +83,12 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
 {
   const int version = cJSON_GetArrayItem(body, 2)->valueint;
   cJSON* identity = cJSON_GetArrayItem(body, 4);
-  cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
-  
+  cJSON* avatar = cJSON_GetArrayItem(body, 6);
+  char *avatars = cJSON_Print(avatar);
 
-  allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
-  client->avatar_entity_id = allo_strdup(ava->id);
+  Alloverse::EntityT *ava = state.addEntityFromSpec(avatars, client->agent_id, NULL);
+  free(avatars);
+  client->avatar_entity_id = allo_strdup(ava->id.c_str());
   client->identity = cJSON_Duplicate(identity, true);
 
 
@@ -113,7 +110,7 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   else
   {
     fprintf(stderr, "Client announced: %s version %d\n", alloserv_describe_client(client), version);
-    cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id), cJSON_CreateString(g_placename), NULL);
+    cJSON* respbody = cjson_create_list(cJSON_CreateString("announce"), cJSON_CreateString(ava->id.c_str()), cJSON_CreateString(g_placename), NULL);
     char* respbodys = cJSON_Print(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
     free(respbodys);
@@ -126,11 +123,13 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
 
 static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-  cJSON* edesc = cJSON_DetachItemFromArray(body, 1);
+  cJSON* edesc = cJSON_GetArrayItem(body, 1);
+  char *edescs = cJSON_Print(edesc);
 
-  allo_entity *entity = allo_state_add_entity_from_spec(&serv->state, client->agent_id, edesc, NULL); // takes edesc
+  Alloverse::EntityT *entity = state.addEntityFromSpec(edescs, client->agent_id, NULL);
+  free(edescs);
 
-  cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id), NULL);
+  cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id.c_str()), NULL);
   char* respbodys = cJSON_Print(respbody);
   cJSON_Delete(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
@@ -150,7 +149,7 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
   {
     mode = AlloRemovalReparent;
   }
-  bool ok = allo_state_remove_entity_id(&serv->state, eid, mode);
+  bool ok = state.removeEntity(mode, eid);
   cJSON_Delete(jeid);
   cJSON_Delete(jmodes);
 
@@ -167,11 +166,18 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   cJSON* entity_id = cJSON_GetArrayItem(body, 1);
-  cJSON* comps = cJSON_DetachItemFromArray(body, 3);
+  cJSON* comps = cJSON_GetArrayItem(body, 3);
+  char *compss = cJSON_Print(comps);
   cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
   cJSON* respbody = NULL;
+  vector<string> componentKeysToRemove;
+  cJSON* compname;
+  cJSON_ArrayForEach(compname, rmcomps)
+  {
+    componentKeysToRemove.push_back(cJSON_GetStringValue(compname));
+  }
 
-  allo_entity* entity = state_get_entity(&serv->state, entity_id->valuestring);
+  Alloverse::EntityT* entity = state.getEntity(entity_id->valuestring);
   if(entity == NULL)
   {
     cJSON_Delete(comps);
@@ -179,26 +185,12 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
     respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("error"), cJSON_CreateString("no such entity"), NULL);
     goto end;
   }
-  for (cJSON* comp = comps->child; comp != NULL;) 
-  {
-    cJSON* next = comp->next;
-    cJSON_DeleteItemFromObject(entity->components, comp->string);
-    cJSON_DetachItemViaPointer(comps, comp);
-    cJSON_AddItemToObject(entity->components, comp->string, comp);
-    comp = next;
-  }
-
-  assert(cJSON_GetArraySize(comps) == 0);
-  cJSON_Delete(comps);
-
-  cJSON* compname;
-  cJSON_ArrayForEach(compname, rmcomps)
-  {
-    cJSON_DeleteItemFromObject(entity->components, compname->valuestring);
-  }
+  
+  state.changeComponents(entity, compss, componentKeysToRemove);
 
   respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
 end:;
+  free(compss);
   char* respbodys = cJSON_Print(respbody);
   cJSON_Delete(respbody);
   allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);

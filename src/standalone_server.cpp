@@ -318,6 +318,7 @@ done:;
 
 static void handle_place_add_property_animation_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+    /*
     allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
     cJSON *animation_spec = cJSON_DetachItemFromArray(body, 1);
     bool ok = cJSON_HasObjectItem(animation_spec, "path") && cJSON_HasObjectItem(animation_spec, "from") && cJSON_HasObjectItem(animation_spec, "to");
@@ -348,10 +349,12 @@ static void handle_place_add_property_animation_interaction(alloserver* serv, al
     free(respbodys);
     send_interaction_to_client(serv, client, response);
     allo_interaction_free(response);
+    */
 }
 
 static void handle_place_remove_property_animation_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+    /*
     allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
     const char *animation_id = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
     cJSON* respbody;
@@ -380,10 +383,12 @@ static void handle_place_remove_property_animation_interaction(alloserver* serv,
     free(respbodys);
     send_interaction_to_client(serv, client, response);
     allo_interaction_free(response);
+    */
 }
 
 static void handle_place_list_agents_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+    /*
     (void)body;
     cJSON *agentlist = cJSON_CreateArray();
     
@@ -411,6 +416,7 @@ static void handle_place_list_agents_interaction(alloserver* serv, alloserver_cl
     free(respbodys);
     send_interaction_to_client(serv, client, response);
     allo_interaction_free(response);
+    */
 }
 
 static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -492,17 +498,15 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
   }
   else
   {
-    allo_entity* entity = NULL;
-    LIST_FOREACH(entity, &serv->state.entities, pointers) {
-      if (strcmp(entity->id, interaction->receiver_entity_id) == 0) {
-        alloserver_client* client2;
-        LIST_FOREACH(client2, &serv->clients, pointers) {
-          if (strcmp(entity->owner_agent_id, client2->agent_id) == 0) {
-            send_interaction_to_client(serv, client2, interaction);
-            return;
-          }
+    allo_entity* entity = state_get_entity(&state, interaction->receiver_entity_id);
+    if(entity)
+    {
+      alloserver_client* client2;
+      LIST_FOREACH(client2, &serv->clients, pointers) {
+        if (strcmp(entity->owner_agent_id, client2->agent_id) == 0) {
+          send_interaction_to_client(serv, client2, interaction);
+          return;
         }
-        break;
       }
     }
     // TODO: send failure response, because recipient was not found.
@@ -687,7 +691,7 @@ alloserver *alloserv_start_standalone(int listenhost, int port, const char *plac
   }
   serv->clients_callback = clients_changed;
   serv->raw_indata_callback = received_from_client;
-  allo_state_init(&serv->state);
+  serv->state = &state;
 
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", serv->_port);
   addDefaultEntities(&state);

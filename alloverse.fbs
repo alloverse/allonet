@@ -67,22 +67,10 @@ table RelationshipsComponent {
     parent:string;
 }
 
-enum LiveMediaType : byte { 
-    Audio,
-    Video
-}
-enum LiveMediaFormat : short {
-    Opus,
-    MJPEG,
-    H264
-}
-enum LiveMediaChannelLayout : byte {
-    Mono
-}
 table LiveMediaMetadata {
     // audio
     sample_rate:int;
-    channel_layout:LiveMediaChannelLayout;
+    channel_layout:string;
 
     // video
     width:int;
@@ -90,8 +78,8 @@ table LiveMediaMetadata {
 }
 table LiveMediaComponent {
     track_id:int;
-    type:LiveMediaType;
-    format:LiveMediaFormat;
+    type:string;
+    format:string;
     metadata:LiveMediaMetadata;
 }
 
@@ -104,4 +92,4 @@ struct Mat4 {
 }
 
 
-root_type Entity;
+root_type State;

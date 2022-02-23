@@ -149,75 +149,6 @@ typedef flatbuffers_uoffset_t *Alloverse_LiveMediaComponent_mutable_vec_t;
 #define Alloverse_Mat4_file_extension "bin"
 #endif
 
-typedef int8_t Alloverse_LiveMediaType_enum_t;
-__flatbuffers_define_integer_type(Alloverse_LiveMediaType, Alloverse_LiveMediaType_enum_t, 8)
-#define Alloverse_LiveMediaType_Audio ((Alloverse_LiveMediaType_enum_t)INT8_C(0))
-#define Alloverse_LiveMediaType_Video ((Alloverse_LiveMediaType_enum_t)INT8_C(1))
-
-static inline const char *Alloverse_LiveMediaType_name(Alloverse_LiveMediaType_enum_t value)
-{
-    switch (value) {
-    case Alloverse_LiveMediaType_Audio: return "Audio";
-    case Alloverse_LiveMediaType_Video: return "Video";
-    default: return "";
-    }
-}
-
-static inline int Alloverse_LiveMediaType_is_known_value(Alloverse_LiveMediaType_enum_t value)
-{
-    switch (value) {
-    case Alloverse_LiveMediaType_Audio: return 1;
-    case Alloverse_LiveMediaType_Video: return 1;
-    default: return 0;
-    }
-}
-
-typedef int16_t Alloverse_LiveMediaFormat_enum_t;
-__flatbuffers_define_integer_type(Alloverse_LiveMediaFormat, Alloverse_LiveMediaFormat_enum_t, 16)
-#define Alloverse_LiveMediaFormat_Opus ((Alloverse_LiveMediaFormat_enum_t)INT16_C(0))
-#define Alloverse_LiveMediaFormat_MJPEG ((Alloverse_LiveMediaFormat_enum_t)INT16_C(1))
-#define Alloverse_LiveMediaFormat_H264 ((Alloverse_LiveMediaFormat_enum_t)INT16_C(2))
-
-static inline const char *Alloverse_LiveMediaFormat_name(Alloverse_LiveMediaFormat_enum_t value)
-{
-    switch (value) {
-    case Alloverse_LiveMediaFormat_Opus: return "Opus";
-    case Alloverse_LiveMediaFormat_MJPEG: return "MJPEG";
-    case Alloverse_LiveMediaFormat_H264: return "H264";
-    default: return "";
-    }
-}
-
-static inline int Alloverse_LiveMediaFormat_is_known_value(Alloverse_LiveMediaFormat_enum_t value)
-{
-    switch (value) {
-    case Alloverse_LiveMediaFormat_Opus: return 1;
-    case Alloverse_LiveMediaFormat_MJPEG: return 1;
-    case Alloverse_LiveMediaFormat_H264: return 1;
-    default: return 0;
-    }
-}
-
-typedef int8_t Alloverse_LiveMediaChannelLayout_enum_t;
-__flatbuffers_define_integer_type(Alloverse_LiveMediaChannelLayout, Alloverse_LiveMediaChannelLayout_enum_t, 8)
-#define Alloverse_LiveMediaChannelLayout_Mono ((Alloverse_LiveMediaChannelLayout_enum_t)INT8_C(0))
-
-static inline const char *Alloverse_LiveMediaChannelLayout_name(Alloverse_LiveMediaChannelLayout_enum_t value)
-{
-    switch (value) {
-    case Alloverse_LiveMediaChannelLayout_Mono: return "Mono";
-    default: return "";
-    }
-}
-
-static inline int Alloverse_LiveMediaChannelLayout_is_known_value(Alloverse_LiveMediaChannelLayout_enum_t value)
-{
-    switch (value) {
-    case Alloverse_LiveMediaChannelLayout_Mono: return 1;
-    default: return 0;
-    }
-}
-
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////  */
@@ -309,7 +240,7 @@ __flatbuffers_offset_vec_at(Alloverse_LiveMediaMetadata_table_t, vec, i, 0)
 __flatbuffers_table_as_root(Alloverse_LiveMediaMetadata)
 
 __flatbuffers_define_scalar_field(0, Alloverse_LiveMediaMetadata, sample_rate, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(1, Alloverse_LiveMediaMetadata, channel_layout, Alloverse_LiveMediaChannelLayout, Alloverse_LiveMediaChannelLayout_enum_t, INT8_C(0))
+__flatbuffers_define_string_field(1, Alloverse_LiveMediaMetadata, channel_layout, 0)
 __flatbuffers_define_scalar_field(2, Alloverse_LiveMediaMetadata, width, flatbuffers_int32, int32_t, INT32_C(0))
 __flatbuffers_define_scalar_field(3, Alloverse_LiveMediaMetadata, height, flatbuffers_int32, int32_t, INT32_C(0))
 
@@ -322,8 +253,8 @@ __flatbuffers_offset_vec_at(Alloverse_LiveMediaComponent_table_t, vec, i, 0)
 __flatbuffers_table_as_root(Alloverse_LiveMediaComponent)
 
 __flatbuffers_define_scalar_field(0, Alloverse_LiveMediaComponent, track_id, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(1, Alloverse_LiveMediaComponent, type, Alloverse_LiveMediaType, Alloverse_LiveMediaType_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(2, Alloverse_LiveMediaComponent, format, Alloverse_LiveMediaFormat, Alloverse_LiveMediaFormat_enum_t, INT16_C(0))
+__flatbuffers_define_string_field(1, Alloverse_LiveMediaComponent, type, 0)
+__flatbuffers_define_string_field(2, Alloverse_LiveMediaComponent, format, 0)
 __flatbuffers_define_table_field(3, Alloverse_LiveMediaComponent, metadata, Alloverse_LiveMediaMetadata_table_t, 0)
 
 

@@ -8,11 +8,13 @@
 #include <vector>
 #include <string>
 using namespace std;
+using namespace Alloverse;
 
 #include <allonet/allonet.h>
 #include "media/media.h"
 #include "util.h"
 #include "delta.h"
+#include "alloverse_binary_schema.h"
 
 static alloserver* serv;
 static allo_mutable_state state;
@@ -203,47 +205,61 @@ static int next_free_track_id = 1;
 
 static void handle_place_allocate_track_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-    allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
-    cJSON *existing_comp = entity ? cJSON_GetObjectItem(entity->components, "live_media") : NULL;
+    const char *media_type = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
+    const char *media_format = cJSON_GetStringValue(cJSON_GetArrayItem(body, 2));
+    cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
+    char *media_metadatas = cJSON_Print(media_metadata);
+    cJSON* respbody;
+    cJSON *mediacomp;
+    allo_media_track *track;
+    int track_id;
+    std::unique_ptr<LiveMediaComponentT> media;
+    flatbuffers::Parser parser;
 
-    if(!entity || existing_comp != NULL)
+    parser.parse(alloverse_schema_bytes);
+    parser.SetRootType("LiveMediaMetadata");
+    parser.parse(media_metadatas);
+    auto metadata = unique_ptr<LiveMediaMetadataT>(new LiveMediaMetadataT());
+    flatbuffers::GetRoot<LiveMediaMetadata>(parser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
+    
+    Alloverse::EntityT *entity = state.getEntity(interaction->sender_entity_id);
+    if(!entity || !media_type || !media_format || !cJSON_IsObject(media_metadata))
+    {
+      fprintf(stderr, "Disallowed creating allocating track for %s: invalid argument\n", interaction->sender_entity_id);
+      respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("failed"), cJSON_CreateString("invalid argument"), NULL);
+      goto end;
+    }
+    
+    if(entity->components->live_media.get())
     {
       fprintf(stderr, "Disallowed creating allocating track for %s: entity already has track\n", interaction->sender_entity_id);
-      cJSON* respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("failed"), cJSON_CreateString("only one track allowed per entity"), NULL);
-      char* respbodys = cJSON_Print(respbody);
-      cJSON_Delete(respbody);
-      allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
-      free(respbodys);
-      send_interaction_to_client(serv, client, response);
-      allo_interaction_free(response);
-      return;
+      respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("failed"), cJSON_CreateString("only one track allowed per entity"), NULL);
+      goto end;
     }
 
-    cJSON *media_type = cJSON_GetArrayItem(body, 1);
-    cJSON *media_format = cJSON_GetArrayItem(body, 2);
-    cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
-
-    int track_id = next_free_track_id++;
-    cJSON *mediacomp = cjson_create_object(
-        "track_id", cJSON_CreateNumber(track_id),
-        "type", cJSON_Duplicate(media_type, false),
-        "format", cJSON_Duplicate(media_format, false),
-        "metadata", cJSON_Duplicate(media_metadata, true),
-        NULL
-    );
-
+    track_id = next_free_track_id++;
+    media = std::unique_ptr<LiveMediaComponentT>(new LiveMediaComponentT());
+    media->track_id = track_id;
+    media->type = media_type;
+    media->format = media_format;
+    media->metadata.swap(metadata);
+    entity->components->live_media.swap(media);
+    
     fprintf(stderr, "Allocated track %d (%s.%s) for %s/%s.\n", 
       track_id, cJSON_GetStringValue(media_type), cJSON_GetStringValue(media_format),
       interaction->sender_entity_id, alloserv_describe_client(client)
     );
 
     
-    allo_media_track *track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
+    track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
     track->origin = client;
 
     cJSON_AddItemToObject(entity->components, "live_media", mediacomp);
 
-    cJSON* respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+    respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
+
+end:;
+    free(media_metadatas);
     char* respbodys = cJSON_Print(respbody);
     cJSON_Delete(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);

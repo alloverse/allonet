@@ -182,7 +182,7 @@ static int Alloverse_LiveMediaMetadata_verify_table(flatcc_table_verifier_descri
 {
     int ret;
     if ((ret = flatcc_verify_field(td, 0, 4, 4) /* sample_rate */)) return ret;
-    if ((ret = flatcc_verify_field(td, 1, 1, 1) /* channel_layout */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 1, 0) /* channel_layout */)) return ret;
     if ((ret = flatcc_verify_field(td, 2, 4, 4) /* width */)) return ret;
     if ((ret = flatcc_verify_field(td, 3, 4, 4) /* height */)) return ret;
     return flatcc_verify_ok;
@@ -212,8 +212,8 @@ static int Alloverse_LiveMediaComponent_verify_table(flatcc_table_verifier_descr
 {
     int ret;
     if ((ret = flatcc_verify_field(td, 0, 4, 4) /* track_id */)) return ret;
-    if ((ret = flatcc_verify_field(td, 1, 1, 1) /* type */)) return ret;
-    if ((ret = flatcc_verify_field(td, 2, 2, 2) /* format */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 1, 0) /* type */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 2, 0) /* format */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 3, 0, &Alloverse_LiveMediaMetadata_verify_table) /* metadata */)) return ret;
     return flatcc_verify_ok;
 }

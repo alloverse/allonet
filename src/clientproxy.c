@@ -8,7 +8,8 @@
 #include "inlinesys/queue.h"
 
 // internals in client.c
-int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd);
+void alloclient_handle_parsed_statediff(alloclient *client, allo_state *newstate, allo_state_diff *diff);
+
 void alloclient_ack_rev(alloclient *client, int64_t rev);
 
 // forwards in this file
@@ -60,7 +61,10 @@ typedef struct proxy_message
         } connect;
         allo_interaction *interaction;
         allo_client_intent *intent;
-        cJSON *state_delta;
+        struct {
+            allo_state *state;
+            allo_state_diff *diff;
+        } delta;
         struct {
             int code;
             char *msg;
@@ -412,27 +416,22 @@ static void proxy_alloclient_asset_request_bytes_callback(alloclient *proxyclien
     free(msg->value.asset_request_bytes.asset_id);
 }
 
-static void bridge_raw_state_delta_callback(alloclient *bridgeclient, cJSON *cmd)
+static void bridge_state_callback(alloclient *bridgeclient, allo_state *state, allo_state_diff *diff)
 {
-    // Our strategy here is to parse the deltas on the main thread instead of the network thread.
-    // This is a bit much work to do on a main thread, so it would be much nicer to parse on the network
-    // thread and somehow do a pointer swap with the main thread. That's too complicated for my
-    // poor brain right now, so let's try it this way, and if the performance is good enough,
-    // keep it this way.
-    assert(cmd);
+
     alloclient *proxyclient = bridgeclient->_backref;
     proxy_message *msg = proxy_message_create(msg_state_delta);
-    msg->value.state_delta = cmd;
+    msg->value.delta.state = allo_state_duplicate(state);
+    msg->value.delta.diff = allo_state_diff_duplicate(diff);
     enqueue_bridge_to_proxy(_internal(proxyclient), msg);
 }
-static void proxy_raw_state_delta_callback(alloclient *proxyclient, proxy_message *msg)
+static void proxy_state_callback(alloclient *proxyclient, proxy_message *msg)
 {
-    int64_t rev = alloclient_parse_statediff(proxyclient, msg->value.state_delta);
-    // note: parse_statediff takes ownership of state_delta, so no need to free it.
-
-    proxy_message *out = proxy_message_create(msg_ack);
-    out->value.ack.rev = rev;
-    enqueue_proxy_to_bridge(_internal(proxyclient), out);
+    alloclient_handle_parsed_statediff(proxyclient, msg->value.delta.state, msg->value.delta.diff);
+    // handle_parsed_statediff takes ownership of state, but not of the diff. 
+    // so we only need to free the latter.
+    allo_state_diff_destroy(msg->value.delta.diff);
+    free(msg->value.delta.diff);
 }
 
 static bool bridge_interaction_callback(alloclient *bridgeclient, allo_interaction *interaction)
@@ -525,7 +524,7 @@ static void proxy_clock_callback(alloclient *proxyclient, proxy_message *msg)
 }
 
 static void(*proxy_message_lookup_table[])(alloclient*, proxy_message*) = {
-    [msg_state_delta] = proxy_raw_state_delta_callback,
+    [msg_state_delta] = proxy_state_callback,
     [msg_interaction] = proxy_interaction_callback,
     [msg_audio] = proxy_audio_callback,
     [msg_video] = proxy_video_callback,
@@ -607,7 +606,7 @@ alloclient *clientproxy_create(alloclient *target)
     proxyclient->_internal2 = calloc(1, sizeof(clientproxy_internal));
     _internal(proxyclient)->bridgeclient = target;
     _internal(proxyclient)->bridgeclient->_backref = proxyclient;
-    _internal(proxyclient)->bridgeclient->raw_state_delta_callback = bridge_raw_state_delta_callback;
+    _internal(proxyclient)->bridgeclient->state_callback = bridge_state_callback;
     _internal(proxyclient)->bridgeclient->interaction_callback = bridge_interaction_callback;
     _internal(proxyclient)->bridgeclient->audio_callback = bridge_audio_callback;
     _internal(proxyclient)->bridgeclient->video_callback = bridge_video_callback;

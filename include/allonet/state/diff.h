@@ -37,7 +37,8 @@ typedef struct allo_state_diff
 } allo_state_diff;
 
 extern void allo_state_diff_init(allo_state_diff *diff);
-extern void allo_state_diff_free(allo_state_diff *diff);
+extern allo_state_diff *allo_state_diff_duplicate(allo_state_diff *orig); // needs to be both destroyed and free'd
+extern void allo_state_diff_destroy(allo_state_diff *diff);
 extern void allo_state_diff_dump(allo_state_diff *diff);
 extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
 extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);

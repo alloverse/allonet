@@ -10,7 +10,7 @@ extern void allo_state_diff_init(allo_state_diff *diff)
   arr_init(&diff->updated_components); arr_reserve(&diff->updated_components, 64);
   arr_init(&diff->deleted_components); arr_reserve(&diff->deleted_components, 64);
 }
-extern void allo_state_diff_free(allo_state_diff *diff)
+extern void allo_state_diff_destroy(allo_state_diff *diff)
 {
   arr_free(&diff->new_entities);
   arr_free(&diff->deleted_entities);

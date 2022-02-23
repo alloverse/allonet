@@ -6,7 +6,7 @@
 #include "alloverse_generated.h"
 using namespace Alloverse;
 
-extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t len)
+extern "C" void allo_state_create_parsed(allo_state *state, const void *buf, size_t len)
 {
     // realloc = we can reuse the same buffer as last time, especially if the size is ~the same
     state->flat = realloc(state->flat, len);
@@ -22,8 +22,17 @@ extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t le
     state->_cur = GetState(state->flat);
 }
 
+extern "C" allo_state *allo_state_duplicate(allo_state *state)
+{
+  allo_state *clone = (allo_state*)calloc(1, sizeof(*clone));
+  allo_state_create_parsed(clone, state->flat, state->flatlength);
+  return clone;
+}
+
 extern "C" void allo_state_destroy(allo_state *state)
 {
+    if(!state) return;
+
     free(state->flat);
 }
 

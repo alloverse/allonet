@@ -22,29 +22,19 @@ static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 void alloclient_ack_rev(alloclient *client, int64_t rev);
 
-static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *staterep, allo_state_diff *diff);
-int64_t alloclient_parse_statediff(alloclient *client, cJSON *cmd)
+void alloclient_handle_parsed_statediff(alloclient *client, allo_state *newstate, allo_state_diff *diff);
+void alloclient_parse_statediff(alloclient *client, const char *flat, size_t flatlength)
 {
-    if(client->raw_state_delta_callback) 
-    {
-        client->raw_state_delta_callback(client, cmd);
-        return 0;
-    }
+    allo_state *newstate = calloc(1, sizeof(*newstate));
+    allo_state_create_parsed(newstate, flat, flatlength);
 
     allo_state_diff diff;
     allo_state_diff_init(&diff);
-    cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd, &diff, (allo_statediff_handler)_handle_parsed_statediff, client);    
-    allo_state_diff_free(&diff);
-
-    int64_t rev = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(staterep, "revision"));
-    return rev;
-}
-
-static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *staterep, allo_state_diff *diff)
-{
-    if(staterep == NULL)
+    //cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd, &diff, (allo_statediff_handler)_handle_parsed_statediff, client);    
+    // todo: CALCULATE THE DIFF
+    if(!newstate /*unparseable due to missing the rev we got a patch from */)
     {
-        int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
+        int64_t patch_from = 7777; //cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
         fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state\n",
             _internal(client)->avatar_id,
             (long long int)patch_from,
@@ -53,11 +43,17 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
         _internal(client)->latest_intent->ack_state_rev = 0;
         return;
     }
+    alloclient_ack_rev(client, newstate->revision);
 
-    int64_t rev = nonnull(cJSON_GetObjectItemCaseSensitive(staterep, "revision"))->valueint;
-    alloclient_ack_rev(client, rev);
+    alloclient_handle_parsed_statediff(client, newstate, &diff);
+    allo_state_diff_destroy(&diff);
+}
 
-    // .... 
+void alloclient_handle_parsed_statediff(alloclient *client, allo_state *newstate, allo_state_diff *diff)
+{
+    // destroy previously stored state, and take ownership of the new state
+    allo_state_destroy(client->_state); free(client->_state);
+    client->_state = newstate;
 
     _alloclient_media_handle_statediff(client, diff);
 
@@ -66,13 +62,15 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
 
     if(client->state_callback)
     {
-        client->state_callback(client, &client->_state, diff);
+        client->state_callback(client, client->_state, diff);
     }
+
+    // note: we lose ownership of diff here (caller owns it)
 }
 
 void alloclient_ack_rev(alloclient *client, int64_t rev)
 {
-    _internal(client)->latest_intent->ack_state_rev = client->_state.revision = rev;
+    _internal(client)->latest_intent->ack_state_rev = rev;
 }
 
 
@@ -207,15 +205,7 @@ static bool parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     
     switch(channel) {
     case CHANNEL_STATEDIFFS: {
-        cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
-        if(!cmdrep) {
-            fprintf(stderr, "alloclient: unparseable statediff:\n");
-            fprintf(stderr, "%s\n", packet->data);
-            assert(cmdrep);
-            return true;
-        }
-        //printf("alloclient(%s): My latest rev is %zd. Receiving delta %s\n", _internal(client)->avatar_id, _internal(client)->latest_intent->ack_state_rev, packet->data);
-        alloclient_parse_statediff(client, cmdrep);
+        alloclient_parse_statediff(client, (const char*)(packet->data), packet->dataLength);
         break; }
     case CHANNEL_COMMANDS: {
         cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
@@ -595,12 +585,12 @@ static void _alloclient_simulate(alloclient *client)
   
   double now = alloclient_get_time(client);
   allo_state_diff diff; allo_state_diff_init(&diff);
-  allo_simulate(&client->_state, intents, 1, now, &diff);
+  allo_simulate(client->_state, intents, 1, now, &diff);
   if (client->state_callback)
   {
-    client->state_callback(client, &client->_state, &diff);
+    client->state_callback(client, client->_state, &diff);
   }
-  allo_state_diff_free(&diff);
+  allo_state_diff_destroy(&diff);
 }
 
 double alloclient_get_time(alloclient* client)
@@ -682,7 +672,7 @@ alloclient *_alloclient_create()
     
     scheduler_init(&_internal(client)->jobs);
     
-    LIST_INIT(&client->_state.entities);
+    client->_state = NULL;
     
     client->alloclient_connect = _alloclient_connect;
     client->alloclient_disconnect = _alloclient_disconnect;

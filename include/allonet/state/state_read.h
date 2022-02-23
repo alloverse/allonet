@@ -50,7 +50,8 @@ typedef struct allo_entity{
     LIST_ENTRY(allo_entity) pointers;
 } allo_entity;
 
-extern void allo_state_create_parsed(allo_state *state, void *buf, size_t len);
+extern void allo_state_create_parsed(allo_state *state, const void *buf, size_t len);
+extern allo_state *allo_state_duplicate(allo_state *state);
 extern void allo_state_destroy(allo_state *state);
 
 
@@ -60,7 +61,7 @@ extern void allo_generate_id(char *str, size_t len);
 extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
 
-
+// TODO: make these update-in-place for allo_state, and update _next for allo_mutable_state
 // parse and get the transform-from-parent for the entity
 extern allo_m4x4 entity_get_transform(allo_entity* entity);
 // update the transform stored in the entity. this is a mutation, but remains in the "read"

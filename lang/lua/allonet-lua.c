@@ -358,8 +358,8 @@ static int l_alloclient_simulate_root_pose(lua_State* L)
 {
     l_alloclient_t* lclient = check_alloclient(L, 1);
     const char *avatar_id = luaL_checkstring(L, 2);
-    allo_entity *avatar = state_get_entity(&lclient->client->_state, avatar_id);
-    allo_entity* head = allosim_get_child_with_pose(&lclient->client->_state, avatar, "head");
+    allo_entity *avatar = state_get_entity(lclient->client->_state, avatar_id);
+    allo_entity* head = allosim_get_child_with_pose(lclient->client->_state, avatar, "head");
     float dt = luaL_checknumber(L, 3);
     allo_client_intent *intent = get_intent(L);
     
@@ -372,7 +372,7 @@ static int l_alloclient_simulate_root_pose(lua_State* L)
 static int l_alloclient_get_state (lua_State *L)
 {
     l_alloclient_t *lclient = check_alloclient(L, 1);
-    push_state_table(L, &lclient->client->_state);
+    push_state_table(L, lclient->client->_state);
     return 1;
 }
 

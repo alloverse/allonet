@@ -8,17 +8,18 @@
 #include <vector>
 #include <string>
 using namespace std;
-using namespace Alloverse;
 
 #include <allonet/allonet.h>
+#include <flatbuffers/idl.h>
 #include "media/media.h"
 #include "util.h"
 #include "delta.h"
 #include "alloverse_binary_schema.h"
+using namespace Alloverse;
 
 static alloserver* serv;
 static allo_mutable_state state;
-static allo_entity* place;
+static EntityT *place;
 static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
@@ -35,6 +36,7 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
 
 static void clients_changed(alloserver* serv, alloserver_client* added, alloserver_client* removed)
 {
+    (void)serv;
     (void)added;
     if (removed) {
         state.removeEntitiesForAgent(removed->agent_id);
@@ -210,15 +212,14 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     cJSON *media_metadata = cJSON_GetArrayItem(body, 3);
     char *media_metadatas = cJSON_Print(media_metadata);
     cJSON* respbody;
-    cJSON *mediacomp;
     allo_media_track *track;
     int track_id;
     std::unique_ptr<LiveMediaComponentT> media;
     flatbuffers::Parser parser;
 
-    parser.parse(alloverse_schema_bytes);
+    parser.Parse((const char*)alloverse_schema_bytes);
     parser.SetRootType("LiveMediaMetadata");
-    parser.parse(media_metadatas);
+    parser.Parse(media_metadatas);
     auto metadata = unique_ptr<LiveMediaMetadataT>(new LiveMediaMetadataT());
     flatbuffers::GetRoot<LiveMediaMetadata>(parser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
     
@@ -244,18 +245,16 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     media->format = media_format;
     media->metadata.swap(metadata);
     entity->components->live_media.swap(media);
+
+    track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type));
+    track->origin = client;
     
     fprintf(stderr, "Allocated track %d (%s.%s) for %s/%s.\n", 
-      track_id, cJSON_GetStringValue(media_type), cJSON_GetStringValue(media_format),
+      track_id, media_type, media_format,
       interaction->sender_entity_id, alloserv_describe_client(client)
     );
 
     
-    track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type->valuestring));
-    track->origin = client;
-
-    cJSON_AddItemToObject(entity->components, "live_media", mediacomp);
-
     respbody = cjson_create_list(cJSON_CreateString("allocate_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
 
 end:;
@@ -272,6 +271,8 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     cJSON *jTrackId = cJSON_GetArrayItem(body, 1);
     cJSON *jsub = cJSON_GetArrayItem(body, 2);
     cJSON* respbody;
+    allo_media_track *track;
+    uint32_t track_id;
 
     if (!cJSON_IsNumber(jTrackId) || !cJSON_IsString(jsub)) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("missing id or verb"), NULL);
@@ -279,10 +280,10 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
       goto done;
     }
     
-    uint32_t track_id = jTrackId->valueint;
+    track_id = jTrackId->valueint;
     
     // find the track and add or remove client to list of recipients
-    allo_media_track *track = _media_track_find(&mediatracks, track_id);
+    track = _media_track_find(&mediatracks, track_id);
     if(!track) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("invalid track id"), NULL);
       fprintf(stderr, "media_track interaction: %s/%s requested unavailable track id %d\n", interaction->sender_entity_id, alloserv_describe_client(client), track_id);
@@ -544,7 +545,7 @@ static void handle_media(alloserver *serv, alloserver_client *client, const uint
     // pass information on to all peers in track recipient list
     for (size_t i = 0; i < track->recipients.length; i++) {
         ENetPacket *packet = enet_packet_create(data, length, 0);
-        alloserv_send_enet(serv, track->recipients.data[i], channel, packet);
+        alloserv_send_enet(serv, (alloserver_client*)track->recipients.data[i], (allochannel)channel, packet);
     }
 }
 
@@ -576,22 +577,13 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
 static statehistory_t hist;
 static void broadcast_server_state(alloserver* serv)
 {
-  serv->state.revision++;
-  // roll over revision to 0 before it reaches biggest consecutive integer representable in json
-  if(serv->state.revision == 9007199254740990) { serv->state.revision = 0; }
-
-  flatcc_builder_t builder;
-  flatcc_builder_init(&builder);
-  allo_state_to_flat(&serv->state, &builder);
-  int flatlength;
-  void *flatbuf = flatcc_builder_finalize_aligned_buffer(&builder, &flatlength);
+  state.finishIterationAndFlatten();
 
   alloserver_client* client;
   LIST_FOREACH(client, &serv->clients, pointers) {
-    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)flatbuf, flatlength);
+    serv->send(serv, client, CHANNEL_STATEDIFFS, (const uint8_t*)state.flat, state.flatlength);
   }
-  flatcc_builder_aligned_free(flatbuf);
-  flatcc_builder_clear(&builder);
+
 }
 
 static void step(double goalDt)
@@ -612,116 +604,27 @@ static void step(double goalDt)
     intents[count++] = client->intent;
     if (count == 32) break;
   }
-  allo_simulate(&serv->state, (const allo_client_intent**)intents, count, now, NULL);
+  allo_simulate(&state, (const allo_client_intent**)intents, count, now, NULL);
   broadcast_server_state(serv);
 }
 
-cJSON* cjson3d(double a, double b, double c)
+
+
+static void addDefaultEntities(allo_mutable_state *mstate)
 {
-  return cjson_create_list( cJSON_CreateNumber(a), cJSON_CreateNumber(b), cJSON_CreateNumber(c), NULL);
-}
+  
+  place->id = "place";
 
-cJSON* cjson2d(double a, double b)
-{
-  return cjson_create_list(cJSON_CreateNumber(a), cJSON_CreateNumber(b), NULL);
-}
+  auto origin = unique_ptr<Mat4>(new Mat4(std::array<float, 16>{{1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1}}));
+  auto transform = unique_ptr<TransformComponentT>(new TransformComponentT);
+  transform->matrix = move(origin);
+  place->components->transform = move(transform);
 
-static cJSON* spec_located_at(float x, float y, float z, float sz)
-{
-  return cjson_create_object(
-    "transform", cjson_create_object(
-      "matrix", m2cjson(allo_m4x4_translate((allo_vector) {{ x, y, z }})),
-      NULL
-    ),
-    "geometry", cjson_create_object(
-      "type", cJSON_CreateString("inline"),
-      "vertices", cjson_create_list(cjson3d(sz, 0.0, -sz), cjson3d(sz, 0.0, sz), cjson3d(-sz, sz, -sz), cjson3d(-sz, sz, sz), NULL),
-      "uvs", cjson_create_list(cjson2d(0.0, 0.0), cjson2d(1.0, 0.0), cjson2d(0.0, 1.0), cjson2d(1.0, 1.0), NULL),
-      "triangles", cjson_create_list(cjson3d(0, 3, 1), cjson3d(0, 2, 3), cjson3d(1, 3, 0), cjson3d(3, 2, 0), NULL),
-      "texture", cJSON_CreateString("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAD8SURBVGhD7c/LCcJgFERhq7Qgy3CfRXoQXItNGYmEeMyQbEbuhYFv9T9gzun6fPR1HofGAdP6xgHz+q4By/qWAev1/QKwftIpANNnbQKwe9EjAKPXGgRgMVQPwNxfpQOwddPRgMv99mcYqiTABkOVBNhgqJIAGwxVEmCDoUoCbDBUSYANhioJsMFQJQE2GKokwAZDlQTYYKiSABsMVRJgg6FKAmwwVEmADYYqCbDBUCUBNhiqJMAGQ5UE2GCokgAbDFUSYIOhytEAfKvjUAD+lLIfgA/V7ATgdUEyAO/K2g7Ao8o2AvCiOAbgur6vANy18AnAaSPvABx1Mg4vbr0dVP2tGoQAAAAASUVORK5CYII="),
-      NULL
-    ),
-    NULL
-  );
-}
-static cJSON* spec_add_child(cJSON* spec, cJSON* childspec)
-{
-  cJSON* children = cJSON_GetObjectItemCaseSensitive(spec, "children");
-  if (children == NULL) {
-    children = cJSON_CreateArray();
-    cJSON_AddItemToObject(spec, "children", children);
-  }
-  cJSON_AddItemToArray(children, childspec);
-  return spec;
-}
-
-
-void add_dummy(alloserver *serv)
-{
-  cJSON* root = spec_located_at(0, 0, 0, 0.3);
-  cJSON *plate = spec_located_at(0, 0.9, 0, 0.2);
-  spec_add_child(root, plate);
-  cJSON* button = spec_located_at(0.2, 0.3, 0, 0.1);
-  spec_add_child(plate, button);
-
-  cJSON_AddItemToObject(button, "collider", cjson_create_object(
-    "type", cJSON_CreateString("box"),
-    "width", cJSON_CreateNumber(0.2),
-    "height", cJSON_CreateNumber(0.2),
-    "depth", cJSON_CreateNumber(0.2),
-    NULL
-  ));
-  cJSON_AddItemToObject(button, "grabbable", cjson_create_object(
-    "actuate_on", cJSON_CreateString("$parent"),
-    "translation_constraint", cjson_create_list(cJSON_CreateNumber(1), cJSON_CreateNumber(0), cJSON_CreateNumber(1)),
-    "rotation_constraint", cjson_create_list(cJSON_CreateNumber(0), cJSON_CreateNumber(1), cJSON_CreateNumber(0)),
-    NULL
-  ));
-
-  cJSON_AddItemToObject(plate, "grabbable", cjson_create_object(
-    "foo", cJSON_CreateString("bar"),
-    NULL
-  ));
-  cJSON_AddItemToObject(plate, "collider", cjson_create_object(
-    "type", cJSON_CreateString("box"),
-    "width", cJSON_CreateNumber(0.2),
-    "height", cJSON_CreateNumber(0.2),
-    "depth", cJSON_CreateNumber(0.2),
-    NULL
-  ));
-
-  cJSON_AddItemToObject(root, "grabbable", cjson_create_object(
-    "foo", cJSON_CreateString("bar"),
-    NULL
-  ));
-  cJSON_AddItemToObject(root, "collider", cjson_create_object(
-    "type", cJSON_CreateString("box"),
-    "width", cJSON_CreateNumber(0.2),
-    "height", cJSON_CreateNumber(0.2),
-    "depth", cJSON_CreateNumber(0.2),
-    NULL
-  ));
-
-  allo_state_add_entity_from_spec(&serv->state, NULL, root, NULL);
-}
-
-static allo_entity* add_place(alloserver *serv)
-{
-  cJSON* place = cjson_create_object(
-    "transform", cjson_create_object(
-      "matrix", m2cjson(allo_m4x4_translate((allo_vector) {{ 0, 0, 0 }})),
-      NULL
-    ),
-    "clock", cjson_create_object(
-      "time", cJSON_CreateNumber(0.0),
-      NULL
-    ),
-    NULL
-  );
-
-  allo_entity *e = allo_state_add_entity_from_spec(&serv->state, NULL, place, NULL);
-  free(e->id); e->id = strdup("place");
-  return e;
+  auto clock = unique_ptr<ClockComponentT>(new ClockComponentT);
+  clock->time = 0.0;
+  place->components->clock = move(clock);
+  
+  mstate->next.entities.push_back(unique_ptr<EntityT>(place));
 }
 
 bool alloserv_run_standalone(int host, int port, const char *placename)
@@ -787,7 +690,7 @@ alloserver *alloserv_start_standalone(int listenhost, int port, const char *plac
   allo_state_init(&serv->state);
 
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", serv->_port);
-  place = add_place(serv);
+  addDefaultEntities(&state);
 
   return serv;
 }

@@ -21,6 +21,7 @@ table Components {
     transform:TransformComponent;
     relationships:RelationshipsComponent;
     live_media:LiveMediaComponent;
+    clock:ClockComponent;
 
     // If a Component has any non-standard fields (or perhaps doesn't
     // have a definition at all), it is dynamically typed with a flexbuffer
@@ -81,6 +82,9 @@ table LiveMediaComponent {
     type:string;
     format:string;
     metadata:LiveMediaMetadata;
+}
+table ClockComponent {
+    time:double;
 }
 
 ///////////////////////////////////////////////////////////////

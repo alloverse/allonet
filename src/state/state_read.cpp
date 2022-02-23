@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../util.h"
+#include "alloverse_generated.h"
+using namespace Alloverse;
 
 static State *cur(allo_state *state)
 {
@@ -10,19 +12,23 @@ static State *cur(allo_state *state)
 
 extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t len)
 {
-    state->flat = buf;
-    // ...
+    // realloc = we can reuse the same buffer as last time, especially if the size is ~the same
+    state->flat = realloc(state->flat, len);
+    // copy over the data we need
+    memcpy(state->flat, buf, len);
+    state->flatlength = len;
+    
+    // parse a read-only version with the C API so API clients can use the state
+    state->state = Alloverse_State_as_root(state->flat);
+    state->revision = Alloverse_State_revision_get(state->state);
+
+    // parse read-only with the C++ API so internal code can use easier APIs.
+    state->_cur = (void*)GetState(state->flat);
 }
 
 extern "C" void allo_state_destroy(allo_state *state)
 {
-  allo_entity *entity = state->entities.lh_first;
-  while(entity)
-  {
-    allo_entity *to_delete = entity;
-    entity = entity->pointers.le_next;
-    entity_destroy(state, to_delete);
-  }
+    free(state->flat);
 }
 
 

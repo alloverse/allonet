@@ -5,9 +5,7 @@
 //  Created by Nevyn Bengtsson on 1/2/19.
 //
 
-extern "C" {
 #include "util.h"
-}
 #include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>

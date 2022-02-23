@@ -23,7 +23,7 @@ public:
     Alloverse::StateT next;
 
     // transform next into cur/flat and bump revision so it can be transmitted.
-    void finishIteration();
+    void finishIterationAndFlatten();
 
     Alloverse::EntityT *addEntity(const char *id);
     Alloverse::EntityT *addEntityFromSpec(const char *spec, const char *agentId, const char *parent);

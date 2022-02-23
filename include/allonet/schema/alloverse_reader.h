@@ -52,6 +52,10 @@ typedef const struct Alloverse_LiveMediaComponent_table *Alloverse_LiveMediaComp
 typedef struct Alloverse_LiveMediaComponent_table *Alloverse_LiveMediaComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_LiveMediaComponent_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_LiveMediaComponent_mutable_vec_t;
+typedef const struct Alloverse_ClockComponent_table *Alloverse_ClockComponent_table_t;
+typedef struct Alloverse_ClockComponent_table *Alloverse_ClockComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_ClockComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_ClockComponent_mutable_vec_t;
 #ifndef Alloverse_State_file_identifier
 #define Alloverse_State_file_identifier 0
 #endif
@@ -136,6 +140,18 @@ typedef flatbuffers_uoffset_t *Alloverse_LiveMediaComponent_mutable_vec_t;
 #ifndef Alloverse_LiveMediaComponent_file_extension
 #define Alloverse_LiveMediaComponent_file_extension "bin"
 #endif
+#ifndef Alloverse_ClockComponent_file_identifier
+#define Alloverse_ClockComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_ClockComponent_file_identifier */
+#ifndef Alloverse_ClockComponent_identifier
+#define Alloverse_ClockComponent_identifier 0
+#endif
+#define Alloverse_ClockComponent_type_hash ((flatbuffers_thash_t)0xf35b3345)
+#define Alloverse_ClockComponent_type_identifier "\x45\x33\x5b\xf3"
+#ifndef Alloverse_ClockComponent_file_extension
+#define Alloverse_ClockComponent_file_extension "bin"
+#endif
 #ifndef Alloverse_Mat4_file_identifier
 #define Alloverse_Mat4_file_identifier 0
 #endif
@@ -205,7 +221,8 @@ __flatbuffers_table_as_root(Alloverse_Components)
 __flatbuffers_define_table_field(0, Alloverse_Components, transform, Alloverse_TransformComponent_table_t, 0)
 __flatbuffers_define_table_field(1, Alloverse_Components, relationships, Alloverse_RelationshipsComponent_table_t, 0)
 __flatbuffers_define_table_field(2, Alloverse_Components, live_media, Alloverse_LiveMediaComponent_table_t, 0)
-__flatbuffers_define_vector_field(3, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
+__flatbuffers_define_table_field(3, Alloverse_Components, clock, Alloverse_ClockComponent_table_t, 0)
+__flatbuffers_define_vector_field(4, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////
@@ -256,6 +273,16 @@ __flatbuffers_define_scalar_field(0, Alloverse_LiveMediaComponent, track_id, fla
 __flatbuffers_define_string_field(1, Alloverse_LiveMediaComponent, type, 0)
 __flatbuffers_define_string_field(2, Alloverse_LiveMediaComponent, format, 0)
 __flatbuffers_define_table_field(3, Alloverse_LiveMediaComponent, metadata, Alloverse_LiveMediaMetadata_table_t, 0)
+
+struct Alloverse_ClockComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_ClockComponent_vec_len(Alloverse_ClockComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_ClockComponent_table_t Alloverse_ClockComponent_vec_at(Alloverse_ClockComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_ClockComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_ClockComponent)
+
+__flatbuffers_define_scalar_field(0, Alloverse_ClockComponent, time, flatbuffers_double, double, 0.0000000000000000)
 
 
 #include "flatcc/flatcc_epilogue.h"

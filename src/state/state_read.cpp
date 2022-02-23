@@ -1,14 +1,10 @@
+#define ALLO_INTERNALS 1
 #include <allonet/state/state_read.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../util.h"
 #include "alloverse_generated.h"
 using namespace Alloverse;
-
-static State *cur(allo_state *state)
-{
-    return (State*)state->_cur;
-}
 
 extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t len)
 {
@@ -23,7 +19,7 @@ extern "C" void allo_state_create_parsed(allo_state *state, void *buf, size_t le
     state->revision = Alloverse_State_revision_get(state->state);
 
     // parse read-only with the C++ API so internal code can use easier APIs.
-    state->_cur = (void*)GetState(state->flat);
+    state->_cur = GetState(state->flat);
 }
 
 extern "C" void allo_state_destroy(allo_state *state)

@@ -3,7 +3,6 @@
 
 #include <allonet/state/state_read.h>
 
-#define ALLO_INTERNALS 1
 #if defined(__cplusplus) && defined(ALLO_INTERNALS)
 #include "alloverse_generated.h"
 #include <vector>

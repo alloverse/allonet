@@ -318,6 +318,7 @@ done:;
 
 static void handle_place_add_property_animation_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+  (void)serv; (void)client; (void)interaction; (void)body;
     /*
     allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
     cJSON *animation_spec = cJSON_DetachItemFromArray(body, 1);
@@ -354,6 +355,7 @@ static void handle_place_add_property_animation_interaction(alloserver* serv, al
 
 static void handle_place_remove_property_animation_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+    (void)serv; (void)client; (void)interaction; (void)body;
     /*
     allo_entity* entity = state_get_entity(&serv->state, interaction->sender_entity_id);
     const char *animation_id = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
@@ -388,6 +390,7 @@ static void handle_place_remove_property_animation_interaction(alloserver* serv,
 
 static void handle_place_list_agents_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
+    (void)serv; (void)client; (void)interaction; (void)body;
     /*
     (void)body;
     cJSON *agentlist = cJSON_CreateArray();
@@ -578,7 +581,7 @@ static void received_from_client(alloserver* serv, alloserver_client* client, al
 }
 
 
-static statehistory_t hist;
+//static statehistory_t hist;
 static void broadcast_server_state(alloserver* serv)
 {
   state.finishIterationAndFlatten();

@@ -6,6 +6,9 @@
 #include <allonet/schema/alloverse_reader.h>
 #include <allonet/schema/alloverse_builder.h>
 #include <allonet/schema/alloverse_verifier.h>
+#if defined(__cplusplus) && defined(ALLO_INTERNALS)
+namespace Alloverse { class State; }
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,7 +32,11 @@ typedef struct allo_state
     uint64_t revision;
 
     // internal parsed cpp version of 'state'
+#if defined(__cplusplus) && defined(ALLO_INTERNALS)
+    const Alloverse::State *_cur;
+#else
     void *_cur;
+#endif
 
     // Only to be able to compile...
     LIST_HEAD(allo_entity_list, allo_entity) entities;

@@ -30,7 +30,7 @@ static const double kCacheMinAge = 5.0;
 static const double kCacheMaxAge = 60.0*10;
 // Maximum number of assets to keep in the cache (not counting static assets)
 // This is useful because lookup times gets bad after a while...
-static const int kCacheMaxCount = 400;
+static const size_t kCacheMaxCount = 400;
 // Maximum number of bytes to keep in the store.
 static const size_t kCacheMaxBytes = 1024*1024*1024;
 
@@ -309,7 +309,7 @@ void _lru_prune(assetstore *store) {
     
     double max_barrier = time - kCacheMaxAge;
     cJSON *state = store->state->child;
-    int total_asset_count = 0;
+    size_t total_asset_count = 0;
     int static_asset_count = 0;
     size_t total_memory_usage = 0;
     size_t static_memory_usage = 0;
@@ -347,8 +347,8 @@ void _lru_prune(assetstore *store) {
     
     // If we just have too many assets then prune some more
     if (total_asset_count > kCacheMaxCount || total_memory_usage > kCacheMaxBytes) { // todo: check memory usage and sort on impact as well.
-        printf("assetstore: %d assets in cache using %zu bytes\n", total_asset_count, total_memory_usage);
-        printf("assetstore: Limits are set to %d assets using %zu bytes\n", kCacheMaxCount, kCacheMaxBytes);
+        printf("assetstore: %zu assets in cache using %zu bytes\n", total_asset_count, total_memory_usage);
+        printf("assetstore: Limits are set to %zu assets using %zu bytes\n", kCacheMaxCount, kCacheMaxBytes);
         int mode = total_memory_usage > kCacheMaxBytes ? 1 : 0;
         
         int count_to_evict = (mode == 0) ? total_asset_count - kCacheMaxCount : 0;
@@ -417,7 +417,7 @@ void _lru_prune(assetstore *store) {
     if (pruned_total_count > 0) {
         printf("assetstore: Removed %d assets freeing %zu bytes.\n", pruned_total_count, pruned_total_size);
     }
-    printf("assetstore: %d assets in cache using %zu bytes, whereof %d are static using %zu bytes.\n", total_asset_count, total_memory_usage, static_asset_count, static_memory_usage);
+    printf("assetstore: %zu assets in cache using %zu bytes, whereof %d are static using %zu bytes.\n", total_asset_count, total_memory_usage, static_asset_count, static_memory_usage);
 }
 
 int _assetstore_read(assetstore *store, const char *asset_id, size_t offset, uint8_t *buffer, size_t length, size_t *out_total_size) {
@@ -495,7 +495,7 @@ int _memstore_read(assetstore *store, const char *asset_id, size_t offset, uint8
         mtx_unlock((mtx_t*)store->lock);
         return -3;
     }
-    uint8_t *file_data = strtoll(file->valuestring, NULL, 10);
+    uint8_t *file_data = (uint8_t*)strtoll(file->valuestring, NULL, 10);
     length = min(length, *out_total_size - offset);
     memcpy(buffer, file_data + offset, length);
     
@@ -525,7 +525,7 @@ int _memstorestore_write(assetstore *store, const char *asset_id, size_t offset,
         assert(ranges || (cJSON_IsTrue(cJSON_GetObjectItem(state, "complete"))));
         assert(cJSON_IsString(file));
         
-        file_data = strtol(file->valuestring, NULL, 10);
+        file_data = (uint8_t*)strtol(file->valuestring, NULL, 10);
         assert(file_data);
     } else {
         state = cJSON_AddObjectToObject(store->state, asset_id);
@@ -650,7 +650,7 @@ size_t assetstore_get_missing_ranges(struct assetstore *store, const char *asset
 
 char *asset_generate_identifier(const uint8_t *bytes, size_t size);
 int asset_memstore_register_asset_nocopy(struct assetstore *store, const char *asset_id, const uint8_t *data, size_t length) {
-    
+    (void)asset_id;
     mtx_lock((mtx_t*)store->lock);
     
     char *id = asset_generate_identifier(data, length);
@@ -689,7 +689,7 @@ uint8_t *asset_memstore_get_data_pointer(assetstore *store, const char *asset_id
         mtx_unlock((mtx_t*)store->lock);
         return 0;
     }
-    uint8_t *file_data = strtol(file->valuestring, NULL, 10);
+    uint8_t *file_data = (uint8_t*)strtol(file->valuestring, NULL, 10);
     
     mtx_unlock((mtx_t*)store->lock);
     

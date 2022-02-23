@@ -588,7 +588,7 @@ static void bridge_check_for_network(alloclient *bridgeclient)
 }
 
 // thread: bridge
-static void _bridgethread(alloclient *bridgeclient)
+static int _bridgethread(alloclient *bridgeclient)
 {
     while(_internal(bridgeclient->_backref)->running)
     {
@@ -597,6 +597,7 @@ static void _bridgethread(alloclient *bridgeclient)
     }
     fprintf(stderr, "alloclient[clientproxy]: deallocating network thread resources...\n");
     alloclient_disconnect(bridgeclient, _internal(bridgeclient->_backref)->exit_code);
+    return 0;
 }
 
 // thread: proxy

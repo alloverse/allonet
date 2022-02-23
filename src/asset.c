@@ -184,7 +184,6 @@ void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offse
 
 void asset_deliver(const char *asset_id, asset_request_func request, void *user) {
     assert(request);
-    assert(send);
     
     request(asset_id, 0, ASSET_CHUNK_SIZE, user);
 }
@@ -226,7 +225,7 @@ void asset_handle(
             return;
         }
         
-        printf("Asset: Got a request for %s at %d+%d\n", asset_id, offset, length);
+        printf("Asset: Got a request for %s at %zu+%zu\n", asset_id, offset, length);
         
         // If we can't read we just fail early.
         if (request == NULL) {

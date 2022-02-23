@@ -1,4 +1,6 @@
 #include <allonet/state/diff.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 extern void allo_state_diff_init(allo_state_diff *diff)
 {

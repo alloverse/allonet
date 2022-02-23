@@ -14,7 +14,7 @@
 #include <Windows.h>
 #endif
 
-allo_statistics_t allo_statistics = {0};
+allo_statistics_t allo_statistics;
 
 extern "C" int64_t
 get_ts_mono(void)

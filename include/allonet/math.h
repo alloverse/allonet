@@ -14,6 +14,16 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
+// we want anonymous structs in unions. disable the warning.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif  // defined(__GNUC__)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpedantic"
+#endif  // defined(__clang__)
+
 typedef union allo_vector
 {
 	struct {
@@ -66,6 +76,14 @@ extern allo_vector allo_m4x4_get_position(allo_m4x4 l);
 extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
 extern bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma);
 extern char *allo_m4x4_string(allo_m4x4 m);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif  // defined(__clang__)
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif  // defined(__GNUC__)
+
 #pragma pack(pop)
 
 #endif

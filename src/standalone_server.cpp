@@ -506,7 +506,7 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
     {
       alloserver_client* client2;
       LIST_FOREACH(client2, &serv->clients, pointers) {
-        if (strcmp(entity->owner_agent_id, client2->agent_id) == 0) {
+        if (strcmp(Alloverse_Entity_owner_agent_id(entity), client2->agent_id) == 0) {
           send_interaction_to_client(serv, client2, interaction);
           return;
         }

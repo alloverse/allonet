@@ -19,7 +19,7 @@ extern "C" void allo_state_create_parsed(allo_state *state, const void *buf, siz
     state->revision = Alloverse_State_revision_get(state->state);
 
     // parse read-only with the C++ API so internal code can use easier APIs.
-    state->_cur = GetState(state->flat);
+    state->_cur = GetMutableState(state->flat);
 }
 
 extern "C" allo_state *allo_state_duplicate(allo_state *state)
@@ -36,8 +36,7 @@ extern "C" void allo_state_destroy(allo_state *state)
     free(state->flat);
 }
 
-
-void allo_generate_id(char *str, size_t len)
+extern "C" void allo_generate_id(char *str, size_t len)
 {
   for (size_t i = 0; i < len-1; i++)
   {
@@ -46,65 +45,12 @@ void allo_generate_id(char *str, size_t len)
   str[len-1] = 0;
 }
 
-allo_entity* state_get_entity(allo_state* state, const char* entity_id)
+extern "C" void state_set_server_time(allo_state *state, double server_time)
 {
-  if (!state || !entity_id || strlen(entity_id) == 0)
-    return NULL;
-  allo_entity* entity = NULL;
-  LIST_FOREACH(entity, &state->entities, pointers)
-  {
-    if (strcmp(entity_id, entity->id) == 0)
-    {
-      return entity;
-    }
-  }
-  return NULL;
+  state->setServerTime(server_time);
 }
 
-extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity)
-{
-  cJSON* relationships = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
-  cJSON* parentIdJ = cJSON_GetObjectItemCaseSensitive(relationships, "parent");
-  if (!parentIdJ) return NULL;
-  return state_get_entity(state, cJSON_GetStringValue(parentIdJ));
-}
-
-extern allo_m4x4 entity_get_transform(allo_entity* entity)
-{
-  if(!entity)
-    return allo_m4x4_identity();
-  cJSON* transform = cJSON_GetObjectItemCaseSensitive(entity->components, "transform");
-  cJSON* matrix = cJSON_GetObjectItemCaseSensitive(transform, "matrix");
-  if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16)
-    return allo_m4x4_identity();
-
-  return cjson2m(matrix);
-}
-
-void entity_set_transform(allo_entity* entity, allo_m4x4 m)
-{
-  for (int i = 0; i < 16; i++)
-  {
-    assert(isnan(m.v[i]) == false);
-  }
-  cJSON* transform = cJSON_GetObjectItemCaseSensitive(entity->components, "transform");
-  cJSON* matrix = cJSON_GetObjectItemCaseSensitive(transform, "matrix");
-  if (!transform || !matrix || cJSON_GetArraySize(matrix) != 16) 
-  {
-    matrix = cJSON_CreateDoubleArray(m.v, 16);
-    transform = cjson_create_object("matrix", matrix, NULL);
-    cJSON_AddItemToObject(entity->components, "transform", transform);
-  }
-  else 
-  {
-    for (int i = 0; i < 16; i++)
-    {
-      cJSON_SetNumberValue(cJSON_GetArrayItem(matrix, i), m.v[i]);
-    }
-  }
-}
-
-allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state, allo_entity* entity, allo_entity* space)
+extern "C" allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state, allo_entity* entity, allo_entity* space)
 {
   allo_m4x4 m = entity_get_transform(entity);
   return state_convert_coordinate_space(state, m, entity_get_parent(state, entity), space);
@@ -123,7 +69,7 @@ static allo_m4x4 entity_get_transform_to_world(allo_state* state, allo_entity *e
   return my_transform;
 }
 
-allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* old, allo_entity* neww)
+extern "C" allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* old, allo_entity* neww)
 {
   allo_m4x4 worldFromOld = entity_get_transform_to_world(state, old);
   allo_m4x4 worldFromNew = entity_get_transform_to_world(state, neww);
@@ -131,4 +77,18 @@ allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_en
   allo_m4x4 newFromOld = allo_m4x4_concat(newFromWorld, worldFromOld);
 
   return allo_m4x4_concat(newFromOld, m);
+}
+
+Entity *
+allo_state::getMutableEntity(const char *id)
+{
+    return _cur->mutable_entities()->MutableLookupByKey(id);
+}
+
+void
+allo_state::setServerTime(double time)
+{
+    Entity *place = getMutableEntity("place");
+    bool ok = place->mutable_components()->mutable_clock()->mutate_time(time);
+    assert(ok); (void)ok;
 }

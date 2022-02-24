@@ -7,7 +7,7 @@
 #include <allonet/schema/alloverse_builder.h>
 #include <allonet/schema/alloverse_verifier.h>
 #if defined(__cplusplus) && defined(ALLO_INTERNALS)
-namespace Alloverse { class State; }
+namespace Alloverse { class State; class Entity; }
 #endif
 #ifdef __cplusplus
 extern "C" {
@@ -33,22 +33,15 @@ typedef struct allo_state
 
     // internal parsed cpp version of 'state'
 #if defined(__cplusplus) && defined(ALLO_INTERNALS)
-    const Alloverse::State *_cur;
+    Alloverse::State *_cur;
+    Alloverse::Entity *getMutableEntity(const char *id);
+    virtual void setServerTime(double time);
 #else
     void *_cur;
 #endif
-
-    // Only to be able to compile...
-    LIST_HEAD(allo_entity_list, allo_entity) entities;
 } allo_state;
 
-//typedef struct Alloverse_Entity_table allo_entity;
-typedef struct allo_entity{
-    char *id;
-    char *owner_agent_id;
-    cJSON *components;
-    LIST_ENTRY(allo_entity) pointers;
-} allo_entity;
+typedef struct Alloverse_Entity_table allo_entity;
 
 extern void allo_state_create_parsed(allo_state *state, const void *buf, size_t len);
 extern allo_state *allo_state_duplicate(allo_state *state);
@@ -61,6 +54,7 @@ extern void allo_generate_id(char *str, size_t len);
 extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
 
+extern void state_set_server_time(allo_state *state, double server_time);
 // TODO: make these update-in-place for allo_state, and update _next for allo_mutable_state
 // parse and get the transform-from-parent for the entity
 extern allo_m4x4 entity_get_transform(allo_entity* entity);

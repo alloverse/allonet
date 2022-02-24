@@ -3,19 +3,9 @@
 void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
 {
   // figure out what time was in pre-sim state
-  allo_entity *place = state_get_entity(state, "place");
-  double old_time = 0.0;
-  if(place) {
-    cJSON *clock = cJSON_GetObjectItemCaseSensitive(place->components, "clock");
-    if(!clock) {
-      clock = cjson_create_object("time", cJSON_CreateNumber(server_time), NULL);
-      cJSON_AddItemToObject(place->components, "clock", clock);
-    }
-    cJSON *time =cJSON_GetObjectItemCaseSensitive(clock, "time");
-    old_time = time->valuedouble;
-    cJSON_SetNumberValue(time, server_time);
-    allo_state_diff_mark_component_updated(diff, "place", "clock", clock);
-  }
+  state_set_server_time(state, server_time);
+  allo_state_diff_mark_component_updated(diff, "place", "clock", clock);
+  
   // todo: run simulate at fixed-sized steps
   // https://gafferongames.com/post/fix_your_timestep/
   // https://www.gamasutra.com/blogs/BramStolk/20160408/269988/Fixing_your_time_step_the_easy_way_with_the_golden_48537_ms.php

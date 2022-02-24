@@ -123,6 +123,7 @@ static inline Alloverse_ClockComponent_ref_t Alloverse_ClockComponent_create(fla
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_ClockComponent, Alloverse_ClockComponent_file_identifier, Alloverse_ClockComponent_type_identifier)
 
 __flatbuffers_build_scalar_field(0, flatbuffers_, Alloverse_State_revision, flatbuffers_uint64, uint64_t, 8, 8, UINT64_C(0), Alloverse_State)
+/* vector has keyed elements */
 __flatbuffers_build_table_vector_field(1, flatbuffers_, Alloverse_State_entities, Alloverse_Entity, Alloverse_State)
 
 static inline Alloverse_State_ref_t Alloverse_State_create(flatbuffers_builder_t *B __Alloverse_State_formal_args)

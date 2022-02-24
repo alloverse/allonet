@@ -12,7 +12,7 @@ table State {
 }
 
 table Entity {
-    id:string;
+    id:string (key);
     owner_agent_id:string;
     components:Components;
 }

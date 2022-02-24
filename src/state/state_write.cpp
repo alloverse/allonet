@@ -32,3 +32,21 @@ allo_mutable_state::finishIterationAndFlatten()
     if(next_revision == 9007199254740990) { next_revision = 0; }
     next.revision = next_revision;
 }
+
+EntityT *
+allo_mutable_state::getNextEntity(const char *id)
+{
+  for(int i = 0, c = next.entities.size(); i < c; i++)
+  {
+    EntityT *ent = next.entities[i].get();
+    if(ent->id == id)
+      return ent;
+  }
+  return NULL;
+}
+
+void
+allo_mutable_state::setServerTime(double time)
+{
+  getNextEntity("place")->components->clock->time = time;
+}

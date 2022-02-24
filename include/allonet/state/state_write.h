@@ -30,8 +30,10 @@ public:
     bool removeEntity(allo_removal_mode mode, const char *id);
     void removeEntitiesForAgent(const char *agent_id);
 
-    Alloverse::EntityT *getEntity(const char *id);
+    Alloverse::EntityT *getNextEntity(const char *id);
     void changeComponents(Alloverse::EntityT *entity, const char *addChange, std::vector<std::string> remove);
+
+    virtual void setServerTime(double time) override;
 };
 
 #endif // _cplusplus && ALLO_INTERNALS

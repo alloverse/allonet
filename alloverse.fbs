@@ -22,6 +22,7 @@ table Components {
     relationships:RelationshipsComponent;
     live_media:LiveMediaComponent;
     clock:ClockComponent;
+    intent:IntentComponent;
 
     // If a Component has any non-standard fields (or perhaps doesn't
     // have a definition at all), it is dynamically typed with a flexbuffer
@@ -83,8 +84,14 @@ table LiveMediaComponent {
     format:string;
     metadata:LiveMediaMetadata;
 }
+
 table ClockComponent {
     time:double;
+}
+
+table IntentComponent {
+    actuate_pose:string;
+    from_avatar:string;
 }
 
 ///////////////////////////////////////////////////////////////

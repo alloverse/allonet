@@ -53,7 +53,7 @@ __flatbuffers_build_table(flatbuffers_, Alloverse_Entity, 3)
 static const flatbuffers_voffset_t __Alloverse_Components_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_Components_ref_t;
 static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder_t *B, Alloverse_Components_table_t t);
-__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 5)
+__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 6)
 
 static const flatbuffers_voffset_t __Alloverse_TransformComponent_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_TransformComponent_ref_t;
@@ -80,6 +80,11 @@ typedef flatbuffers_ref_t Alloverse_ClockComponent_ref_t;
 static Alloverse_ClockComponent_ref_t Alloverse_ClockComponent_clone(flatbuffers_builder_t *B, Alloverse_ClockComponent_table_t t);
 __flatbuffers_build_table(flatbuffers_, Alloverse_ClockComponent, 1)
 
+static const flatbuffers_voffset_t __Alloverse_IntentComponent_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_IntentComponent_ref_t;
+static Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_clone(flatbuffers_builder_t *B, Alloverse_IntentComponent_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_IntentComponent, 2)
+
 #define __Alloverse_State_formal_args , uint64_t v0, Alloverse_Entity_vec_ref_t v1
 #define __Alloverse_State_call_args , v0, v1
 static inline Alloverse_State_ref_t Alloverse_State_create(flatbuffers_builder_t *B __Alloverse_State_formal_args);
@@ -91,9 +96,9 @@ static inline Alloverse_Entity_ref_t Alloverse_Entity_create(flatbuffers_builder
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Entity, Alloverse_Entity_file_identifier, Alloverse_Entity_type_identifier)
 
 #define __Alloverse_Components_formal_args ,\
-  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3, flatbuffers_uint8_vec_ref_t v4
+  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3, Alloverse_IntentComponent_ref_t v4, flatbuffers_uint8_vec_ref_t v5
 #define __Alloverse_Components_call_args ,\
-  v0, v1, v2, v3, v4
+  v0, v1, v2, v3, v4, v5
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Components, Alloverse_Components_file_identifier, Alloverse_Components_type_identifier)
 
@@ -121,6 +126,11 @@ __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_LiveMediaComponent, All
 #define __Alloverse_ClockComponent_call_args , v0
 static inline Alloverse_ClockComponent_ref_t Alloverse_ClockComponent_create(flatbuffers_builder_t *B __Alloverse_ClockComponent_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_ClockComponent, Alloverse_ClockComponent_file_identifier, Alloverse_ClockComponent_type_identifier)
+
+#define __Alloverse_IntentComponent_formal_args , flatbuffers_string_ref_t v0, flatbuffers_string_ref_t v1
+#define __Alloverse_IntentComponent_call_args , v0, v1
+static inline Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_create(flatbuffers_builder_t *B __Alloverse_IntentComponent_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_IntentComponent, Alloverse_IntentComponent_file_identifier, Alloverse_IntentComponent_type_identifier)
 
 __flatbuffers_build_scalar_field(0, flatbuffers_, Alloverse_State_revision, flatbuffers_uint64, uint64_t, 8, 8, UINT64_C(0), Alloverse_State)
 /* vector has keyed elements */
@@ -178,7 +188,8 @@ __flatbuffers_build_table_field(0, flatbuffers_, Alloverse_Components_transform,
 __flatbuffers_build_table_field(1, flatbuffers_, Alloverse_Components_relationships, Alloverse_RelationshipsComponent, Alloverse_Components)
 __flatbuffers_build_table_field(2, flatbuffers_, Alloverse_Components_live_media, Alloverse_LiveMediaComponent, Alloverse_Components)
 __flatbuffers_build_table_field(3, flatbuffers_, Alloverse_Components_clock, Alloverse_ClockComponent, Alloverse_Components)
-__flatbuffers_build_vector_field(4, flatbuffers_, Alloverse_Components_flex, flatbuffers_uint8, uint8_t, Alloverse_Components)
+__flatbuffers_build_table_field(4, flatbuffers_, Alloverse_Components_intent, Alloverse_IntentComponent, Alloverse_Components)
+__flatbuffers_build_vector_field(5, flatbuffers_, Alloverse_Components_flex, flatbuffers_uint8, uint8_t, Alloverse_Components)
 
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args)
 {
@@ -187,7 +198,8 @@ static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers
         || Alloverse_Components_relationships_add(B, v1)
         || Alloverse_Components_live_media_add(B, v2)
         || Alloverse_Components_clock_add(B, v3)
-        || Alloverse_Components_flex_add(B, v4)) {
+        || Alloverse_Components_intent_add(B, v4)
+        || Alloverse_Components_flex_add(B, v5)) {
         return 0;
     }
     return Alloverse_Components_end(B);
@@ -201,6 +213,7 @@ static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder
         || Alloverse_Components_relationships_pick(B, t)
         || Alloverse_Components_live_media_pick(B, t)
         || Alloverse_Components_clock_pick(B, t)
+        || Alloverse_Components_intent_pick(B, t)
         || Alloverse_Components_flex_pick(B, t)) {
         return 0;
     }
@@ -328,6 +341,30 @@ static Alloverse_ClockComponent_ref_t Alloverse_ClockComponent_clone(flatbuffers
         return 0;
     }
     __flatbuffers_memoize_end(B, t, Alloverse_ClockComponent_end(B));
+}
+
+__flatbuffers_build_string_field(0, flatbuffers_, Alloverse_IntentComponent_actuate_pose, Alloverse_IntentComponent)
+__flatbuffers_build_string_field(1, flatbuffers_, Alloverse_IntentComponent_from_avatar, Alloverse_IntentComponent)
+
+static inline Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_create(flatbuffers_builder_t *B __Alloverse_IntentComponent_formal_args)
+{
+    if (Alloverse_IntentComponent_start(B)
+        || Alloverse_IntentComponent_actuate_pose_add(B, v0)
+        || Alloverse_IntentComponent_from_avatar_add(B, v1)) {
+        return 0;
+    }
+    return Alloverse_IntentComponent_end(B);
+}
+
+static Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_clone(flatbuffers_builder_t *B, Alloverse_IntentComponent_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_IntentComponent_start(B)
+        || Alloverse_IntentComponent_actuate_pose_pick(B, t)
+        || Alloverse_IntentComponent_from_avatar_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_IntentComponent_end(B));
 }
 
 #include "flatcc/flatcc_epilogue.h"

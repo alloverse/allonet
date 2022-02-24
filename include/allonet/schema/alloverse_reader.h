@@ -56,6 +56,10 @@ typedef const struct Alloverse_ClockComponent_table *Alloverse_ClockComponent_ta
 typedef struct Alloverse_ClockComponent_table *Alloverse_ClockComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_ClockComponent_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_ClockComponent_mutable_vec_t;
+typedef const struct Alloverse_IntentComponent_table *Alloverse_IntentComponent_table_t;
+typedef struct Alloverse_IntentComponent_table *Alloverse_IntentComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_IntentComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_IntentComponent_mutable_vec_t;
 #ifndef Alloverse_State_file_identifier
 #define Alloverse_State_file_identifier 0
 #endif
@@ -152,6 +156,18 @@ typedef flatbuffers_uoffset_t *Alloverse_ClockComponent_mutable_vec_t;
 #ifndef Alloverse_ClockComponent_file_extension
 #define Alloverse_ClockComponent_file_extension "bin"
 #endif
+#ifndef Alloverse_IntentComponent_file_identifier
+#define Alloverse_IntentComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_IntentComponent_file_identifier */
+#ifndef Alloverse_IntentComponent_identifier
+#define Alloverse_IntentComponent_identifier 0
+#endif
+#define Alloverse_IntentComponent_type_hash ((flatbuffers_thash_t)0xf0888b55)
+#define Alloverse_IntentComponent_type_identifier "\x55\x8b\x88\xf0"
+#ifndef Alloverse_IntentComponent_file_extension
+#define Alloverse_IntentComponent_file_extension "bin"
+#endif
 #ifndef Alloverse_Mat4_file_identifier
 #define Alloverse_Mat4_file_identifier 0
 #endif
@@ -207,6 +223,11 @@ __flatbuffers_offset_vec_at(Alloverse_Entity_table_t, vec, i, 0)
 __flatbuffers_table_as_root(Alloverse_Entity)
 
 __flatbuffers_define_string_field(0, Alloverse_Entity, id, 0)
+__flatbuffers_define_find_by_string_field(Alloverse_Entity, id)
+__flatbuffers_define_table_sort_by_string_field(Alloverse_Entity, id)
+__flatbuffers_define_default_find_by_string_field(Alloverse_Entity, id)
+__flatbuffers_define_default_scan_by_string_field(Alloverse_Entity, id)
+#define Alloverse_Entity_vec_sort Alloverse_Entity_vec_sort_by_id
 __flatbuffers_define_string_field(1, Alloverse_Entity, owner_agent_id, 0)
 __flatbuffers_define_table_field(2, Alloverse_Entity, components, Alloverse_Components_table_t, 0)
 
@@ -222,7 +243,8 @@ __flatbuffers_define_table_field(0, Alloverse_Components, transform, Alloverse_T
 __flatbuffers_define_table_field(1, Alloverse_Components, relationships, Alloverse_RelationshipsComponent_table_t, 0)
 __flatbuffers_define_table_field(2, Alloverse_Components, live_media, Alloverse_LiveMediaComponent_table_t, 0)
 __flatbuffers_define_table_field(3, Alloverse_Components, clock, Alloverse_ClockComponent_table_t, 0)
-__flatbuffers_define_vector_field(4, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
+__flatbuffers_define_table_field(4, Alloverse_Components, intent, Alloverse_IntentComponent_table_t, 0)
+__flatbuffers_define_vector_field(5, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////
@@ -283,6 +305,17 @@ __flatbuffers_offset_vec_at(Alloverse_ClockComponent_table_t, vec, i, 0)
 __flatbuffers_table_as_root(Alloverse_ClockComponent)
 
 __flatbuffers_define_scalar_field(0, Alloverse_ClockComponent, time, flatbuffers_double, double, 0.0000000000000000)
+
+struct Alloverse_IntentComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_IntentComponent_vec_len(Alloverse_IntentComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_IntentComponent_table_t Alloverse_IntentComponent_vec_at(Alloverse_IntentComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_IntentComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_IntentComponent)
+
+__flatbuffers_define_string_field(0, Alloverse_IntentComponent, actuate_pose, 0)
+__flatbuffers_define_string_field(1, Alloverse_IntentComponent, from_avatar, 0)
 
 
 #include "flatcc/flatcc_epilogue.h"

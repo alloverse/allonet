@@ -2,9 +2,16 @@
 
 void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
 {
+  // wait until we have received first state before simulating
+  if(
+    state->state == NULL || 
+    Alloverse_Entity_vec_find_by_id(Alloverse_State_entities_get(state->state), "place") == flatbuffers_not_found
+  ) return;
+
   // figure out what time was in pre-sim state
-  state_set_server_time(state, server_time);
-  allo_state_diff_mark_component_updated(diff, "place", "clock", clock);
+  double old_time = state_set_server_time(state, server_time);
+  // TODO: figure out what to send for Components
+  allo_state_diff_mark_component_updated(diff, "place", "clock", NULL);
   
   // todo: run simulate at fixed-sized steps
   // https://gafferongames.com/post/fix_your_timestep/
@@ -23,7 +30,7 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
     allo_entity* avatar = state_get_entity(state, intent->entity_id);
     if (intent->entity_id == NULL || avatar == NULL)
       return;
-    allo_entity* head = allosim_get_child_with_pose(state, avatar, "head");
+    const allo_entity* head = allosim_get_child_with_pose(state, avatar, "head");
     allosim_stick_movement(avatar, head, intent, dt, true, diff);
     allosim_pose_movements(state, avatar, intent, intents, intent_count, dt, diff);
     allosim_handle_grabs(state, avatar, intent, dt, diff);
@@ -32,19 +39,24 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
   allosim_animate(state, server_time, diff);
 }
 
-allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name)
+const allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name)
 {
   if (!state || !avatar || !pose_name || strlen(pose_name) == 0)
     return NULL;
-  allo_entity* entity = NULL;
-  LIST_FOREACH(entity, &state->entities, pointers)
-  {
-    cJSON* relationships = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
-    cJSON* parent = cJSON_GetObjectItemCaseSensitive(relationships, "parent");
-    cJSON* intent = cJSON_GetObjectItemCaseSensitive(entity->components, "intent");
-    cJSON* actuate_pose = cJSON_GetObjectItemCaseSensitive(intent, "actuate_pose");
+  
+  const char *avatar_id = Alloverse_Entity_id_get(avatar);
+  Alloverse_Entity_vec_t entities = Alloverse_State_entities_get(state->state);
 
-    if (parent && parent->valuestring && actuate_pose && strcmp(parent->valuestring, avatar->id) == 0 && strcmp(actuate_pose->valuestring, pose_name) == 0)
+  for(int i = 0, c = Alloverse_Entity_vec_len(entities); i < c; i++)
+  {
+    const allo_entity* entity = Alloverse_Entity_vec_at(entities, i);
+    const Alloverse_Components_table_t comps = Alloverse_Entity_components_get(entity);
+    const Alloverse_RelationshipsComponent_table_t relationships = Alloverse_Components_relationships_get(comps);
+    const char *parent = relationships ? Alloverse_RelationshipsComponent_parent_get(relationships) : NULL;
+    const Alloverse_IntentComponent_table_t intent = Alloverse_Components_intent_get(comps);
+    const char *actuate_pose = intent ? Alloverse_IntentComponent_actuate_pose_get(intent) : NULL;
+
+    if (parent && actuate_pose && strcmp(parent, avatar_id) == 0 && strcmp(actuate_pose, pose_name) == 0)
     {
       return entity;
     }

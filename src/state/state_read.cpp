@@ -36,15 +36,6 @@ extern "C" void allo_state_destroy(allo_state *state)
     free(state->flat);
 }
 
-extern "C" void allo_generate_id(char *str, size_t len)
-{
-  for (size_t i = 0; i < len-1; i++)
-  {
-    str[i] = 'a' + rand() % 25;
-  }
-  str[len-1] = 0;
-}
-
 extern "C" void state_set_server_time(allo_state *state, double server_time)
 {
   state->setServerTime(server_time);
@@ -85,10 +76,13 @@ allo_state::getMutableEntity(const char *id)
     return _cur->mutable_entities()->MutableLookupByKey(id);
 }
 
-void
+double
 allo_state::setServerTime(double time)
 {
     Entity *place = getMutableEntity("place");
-    bool ok = place->mutable_components()->mutable_clock()->mutate_time(time);
+    auto clock = place->mutable_components()->mutable_clock();
+    double prev = clock->time();
+    bool ok = clock->mutate_time(time);
     assert(ok); (void)ok;
+    return prev;
 }

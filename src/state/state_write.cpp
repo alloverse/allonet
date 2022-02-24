@@ -45,8 +45,20 @@ allo_mutable_state::getNextEntity(const char *id)
   return NULL;
 }
 
-void
+double
 allo_mutable_state::setServerTime(double time)
 {
-  getNextEntity("place")->components->clock->time = time;
+  auto clock = getNextEntity("place")->components->clock;
+  auto prev = clock->time;
+  clock->time = time;
+  return prev;
+}
+
+extern "C" void allo_generate_id(char *str, size_t len)
+{
+  for (size_t i = 0; i < len-1; i++)
+  {
+    str[i] = 'a' + rand() % 25;
+  }
+  str[len-1] = 0;
 }

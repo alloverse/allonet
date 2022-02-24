@@ -35,7 +35,7 @@ typedef struct allo_state
 #if defined(__cplusplus) && defined(ALLO_INTERNALS)
     Alloverse::State *_cur;
     Alloverse::Entity *getMutableEntity(const char *id);
-    virtual void setServerTime(double time);
+    virtual double setServerTime(double time);
 #else
     void *_cur;
 #endif
@@ -47,14 +47,11 @@ extern void allo_state_create_parsed(allo_state *state, const void *buf, size_t 
 extern allo_state *allo_state_duplicate(allo_state *state);
 extern void allo_state_destroy(allo_state *state);
 
-
-// generate an identifier of 'len'-1 chars into str, and null the last byte in str.
-extern void allo_generate_id(char *str, size_t len);
-
 extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
 extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
 
-extern void state_set_server_time(allo_state *state, double server_time);
+// set the time (in flat if client-side, in next if server-side) and returns the previous time
+extern double state_set_server_time(allo_state *state, double server_time);
 // TODO: make these update-in-place for allo_state, and update _next for allo_mutable_state
 // parse and get the transform-from-parent for the entity
 extern allo_m4x4 entity_get_transform(allo_entity* entity);

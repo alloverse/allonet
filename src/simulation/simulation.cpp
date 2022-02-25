@@ -1,4 +1,7 @@
+#define ALLO_INTERNALS 1
 #include "simulation.h"
+#include "alloverse_generated.h"
+using namespace Alloverse;
 
 void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
 {
@@ -27,10 +30,10 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
   for (int i = 0; i < intent_count; i++)
   {
     const allo_client_intent *intent = intents[i];
-    allo_entity* avatar = state_get_entity(state, intent->entity_id);
+    const Entity* avatar = state->_cur->entities()->LookupByKey(intent->entity_id);
     if (intent->entity_id == NULL || avatar == NULL)
       return;
-    const allo_entity* head = allosim_get_child_with_pose(state, avatar, "head");
+    const allo_entity* head = allosim_get_child_with_pose(state, avatar->id()->c_str(), "head");
     allosim_stick_movement(avatar, head, intent, dt, true, diff);
     allosim_pose_movements(state, avatar, intent, intents, intent_count, dt, diff);
     allosim_handle_grabs(state, avatar, intent, dt, diff);
@@ -39,24 +42,23 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
   allosim_animate(state, server_time, diff);
 }
 
-const allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name)
+const Entity* allosim_get_child_with_pose(allo_state* state, const char* avatar_id, const char* pose_name)
 {
-  if (!state || !avatar || !pose_name || strlen(pose_name) == 0)
+  if (!state || !avatar_id || !pose_name || strlen(pose_name) == 0)
     return NULL;
   
-  const char *avatar_id = Alloverse_Entity_id_get(avatar);
-  Alloverse_Entity_vec_t entities = Alloverse_State_entities_get(state->state);
+  auto entities = state->_cur->entities();
 
-  for(int i = 0, c = Alloverse_Entity_vec_len(entities); i < c; i++)
+  for(int i = 0, c = entities->size(); i < c; i++)
   {
-    const allo_entity* entity = Alloverse_Entity_vec_at(entities, i);
-    const Alloverse_Components_table_t comps = Alloverse_Entity_components_get(entity);
-    const Alloverse_RelationshipsComponent_table_t relationships = Alloverse_Components_relationships_get(comps);
-    const char *parent = relationships ? Alloverse_RelationshipsComponent_parent_get(relationships) : NULL;
-    const Alloverse_IntentComponent_table_t intent = Alloverse_Components_intent_get(comps);
-    const char *actuate_pose = intent ? Alloverse_IntentComponent_actuate_pose_get(intent) : NULL;
+    auto entity = entities->Get(i);
+    auto comps = entity->components();
+    auto rels = comps->relationships();
+    auto parent = rels ? rels->parent() : NULL;
+    auto intent = comps->intent();
+    auto actuate_pose = intent ? intent->actuate_pose() : NULL;
 
-    if (parent && actuate_pose && strcmp(parent, avatar_id) == 0 && strcmp(actuate_pose, pose_name) == 0)
+    if (parent && actuate_pose && strcmp(parent->c_str(), avatar_id) == 0 && strcmp(actuate_pose->c_str(), pose_name) == 0)
     {
       return entity;
     }

@@ -116,13 +116,13 @@ set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/client/_client.h
     ${SOURCE_FILES_PREFIX}/client/client.c
-    ${SOURCE_FILES_PREFIX}/simulation/animation.c
-    ${SOURCE_FILES_PREFIX}/simulation/animation_prop.c
-    ${SOURCE_FILES_PREFIX}/simulation/grabbing.c
-    ${SOURCE_FILES_PREFIX}/simulation/pose_movement.c
-    ${SOURCE_FILES_PREFIX}/simulation/simulation.c
+    ${SOURCE_FILES_PREFIX}/simulation/animation.cpp
+    ${SOURCE_FILES_PREFIX}/simulation/animation_prop.cpp
+    ${SOURCE_FILES_PREFIX}/simulation/grabbing.cpp
+    ${SOURCE_FILES_PREFIX}/simulation/pose_movement.cpp
+    ${SOURCE_FILES_PREFIX}/simulation/simulation.cpp
     ${SOURCE_FILES_PREFIX}/simulation/simulation.h
-    ${SOURCE_FILES_PREFIX}/simulation/stick_movement.c
+    ${SOURCE_FILES_PREFIX}/simulation/stick_movement.cpp
     ${SOURCE_FILES_PREFIX}/media/media.h
     ${SOURCE_FILES_PREFIX}/media/media.c
     ${SOURCE_FILES_PREFIX}/media/audio/audio.c

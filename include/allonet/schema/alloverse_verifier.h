@@ -21,22 +21,22 @@ static int Alloverse_IntentComponent_verify_table(flatcc_table_verifier_descript
 
 static inline int Alloverse_Mat4_verify_as_root(const void *buf, size_t bufsiz)
 {
-    return flatcc_verify_struct_as_root(buf, bufsiz, Alloverse_Mat4_identifier, 64, 4);
+    return flatcc_verify_struct_as_root(buf, bufsiz, Alloverse_Mat4_identifier, 128, 8);
 }
 
 static inline int Alloverse_Mat4_verify_as_typed_root(const void *buf, size_t bufsiz)
 {
-    return flatcc_verify_struct_as_typed_root(buf, bufsiz, Alloverse_Mat4_type_hash, 64, 4);
+    return flatcc_verify_struct_as_typed_root(buf, bufsiz, Alloverse_Mat4_type_hash, 128, 8);
 }
 
 static inline int Alloverse_Mat4_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
 {
-    return flatcc_verify_struct_as_typed_root(buf, bufsiz, thash, 64, 4);
+    return flatcc_verify_struct_as_typed_root(buf, bufsiz, thash, 128, 8);
 }
 
 static inline int Alloverse_Mat4_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
 {
-    return flatcc_verify_struct_as_root(buf, bufsiz, fid, 64, 4);
+    return flatcc_verify_struct_as_root(buf, bufsiz, fid, 128, 8);
 }
 
 static int Alloverse_State_verify_table(flatcc_table_verifier_descriptor_t *td)
@@ -131,7 +131,7 @@ static inline int Alloverse_Components_verify_as_root_with_type_hash(const void 
 static int Alloverse_TransformComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
 {
     int ret;
-    if ((ret = flatcc_verify_field(td, 0, 64, 4) /* matrix */)) return ret;
+    if ((ret = flatcc_verify_field(td, 0, 128, 8) /* matrix */)) return ret;
     return flatcc_verify_ok;
 }
 

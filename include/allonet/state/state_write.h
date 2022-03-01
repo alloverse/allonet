@@ -33,7 +33,7 @@ public:
     Alloverse::EntityT *getNextEntity(const char *id);
     void changeComponents(Alloverse::EntityT *entity, const char *addChange, std::vector<std::string> remove);
 
-    virtual void setServerTime(double time) override;
+    virtual double setServerTime(double time) override;
 };
 
 // generate an identifier of 'len'-1 chars into str, and null the last byte in str.

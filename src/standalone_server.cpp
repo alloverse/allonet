@@ -223,7 +223,7 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     auto metadata = unique_ptr<LiveMediaMetadataT>(new LiveMediaMetadataT());
     flatbuffers::GetRoot<LiveMediaMetadata>(parser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
     
-    Alloverse::EntityT *entity = state.getEntity(interaction->sender_entity_id);
+    Alloverse::EntityT *entity = state.getNextEntity(interaction->sender_entity_id);
     if(!entity || !media_type || !media_format || !cJSON_IsObject(media_metadata))
     {
       fprintf(stderr, "Disallowed creating allocating track for %s: invalid argument\n", interaction->sender_entity_id);

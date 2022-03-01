@@ -6,10 +6,7 @@ using namespace Alloverse;
 void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
 {
   // wait until we have received first state before simulating
-  if(
-    state->state == NULL || 
-    Alloverse_Entity_vec_find_by_id(Alloverse_State_entities_get(state->state), "place") == flatbuffers_not_found
-  ) return;
+  if(state->getMutableEntity("place") == NULL) return;
 
   // figure out what time was in pre-sim state
   double old_time = state_set_server_time(state, server_time);
@@ -30,10 +27,10 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
   for (int i = 0; i < intent_count; i++)
   {
     const allo_client_intent *intent = intents[i];
-    const Entity* avatar = state->_cur->entities()->LookupByKey(intent->entity_id);
+    Entity* avatar = state->getMutableEntity(intent->entity_id);
     if (intent->entity_id == NULL || avatar == NULL)
       return;
-    const allo_entity* head = allosim_get_child_with_pose(state, avatar->id()->c_str(), "head");
+    Entity* head = allosim_get_child_with_pose(state, avatar->id()->c_str(), "head");
     allosim_stick_movement(avatar, head, intent, dt, true, diff);
     allosim_pose_movements(state, avatar, intent, intents, intent_count, dt, diff);
     allosim_handle_grabs(state, avatar, intent, dt, diff);
@@ -42,16 +39,16 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
   allosim_animate(state, server_time, diff);
 }
 
-const Entity* allosim_get_child_with_pose(allo_state* state, const char* avatar_id, const char* pose_name)
+Entity* allosim_get_child_with_pose(allo_state* state, const char* avatar_id, const char* pose_name)
 {
   if (!state || !avatar_id || !pose_name || strlen(pose_name) == 0)
     return NULL;
   
-  auto entities = state->_cur->entities();
+  auto entities = state->_cur->mutable_entities();
 
   for(int i = 0, c = entities->size(); i < c; i++)
   {
-    auto entity = entities->Get(i);
+    auto entity = entities->GetMutableObject(i);
     auto comps = entity->components();
     auto rels = comps->relationships();
     auto parent = rels ? rels->parent() : NULL;

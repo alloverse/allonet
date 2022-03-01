@@ -62,6 +62,12 @@ extern allo_m4x4 entity_get_transform_in_coordinate_space(allo_state* state, all
 extern allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space);
 
 #ifdef __cplusplus
-}
+} // extern "C"
+
+#if defined(ALLO_INTERNALS)
+allo_m4x4 GetEntityTransform(const Alloverse::Entity *ent);
+void SetEntityTransform(Alloverse::Entity *ent, allo_m4x4 transform);
+#endif
+
 #endif
 #endif

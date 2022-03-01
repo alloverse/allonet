@@ -185,20 +185,20 @@ typedef flatbuffers_uoffset_t *Alloverse_IntentComponent_mutable_vec_t;
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////  */
 struct Alloverse_Mat4 {
-    alignas(4) float m[16];
+    alignas(8) double m[16];
 };
-static_assert(sizeof(Alloverse_Mat4_t) == 64, "struct size mismatch");
+static_assert(sizeof(Alloverse_Mat4_t) == 128, "struct size mismatch");
 
 static inline const Alloverse_Mat4_t *Alloverse_Mat4__const_ptr_add(const Alloverse_Mat4_t *p, size_t i) { return p + i; }
 static inline Alloverse_Mat4_t *Alloverse_Mat4__ptr_add(Alloverse_Mat4_t *p, size_t i) { return p + i; }
 static inline Alloverse_Mat4_struct_t Alloverse_Mat4_vec_at(Alloverse_Mat4_vec_t vec, size_t i)
 __flatbuffers_struct_vec_at(vec, i)
-static inline size_t Alloverse_Mat4__size(void) { return 64; }
+static inline size_t Alloverse_Mat4__size(void) { return 128; }
 static inline size_t Alloverse_Mat4_vec_len(Alloverse_Mat4_vec_t vec)
 __flatbuffers_vec_len(vec)
 __flatbuffers_struct_as_root(Alloverse_Mat4)
 
-__flatbuffers_define_struct_scalar_fixed_array_field(Alloverse_Mat4, m, flatbuffers_float, float, 16)
+__flatbuffers_define_struct_scalar_fixed_array_field(Alloverse_Mat4, m, flatbuffers_double, double, 16)
 
 
 /** ////////////////////////////////////////////////////////////

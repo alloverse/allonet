@@ -48,7 +48,7 @@ allo_mutable_state::getNextEntity(const char *id)
 double
 allo_mutable_state::setServerTime(double time)
 {
-  auto clock = getNextEntity("place")->components->clock;
+  auto clock = getNextEntity("place")->components.get()->clock.get();
   auto prev = clock->time;
   clock->time = time;
   return prev;

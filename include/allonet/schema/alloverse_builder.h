@@ -17,27 +17,27 @@
 #define flatbuffers_extension "bin"
 #endif
 
-#define __Alloverse_Mat4_formal_args , const float v0[16]
+#define __Alloverse_Mat4_formal_args , const double v0[16]
 #define __Alloverse_Mat4_call_args , v0
-static inline Alloverse_Mat4_t *Alloverse_Mat4_assign(Alloverse_Mat4_t *p, const float v0[16])
-{ flatbuffers_float_array_copy(p->m, v0, 16);
+static inline Alloverse_Mat4_t *Alloverse_Mat4_assign(Alloverse_Mat4_t *p, const double v0[16])
+{ flatbuffers_double_array_copy(p->m, v0, 16);
   return p; }
 static inline Alloverse_Mat4_t *Alloverse_Mat4_copy(Alloverse_Mat4_t *p, const Alloverse_Mat4_t *p2)
-{ flatbuffers_float_array_copy(p->m, p2->m, 16);
+{ flatbuffers_double_array_copy(p->m, p2->m, 16);
   return p; }
-static inline Alloverse_Mat4_t *Alloverse_Mat4_assign_to_pe(Alloverse_Mat4_t *p, const float v0[16])
-{ flatbuffers_float_array_copy_to_pe(p->m, v0, 16);
+static inline Alloverse_Mat4_t *Alloverse_Mat4_assign_to_pe(Alloverse_Mat4_t *p, const double v0[16])
+{ flatbuffers_double_array_copy_to_pe(p->m, v0, 16);
   return p; }
 static inline Alloverse_Mat4_t *Alloverse_Mat4_copy_to_pe(Alloverse_Mat4_t *p, const Alloverse_Mat4_t *p2)
-{ flatbuffers_float_array_copy_to_pe(p->m, p2->m, 16);
+{ flatbuffers_double_array_copy_to_pe(p->m, p2->m, 16);
   return p; }
-static inline Alloverse_Mat4_t *Alloverse_Mat4_assign_from_pe(Alloverse_Mat4_t *p, const float v0[16])
-{ flatbuffers_float_array_copy_from_pe(p->m, v0, 16);
+static inline Alloverse_Mat4_t *Alloverse_Mat4_assign_from_pe(Alloverse_Mat4_t *p, const double v0[16])
+{ flatbuffers_double_array_copy_from_pe(p->m, v0, 16);
   return p; }
 static inline Alloverse_Mat4_t *Alloverse_Mat4_copy_from_pe(Alloverse_Mat4_t *p, const Alloverse_Mat4_t *p2)
-{ flatbuffers_float_array_copy_from_pe(p->m, p2->m, 16);
+{ flatbuffers_double_array_copy_from_pe(p->m, p2->m, 16);
   return p; }
-__flatbuffers_build_struct(flatbuffers_, Alloverse_Mat4, 64, 4, Alloverse_Mat4_file_identifier, Alloverse_Mat4_type_identifier)
+__flatbuffers_build_struct(flatbuffers_, Alloverse_Mat4, 128, 8, Alloverse_Mat4_file_identifier, Alloverse_Mat4_type_identifier)
 __flatbuffers_define_fixed_array_primitives(flatbuffers_, Alloverse_Mat4, Alloverse_Mat4_t)
 
 static const flatbuffers_voffset_t __Alloverse_State_required[] = { 0 };
@@ -220,7 +220,7 @@ static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder
     __flatbuffers_memoize_end(B, t, Alloverse_Components_end(B));
 }
 
-__flatbuffers_build_struct_field(0, flatbuffers_, Alloverse_TransformComponent_matrix, Alloverse_Mat4, 64, 4, Alloverse_TransformComponent)
+__flatbuffers_build_struct_field(0, flatbuffers_, Alloverse_TransformComponent_matrix, Alloverse_Mat4, 128, 8, Alloverse_TransformComponent)
 
 static inline Alloverse_TransformComponent_ref_t Alloverse_TransformComponent_create(flatbuffers_builder_t *B __Alloverse_TransformComponent_formal_args)
 {

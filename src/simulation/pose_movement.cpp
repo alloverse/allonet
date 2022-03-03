@@ -1,22 +1,27 @@
+#define ALLO_INTERNALS 1
 #include "simulation.h"
+#include "alloverse_generated.h"
+using namespace Alloverse;
 
-void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt, allo_state_diff *diff)
+void allosim_pose_movements(allo_state* state, Entity* avatar, const allo_client_intent *intent, const allo_client_intent** other_intents, int intent_count, double dt, allo_state_diff *diff)
 {
   (void)dt;
-  allo_entity* entity = NULL;
-  LIST_FOREACH(entity, &state->entities, pointers)
+  auto entities = state->_cur->mutable_entities();
+
+  for(int i = 0, c = entities->size(); i < c; i++)
   {
-    cJSON* rels = cJSON_GetObjectItemCaseSensitive(entity->components, "relationships");
-    const char* parent = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(rels, "parent"));
-    cJSON* intents = cJSON_GetObjectItemCaseSensitive(entity->components, "intent");
-    const char* actuate_pose = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(intents, "actuate_pose"));
-    const char* from_avatar = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(intents, "from_avatar"));
+    Entity *entity = entities->GetMutableObject(i);
+    auto rels = entity->components()->relationships();
+    auto parent = rels ? rels->parent()->c_str() : NULL;
+    auto intentc = entity->components()->intent();
+    auto actuate_pose = intent ? intentc->actuate_pose()->c_str() : NULL;
+    auto from_avatar = intent ? intentc->from_avatar() ? intentc->from_avatar()->c_str() : NULL : NULL;
 
     // don't care about entities that don't try to pose
     if (!actuate_pose)
       continue;
     // only do the work in this call of move_pose if this entity is owned by the current avatar
-    if (entity->owner_agent_id && strcmp(entity->owner_agent_id, avatar->owner_agent_id) != 0)
+    if (entity->owner_agent_id() && strcmp(entity->owner_agent_id()->c_str(), avatar->owner_agent_id()->c_str()) != 0)
       continue;
 
     // if this entity wants to actuate some _other_ agent's intent...
@@ -49,7 +54,7 @@ void allosim_pose_movements(allo_state* state, allo_entity* avatar, const allo_c
     if (allo_m4x4_is_identity(new_transform))
       continue;
 
-    entity_set_transform(entity, new_transform);
-    allo_state_diff_mark_component_updated(diff, entity->id, "transform", cJSON_GetObjectItemCaseSensitive(entity->components, "transform"));
+    SetEntityTransform(entity, new_transform);
+    allo_state_diff_mark_component_updated(diff, entity->id()->c_str(), "transform", NULL);
   }
 }

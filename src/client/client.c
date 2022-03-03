@@ -425,6 +425,7 @@ static void _alloclient_disconnect(alloclient *client, int reason)
         opus_encoder_destroy(_internal(client)->opus_encoder);
         allo_client_intent_free(_internal(client)->latest_intent);
         allo_delta_clear(&_internal(client)->history);
+        allo_simulation_cache_destroy(&client->_simulation_cache);
         free(_internal(client)->avatar_id);
         free(_internal(client));
     }
@@ -585,7 +586,7 @@ static void _alloclient_simulate(alloclient *client)
   
   double now = alloclient_get_time(client);
   allo_state_diff diff; allo_state_diff_init(&diff);
-  allo_simulate(client->_state, intents, 1, now, &diff);
+  allo_simulate(client->_state, client->_simulation_cache, intents, 1, now, &diff);
   if (client->state_callback)
   {
     client->state_callback(client, client->_state, &diff);
@@ -669,6 +670,7 @@ alloclient *_alloclient_create()
     client->_internal = calloc(1, sizeof(alloclient_internal));
     _internal(client)->latest_intent = allo_client_intent_create();
     assetstore_init(&(_internal(client)->assets));
+    allo_simulation_cache_create(&client->_simulation_cache);
     
     scheduler_init(&_internal(client)->jobs);
     

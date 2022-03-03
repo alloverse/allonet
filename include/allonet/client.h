@@ -189,6 +189,7 @@ typedef struct alloclient {
     void *_internal;
     void *_internal2;
     void *_backref; // use this as a backref for callbacks  
+    void *_simulation_cache;
 
     void (*clock_callback)(alloclient *client, double latency, double server_delta);
     double clock_latency;

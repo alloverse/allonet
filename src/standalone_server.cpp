@@ -20,6 +20,7 @@ using namespace Alloverse;
 static alloserver* serv;
 static allo_mutable_state state;
 static EntityT *place;
+static void *simulation_cache;
 static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
@@ -611,7 +612,7 @@ static void step(double goalDt)
     intents[count++] = client->intent;
     if (count == 32) break;
   }
-  allo_simulate(&state, (const allo_client_intent**)intents, count, now, NULL);
+  allo_simulate(&state, simulation_cache, (const allo_client_intent**)intents, count, now, NULL);
   broadcast_server_state(serv);
 }
 
@@ -695,6 +696,7 @@ alloserver *alloserv_start_standalone(int listenhost, int port, const char *plac
   serv->clients_callback = clients_changed;
   serv->raw_indata_callback = received_from_client;
   serv->state = &state;
+  allo_simulation_cache_create(&simulation_cache);
 
   fprintf(stderr, "alloserv_run_standalone open on port %d\n", serv->_port);
   addDefaultEntities(&state);
@@ -729,4 +731,5 @@ void alloserv_stop_standalone()
   if(serv) alloserv_stop(serv);
   place = NULL;
   serv = NULL;
+  allo_simulation_cache_destroy(&simulation_cache);
 }

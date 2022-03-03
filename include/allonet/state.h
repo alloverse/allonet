@@ -18,16 +18,21 @@ extern bool allo_initialize(bool redirect_stdout);
  */
 extern void allo_libav_initialize(void);
 
+extern void allo_simulation_cache_create(void **cache);
+extern void allo_simulation_cache_destroy(void **cache);
+
 /**
  * Run world simulation for a given state and known intents. Modifies state inline.
  * Will run the number of world iterations needed to get to server_time (or skip if too many)
+ * @param state         World state to perform simulation in.
+ * @param cache         Pointer to a cache created with allo_simulation_cache_create();
+ * @param intents       List of all the connected clients' intents (or just localhosts if running on client)
+ * @param intent_count  How many intents are in the intents[] list?
+ * @param server_time   if on server, what's the current get_ts_monod()? if on client, what's the current alloclient_get_time()?
+ * @param diff          an allocated diff set that will have the list of changes from this simulation iteration
  */
-extern void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff);
+extern void allo_simulate(allo_state* state, void *cache, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff);
 
-
-extern cJSON *allo_state_to_json(allo_state *state, bool include_agent_id);
-extern allo_state *allo_state_from_json(cJSON *state);
-void allo_state_to_flat(allo_state *state, flatcc_builder_t *B);
 
 #ifdef __cplusplus
 }

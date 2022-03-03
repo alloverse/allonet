@@ -3,8 +3,19 @@
 #include "alloverse_generated.h"
 using namespace Alloverse;
 
-void allo_simulate(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
+void allo_simulation_cache_create(void **cache)
 {
+    *cache = new SimulationCache();
+}
+void allo_simulation_cache_destroy(void **cache)
+{
+  delete *(SimulationCache**)cache;
+}
+
+void allo_simulate(allo_state* state, void *cache, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff)
+{
+  SimulationCache *simcache = (SimulationCache*)cache;
+
   // wait until we have received first state before simulating
   if(state->getMutableEntity("place") == NULL) return;
 
@@ -19,10 +30,10 @@ void allo_simulate(allo_state* state, const allo_client_intent* intents[], int i
   // for now, slow down simulation if we're given a larger dt than a 20fps equivalent
   double dt = server_time - old_time;
   dt = dt < 1/5.0 ? dt : 1/5.0;
-  allo_simulate_iteration(state, intents, intent_count, server_time, dt, diff);
+  allo_simulate_iteration(state, simcache, intents, intent_count, server_time, dt, diff);
 }
 
-void allo_simulate_iteration(allo_state* state, const allo_client_intent* intents[], int intent_count, double server_time, double dt, allo_state_diff *diff)
+void allo_simulate_iteration(allo_state* state, SimulationCache *cache, const allo_client_intent* intents[], int intent_count, double server_time, double dt, allo_state_diff *diff)
 {
   for (int i = 0; i < intent_count; i++)
   {
@@ -36,7 +47,7 @@ void allo_simulate_iteration(allo_state* state, const allo_client_intent* intent
     allosim_handle_grabs(state, avatar, intent, dt, diff);
   }
 
-  allosim_animate(state, server_time, diff);
+  allosim_animate(state, cache, server_time, diff);
 }
 
 Entity* allosim_get_child_with_pose(allo_state* state, const char* avatar_id, const char* pose_name)

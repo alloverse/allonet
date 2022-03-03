@@ -23,6 +23,11 @@ typedef const Alloverse_Mat4_t *Alloverse_Mat4_struct_t;
 typedef Alloverse_Mat4_t *Alloverse_Mat4_mutable_struct_t;
 typedef const Alloverse_Mat4_t *Alloverse_Mat4_vec_t;
 typedef Alloverse_Mat4_t *Alloverse_Mat4_mutable_vec_t;
+typedef struct Alloverse_Vec3 Alloverse_Vec3_t;
+typedef const Alloverse_Vec3_t *Alloverse_Vec3_struct_t;
+typedef Alloverse_Vec3_t *Alloverse_Vec3_mutable_struct_t;
+typedef const Alloverse_Vec3_t *Alloverse_Vec3_vec_t;
+typedef Alloverse_Vec3_t *Alloverse_Vec3_mutable_vec_t;
 
 typedef const struct Alloverse_State_table *Alloverse_State_table_t;
 typedef struct Alloverse_State_table *Alloverse_State_mutable_table_t;
@@ -60,6 +65,30 @@ typedef const struct Alloverse_IntentComponent_table *Alloverse_IntentComponent_
 typedef struct Alloverse_IntentComponent_table *Alloverse_IntentComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_IntentComponent_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_IntentComponent_mutable_vec_t;
+typedef const struct Alloverse_NumberAnimationValue_table *Alloverse_NumberAnimationValue_table_t;
+typedef struct Alloverse_NumberAnimationValue_table *Alloverse_NumberAnimationValue_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_NumberAnimationValue_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_NumberAnimationValue_mutable_vec_t;
+typedef const struct Alloverse_VectorAnimationValue_table *Alloverse_VectorAnimationValue_table_t;
+typedef struct Alloverse_VectorAnimationValue_table *Alloverse_VectorAnimationValue_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_VectorAnimationValue_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_VectorAnimationValue_mutable_vec_t;
+typedef const struct Alloverse_RotationAnimationValue_table *Alloverse_RotationAnimationValue_table_t;
+typedef struct Alloverse_RotationAnimationValue_table *Alloverse_RotationAnimationValue_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_RotationAnimationValue_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_RotationAnimationValue_mutable_vec_t;
+typedef const struct Alloverse_TransformAnimationValue_table *Alloverse_TransformAnimationValue_table_t;
+typedef struct Alloverse_TransformAnimationValue_table *Alloverse_TransformAnimationValue_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_TransformAnimationValue_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_TransformAnimationValue_mutable_vec_t;
+typedef const struct Alloverse_PropertyAnimation_table *Alloverse_PropertyAnimation_table_t;
+typedef struct Alloverse_PropertyAnimation_table *Alloverse_PropertyAnimation_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_PropertyAnimation_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_PropertyAnimation_mutable_vec_t;
+typedef const struct Alloverse_PropertyAnimationsComponent_table *Alloverse_PropertyAnimationsComponent_table_t;
+typedef struct Alloverse_PropertyAnimationsComponent_table *Alloverse_PropertyAnimationsComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_mutable_vec_t;
 #ifndef Alloverse_State_file_identifier
 #define Alloverse_State_file_identifier 0
 #endif
@@ -168,6 +197,78 @@ typedef flatbuffers_uoffset_t *Alloverse_IntentComponent_mutable_vec_t;
 #ifndef Alloverse_IntentComponent_file_extension
 #define Alloverse_IntentComponent_file_extension "bin"
 #endif
+#ifndef Alloverse_NumberAnimationValue_file_identifier
+#define Alloverse_NumberAnimationValue_file_identifier 0
+#endif
+/* deprecated, use Alloverse_NumberAnimationValue_file_identifier */
+#ifndef Alloverse_NumberAnimationValue_identifier
+#define Alloverse_NumberAnimationValue_identifier 0
+#endif
+#define Alloverse_NumberAnimationValue_type_hash ((flatbuffers_thash_t)0x89ceeaa6)
+#define Alloverse_NumberAnimationValue_type_identifier "\xa6\xea\xce\x89"
+#ifndef Alloverse_NumberAnimationValue_file_extension
+#define Alloverse_NumberAnimationValue_file_extension "bin"
+#endif
+#ifndef Alloverse_VectorAnimationValue_file_identifier
+#define Alloverse_VectorAnimationValue_file_identifier 0
+#endif
+/* deprecated, use Alloverse_VectorAnimationValue_file_identifier */
+#ifndef Alloverse_VectorAnimationValue_identifier
+#define Alloverse_VectorAnimationValue_identifier 0
+#endif
+#define Alloverse_VectorAnimationValue_type_hash ((flatbuffers_thash_t)0x9fafb21c)
+#define Alloverse_VectorAnimationValue_type_identifier "\x1c\xb2\xaf\x9f"
+#ifndef Alloverse_VectorAnimationValue_file_extension
+#define Alloverse_VectorAnimationValue_file_extension "bin"
+#endif
+#ifndef Alloverse_RotationAnimationValue_file_identifier
+#define Alloverse_RotationAnimationValue_file_identifier 0
+#endif
+/* deprecated, use Alloverse_RotationAnimationValue_file_identifier */
+#ifndef Alloverse_RotationAnimationValue_identifier
+#define Alloverse_RotationAnimationValue_identifier 0
+#endif
+#define Alloverse_RotationAnimationValue_type_hash ((flatbuffers_thash_t)0xcb2b2c3d)
+#define Alloverse_RotationAnimationValue_type_identifier "\x3d\x2c\x2b\xcb"
+#ifndef Alloverse_RotationAnimationValue_file_extension
+#define Alloverse_RotationAnimationValue_file_extension "bin"
+#endif
+#ifndef Alloverse_TransformAnimationValue_file_identifier
+#define Alloverse_TransformAnimationValue_file_identifier 0
+#endif
+/* deprecated, use Alloverse_TransformAnimationValue_file_identifier */
+#ifndef Alloverse_TransformAnimationValue_identifier
+#define Alloverse_TransformAnimationValue_identifier 0
+#endif
+#define Alloverse_TransformAnimationValue_type_hash ((flatbuffers_thash_t)0xd2aa2c13)
+#define Alloverse_TransformAnimationValue_type_identifier "\x13\x2c\xaa\xd2"
+#ifndef Alloverse_TransformAnimationValue_file_extension
+#define Alloverse_TransformAnimationValue_file_extension "bin"
+#endif
+#ifndef Alloverse_PropertyAnimation_file_identifier
+#define Alloverse_PropertyAnimation_file_identifier 0
+#endif
+/* deprecated, use Alloverse_PropertyAnimation_file_identifier */
+#ifndef Alloverse_PropertyAnimation_identifier
+#define Alloverse_PropertyAnimation_identifier 0
+#endif
+#define Alloverse_PropertyAnimation_type_hash ((flatbuffers_thash_t)0x2abf6da1)
+#define Alloverse_PropertyAnimation_type_identifier "\xa1\x6d\xbf\x2a"
+#ifndef Alloverse_PropertyAnimation_file_extension
+#define Alloverse_PropertyAnimation_file_extension "bin"
+#endif
+#ifndef Alloverse_PropertyAnimationsComponent_file_identifier
+#define Alloverse_PropertyAnimationsComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_PropertyAnimationsComponent_file_identifier */
+#ifndef Alloverse_PropertyAnimationsComponent_identifier
+#define Alloverse_PropertyAnimationsComponent_identifier 0
+#endif
+#define Alloverse_PropertyAnimationsComponent_type_hash ((flatbuffers_thash_t)0x85ac1165)
+#define Alloverse_PropertyAnimationsComponent_type_identifier "\x65\x11\xac\x85"
+#ifndef Alloverse_PropertyAnimationsComponent_file_extension
+#define Alloverse_PropertyAnimationsComponent_file_extension "bin"
+#endif
 #ifndef Alloverse_Mat4_file_identifier
 #define Alloverse_Mat4_file_identifier 0
 #endif
@@ -179,6 +280,18 @@ typedef flatbuffers_uoffset_t *Alloverse_IntentComponent_mutable_vec_t;
 #define Alloverse_Mat4_type_identifier "\x82\x3d\xa3\x5e"
 #ifndef Alloverse_Mat4_file_extension
 #define Alloverse_Mat4_file_extension "bin"
+#endif
+#ifndef Alloverse_Vec3_file_identifier
+#define Alloverse_Vec3_file_identifier 0
+#endif
+/* deprecated, use Alloverse_Vec3_file_identifier */
+#ifndef Alloverse_Vec3_identifier
+#define Alloverse_Vec3_identifier 0
+#endif
+#define Alloverse_Vec3_type_hash ((flatbuffers_thash_t)0x7e71b453)
+#define Alloverse_Vec3_type_identifier "\x53\xb4\x71\x7e"
+#ifndef Alloverse_Vec3_file_extension
+#define Alloverse_Vec3_file_extension "bin"
 #endif
 
 
@@ -199,6 +312,22 @@ __flatbuffers_vec_len(vec)
 __flatbuffers_struct_as_root(Alloverse_Mat4)
 
 __flatbuffers_define_struct_scalar_fixed_array_field(Alloverse_Mat4, m, flatbuffers_double, double, 16)
+
+struct Alloverse_Vec3 {
+    alignas(8) double v[3];
+};
+static_assert(sizeof(Alloverse_Vec3_t) == 24, "struct size mismatch");
+
+static inline const Alloverse_Vec3_t *Alloverse_Vec3__const_ptr_add(const Alloverse_Vec3_t *p, size_t i) { return p + i; }
+static inline Alloverse_Vec3_t *Alloverse_Vec3__ptr_add(Alloverse_Vec3_t *p, size_t i) { return p + i; }
+static inline Alloverse_Vec3_struct_t Alloverse_Vec3_vec_at(Alloverse_Vec3_vec_t vec, size_t i)
+__flatbuffers_struct_vec_at(vec, i)
+static inline size_t Alloverse_Vec3__size(void) { return 24; }
+static inline size_t Alloverse_Vec3_vec_len(Alloverse_Vec3_vec_t vec)
+__flatbuffers_vec_len(vec)
+__flatbuffers_struct_as_root(Alloverse_Vec3)
+
+__flatbuffers_define_struct_scalar_fixed_array_field(Alloverse_Vec3, v, flatbuffers_double, double, 3)
 
 
 /** ////////////////////////////////////////////////////////////
@@ -244,7 +373,8 @@ __flatbuffers_define_table_field(1, Alloverse_Components, relationships, Allover
 __flatbuffers_define_table_field(2, Alloverse_Components, live_media, Alloverse_LiveMediaComponent_table_t, 0)
 __flatbuffers_define_table_field(3, Alloverse_Components, clock, Alloverse_ClockComponent_table_t, 0)
 __flatbuffers_define_table_field(4, Alloverse_Components, intent, Alloverse_IntentComponent_table_t, 0)
-__flatbuffers_define_vector_field(5, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
+__flatbuffers_define_table_field(5, Alloverse_Components, property_animations, Alloverse_PropertyAnimationsComponent_table_t, 0)
+__flatbuffers_define_vector_field(6, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////
@@ -316,6 +446,113 @@ __flatbuffers_table_as_root(Alloverse_IntentComponent)
 
 __flatbuffers_define_string_field(0, Alloverse_IntentComponent, actuate_pose, 0)
 __flatbuffers_define_string_field(1, Alloverse_IntentComponent, from_avatar, 0)
+
+struct Alloverse_NumberAnimationValue_table { uint8_t unused__; };
+
+static inline size_t Alloverse_NumberAnimationValue_vec_len(Alloverse_NumberAnimationValue_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_NumberAnimationValue_table_t Alloverse_NumberAnimationValue_vec_at(Alloverse_NumberAnimationValue_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_NumberAnimationValue_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_NumberAnimationValue)
+
+__flatbuffers_define_scalar_field(0, Alloverse_NumberAnimationValue, number, flatbuffers_double, double, 0.0000000000000000)
+
+struct Alloverse_VectorAnimationValue_table { uint8_t unused__; };
+
+static inline size_t Alloverse_VectorAnimationValue_vec_len(Alloverse_VectorAnimationValue_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_VectorAnimationValue_table_t Alloverse_VectorAnimationValue_vec_at(Alloverse_VectorAnimationValue_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_VectorAnimationValue_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_VectorAnimationValue)
+
+__flatbuffers_define_struct_field(0, Alloverse_VectorAnimationValue, vector, Alloverse_Vec3_struct_t, 0)
+
+struct Alloverse_RotationAnimationValue_table { uint8_t unused__; };
+
+static inline size_t Alloverse_RotationAnimationValue_vec_len(Alloverse_RotationAnimationValue_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_RotationAnimationValue_table_t Alloverse_RotationAnimationValue_vec_at(Alloverse_RotationAnimationValue_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_RotationAnimationValue_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_RotationAnimationValue)
+
+__flatbuffers_define_scalar_field(0, Alloverse_RotationAnimationValue, angle, flatbuffers_double, double, 0.0000000000000000)
+__flatbuffers_define_struct_field(1, Alloverse_RotationAnimationValue, axis, Alloverse_Vec3_struct_t, 0)
+
+struct Alloverse_TransformAnimationValue_table { uint8_t unused__; };
+
+static inline size_t Alloverse_TransformAnimationValue_vec_len(Alloverse_TransformAnimationValue_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_TransformAnimationValue_table_t Alloverse_TransformAnimationValue_vec_at(Alloverse_TransformAnimationValue_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_TransformAnimationValue_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_TransformAnimationValue)
+
+__flatbuffers_define_struct_field(0, Alloverse_TransformAnimationValue, matrix, Alloverse_Mat4_struct_t, 0)
+typedef uint8_t Alloverse_AnimationValue_union_type_t;
+__flatbuffers_define_integer_type(Alloverse_AnimationValue, Alloverse_AnimationValue_union_type_t, 8)
+__flatbuffers_define_union(flatbuffers_, Alloverse_AnimationValue)
+#define Alloverse_AnimationValue_NONE ((Alloverse_AnimationValue_union_type_t)UINT8_C(0))
+#define Alloverse_AnimationValue_number ((Alloverse_AnimationValue_union_type_t)UINT8_C(1))
+#define Alloverse_AnimationValue_vector ((Alloverse_AnimationValue_union_type_t)UINT8_C(2))
+#define Alloverse_AnimationValue_rotation ((Alloverse_AnimationValue_union_type_t)UINT8_C(3))
+#define Alloverse_AnimationValue_matrix ((Alloverse_AnimationValue_union_type_t)UINT8_C(4))
+
+static inline const char *Alloverse_AnimationValue_type_name(Alloverse_AnimationValue_union_type_t type)
+{
+    switch (type) {
+    case Alloverse_AnimationValue_NONE: return "NONE";
+    case Alloverse_AnimationValue_number: return "number";
+    case Alloverse_AnimationValue_vector: return "vector";
+    case Alloverse_AnimationValue_rotation: return "rotation";
+    case Alloverse_AnimationValue_matrix: return "matrix";
+    default: return "";
+    }
+}
+
+static inline int Alloverse_AnimationValue_is_known_type(Alloverse_AnimationValue_union_type_t type)
+{
+    switch (type) {
+    case Alloverse_AnimationValue_NONE: return 1;
+    case Alloverse_AnimationValue_number: return 1;
+    case Alloverse_AnimationValue_vector: return 1;
+    case Alloverse_AnimationValue_rotation: return 1;
+    case Alloverse_AnimationValue_matrix: return 1;
+    default: return 0;
+    }
+}
+
+
+struct Alloverse_PropertyAnimation_table { uint8_t unused__; };
+
+static inline size_t Alloverse_PropertyAnimation_vec_len(Alloverse_PropertyAnimation_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_PropertyAnimation_table_t Alloverse_PropertyAnimation_vec_at(Alloverse_PropertyAnimation_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_PropertyAnimation_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_PropertyAnimation)
+
+__flatbuffers_define_string_field(0, Alloverse_PropertyAnimation, id, 0)
+__flatbuffers_define_find_by_string_field(Alloverse_PropertyAnimation, id)
+__flatbuffers_define_table_sort_by_string_field(Alloverse_PropertyAnimation, id)
+__flatbuffers_define_default_find_by_string_field(Alloverse_PropertyAnimation, id)
+__flatbuffers_define_default_scan_by_string_field(Alloverse_PropertyAnimation, id)
+#define Alloverse_PropertyAnimation_vec_sort Alloverse_PropertyAnimation_vec_sort_by_id
+__flatbuffers_define_string_field(1, Alloverse_PropertyAnimation, path, 0)
+__flatbuffers_define_union_field(flatbuffers_, 3, Alloverse_PropertyAnimation, from, Alloverse_AnimationValue, 0)
+__flatbuffers_define_union_field(flatbuffers_, 5, Alloverse_PropertyAnimation, to, Alloverse_AnimationValue, 0)
+__flatbuffers_define_scalar_field(6, Alloverse_PropertyAnimation, start_at, flatbuffers_double, double, 0.0000000000000000)
+__flatbuffers_define_scalar_field(7, Alloverse_PropertyAnimation, duration, flatbuffers_double, double, 1.0000000000000000)
+__flatbuffers_define_string_field(8, Alloverse_PropertyAnimation, easing, 0)
+__flatbuffers_define_scalar_field(9, Alloverse_PropertyAnimation, repeats, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(10, Alloverse_PropertyAnimation, autoreverses, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+
+struct Alloverse_PropertyAnimationsComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_PropertyAnimationsComponent_vec_len(Alloverse_PropertyAnimationsComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_PropertyAnimationsComponent_table_t Alloverse_PropertyAnimationsComponent_vec_at(Alloverse_PropertyAnimationsComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_PropertyAnimationsComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_PropertyAnimationsComponent)
+
+__flatbuffers_define_vector_field(0, Alloverse_PropertyAnimationsComponent, animations, Alloverse_PropertyAnimation_vec_t, 0)
 
 
 #include "flatcc/flatcc_epilogue.h"

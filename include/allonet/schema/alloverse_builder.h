@@ -40,6 +40,33 @@ static inline Alloverse_Mat4_t *Alloverse_Mat4_copy_from_pe(Alloverse_Mat4_t *p,
 __flatbuffers_build_struct(flatbuffers_, Alloverse_Mat4, 128, 8, Alloverse_Mat4_file_identifier, Alloverse_Mat4_type_identifier)
 __flatbuffers_define_fixed_array_primitives(flatbuffers_, Alloverse_Mat4, Alloverse_Mat4_t)
 
+#define __Alloverse_Vec3_formal_args , const double v0[3]
+#define __Alloverse_Vec3_call_args , v0
+static inline Alloverse_Vec3_t *Alloverse_Vec3_assign(Alloverse_Vec3_t *p, const double v0[3])
+{ flatbuffers_double_array_copy(p->v, v0, 3);
+  return p; }
+static inline Alloverse_Vec3_t *Alloverse_Vec3_copy(Alloverse_Vec3_t *p, const Alloverse_Vec3_t *p2)
+{ flatbuffers_double_array_copy(p->v, p2->v, 3);
+  return p; }
+static inline Alloverse_Vec3_t *Alloverse_Vec3_assign_to_pe(Alloverse_Vec3_t *p, const double v0[3])
+{ flatbuffers_double_array_copy_to_pe(p->v, v0, 3);
+  return p; }
+static inline Alloverse_Vec3_t *Alloverse_Vec3_copy_to_pe(Alloverse_Vec3_t *p, const Alloverse_Vec3_t *p2)
+{ flatbuffers_double_array_copy_to_pe(p->v, p2->v, 3);
+  return p; }
+static inline Alloverse_Vec3_t *Alloverse_Vec3_assign_from_pe(Alloverse_Vec3_t *p, const double v0[3])
+{ flatbuffers_double_array_copy_from_pe(p->v, v0, 3);
+  return p; }
+static inline Alloverse_Vec3_t *Alloverse_Vec3_copy_from_pe(Alloverse_Vec3_t *p, const Alloverse_Vec3_t *p2)
+{ flatbuffers_double_array_copy_from_pe(p->v, p2->v, 3);
+  return p; }
+__flatbuffers_build_struct(flatbuffers_, Alloverse_Vec3, 24, 8, Alloverse_Vec3_file_identifier, Alloverse_Vec3_type_identifier)
+__flatbuffers_define_fixed_array_primitives(flatbuffers_, Alloverse_Vec3, Alloverse_Vec3_t)
+
+typedef flatbuffers_union_ref_t Alloverse_AnimationValue_union_ref_t;
+typedef flatbuffers_union_vec_ref_t Alloverse_AnimationValue_union_vec_ref_t;
+static Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_clone(flatbuffers_builder_t *B, Alloverse_AnimationValue_union_t t);
+
 static const flatbuffers_voffset_t __Alloverse_State_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_State_ref_t;
 static Alloverse_State_ref_t Alloverse_State_clone(flatbuffers_builder_t *B, Alloverse_State_table_t t);
@@ -53,7 +80,7 @@ __flatbuffers_build_table(flatbuffers_, Alloverse_Entity, 3)
 static const flatbuffers_voffset_t __Alloverse_Components_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_Components_ref_t;
 static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder_t *B, Alloverse_Components_table_t t);
-__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 6)
+__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 7)
 
 static const flatbuffers_voffset_t __Alloverse_TransformComponent_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_TransformComponent_ref_t;
@@ -85,6 +112,36 @@ typedef flatbuffers_ref_t Alloverse_IntentComponent_ref_t;
 static Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_clone(flatbuffers_builder_t *B, Alloverse_IntentComponent_table_t t);
 __flatbuffers_build_table(flatbuffers_, Alloverse_IntentComponent, 2)
 
+static const flatbuffers_voffset_t __Alloverse_NumberAnimationValue_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_NumberAnimationValue_ref_t;
+static Alloverse_NumberAnimationValue_ref_t Alloverse_NumberAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_NumberAnimationValue_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_NumberAnimationValue, 1)
+
+static const flatbuffers_voffset_t __Alloverse_VectorAnimationValue_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_VectorAnimationValue_ref_t;
+static Alloverse_VectorAnimationValue_ref_t Alloverse_VectorAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_VectorAnimationValue_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_VectorAnimationValue, 1)
+
+static const flatbuffers_voffset_t __Alloverse_RotationAnimationValue_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_RotationAnimationValue_ref_t;
+static Alloverse_RotationAnimationValue_ref_t Alloverse_RotationAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_RotationAnimationValue_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_RotationAnimationValue, 2)
+
+static const flatbuffers_voffset_t __Alloverse_TransformAnimationValue_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_TransformAnimationValue_ref_t;
+static Alloverse_TransformAnimationValue_ref_t Alloverse_TransformAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_TransformAnimationValue_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_TransformAnimationValue, 1)
+
+static const flatbuffers_voffset_t __Alloverse_PropertyAnimation_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_PropertyAnimation_ref_t;
+static Alloverse_PropertyAnimation_ref_t Alloverse_PropertyAnimation_clone(flatbuffers_builder_t *B, Alloverse_PropertyAnimation_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_PropertyAnimation, 11)
+
+static const flatbuffers_voffset_t __Alloverse_PropertyAnimationsComponent_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_PropertyAnimationsComponent_ref_t;
+static Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_clone(flatbuffers_builder_t *B, Alloverse_PropertyAnimationsComponent_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_PropertyAnimationsComponent, 1)
+
 #define __Alloverse_State_formal_args , uint64_t v0, Alloverse_Entity_vec_ref_t v1
 #define __Alloverse_State_call_args , v0, v1
 static inline Alloverse_State_ref_t Alloverse_State_create(flatbuffers_builder_t *B __Alloverse_State_formal_args);
@@ -96,9 +153,11 @@ static inline Alloverse_Entity_ref_t Alloverse_Entity_create(flatbuffers_builder
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Entity, Alloverse_Entity_file_identifier, Alloverse_Entity_type_identifier)
 
 #define __Alloverse_Components_formal_args ,\
-  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3, Alloverse_IntentComponent_ref_t v4, flatbuffers_uint8_vec_ref_t v5
+  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3,\
+  Alloverse_IntentComponent_ref_t v4, Alloverse_PropertyAnimationsComponent_ref_t v5, flatbuffers_uint8_vec_ref_t v6
 #define __Alloverse_Components_call_args ,\
-  v0, v1, v2, v3, v4, v5
+  v0, v1, v2, v3,\
+  v4, v5, v6
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Components, Alloverse_Components_file_identifier, Alloverse_Components_type_identifier)
 
@@ -131,6 +190,63 @@ __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_ClockComponent, Allover
 #define __Alloverse_IntentComponent_call_args , v0, v1
 static inline Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_create(flatbuffers_builder_t *B __Alloverse_IntentComponent_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_IntentComponent, Alloverse_IntentComponent_file_identifier, Alloverse_IntentComponent_type_identifier)
+
+#define __Alloverse_NumberAnimationValue_formal_args , double v0
+#define __Alloverse_NumberAnimationValue_call_args , v0
+static inline Alloverse_NumberAnimationValue_ref_t Alloverse_NumberAnimationValue_create(flatbuffers_builder_t *B __Alloverse_NumberAnimationValue_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_NumberAnimationValue, Alloverse_NumberAnimationValue_file_identifier, Alloverse_NumberAnimationValue_type_identifier)
+
+#define __Alloverse_VectorAnimationValue_formal_args , Alloverse_Vec3_t *v0
+#define __Alloverse_VectorAnimationValue_call_args , v0
+static inline Alloverse_VectorAnimationValue_ref_t Alloverse_VectorAnimationValue_create(flatbuffers_builder_t *B __Alloverse_VectorAnimationValue_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_VectorAnimationValue, Alloverse_VectorAnimationValue_file_identifier, Alloverse_VectorAnimationValue_type_identifier)
+
+#define __Alloverse_RotationAnimationValue_formal_args , double v0, Alloverse_Vec3_t *v1
+#define __Alloverse_RotationAnimationValue_call_args , v0, v1
+static inline Alloverse_RotationAnimationValue_ref_t Alloverse_RotationAnimationValue_create(flatbuffers_builder_t *B __Alloverse_RotationAnimationValue_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_RotationAnimationValue, Alloverse_RotationAnimationValue_file_identifier, Alloverse_RotationAnimationValue_type_identifier)
+
+#define __Alloverse_TransformAnimationValue_formal_args , Alloverse_Mat4_t *v0
+#define __Alloverse_TransformAnimationValue_call_args , v0
+static inline Alloverse_TransformAnimationValue_ref_t Alloverse_TransformAnimationValue_create(flatbuffers_builder_t *B __Alloverse_TransformAnimationValue_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_TransformAnimationValue, Alloverse_TransformAnimationValue_file_identifier, Alloverse_TransformAnimationValue_type_identifier)
+
+#define __Alloverse_PropertyAnimation_formal_args ,\
+  flatbuffers_string_ref_t v0, flatbuffers_string_ref_t v1, Alloverse_AnimationValue_union_ref_t v3, Alloverse_AnimationValue_union_ref_t v5,\
+  double v6, double v7, flatbuffers_string_ref_t v8, flatbuffers_bool_t v9, flatbuffers_bool_t v10
+#define __Alloverse_PropertyAnimation_call_args ,\
+  v0, v1, v3, v5,\
+  v6, v7, v8, v9, v10
+static inline Alloverse_PropertyAnimation_ref_t Alloverse_PropertyAnimation_create(flatbuffers_builder_t *B __Alloverse_PropertyAnimation_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_PropertyAnimation, Alloverse_PropertyAnimation_file_identifier, Alloverse_PropertyAnimation_type_identifier)
+
+#define __Alloverse_PropertyAnimationsComponent_formal_args , Alloverse_PropertyAnimation_vec_ref_t v0
+#define __Alloverse_PropertyAnimationsComponent_call_args , v0
+static inline Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_create(flatbuffers_builder_t *B __Alloverse_PropertyAnimationsComponent_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_PropertyAnimationsComponent, Alloverse_PropertyAnimationsComponent_file_identifier, Alloverse_PropertyAnimationsComponent_type_identifier)
+
+static inline Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_as_NONE(void)
+{ Alloverse_AnimationValue_union_ref_t uref; uref.type = Alloverse_AnimationValue_NONE; uref.value = 0; return uref; }
+static inline Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_as_number(Alloverse_NumberAnimationValue_ref_t ref)
+{ Alloverse_AnimationValue_union_ref_t uref; uref.type = Alloverse_AnimationValue_number; uref.value = ref; return uref; }
+static inline Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_as_vector(Alloverse_VectorAnimationValue_ref_t ref)
+{ Alloverse_AnimationValue_union_ref_t uref; uref.type = Alloverse_AnimationValue_vector; uref.value = ref; return uref; }
+static inline Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_as_rotation(Alloverse_RotationAnimationValue_ref_t ref)
+{ Alloverse_AnimationValue_union_ref_t uref; uref.type = Alloverse_AnimationValue_rotation; uref.value = ref; return uref; }
+static inline Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_as_matrix(Alloverse_TransformAnimationValue_ref_t ref)
+{ Alloverse_AnimationValue_union_ref_t uref; uref.type = Alloverse_AnimationValue_matrix; uref.value = ref; return uref; }
+__flatbuffers_build_union_vector(flatbuffers_, Alloverse_AnimationValue)
+
+static Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_clone(flatbuffers_builder_t *B, Alloverse_AnimationValue_union_t u)
+{
+    switch (u.type) {
+    case 1: return Alloverse_AnimationValue_as_number(Alloverse_NumberAnimationValue_clone(B, (Alloverse_NumberAnimationValue_table_t)u.value));
+    case 2: return Alloverse_AnimationValue_as_vector(Alloverse_VectorAnimationValue_clone(B, (Alloverse_VectorAnimationValue_table_t)u.value));
+    case 3: return Alloverse_AnimationValue_as_rotation(Alloverse_RotationAnimationValue_clone(B, (Alloverse_RotationAnimationValue_table_t)u.value));
+    case 4: return Alloverse_AnimationValue_as_matrix(Alloverse_TransformAnimationValue_clone(B, (Alloverse_TransformAnimationValue_table_t)u.value));
+    default: return Alloverse_AnimationValue_as_NONE();
+    }
+}
 
 __flatbuffers_build_scalar_field(0, flatbuffers_, Alloverse_State_revision, flatbuffers_uint64, uint64_t, 8, 8, UINT64_C(0), Alloverse_State)
 /* vector has keyed elements */
@@ -189,7 +305,8 @@ __flatbuffers_build_table_field(1, flatbuffers_, Alloverse_Components_relationsh
 __flatbuffers_build_table_field(2, flatbuffers_, Alloverse_Components_live_media, Alloverse_LiveMediaComponent, Alloverse_Components)
 __flatbuffers_build_table_field(3, flatbuffers_, Alloverse_Components_clock, Alloverse_ClockComponent, Alloverse_Components)
 __flatbuffers_build_table_field(4, flatbuffers_, Alloverse_Components_intent, Alloverse_IntentComponent, Alloverse_Components)
-__flatbuffers_build_vector_field(5, flatbuffers_, Alloverse_Components_flex, flatbuffers_uint8, uint8_t, Alloverse_Components)
+__flatbuffers_build_table_field(5, flatbuffers_, Alloverse_Components_property_animations, Alloverse_PropertyAnimationsComponent, Alloverse_Components)
+__flatbuffers_build_vector_field(6, flatbuffers_, Alloverse_Components_flex, flatbuffers_uint8, uint8_t, Alloverse_Components)
 
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args)
 {
@@ -199,7 +316,8 @@ static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers
         || Alloverse_Components_live_media_add(B, v2)
         || Alloverse_Components_clock_add(B, v3)
         || Alloverse_Components_intent_add(B, v4)
-        || Alloverse_Components_flex_add(B, v5)) {
+        || Alloverse_Components_property_animations_add(B, v5)
+        || Alloverse_Components_flex_add(B, v6)) {
         return 0;
     }
     return Alloverse_Components_end(B);
@@ -214,6 +332,7 @@ static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder
         || Alloverse_Components_live_media_pick(B, t)
         || Alloverse_Components_clock_pick(B, t)
         || Alloverse_Components_intent_pick(B, t)
+        || Alloverse_Components_property_animations_pick(B, t)
         || Alloverse_Components_flex_pick(B, t)) {
         return 0;
     }
@@ -365,6 +484,170 @@ static Alloverse_IntentComponent_ref_t Alloverse_IntentComponent_clone(flatbuffe
         return 0;
     }
     __flatbuffers_memoize_end(B, t, Alloverse_IntentComponent_end(B));
+}
+
+__flatbuffers_build_scalar_field(0, flatbuffers_, Alloverse_NumberAnimationValue_number, flatbuffers_double, double, 8, 8, 0.0000000000000000, Alloverse_NumberAnimationValue)
+
+static inline Alloverse_NumberAnimationValue_ref_t Alloverse_NumberAnimationValue_create(flatbuffers_builder_t *B __Alloverse_NumberAnimationValue_formal_args)
+{
+    if (Alloverse_NumberAnimationValue_start(B)
+        || Alloverse_NumberAnimationValue_number_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_NumberAnimationValue_end(B);
+}
+
+static Alloverse_NumberAnimationValue_ref_t Alloverse_NumberAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_NumberAnimationValue_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_NumberAnimationValue_start(B)
+        || Alloverse_NumberAnimationValue_number_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_NumberAnimationValue_end(B));
+}
+
+__flatbuffers_build_struct_field(0, flatbuffers_, Alloverse_VectorAnimationValue_vector, Alloverse_Vec3, 24, 8, Alloverse_VectorAnimationValue)
+
+static inline Alloverse_VectorAnimationValue_ref_t Alloverse_VectorAnimationValue_create(flatbuffers_builder_t *B __Alloverse_VectorAnimationValue_formal_args)
+{
+    if (Alloverse_VectorAnimationValue_start(B)
+        || Alloverse_VectorAnimationValue_vector_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_VectorAnimationValue_end(B);
+}
+
+static Alloverse_VectorAnimationValue_ref_t Alloverse_VectorAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_VectorAnimationValue_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_VectorAnimationValue_start(B)
+        || Alloverse_VectorAnimationValue_vector_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_VectorAnimationValue_end(B));
+}
+
+__flatbuffers_build_scalar_field(0, flatbuffers_, Alloverse_RotationAnimationValue_angle, flatbuffers_double, double, 8, 8, 0.0000000000000000, Alloverse_RotationAnimationValue)
+__flatbuffers_build_struct_field(1, flatbuffers_, Alloverse_RotationAnimationValue_axis, Alloverse_Vec3, 24, 8, Alloverse_RotationAnimationValue)
+
+static inline Alloverse_RotationAnimationValue_ref_t Alloverse_RotationAnimationValue_create(flatbuffers_builder_t *B __Alloverse_RotationAnimationValue_formal_args)
+{
+    if (Alloverse_RotationAnimationValue_start(B)
+        || Alloverse_RotationAnimationValue_angle_add(B, v0)
+        || Alloverse_RotationAnimationValue_axis_add(B, v1)) {
+        return 0;
+    }
+    return Alloverse_RotationAnimationValue_end(B);
+}
+
+static Alloverse_RotationAnimationValue_ref_t Alloverse_RotationAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_RotationAnimationValue_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_RotationAnimationValue_start(B)
+        || Alloverse_RotationAnimationValue_angle_pick(B, t)
+        || Alloverse_RotationAnimationValue_axis_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_RotationAnimationValue_end(B));
+}
+
+__flatbuffers_build_struct_field(0, flatbuffers_, Alloverse_TransformAnimationValue_matrix, Alloverse_Mat4, 128, 8, Alloverse_TransformAnimationValue)
+
+static inline Alloverse_TransformAnimationValue_ref_t Alloverse_TransformAnimationValue_create(flatbuffers_builder_t *B __Alloverse_TransformAnimationValue_formal_args)
+{
+    if (Alloverse_TransformAnimationValue_start(B)
+        || Alloverse_TransformAnimationValue_matrix_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_TransformAnimationValue_end(B);
+}
+
+static Alloverse_TransformAnimationValue_ref_t Alloverse_TransformAnimationValue_clone(flatbuffers_builder_t *B, Alloverse_TransformAnimationValue_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_TransformAnimationValue_start(B)
+        || Alloverse_TransformAnimationValue_matrix_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_TransformAnimationValue_end(B));
+}
+
+__flatbuffers_build_string_field(0, flatbuffers_, Alloverse_PropertyAnimation_id, Alloverse_PropertyAnimation)
+__flatbuffers_build_string_field(1, flatbuffers_, Alloverse_PropertyAnimation_path, Alloverse_PropertyAnimation)
+__flatbuffers_build_union_field(3, flatbuffers_, Alloverse_PropertyAnimation_from, Alloverse_AnimationValue, Alloverse_PropertyAnimation)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_from, Alloverse_AnimationValue, number, Alloverse_NumberAnimationValue)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_from, Alloverse_AnimationValue, vector, Alloverse_VectorAnimationValue)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_from, Alloverse_AnimationValue, rotation, Alloverse_RotationAnimationValue)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_from, Alloverse_AnimationValue, matrix, Alloverse_TransformAnimationValue)
+__flatbuffers_build_union_field(5, flatbuffers_, Alloverse_PropertyAnimation_to, Alloverse_AnimationValue, Alloverse_PropertyAnimation)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_to, Alloverse_AnimationValue, number, Alloverse_NumberAnimationValue)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_to, Alloverse_AnimationValue, vector, Alloverse_VectorAnimationValue)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_to, Alloverse_AnimationValue, rotation, Alloverse_RotationAnimationValue)
+__flatbuffers_build_union_table_value_field(flatbuffers_, Alloverse_PropertyAnimation_to, Alloverse_AnimationValue, matrix, Alloverse_TransformAnimationValue)
+__flatbuffers_build_scalar_field(6, flatbuffers_, Alloverse_PropertyAnimation_start_at, flatbuffers_double, double, 8, 8, 0.0000000000000000, Alloverse_PropertyAnimation)
+__flatbuffers_build_scalar_field(7, flatbuffers_, Alloverse_PropertyAnimation_duration, flatbuffers_double, double, 8, 8, 1.0000000000000000, Alloverse_PropertyAnimation)
+__flatbuffers_build_string_field(8, flatbuffers_, Alloverse_PropertyAnimation_easing, Alloverse_PropertyAnimation)
+__flatbuffers_build_scalar_field(9, flatbuffers_, Alloverse_PropertyAnimation_repeats, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), Alloverse_PropertyAnimation)
+__flatbuffers_build_scalar_field(10, flatbuffers_, Alloverse_PropertyAnimation_autoreverses, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), Alloverse_PropertyAnimation)
+
+static inline Alloverse_PropertyAnimation_ref_t Alloverse_PropertyAnimation_create(flatbuffers_builder_t *B __Alloverse_PropertyAnimation_formal_args)
+{
+    if (Alloverse_PropertyAnimation_start(B)
+        || Alloverse_PropertyAnimation_start_at_add(B, v6)
+        || Alloverse_PropertyAnimation_duration_add(B, v7)
+        || Alloverse_PropertyAnimation_id_add(B, v0)
+        || Alloverse_PropertyAnimation_path_add(B, v1)
+        || Alloverse_PropertyAnimation_from_add_value(B, v3)
+        || Alloverse_PropertyAnimation_to_add_value(B, v5)
+        || Alloverse_PropertyAnimation_easing_add(B, v8)
+        || Alloverse_PropertyAnimation_repeats_add(B, v9)
+        || Alloverse_PropertyAnimation_autoreverses_add(B, v10)
+        || Alloverse_PropertyAnimation_from_add_type(B, v3.type)
+        || Alloverse_PropertyAnimation_to_add_type(B, v5.type)) {
+        return 0;
+    }
+    return Alloverse_PropertyAnimation_end(B);
+}
+
+static Alloverse_PropertyAnimation_ref_t Alloverse_PropertyAnimation_clone(flatbuffers_builder_t *B, Alloverse_PropertyAnimation_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_PropertyAnimation_start(B)
+        || Alloverse_PropertyAnimation_start_at_pick(B, t)
+        || Alloverse_PropertyAnimation_duration_pick(B, t)
+        || Alloverse_PropertyAnimation_id_pick(B, t)
+        || Alloverse_PropertyAnimation_path_pick(B, t)
+        || Alloverse_PropertyAnimation_from_pick(B, t)
+        || Alloverse_PropertyAnimation_to_pick(B, t)
+        || Alloverse_PropertyAnimation_easing_pick(B, t)
+        || Alloverse_PropertyAnimation_repeats_pick(B, t)
+        || Alloverse_PropertyAnimation_autoreverses_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_PropertyAnimation_end(B));
+}
+
+/* vector has keyed elements */
+__flatbuffers_build_table_vector_field(0, flatbuffers_, Alloverse_PropertyAnimationsComponent_animations, Alloverse_PropertyAnimation, Alloverse_PropertyAnimationsComponent)
+
+static inline Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_create(flatbuffers_builder_t *B __Alloverse_PropertyAnimationsComponent_formal_args)
+{
+    if (Alloverse_PropertyAnimationsComponent_start(B)
+        || Alloverse_PropertyAnimationsComponent_animations_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_PropertyAnimationsComponent_end(B);
+}
+
+static Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_clone(flatbuffers_builder_t *B, Alloverse_PropertyAnimationsComponent_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_PropertyAnimationsComponent_start(B)
+        || Alloverse_PropertyAnimationsComponent_animations_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_PropertyAnimationsComponent_end(B));
 }
 
 #include "flatcc/flatcc_epilogue.h"

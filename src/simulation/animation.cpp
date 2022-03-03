@@ -1,30 +1,33 @@
-#include "animation.h"
+#define ALLO_INTERNALS 1
 
-static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time, allo_state_diff *diff);
+#include "animation.h"
+#include "alloverse_generated.h"
+#include <unordered_map>
+using namespace Alloverse;
+using namespace std;
+
+static bool allosim_animate_process(SimulationCache *cache, Entity *entity, const PropertyAnimation *anim, double server_time, allo_state_diff *diff);
 static double _ease(double value, const char *easing);
 
 // perform all property animations specified in 'state' for where they should be at 'server_time'.
 // Also, delete non-repeating animations that have progressed to completion come `server_time`.
-void allosim_animate(allo_state *state, double server_time, allo_state_diff *diff)
+void allosim_animate(allo_state *state, SimulationCache *cache, double server_time, allo_state_diff *diff)
 {
-    allo_entity* entity = NULL;
-    LIST_FOREACH(entity, &state->entities, pointers)
+    auto entities = state->_cur->mutable_entities();
+    for(int i = 0, c = entities->size(); i < c; i++)
     {
-        cJSON *comp = cJSON_GetObjectItemCaseSensitive(entity->components, "property_animations");
+        auto entity = entities->GetMutableObject(i);
+        auto comp = entity->components()->property_animations();
         if(comp)
         {
-            cJSON *anims = cJSON_GetObjectItemCaseSensitive(comp, "animations");
-            cJSON *anim = anims->child;
-            while(anim) {
-                cJSON *remove = NULL;
-                if(allosim_animate_process(entity, anim, server_time, diff))
+            auto anims = comp->animations();
+            for(int ai = 0, ac = anims->size(); ai < ac; ai++)
+            {
+                auto anim = anims->Get(ai);
+                if(allosim_animate_process(cache, entity, anim, server_time, diff))
                 {
-                    remove = anim;
-                }
-                anim = anim->next;
-                if(remove)
-                {
-                    cJSON_Delete(cJSON_DetachItemViaPointer(anims, remove));
+                    cache->animations.erase(anim->id()->c_str());
+                    // TODO! Remove this animation from world state too!
                 }
             }
         }
@@ -33,18 +36,28 @@ void allosim_animate(allo_state *state, double server_time, allo_state_diff *dif
 
 // animate a single property for a single entity. Return whether that particular animation
 // has completed 100%.
-static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double server_time, allo_state_diff *diff)
+static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity, const PropertyAnimation *anim, double server_time, allo_state_diff *diff)
 {
+    auto stateiter = cache->animations.find(anim->id()->c_str());
+    shared_ptr<AlloPropertyAnimation> animstate;
+    if(stateiter != cache->animations.end())
+    {
+        animstate = stateiter->second.get();
+    }
+    else
+    {
+        animstate = shared_ptr<AlloPropertyAnimation>(new AlloPropertyAnimation()); // ...
+        cache->animations[anim->id()->c_str()] = animstate;
+    }
+
     // all the inputs
-    const char *path = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "path"));
-    cJSON *from = cJSON_GetObjectItemCaseSensitive(anim, "from");
-    cJSON *to = cJSON_GetObjectItemCaseSensitive(anim, "to");
-    double start_at = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(anim, "start_at"));
-    double duration = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(anim, "duration"));
-    const char *easing = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(anim, "easing"));
-    if(!easing) easing = "linear"; 
-    bool repeats = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(anim, "repeats"));
-    bool autoreverses = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(anim, "autoreverses"));
+    auto path = anim->path()->str();
+    double start_at = anim->start_at();
+    double duration = anim->duration();
+    const char *easingName = anim->easing() ? anim->easing()->c_str() : "linear";
+    bool repeats = anim->repeats();
+    bool autoreverses = anim->autoreverses();
+    
     // state
     bool done = false;
 
@@ -68,18 +81,17 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     }
     // reverse every other iteration if requested
     int64_t iteration = (server_time-start_at)/duration;
+    bool swap = false;
     if(repeats && autoreverses && iteration%2 == 1)
     {
         // if we invert progress, easing will also play in reverse. which might make sense...
         // but... I feel like, if you're bouncing an animation, you want the same easing in the
         // other direction? I might be wrong, in which case, swap the swap for the inversion.
         //progress = 1.0 - progress;
-        cJSON *swap = to;
-        to = from;
-        from = swap;
+        swap = true;
     }
     // and ease the progress
-    double eased_progress = _ease(progress, easing);
+    double eased_progress = _ease(progress, easingName);
 
     // great. now figure out what values we're interpolating based on from, to and path.
     // todo: this could be done only once per animation, which would save a LOT of work.
@@ -100,39 +112,45 @@ static bool allosim_animate_process(allo_entity *entity, cJSON *anim, double ser
     return done;
 }
 
-// todo: lookup table?
+typedef double (*EasingFunction)(double);
+static double _linear(double v) { return v; }
+
+static unordered_map<string, EasingFunction> _easings = {
+    {"linear", _linear},
+    {"quadInOut", quadratic_ease_in_out},
+    {"quadIn", quadratic_ease_in},
+    {"quadOut", quadratic_ease_out},
+    {"bounceInOut", bounce_ease_in_out},
+    {"bounceIn", bounce_ease_in},
+    {"bounceOut", bounce_ease_out},
+    {"backInOut", back_ease_in_out},
+    {"backIn", back_ease_in},
+    {"backOut", back_ease_out},
+    {"sineInOut", sine_ease_in_out},
+    {"sineIn", sine_ease_in},
+    {"sineOut", sine_ease_out},
+    {"cubicInOut", cubic_ease_in_out},
+    {"cubicIn", cubic_ease_in},
+    {"cubicOut", cubic_ease_out},
+    {"quartInOut", quartic_ease_in_out},
+    {"quartIn", quartic_ease_in},
+    {"quartOut", quartic_ease_out},
+    {"quintInOut", quintic_ease_in_out},
+    {"quintIn", quintic_ease_in},
+    {"quintOut", quintic_ease_out},
+    {"elasticInOut", elastic_ease_in_out},
+    {"elasticIn", elastic_ease_in},
+    {"elasticOut", elastic_ease_out},
+    {"circularInOut", circular_ease_in_out},
+    {"circularIn", circular_ease_in},
+    {"circularOut", circular_ease_out},
+    {"expInOut", exponential_ease_in_out},
+    {"expIn", exponential_ease_in},
+    {"expOut", exponential_ease_out}
+};
+
 static double _ease(double value, const char *easing)
 {
-         if(strcmp(easing, "linear") == 0)          return value;
-    else if(strcmp(easing, "quadInOut") == 0)       return quadratic_ease_in_out(value);
-    else if(strcmp(easing, "quadIn") == 0)          return quadratic_ease_in(value);
-    else if(strcmp(easing, "quadOut") == 0)         return quadratic_ease_out(value);
-    else if(strcmp(easing, "bounceInOut") == 0)     return bounce_ease_in_out(value);
-    else if(strcmp(easing, "bounceIn") == 0)        return bounce_ease_in(value);
-    else if(strcmp(easing, "bounceOut") == 0)       return bounce_ease_out(value);
-    else if(strcmp(easing, "backInOut") == 0)       return back_ease_in_out(value);
-    else if(strcmp(easing, "backIn") == 0)          return back_ease_in(value);
-    else if(strcmp(easing, "backOut") == 0)         return back_ease_out(value);
-    else if(strcmp(easing, "sineInOut") == 0)       return sine_ease_in_out(value);
-    else if(strcmp(easing, "sineIn") == 0)          return sine_ease_in(value);
-    else if(strcmp(easing, "sineOut") == 0)         return sine_ease_out(value);
-    else if(strcmp(easing, "cubicInOut") == 0)      return cubic_ease_in_out(value);
-    else if(strcmp(easing, "cubicIn") == 0)         return cubic_ease_in(value);
-    else if(strcmp(easing, "cubicOut") == 0)        return cubic_ease_out(value);
-    else if(strcmp(easing, "quartInOut") == 0)      return quartic_ease_in_out(value);
-    else if(strcmp(easing, "quartIn") == 0)         return quartic_ease_in(value);
-    else if(strcmp(easing, "quartOut") == 0)        return quartic_ease_out(value);
-    else if(strcmp(easing, "quintInOut") == 0)      return quintic_ease_in_out(value);
-    else if(strcmp(easing, "quintIn") == 0)         return quintic_ease_in(value);
-    else if(strcmp(easing, "quintOut") == 0)        return quintic_ease_out(value);
-    else if(strcmp(easing, "elasticInOut") == 0)    return elastic_ease_in_out(value);
-    else if(strcmp(easing, "elasticIn") == 0)       return elastic_ease_in(value);
-    else if(strcmp(easing, "elasticOut") == 0)      return elastic_ease_out(value);
-    else if(strcmp(easing, "circularInOut") == 0)   return circular_ease_in_out(value);
-    else if(strcmp(easing, "circularIn") == 0)      return circular_ease_in(value);
-    else if(strcmp(easing, "circularOut") == 0)     return circular_ease_out(value);
-    else if(strcmp(easing, "expInOut") == 0)        return exponential_ease_in_out(value);
-    else if(strcmp(easing, "expIn") == 0)           return exponential_ease_in(value);
-    else if(strcmp(easing, "expOut") == 0)          return exponential_ease_out(value);
-    return value;
+    EasingFunction ease = _easings[easing];
+    return ease(value);
 }

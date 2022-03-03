@@ -23,6 +23,7 @@ table Components {
     live_media:LiveMediaComponent;
     clock:ClockComponent;
     intent:IntentComponent;
+    property_animations:PropertyAnimationsComponent;
 
     // If a Component has any non-standard fields (or perhaps doesn't
     // have a definition at all), it is dynamically typed with a flexbuffer
@@ -94,6 +95,41 @@ table IntentComponent {
     from_avatar:string;
 }
 
+table NumberAnimationValue {
+    number:double;
+}
+table VectorAnimationValue {
+    vector:Vec3;
+}
+table RotationAnimationValue {
+    angle:double;
+    axis:Vec3;
+}
+table TransformAnimationValue {
+    matrix:Mat4;
+}
+
+union AnimationValue {
+    number:NumberAnimationValue,
+    vector:VectorAnimationValue,
+    rotation:RotationAnimationValue,
+    matrix:TransformAnimationValue
+}
+table PropertyAnimation {
+    id:string (key);
+    path:string;
+    from:AnimationValue;
+    to:AnimationValue;
+    start_at:double = 0.0;
+    duration:double = 1.0;
+    easing:string;
+    repeats:bool = false;
+    autoreverses:bool = false;
+}
+table PropertyAnimationsComponent {
+    animations:[PropertyAnimation];
+}
+
 ///////////////////////////////////////////////////////////////
 // Types
 /////////////////////////////////////////////////////////////// 
@@ -102,5 +138,8 @@ struct Mat4 {
     m:[double:16];
 }
 
+struct Vec3 {
+    v:[double:3];
+}
 
 root_type State;

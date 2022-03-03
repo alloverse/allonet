@@ -18,6 +18,23 @@ static int Alloverse_LiveMediaMetadata_verify_table(flatcc_table_verifier_descri
 static int Alloverse_LiveMediaComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_ClockComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_IntentComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_NumberAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_VectorAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_RotationAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_TransformAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_PropertyAnimation_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_PropertyAnimationsComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+
+static int Alloverse_AnimationValue_union_verifier(flatcc_union_verifier_descriptor_t *ud)
+{
+    switch (ud->type) {
+    case 1: return flatcc_verify_union_table(ud, Alloverse_NumberAnimationValue_verify_table); /* number */
+    case 2: return flatcc_verify_union_table(ud, Alloverse_VectorAnimationValue_verify_table); /* vector */
+    case 3: return flatcc_verify_union_table(ud, Alloverse_RotationAnimationValue_verify_table); /* rotation */
+    case 4: return flatcc_verify_union_table(ud, Alloverse_TransformAnimationValue_verify_table); /* matrix */
+    default: return flatcc_verify_ok;
+    }
+}
 
 static inline int Alloverse_Mat4_verify_as_root(const void *buf, size_t bufsiz)
 {
@@ -37,6 +54,26 @@ static inline int Alloverse_Mat4_verify_as_root_with_type_hash(const void *buf, 
 static inline int Alloverse_Mat4_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
 {
     return flatcc_verify_struct_as_root(buf, bufsiz, fid, 128, 8);
+}
+
+static inline int Alloverse_Vec3_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_struct_as_root(buf, bufsiz, Alloverse_Vec3_identifier, 24, 8);
+}
+
+static inline int Alloverse_Vec3_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_struct_as_typed_root(buf, bufsiz, Alloverse_Vec3_type_hash, 24, 8);
+}
+
+static inline int Alloverse_Vec3_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_struct_as_typed_root(buf, bufsiz, thash, 24, 8);
+}
+
+static inline int Alloverse_Vec3_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_struct_as_root(buf, bufsiz, fid, 24, 8);
 }
 
 static int Alloverse_State_verify_table(flatcc_table_verifier_descriptor_t *td)
@@ -104,7 +141,8 @@ static int Alloverse_Components_verify_table(flatcc_table_verifier_descriptor_t 
     if ((ret = flatcc_verify_table_field(td, 2, 0, &Alloverse_LiveMediaComponent_verify_table) /* live_media */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 3, 0, &Alloverse_ClockComponent_verify_table) /* clock */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 4, 0, &Alloverse_IntentComponent_verify_table) /* intent */)) return ret;
-    if ((ret = flatcc_verify_vector_field(td, 5, 0, 1, 1, INT64_C(4294967295)) /* flex */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 5, 0, &Alloverse_PropertyAnimationsComponent_verify_table) /* property_animations */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 6, 0, 1, 1, INT64_C(4294967295)) /* flex */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -295,6 +333,177 @@ static inline int Alloverse_IntentComponent_verify_as_root_with_identifier(const
 static inline int Alloverse_IntentComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
 {
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_IntentComponent_verify_table);
+}
+
+static int Alloverse_NumberAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 8, 8) /* number */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_NumberAnimationValue_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_NumberAnimationValue_identifier, &Alloverse_NumberAnimationValue_verify_table);
+}
+
+static inline int Alloverse_NumberAnimationValue_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_NumberAnimationValue_type_identifier, &Alloverse_NumberAnimationValue_verify_table);
+}
+
+static inline int Alloverse_NumberAnimationValue_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_NumberAnimationValue_verify_table);
+}
+
+static inline int Alloverse_NumberAnimationValue_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_NumberAnimationValue_verify_table);
+}
+
+static int Alloverse_VectorAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 24, 8) /* vector */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_VectorAnimationValue_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_VectorAnimationValue_identifier, &Alloverse_VectorAnimationValue_verify_table);
+}
+
+static inline int Alloverse_VectorAnimationValue_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_VectorAnimationValue_type_identifier, &Alloverse_VectorAnimationValue_verify_table);
+}
+
+static inline int Alloverse_VectorAnimationValue_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_VectorAnimationValue_verify_table);
+}
+
+static inline int Alloverse_VectorAnimationValue_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_VectorAnimationValue_verify_table);
+}
+
+static int Alloverse_RotationAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 8, 8) /* angle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 24, 8) /* axis */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_RotationAnimationValue_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_RotationAnimationValue_identifier, &Alloverse_RotationAnimationValue_verify_table);
+}
+
+static inline int Alloverse_RotationAnimationValue_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_RotationAnimationValue_type_identifier, &Alloverse_RotationAnimationValue_verify_table);
+}
+
+static inline int Alloverse_RotationAnimationValue_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_RotationAnimationValue_verify_table);
+}
+
+static inline int Alloverse_RotationAnimationValue_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_RotationAnimationValue_verify_table);
+}
+
+static int Alloverse_TransformAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 128, 8) /* matrix */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_TransformAnimationValue_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_TransformAnimationValue_identifier, &Alloverse_TransformAnimationValue_verify_table);
+}
+
+static inline int Alloverse_TransformAnimationValue_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_TransformAnimationValue_type_identifier, &Alloverse_TransformAnimationValue_verify_table);
+}
+
+static inline int Alloverse_TransformAnimationValue_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_TransformAnimationValue_verify_table);
+}
+
+static inline int Alloverse_TransformAnimationValue_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_TransformAnimationValue_verify_table);
+}
+
+static int Alloverse_PropertyAnimation_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_string_field(td, 0, 0) /* id */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 1, 0) /* path */)) return ret;
+    if ((ret = flatcc_verify_union_field(td, 3, 0, &Alloverse_AnimationValue_union_verifier) /* from */)) return ret;
+    if ((ret = flatcc_verify_union_field(td, 5, 0, &Alloverse_AnimationValue_union_verifier) /* to */)) return ret;
+    if ((ret = flatcc_verify_field(td, 6, 8, 8) /* start_at */)) return ret;
+    if ((ret = flatcc_verify_field(td, 7, 8, 8) /* duration */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 8, 0) /* easing */)) return ret;
+    if ((ret = flatcc_verify_field(td, 9, 1, 1) /* repeats */)) return ret;
+    if ((ret = flatcc_verify_field(td, 10, 1, 1) /* autoreverses */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_PropertyAnimation_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_PropertyAnimation_identifier, &Alloverse_PropertyAnimation_verify_table);
+}
+
+static inline int Alloverse_PropertyAnimation_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_PropertyAnimation_type_identifier, &Alloverse_PropertyAnimation_verify_table);
+}
+
+static inline int Alloverse_PropertyAnimation_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_PropertyAnimation_verify_table);
+}
+
+static inline int Alloverse_PropertyAnimation_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_PropertyAnimation_verify_table);
+}
+
+static int Alloverse_PropertyAnimationsComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 0, 0, &Alloverse_PropertyAnimation_verify_table) /* animations */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_PropertyAnimationsComponent_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_PropertyAnimationsComponent_identifier, &Alloverse_PropertyAnimationsComponent_verify_table);
+}
+
+static inline int Alloverse_PropertyAnimationsComponent_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_PropertyAnimationsComponent_type_identifier, &Alloverse_PropertyAnimationsComponent_verify_table);
+}
+
+static inline int Alloverse_PropertyAnimationsComponent_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_PropertyAnimationsComponent_verify_table);
+}
+
+static inline int Alloverse_PropertyAnimationsComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_PropertyAnimationsComponent_verify_table);
 }
 
 #include "flatcc/flatcc_epilogue.h"

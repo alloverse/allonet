@@ -1,4 +1,50 @@
+#define ALLO_INTERNALS 1
 #include "animation.h"
+#include <unordered_map>
+using namespace Alloverse;
+using namespace std;
+
+static double _linear(double v) { return v; }
+static unordered_map<string, AlloEasingFunction> g_easings = {
+    {"linear", _linear},
+    {"quadInOut", quadratic_ease_in_out},
+    {"quadIn", quadratic_ease_in},
+    {"quadOut", quadratic_ease_out},
+    {"bounceInOut", bounce_ease_in_out},
+    {"bounceIn", bounce_ease_in},
+    {"bounceOut", bounce_ease_out},
+    {"backInOut", back_ease_in_out},
+    {"backIn", back_ease_in},
+    {"backOut", back_ease_out},
+    {"sineInOut", sine_ease_in_out},
+    {"sineIn", sine_ease_in},
+    {"sineOut", sine_ease_out},
+    {"cubicInOut", cubic_ease_in_out},
+    {"cubicIn", cubic_ease_in},
+    {"cubicOut", cubic_ease_out},
+    {"quartInOut", quartic_ease_in_out},
+    {"quartIn", quartic_ease_in},
+    {"quartOut", quartic_ease_out},
+    {"quintInOut", quintic_ease_in_out},
+    {"quintIn", quintic_ease_in},
+    {"quintOut", quintic_ease_out},
+    {"elasticInOut", elastic_ease_in_out},
+    {"elasticIn", elastic_ease_in},
+    {"elasticOut", elastic_ease_out},
+    {"circularInOut", circular_ease_in_out},
+    {"circularIn", circular_ease_in},
+    {"circularOut", circular_ease_out},
+    {"expInOut", exponential_ease_in_out},
+    {"expIn", exponential_ease_in},
+    {"expOut", exponential_ease_out}
+};
+
+AlloPropertyAnimation::AlloPropertyAnimation(const PropertyAnimation *spec)
+{
+    easing = g_easings[spec->easing()->c_str()];
+    from = ...;
+}
+
 
 MathVariant mathvariant_from_json(cJSON *json)
 {

@@ -1,6 +1,11 @@
 #include "simulation.h"
 #include "mathc.h"
 
+namespace Alloverse { 
+    class Components;
+    class PropertyAnimation;
+}
+
 typedef enum MathVariantType
 {
     TypeInvalid,
@@ -21,9 +26,7 @@ typedef struct MathVariant
     } value;
 } MathVariant;
 
-extern struct MathVariant mathvariant_from_json(cJSON *json);
-extern void mathvariant_replace_json(MathVariant variant, cJSON *toreplace);
-
+typedef double (*AlloEasingFunction)(double);
 
 // how should the values in the AlloPropertyAnimation be used to interpolate the value?
 typedef enum PropertyAnimationUsage
@@ -40,10 +43,6 @@ typedef enum PropertyAnimationUsage
 
 typedef struct AlloPropertyAnimation
 {
-    // the cJSON value to change with this animation
-    cJSON *act_on;
-    // the component name that it's affecting (i e the root of the path)
-    cJSON *component;
     // the parsed value out of act_on
     struct MathVariant current;
     // the parsed starting value
@@ -54,12 +53,12 @@ typedef struct AlloPropertyAnimation
     PropertyAnimationUsage usage;
     // if >0, UsageMat* will mean to only change x(1), y(2) or z(3) of rot, trans or scale
     int component_index;
+
+    AlloEasingFunction easing;
+
+    AlloPropertyAnimation(const Alloverse::PropertyAnimation *spec);
+
+    // given a prop with derived properties, figure out the MathVariant corresponding to the given fraction.
+    // For example, for a from=value.double=5 and to=value.double=10 and fraction=0.5, return a value.double=7.5.
+    void interpolate_property(Alloverse::Components *comps, double fraction);
 } AlloPropertyAnimation;
-
-// create a property animation with the given components to act on, generic value to animate from and to, and the
-// keypath to the property that is to be animated.
-extern AlloPropertyAnimation propertyanimation_create(cJSON *comps, cJSON *from, cJSON *to, const char *path);
-
-// given a prop with derived properties, figure out the MathVariant corresponding to the given fraction.
-// For example, for a from=value.double=5 and to=value.double=10 and fraction=0.5, return a value.double=7.5.
-extern struct MathVariant animation_interpolate_property(AlloPropertyAnimation *prop, double fraction);

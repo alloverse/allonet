@@ -7,7 +7,8 @@ using namespace Alloverse;
 using namespace std;
 
 static bool allosim_animate_process(SimulationCache *cache, Entity *entity, const PropertyAnimation *anim, double server_time, allo_state_diff *diff);
-static double _ease(double value, const char *easing);
+
+
 
 // perform all property animations specified in 'state' for where they should be at 'server_time'.
 // Also, delete non-repeating animations that have progressed to completion come `server_time`.
@@ -42,11 +43,18 @@ static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity,
     shared_ptr<AlloPropertyAnimation> animstate;
     if(stateiter != cache->animations.end())
     {
-        animstate = stateiter->second.get();
+        // animation state already exists; use it and just process the next iteration.
+        animstate = stateiter->second;
     }
     else
     {
-        animstate = shared_ptr<AlloPropertyAnimation>(new AlloPropertyAnimation()); // ...
+        // validate the animation before trying to process it:
+        if(anim->from_type() == AnimationValue_NONE || anim->from_type() != anim->to_type()) {
+            return;
+        }
+
+        // ok it's good, create state for it!
+        animstate = shared_ptr<AlloPropertyAnimation>(new AlloPropertyAnimation(anim));
         cache->animations[anim->id()->c_str()] = animstate;
     }
 
@@ -112,45 +120,3 @@ static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity,
     return done;
 }
 
-typedef double (*EasingFunction)(double);
-static double _linear(double v) { return v; }
-
-static unordered_map<string, EasingFunction> _easings = {
-    {"linear", _linear},
-    {"quadInOut", quadratic_ease_in_out},
-    {"quadIn", quadratic_ease_in},
-    {"quadOut", quadratic_ease_out},
-    {"bounceInOut", bounce_ease_in_out},
-    {"bounceIn", bounce_ease_in},
-    {"bounceOut", bounce_ease_out},
-    {"backInOut", back_ease_in_out},
-    {"backIn", back_ease_in},
-    {"backOut", back_ease_out},
-    {"sineInOut", sine_ease_in_out},
-    {"sineIn", sine_ease_in},
-    {"sineOut", sine_ease_out},
-    {"cubicInOut", cubic_ease_in_out},
-    {"cubicIn", cubic_ease_in},
-    {"cubicOut", cubic_ease_out},
-    {"quartInOut", quartic_ease_in_out},
-    {"quartIn", quartic_ease_in},
-    {"quartOut", quartic_ease_out},
-    {"quintInOut", quintic_ease_in_out},
-    {"quintIn", quintic_ease_in},
-    {"quintOut", quintic_ease_out},
-    {"elasticInOut", elastic_ease_in_out},
-    {"elasticIn", elastic_ease_in},
-    {"elasticOut", elastic_ease_out},
-    {"circularInOut", circular_ease_in_out},
-    {"circularIn", circular_ease_in},
-    {"circularOut", circular_ease_out},
-    {"expInOut", exponential_ease_in_out},
-    {"expIn", exponential_ease_in},
-    {"expOut", exponential_ease_out}
-};
-
-static double _ease(double value, const char *easing)
-{
-    EasingFunction ease = _easings[easing];
-    return ease(value);
-}

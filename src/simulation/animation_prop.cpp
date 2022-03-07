@@ -41,44 +41,45 @@ static unordered_map<string, AlloEasingFunction> g_easings = {
 
 AlloPropertyAnimation::AlloPropertyAnimation(const PropertyAnimation *spec)
 {
-    easing = g_easings[spec->easing()->c_str()];
-    from = ...;
+    easingFunc = g_easings[spec->easing()->c_str()];
+    from = mathvariant_from_flat(spec->from(), spec->from_type());
+    to = mathvariant_from_flat(spec->to(), spec->to_type());
+    if(from.type != to.type)
+    {
+        usage = UsageInvalid;
+    }
+    path = spec->path()->str();
 }
 
 
-MathVariant mathvariant_from_json(cJSON *json)
+MathVariant mathvariant_from_flat(const void *flatfield, AnimationValue type)
 {
     MathVariant ret;
-    if(cJSON_IsNumber(json))
+    switch(type)
     {
+    case AnimationValue_number:
         ret.type = TypeDouble;
-        ret.value.d = cJSON_GetNumberValue(json);
-    }
-    else if(cJSON_GetArraySize(json) == 3)
-    {
+        ret.value.d = static_cast<const NumberAnimationValue*>(flatfield)->number();
+        break;
+    case AnimationValue_vector:;
+        auto vect = static_cast<const VectorAnimationValue*>(flatfield)->vector()->v();
         ret.type = TypeVec3;
-        ret.value.v = cjson2vec(json);
-    }
-    else if(cJSON_GetArraySize(json) == 4)
-    {
-        ret.type = TypeRotation;
-        ret.value.r = (allo_rotation){
-            .angle = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 0)),
-            .axis = (allo_vector){
-                .x = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 1)),
-                .y = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 2)),
-                .z = cJSON_GetNumberValue(cJSON_GetArrayItem(json, 3)),
-            }
-        };
-    }
-    else if(cJSON_GetArraySize(json) == 16)
-    {
+        ret.value.v = allo_vector{vect->Get(1), vect->Get(2), vect->Get(3)};
+        break;
+    case AnimationValue_matrix:;
+        auto matt = static_cast<const TransformAnimationValue*>(flatfield)->matrix()->m();
         ret.type = TypeMat4;
-        ret.value.m = cjson2m(json);
-    }
-    else
-    {
-        ret.type = TypeInvalid;
+        int i = 0;
+        for(auto it = matt->begin(), end = matt->end(); it != end; it++, i++)
+        {
+            ret.value.m.v[i] = *it;
+        }
+        break;
+    case AnimationValue_rotation:;
+        auto rott = static_cast<const RotationAnimationValue*>(flatfield);
+        ret.type = TypeRotation;
+        ret.value.r.angle = rott->angle();
+        ret.value.r.axis = allo_vector{rott->axis()->v()->Get(0), rott->axis()->v()->Get(1), rott->axis()->v()->Get(2)};
     }
     return ret;
 }
@@ -218,25 +219,9 @@ static void animation_derive_property(AlloPropertyAnimation *prop, const char *p
     }
 }
 
-AlloPropertyAnimation propertyanimation_create(cJSON *comps, cJSON *from, cJSON *to, const char *path)
-{
-    AlloPropertyAnimation prop = {0};
-    prop.act_on = comps;
-    prop.from = mathvariant_from_json(from);
-    prop.to = mathvariant_from_json(to);
-    if(prop.from.type != prop.to.type)
-    {
-        prop.usage = UsageInvalid;
-    }
-    else
-    {
-        animation_derive_property(&prop, path);
-    }
-    return prop;
-}
-
 MathVariant animation_interpolate_property(AlloPropertyAnimation *prop, double fraction)
 {
+    animation_derive_property(prop, path);
     // Figure out how to interpolate from `from` to `to`. Usage or current value doesn't matter yet,
     // so just go ahead and interpolate.
     MathVariant ret;

@@ -1,5 +1,6 @@
 #include "simulation.h"
 #include "mathc.h"
+#include <string>
 
 namespace Alloverse { 
     class Components;
@@ -25,6 +26,7 @@ typedef struct MathVariant
         allo_m4x4 m;
     } value;
 } MathVariant;
+MathVariant mathvariant_from_flat(void *flatfield, AnimationValue type);
 
 typedef double (*AlloEasingFunction)(double);
 
@@ -51,10 +53,12 @@ typedef struct AlloPropertyAnimation
     struct MathVariant to;
     // how to put from->to into current (see PropertyAnimationUsage)
     PropertyAnimationUsage usage;
+    // the path from the entity root to the property being animated
+    std::string path;
     // if >0, UsageMat* will mean to only change x(1), y(2) or z(3) of rot, trans or scale
     int component_index;
-
-    AlloEasingFunction easing;
+    // the easing to apply to the progress for interpolation from 'from' to 'to'
+    AlloEasingFunction easingFunc;
 
     AlloPropertyAnimation(const Alloverse::PropertyAnimation *spec);
 

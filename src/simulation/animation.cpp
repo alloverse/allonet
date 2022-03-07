@@ -36,7 +36,7 @@ void allosim_animate(allo_state *state, SimulationCache *cache, double server_ti
 }
 
 // animate a single property for a single entity. Return whether that particular animation
-// has completed 100%.
+// has completed 100% (or has failed) and should be removed from the world.
 static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity, const PropertyAnimation *anim, double server_time, allo_state_diff *diff)
 {
     auto stateiter = cache->animations.find(anim->id()->c_str());
@@ -48,14 +48,20 @@ static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity,
     }
     else
     {
-        // validate the animation before trying to process it:
+        // validate the animation before trying to process it. If it fails, remove it.
         if(anim->from_type() == AnimationValue_NONE || anim->from_type() != anim->to_type()) {
-            return;
+            return true;
         }
 
         // ok it's good, create state for it!
         animstate = shared_ptr<AlloPropertyAnimation>(new AlloPropertyAnimation(anim));
         cache->animations[anim->id()->c_str()] = animstate;
+    }
+
+    if(animstate->usage == UsageInvalid)
+    {
+        // it's parsed but unusable. remove it from the world.
+        return true;
     }
 
     // all the inputs
@@ -99,19 +105,11 @@ static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity,
         swap = true;
     }
     // and ease the progress
-    double eased_progress = _ease(progress, easingName);
+    double eased_progress = animstate->easingFunc(progress);
 
-    // great. now figure out what values we're interpolating based on from, to and path.
-    // todo: this could be done only once per animation, which would save a LOT of work.
-    AlloPropertyAnimation prop = propertyanimation_create(entity->components, from, to, path);
-    if(prop.usage == UsageInvalid)
-    {
-        // something is off and we can't apply this animation right now.
-        return false;
-    }
 
     // okay, go interpolate
-    MathVariant new_value = animation_interpolate_property(&prop, eased_progress);
+    MathVariant new_value = prop->interpolate_property((&prop, eased_progress);
     
     // apply the new value into state
     mathvariant_replace_json(new_value, prop.act_on);

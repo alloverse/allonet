@@ -37,7 +37,7 @@ void allosim_animate(allo_state *state, SimulationCache *cache, double server_ti
 
 // animate a single property for a single entity. Return whether that particular animation
 // has completed 100% (or has failed) and should be removed from the world.
-static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity, const PropertyAnimation *anim, double server_time, allo_state_diff *diff)
+static bool allosim_animate_process(SimulationCache *cache, Entity *entity, const PropertyAnimation *anim, double server_time, allo_state_diff *diff)
 {
     auto stateiter = cache->animations.find(anim->id()->c_str());
     shared_ptr<AlloPropertyAnimation> animstate;
@@ -108,12 +108,10 @@ static bool allosim_animate_process(SimulationCache *cache, allo_entity *entity,
     double eased_progress = animstate->easingFunc(progress);
 
 
-    // okay, go interpolate
-    MathVariant new_value = prop->interpolate_property((&prop, eased_progress);
+    // okay, go interpolate and apply on these components
+    animstate->interpolateProperty(entity->mutable_components(), eased_progress, swap);
     
-    // apply the new value into state
-    mathvariant_replace_json(new_value, prop.act_on);
-    allo_state_diff_mark_component_updated(diff, entity->id, prop.component->string, prop.component);
+    allo_state_diff_mark_component_updated(diff, entity->id()->c_str(), animstate->component_name.c_str(), NULL);
 
     return done;
 }

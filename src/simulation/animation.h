@@ -55,6 +55,7 @@ typedef struct AlloPropertyAnimation
     PropertyAnimationUsage usage;
     // the path from the entity root to the property being animated
     std::string path;
+    std::string component_name;
     // if >0, UsageMat* will mean to only change x(1), y(2) or z(3) of rot, trans or scale
     int component_index;
     // the easing to apply to the progress for interpolation from 'from' to 'to'
@@ -64,5 +65,5 @@ typedef struct AlloPropertyAnimation
 
     // given a prop with derived properties, figure out the MathVariant corresponding to the given fraction.
     // For example, for a from=value.double=5 and to=value.double=10 and fraction=0.5, return a value.double=7.5.
-    void interpolate_property(Alloverse::Components *comps, double fraction);
+    void interpolateProperty(Alloverse::Components *comps, double fraction, bool swap);
 } AlloPropertyAnimation;

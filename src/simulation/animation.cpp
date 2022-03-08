@@ -54,7 +54,7 @@ static bool allosim_animate_process(SimulationCache *cache, Entity *entity, cons
         }
 
         // ok it's good, create state for it!
-        animstate = shared_ptr<AlloPropertyAnimation>(new AlloPropertyAnimation(anim));
+        animstate = make_shared<AlloPropertyAnimation>(anim);
         cache->animations[anim->id()->c_str()] = animstate;
     }
 

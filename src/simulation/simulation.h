@@ -19,6 +19,9 @@ namespace Alloverse {
     };
 }
 
+struct AlloPropertyAnimation;
+
+
 extern "C" {
 #endif
 

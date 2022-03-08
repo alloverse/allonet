@@ -1,11 +1,7 @@
 #include "simulation.h"
 #include "mathc.h"
 #include <string>
-
-namespace Alloverse { 
-    class Components;
-    class PropertyAnimation;
-}
+#include "alloverse_generated.h"
 
 typedef enum MathVariantType
 {
@@ -26,7 +22,7 @@ typedef struct MathVariant
         allo_m4x4 m;
     } value;
 } MathVariant;
-MathVariant mathvariant_from_flat(void *flatfield, AnimationValue type);
+MathVariant mathvariant_from_flat(void *flatfield, Alloverse::AnimationValue type);
 
 typedef double (*AlloEasingFunction)(double);
 
@@ -43,7 +39,7 @@ typedef enum PropertyAnimationUsage
     UsageMatScale,
 } PropertyAnimationUsage;
 
-typedef struct AlloPropertyAnimation
+struct AlloPropertyAnimation
 {
     // the parsed value out of act_on
     struct MathVariant current;
@@ -65,5 +61,7 @@ typedef struct AlloPropertyAnimation
 
     // given a prop with derived properties, figure out the MathVariant corresponding to the given fraction.
     // For example, for a from=value.double=5 and to=value.double=10 and fraction=0.5, return a value.double=7.5.
-    void interpolateProperty(Alloverse::Components *comps, double fraction, bool swap);
-} AlloPropertyAnimation;
+    MathVariant interpolateProperty(Alloverse::Components *comps, double fraction, bool swap);
+
+
+};

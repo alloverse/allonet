@@ -59,34 +59,34 @@ AlloPropertyAnimation::AlloPropertyAnimation(const PropertyAnimation *spec)
     path = spec->path()->str();
 }
 
-void 
+MathVariant 
 AlloPropertyAnimation::interpolateProperty(Alloverse::Components *comps, double fraction, bool swap)
 {
-    DerivedProperty derived = animation_derive_property(comps, this->path);
-
+    DerivedProperty derived = animation_derive_property(comps, path.c_str());
+    
     // Figure out how to interpolate from `from` to `to`. Usage or current value doesn't matter yet,
     // so just go ahead and interpolate.
     MathVariant ret;
-    if(prop->from.type == TypeDouble)
+    if(from.type == TypeDouble)
     {
-        double range = prop->to.value.d - prop->from.value.d;
+        double range = to.value.d - from.value.d;
         ret.type = TypeDouble;
-        ret.value.d = prop->from.value.d + fraction * range;
+        ret.value.d = from.value.d + fraction * range;
     }
-    else if(prop->from.type == TypeVec3)
+    else if(from.type == TypeVec3)
     {
         ret.type = TypeVec3;
-        vec3_lerp(ret.value.v.v, prop->from.value.v.v, prop->to.value.v.v, fraction);
+        vec3_lerp(ret.value.v.v, from.value.v.v, to.value.v.v, fraction);
     }
-    else if(prop->from.type == TypeRotation)
+    else if(from.type == TypeRotation)
     {
         // this is extremely inefficient :S going from axis-angle to
         // quat to matrix to axis-angle :S
         // FIXME: also, rotations >180deg are folded back to <180deg? :(((
         mfloat_t fromq[4];
         mfloat_t toq[4];
-        quat_from_axis_angle(fromq, prop->from.value.r.axis.v, prop->from.value.r.angle);
-        quat_from_axis_angle(toq, prop->to.value.r.axis.v, prop->to.value.r.angle);
+        quat_from_axis_angle(fromq, from.value.r.axis.v, from.value.r.angle);
+        quat_from_axis_angle(toq, to.value.r.axis.v, to.value.r.angle);
         mfloat_t retq[4];
         quat_slerp(retq, fromq, toq, fraction);
         allo_m4x4 retm;
@@ -95,23 +95,23 @@ AlloPropertyAnimation::interpolateProperty(Alloverse::Components *comps, double 
         ret.type = TypeRotation;
         ret.value.r =allo_m4x4_get_rotation(retm);
     }
-    else if(prop->from.type == TypeMat4)
+    else if(from.type == TypeMat4)
     {
         ret.type = TypeMat4;
-        ret.value.m = allo_m4x4_interpolate(prop->from.value.m, prop->to.value.m, fraction);
+        ret.value.m = allo_m4x4_interpolate(from.value.m, to.value.m, fraction);
     }
 
     // Now, if usage is standard, we can use this value as-is.
-    if(prop->usage == UsageStandard)
+    if(usage == UsageStandard)
     {
         return ret;
     }
 
     // But if it's not standard usage, the usage means we're modifying the 
     // current value with the interpolated value.
-    MathVariant ret2 = prop->current;
-    int ci = prop->component_index;
-    if(prop->usage == UsageMatRot)
+    MathVariant ret2 = derived.current;
+    int ci = component_index;
+    if(usage == UsageMatRot)
     {
         if(ci > 0)
         {
@@ -124,11 +124,11 @@ AlloPropertyAnimation::interpolateProperty(Alloverse::Components *comps, double 
             mat4_rotation_axis(ret2.value.m.v, ret.value.r.axis.v, ret.value.r.angle);
         }
         // but restore previous translation
-        ret2.value.m.v[12] = prop->current.value.m.v[12];
-        ret2.value.m.v[13] = prop->current.value.m.v[13];
-        ret2.value.m.v[14] = prop->current.value.m.v[14];
+        ret2.value.m.v[12] = current.value.m.v[12];
+        ret2.value.m.v[13] = current.value.m.v[13];
+        ret2.value.m.v[14] = current.value.m.v[14];
     }
-    else if(prop->usage == UsageMatTrans)
+    else if(usage == UsageMatTrans)
     {
         if(ci > 0)
         {
@@ -139,7 +139,7 @@ AlloPropertyAnimation::interpolateProperty(Alloverse::Components *comps, double 
             mat4_translation(ret2.value.m.v, ret2.value.m.v, ret.value.v.v);
         }
     }
-    else if(prop->usage == UsageMatScale)
+    else if(usage == UsageMatScale)
     {
         if(ci > 0)
         {
@@ -236,7 +236,7 @@ static DerivedProperty animation_derive_property(Components *comps, const char *
 {
     DerivedProperty derived;
 
-    char this_prop[255] = {0};
+    /*char this_prop[255] = {0};
     int i = 0;
     while(*path && *path != '.' && i<255) {
         this_prop[i++] = *path++;
@@ -254,7 +254,7 @@ static DerivedProperty animation_derive_property(Components *comps, const char *
     bool is_index = sscanf(this_prop, "%d", &index) == 1;
     if(is_index)
     {
-        
+
         prop->act_on = cJSON_GetArrayItem(prop->act_on, index);
     }
     else if(prop->current.type == TypeMat4 && strcmp(this_prop, "rotation") == 0)
@@ -322,5 +322,6 @@ static DerivedProperty animation_derive_property(Components *comps, const char *
             prop->usage = UsageInvalid;
         if(prop->from.type == TypeInvalid || prop->to.type == TypeInvalid || prop->current.type == TypeInvalid)
             prop->usage = UsageInvalid;
-    }
+    }*/
+    return derived;
 }

@@ -12,6 +12,14 @@
 static reflection_Schema_table_t g_alloschema;
 static reflection_Object_vec_t SchemaTables;
 
+extern "C" void allo_generate_id(char *str, size_t len)
+{
+  for (size_t i = 0; i < len-1; i++)
+  {
+    str[i] = 'a' + rand() % 25;
+  }
+  str[len-1] = 0;
+}
 
 // move to allonet.c
 #include <enet/enet.h>

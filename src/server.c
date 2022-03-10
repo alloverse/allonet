@@ -9,6 +9,7 @@
 #include <allonet/arr.h>
 #include "asset.h"
 #include "media/media.h"
+#include <allonet/state/state_write.h>
 #include <allonet/assetstore.h>
 
 #if 0

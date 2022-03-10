@@ -36,9 +36,6 @@ public:
     virtual double setServerTime(double time) override;
 };
 
-// generate an identifier of 'len'-1 chars into str, and null the last byte in str.
-extern "C" void allo_generate_id(char *str, size_t len);
-
 
 #endif // _cplusplus && ALLO_INTERNALS
 #endif // ALLONET_STATE_WRITE_H

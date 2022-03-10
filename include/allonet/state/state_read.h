@@ -1,17 +1,20 @@
 #ifndef ALLONET_STATE_READ_H
 #define ALLONET_STATE_READ_H
+
 #include <inlinesys/queue.h>
 #include <cJSON/cJSON.h>
 #include <allonet/math.h>
 #include <allonet/schema/alloverse_reader.h>
 #include <allonet/schema/alloverse_builder.h>
 #include <allonet/schema/alloverse_verifier.h>
+
 #if defined(__cplusplus) && defined(ALLO_INTERNALS)
 namespace Alloverse { struct State; struct Entity; }
-#endif
+#endif // internals
+
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif // internals
 
 // This file has the "mostly read-only" world state API that clients use to interpret
 // the world. A separate "write" API is available for server-side modification of the world.
@@ -26,7 +29,7 @@ typedef struct allo_state
     size_t flatlength;
     void *flat;
 
-    // parsed world state
+    /// parsed world state
     Alloverse_State_table_t state;
     /// parsed revision from buffer
     uint64_t revision;
@@ -36,9 +39,9 @@ typedef struct allo_state
     Alloverse::State *_cur;
     Alloverse::Entity *getMutableEntity(const char *id);
     virtual double setServerTime(double time);
-#else
+#else  // c++ and internals
     void *_cur;
-#endif
+#endif // c++ and internals
 } allo_state;
 
 typedef struct Alloverse_Entity_table allo_entity;
@@ -67,7 +70,8 @@ extern allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, 
 #if defined(ALLO_INTERNALS)
 allo_m4x4 GetEntityTransform(const Alloverse::Entity *ent);
 void SetEntityTransform(Alloverse::Entity *ent, allo_m4x4 transform);
-#endif
+#endif // internals
 
-#endif
-#endif
+#endif // c++
+
+#endif // header guard

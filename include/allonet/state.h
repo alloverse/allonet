@@ -2,9 +2,7 @@
 #define ALLONET_STATE_H
 #include <allonet/state/intent.h>
 #include <allonet/state/diff.h>
-#include <allonet/state/interaction.h>
 #include <allonet/state/state_read.h>
-#include <allonet/state/state_write.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +31,8 @@ extern void allo_simulation_cache_destroy(void **cache);
  */
 extern void allo_simulate(allo_state* state, void *cache, const allo_client_intent* intents[], int intent_count, double server_time, allo_state_diff *diff);
 
+// generate an identifier of 'len'-1 chars into str, and null the last byte in str.
+void allo_generate_id(char *str, size_t len);
 
 #ifdef __cplusplus
 }

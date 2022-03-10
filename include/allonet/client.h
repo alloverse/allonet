@@ -1,6 +1,7 @@
 #ifndef ALLONET_CLIENT_H
 #define ALLONET_CLIENT_H
 #include "state.h"
+#include "state/interaction.h"
 #include "net.h"
 
 #ifdef __cplusplus

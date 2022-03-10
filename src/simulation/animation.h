@@ -22,7 +22,7 @@ typedef struct MathVariant
         allo_m4x4 m;
     } value;
 } MathVariant;
-MathVariant mathvariant_from_flat(void *flatfield, Alloverse::AnimationValue type);
+MathVariant mathvariant_from_flat(const void *flatfield, Alloverse::AnimationValue type);
 
 typedef double (*AlloEasingFunction)(double);
 

@@ -11,6 +11,7 @@ struct DerivedProperty
     void *act_on;
     string componentName;
 };
+static DerivedProperty animation_derive_property(Components *comps, const char *path);
 
 static double _linear(double v) { return v; }
 static unordered_map<string, AlloEasingFunction> g_easings = {
@@ -115,7 +116,7 @@ AlloPropertyAnimation::interpolateProperty(Alloverse::Components *comps, double 
     {
         if(ci > 0)
         {
-            allo_vector axis = {.v={ci==1, ci==2, ci==3}};
+            allo_vector axis{ci==1?1.0:0.0, ci==2?1.0:0.0, ci==3?1.0:0.0};
             mat4_rotation_axis(ret2.value.m.v, axis.v, ret.value.d);
         }
         else
@@ -164,12 +165,12 @@ MathVariant mathvariant_from_flat(const void *flatfield, AnimationValue type)
         ret.type = TypeDouble;
         ret.value.d = static_cast<const NumberAnimationValue*>(flatfield)->number();
         break;
-    case AnimationValue_vector:;
+    case AnimationValue_vector: {
         auto vect = static_cast<const VectorAnimationValue*>(flatfield)->vector()->v();
         ret.type = TypeVec3;
         ret.value.v = allo_vector{vect->Get(1), vect->Get(2), vect->Get(3)};
-        break;
-    case AnimationValue_matrix:;
+        break; }
+    case AnimationValue_matrix: {
         auto matt = static_cast<const TransformAnimationValue*>(flatfield)->matrix()->m();
         ret.type = TypeMat4;
         int i = 0;
@@ -177,12 +178,13 @@ MathVariant mathvariant_from_flat(const void *flatfield, AnimationValue type)
         {
             ret.value.m.v[i] = *it;
         }
-        break;
-    case AnimationValue_rotation:;
+        break; }
+    case AnimationValue_rotation: {
         auto rott = static_cast<const RotationAnimationValue*>(flatfield);
         ret.type = TypeRotation;
         ret.value.r.angle = rott->angle();
         ret.value.r.axis = allo_vector{rott->axis()->v()->Get(0), rott->axis()->v()->Get(1), rott->axis()->v()->Get(2)};
+        break; }
     }
     return ret;
 }

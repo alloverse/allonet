@@ -7,7 +7,7 @@
 #include <allonet/schema/alloverse_builder.h>
 #include <allonet/schema/alloverse_verifier.h>
 #if defined(__cplusplus) && defined(ALLO_INTERNALS)
-namespace Alloverse { class State; class Entity; }
+namespace Alloverse { struct State; struct Entity; }
 #endif
 #ifdef __cplusplus
 extern "C" {

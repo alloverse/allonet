@@ -92,10 +92,10 @@ GetEntityTransform(const Alloverse::Entity *ent)
 {
     allo_m4x4 ret;
     auto transformcomp = ent->components()->transform();
-    auto mat = transformcomp->matrix().m();
+    auto mat = transformcomp->matrix()->m();
     
     for(int i = 0; i < 16; i++)
-        ret.v[i] = mat[i];
+        ret.v[i] = mat->Get(i);
     return ret;
 }
 void
@@ -104,5 +104,5 @@ SetEntityTransform(Entity *ent, allo_m4x4 transform)
     auto transformcomp = ent->mutable_components()->mutable_transform();
     auto mat = transformcomp->mutable_matrix()->mutable_m();
     for(int i = 0; i < 16; i++)
-        mat[i] = transform.v[i];
+        mat->Mutate(i, transform.v[i]);
 }

@@ -3,6 +3,7 @@
 // picks translation and rotation from 'update' and 'orig' according to the fractions in translation constraint and rotation constraint.
 static allo_m4x4 _constrain(allo_m4x4 orig, allo_m4x4 update, allo_vector tconstraint, allo_vector rconstraint)
 {
+  /*
   // figure out a new translation that picks the axes from 'update' that are >0 in tconstraint, and keeps the rest from 'orig'
   allo_vector oldT = allo_m4x4_get_position(orig);
   allo_vector newT = allo_m4x4_get_position(update);
@@ -17,10 +18,13 @@ static allo_m4x4 _constrain(allo_m4x4 orig, allo_m4x4 update, allo_vector tconst
 
   // concat for a new and fresh transform for our entity!
   return allo_m4x4_concat(allo_m4x4_translate(constrainedTranslation), allo_m4x4_rotate(newR.angle, constrainedAxis));
+  */
+  return allo_m4x4_identity();
 }
 
 void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, const allo_client_intent *const intent, double dt, allo_state_diff *diff)
 {
+  /*
   (void)dt;
   const allo_client_pose_grab* grabs[] = { &intent->poses.left_hand.grab, &intent->poses.right_hand.grab };
   allo_entity* grabbers[] = { allosim_get_child_with_pose(state, avatar, "hand/left"), allosim_get_child_with_pose(state, avatar, "hand/right") };
@@ -71,5 +75,7 @@ void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, co
     entity_set_transform(actuated, constrained);
     allo_state_diff_mark_component_updated(diff, actuated->id, "transform", cJSON_GetObjectItemCaseSensitive(actuated->components, "transform"));
   }
+
+  */
 }
 

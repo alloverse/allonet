@@ -39,7 +39,7 @@ void allosim_pose_movements(allo_state* state, Entity* avatar, const allo_client
 
     // if this is a client-side move pose, make sure we're only moving this client's avatar...
     if(!from_avatar)
-      if(parent ? strcmp(intent->entity_id, parent) : strcmp(intent->entity_id, entity->id))
+      if(parent ? strcmp(intent->entity_id, parent) : strcmp(intent->entity_id, entity->id()->c_str()))
         continue;
 
     allo_m4x4 new_transform;

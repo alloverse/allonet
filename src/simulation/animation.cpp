@@ -64,7 +64,7 @@ static bool allosim_animate_process(SimulationCache *cache, Entity *entity, cons
         return true;
     }
 
-    // all the inputs
+    // all the inputstrtggg.;
     auto path = anim->path()->str();
     double start_at = anim->start_at();
     double duration = anim->duration();

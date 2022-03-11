@@ -15,6 +15,7 @@ using namespace std;
 #include "util.h"
 #include "delta.h"
 #include "alloverse_binary_schema.h"
+#include <allonet/state/state_write.h>
 using namespace Alloverse;
 
 static alloserver* serv;
@@ -182,7 +183,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
     componentKeysToRemove.push_back(cJSON_GetStringValue(compname));
   }
 
-  Alloverse::EntityT* entity = state.getEntity(entity_id->valuestring);
+  Alloverse::EntityT* entity = state.getNextEntity(entity_id->valuestring);
   if(entity == NULL)
   {
     cJSON_Delete(comps);
@@ -623,7 +624,7 @@ static void addDefaultEntities(allo_mutable_state *mstate)
   
   place->id = "place";
 
-  auto origin = unique_ptr<Mat4>(new Mat4(std::array<float, 16>{{1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1}}));
+  auto origin = unique_ptr<Mat4>(new Mat4(flatbuffers::make_span(array<double, 16>{1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1})));
   auto transform = unique_ptr<TransformComponentT>(new TransformComponentT);
   transform->matrix = move(origin);
   place->components->transform = move(transform);

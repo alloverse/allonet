@@ -50,7 +50,8 @@ static unordered_map<string, AlloEasingFunction> g_easings = {
 
 AlloPropertyAnimation::AlloPropertyAnimation(const PropertyAnimation *spec)
 {
-    easingFunc = g_easings[spec->easing()->c_str()];
+    const char *easingName = spec->easing() ? spec->easing()->c_str() : "linear";
+    easingFunc = g_easings[easingName];
     from = mathvariant_from_flat(spec->from(), spec->from_type());
     to = mathvariant_from_flat(spec->to(), spec->to_type());
     if(from.type != to.type)
@@ -116,7 +117,7 @@ AlloPropertyAnimation::interpolateProperty(Alloverse::Components *comps, double 
     {
         if(ci > 0)
         {
-            allo_vector axis{ci==1?1.0:0.0, ci==2?1.0:0.0, ci==3?1.0:0.0};
+            allo_vector axis{{ci==1?1.0:0.0, ci==2?1.0:0.0, ci==3?1.0:0.0}};
             mat4_rotation_axis(ret2.value.m.v, axis.v, ret.value.d);
         }
         else
@@ -168,7 +169,7 @@ MathVariant mathvariant_from_flat(const void *flatfield, AnimationValue type)
     case AnimationValue_vector: {
         auto vect = static_cast<const VectorAnimationValue*>(flatfield)->vector()->v();
         ret.type = TypeVec3;
-        ret.value.v = allo_vector{vect->Get(1), vect->Get(2), vect->Get(3)};
+        ret.value.v = allo_vector{{vect->Get(1), vect->Get(2), vect->Get(3)}};
         break; }
     case AnimationValue_matrix: {
         auto matt = static_cast<const TransformAnimationValue*>(flatfield)->matrix()->m();
@@ -183,8 +184,9 @@ MathVariant mathvariant_from_flat(const void *flatfield, AnimationValue type)
         auto rott = static_cast<const RotationAnimationValue*>(flatfield);
         ret.type = TypeRotation;
         ret.value.r.angle = rott->angle();
-        ret.value.r.axis = allo_vector{rott->axis()->v()->Get(0), rott->axis()->v()->Get(1), rott->axis()->v()->Get(2)};
+        ret.value.r.axis = allo_vector{{rott->axis()->v()->Get(0), rott->axis()->v()->Get(1), rott->axis()->v()->Get(2)}};
         break; }
+    default: assert(false);
     }
     return ret;
 }

@@ -112,6 +112,20 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/net.h
     ${INCLUDE_FILES_PREFIX}/server.h
     ${INCLUDE_FILES_PREFIX}/state.h
+    ${INCLUDE_FILES_PREFIX}/threading.h
+    ${INCLUDE_FILES_PREFIX}/schema/alloverse_builder.h
+    ${INCLUDE_FILES_PREFIX}/schema/alloverse_reader.h
+    ${INCLUDE_FILES_PREFIX}/schema/alloverse_verifier.h
+    ${INCLUDE_FILES_PREFIX}/schema/flatbuffers_common_builder.h
+    ${INCLUDE_FILES_PREFIX}/schema/flatbuffers_common_reader.h
+    ${INCLUDE_FILES_PREFIX}/schema/reflection_builder.h
+    ${INCLUDE_FILES_PREFIX}/schema/reflection_reader.h
+    ${INCLUDE_FILES_PREFIX}/schema/reflection_verifier.h
+    ${INCLUDE_FILES_PREFIX}/state/diff.h
+    ${INCLUDE_FILES_PREFIX}/state/intent.h
+    ${INCLUDE_FILES_PREFIX}/state/interaction.h
+    ${INCLUDE_FILES_PREFIX}/state/state_read.h
+    ${INCLUDE_FILES_PREFIX}/state/state_write.h
 )
 set(SOURCE_FILES_PREFIX src)
 set(SOURCE_FILES

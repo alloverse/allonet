@@ -68,7 +68,7 @@ static bool allosim_animate_process(SimulationCache *cache, Entity *entity, cons
     auto path = anim->path()->str();
     double start_at = anim->start_at();
     double duration = anim->duration();
-    const char *easingName = anim->easing() ? anim->easing()->c_str() : "linear";
+    
     bool repeats = anim->repeats();
     bool autoreverses = anim->autoreverses();
     

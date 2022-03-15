@@ -1,6 +1,11 @@
 #ifndef ALLONET_NET_H
 #define ALLONET_NET_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
+
 typedef enum {
     allo_unreliable = 1,
     allo_reliable = 2,
@@ -21,5 +26,9 @@ extern const char *GetAllonetVersion(); // 3.1.4.g123abc
 extern const char *GetAllonetNumericVersion(); // 3.1.4
 extern const char *GetAllonetGitHash(); // g123abc
 extern int GetAllonetProtocolVersion(); // 3
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif

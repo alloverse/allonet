@@ -1,7 +1,10 @@
 #include "simulation.h"
-#include "mathc.h"
 #include <string>
 #include "alloverse_generated.h"
+
+extern "C" {
+    #include "mathc.h"
+}
 
 typedef enum MathVariantType
 {

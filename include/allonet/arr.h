@@ -40,4 +40,12 @@
 #define arr_clear(a)\
   (a)->length = 0
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 extern void __arr_reserve(void** data, size_t n, size_t* capacity, size_t stride);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

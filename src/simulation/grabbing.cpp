@@ -22,7 +22,7 @@ static allo_m4x4 _constrain(allo_m4x4 orig, allo_m4x4 update, allo_vector tconst
   return allo_m4x4_identity();
 }
 
-void allosim_handle_grabs(allo_state *const state, allo_entity *const avatar, const allo_client_intent *const intent, double dt, allo_state_diff *diff)
+void allosim_handle_grabs(allo_state *state, Alloverse::Entity *avatar, const allo_client_intent *intent, double dt, allo_state_diff *diff)
 {
   /*
   (void)dt;

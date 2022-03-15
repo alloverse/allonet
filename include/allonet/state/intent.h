@@ -1,8 +1,6 @@
 #ifndef ALLONET_STATE_INTENT_H
 #define ALLONET_STATE_INTENT_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 #include <allonet/math.h>
 #include <stdint.h>
@@ -10,6 +8,9 @@ extern "C" {
 #include <cJSON/cJSON.h>
 #include <allonet/math.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 typedef struct allo_client_pose_grab

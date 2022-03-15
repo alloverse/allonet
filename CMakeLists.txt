@@ -5,7 +5,6 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
-option(ALLONET_USE_LUA "Whether to include the Lua bridge." ON)
 set(ALLONET_THREADING_STRATEGY "force_link_tinycthread" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
 
 IF(APPLE)
@@ -34,23 +33,6 @@ add_subdirectory (lib/enet)
 
 set(OPUS_DISABLE_INTRINSICS OFF) # fix m1 build
 add_subdirectory(lib/opus)
-
-# Don't want to require lua installed on dev machine, so include sources instead.
-#find_package(Lua REQUIRED)
-add_subdirectory (lib/lua)
-set(LUA_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/lib/lua/src)
-IF(ALLONET_USE_LUA)
-	include_directories("${LUA_INCLUDE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/lib/lua")
-	IF(APPLE)
-	  SET(LUA_LINKER_FLAGS )
-	ELSEIF(UNIX)
-	  SET(LUA_LINKER_FLAGS "-Wl,-undefined,dynamic_lookup")
-	ELSEIF(WIN32)
-	  SET(LUA_LINKER_FLAGS )
-	ENDIF()
-ELSE()
-	SET(LUA_LINKER_FLAGS "")
-ENDIF()
 
 SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
@@ -122,16 +104,6 @@ set(SOURCE_FILES
 set(AV_SOURCE_FILES
   ${SOURCE_FILES_PREFIX}/media/video/libav.c
 )
-
-
-
-if(ALLONET_USE_LUA)
-	LIST(APPEND SOURCE_FILES
-		lang/lua/allonet-lua.c
-		lang/lua/lua-utils.c
-		lang/lua/lua-weak.c
-	)
-endif()
 
 source_group(include FILES ${INCLUDE_FILES})
 source_group(source FILES ${SOURCE_FILES})
@@ -226,7 +198,7 @@ include_directories(SYSTEM
 
 target_link_libraries(allonet 
   enet cjson-static cjson_utils-static opus 
-  ${PLATFORM_LIBS} ${LUA_LINKER_FLAGS}
+  ${PLATFORM_LIBS}
 )
 
 target_link_libraries(allonet_av

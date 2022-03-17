@@ -604,6 +604,7 @@ void alloclient_simulate(alloclient *client)
 {
     client->alloclient_simulate(client);
 }
+
 static void _alloclient_simulate(alloclient *client)
 {
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
@@ -737,6 +738,10 @@ alloclient *alloclient_create(bool threaded) {
     _internal(client)->shared = shared;
     
     return client;
+}
+
+allo_state *alloclient_get_state(alloclient *client) {
+    return &client->_state;
 }
 
 

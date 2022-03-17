@@ -81,6 +81,25 @@ allo_m4x4 allo_m4x4_identity()
 	return static_identity;
 }
 
+void allo_m4x4_set(allo_m4x4 *m, double c1r1, double c1r2, double c1r3, double c1r4, double c2r1, double c2r2, double c2r3, double c2r4, double c3r1, double c3r2, double c3r3, double c3r4, double c4r1, double c4r2, double c4r3, double c4r4) {
+    m->c1r1 = c1r1;
+    m->c1r2 = c1r2;
+    m->c1r3 = c1r3;
+    m->c1r4 = c1r4;
+    m->c2r1 = c2r1;
+    m->c2r2 = c2r2;
+    m->c2r3 = c2r3;
+    m->c2r4 = c2r4;
+    m->c3r1 = c3r1;
+    m->c3r2 = c3r2;
+    m->c3r3 = c3r3;
+    m->c3r4 = c3r4;
+    m->c4r1 = c4r1;
+    m->c4r2 = c4r2;
+    m->c4r3 = c4r3;
+    m->c4r4 = c4r4;
+}
+
 bool allo_m4x4_is_identity(allo_m4x4 m)
 {
   for(int i = 0; i < 16; i++) {

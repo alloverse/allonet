@@ -306,6 +306,8 @@ void alloclient_asset_send(alloclient *client, const char *asset_id, const uint8
   */
 void alloclient_simulate(alloclient* client);
 
+void alloclient_simulate_root_pose(alloclient *client, const char *avatar_id, float dt, allo_client_intent *intent, allo_m4x4 *outMat);
+
 /** Get current estimated alloplace time that is hopefully uniform across all
   * connected clients; or best-effort if it's out of sync.
   * @return seconds since some arbitrary point in the past
@@ -314,6 +316,9 @@ double alloclient_get_time(alloclient* client);
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
 
+/** Returns a pointer to the state
+ */
+allo_state *alloclient_get_state(alloclient *client);
 
 #ifdef __cplusplus
 }

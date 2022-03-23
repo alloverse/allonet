@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <allonet/arr.h>
 #include <cJSON/cJSON.h>
+struct allo_state;
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,8 +13,12 @@ extern "C" {
 
 typedef arr_t(const char*) allo_entity_id_vec;
 
+// a reference to a specific component in a specific entity. 
+// component named `name` in entity with id `eid.
 typedef struct allo_component_ref
 {
+    // these are all non-owning references into the accompanying state,
+    // so they're only valid for as long as you hold onto the state
     const char *eid;
     const char *name;
     const cJSON *olddata;
@@ -37,7 +42,8 @@ typedef struct allo_state_diff
 } allo_state_diff;
 
 extern void allo_state_diff_init(allo_state_diff *diff);
-extern allo_state_diff *allo_state_diff_duplicate(allo_state_diff *orig); // needs to be both destroyed and free'd
+// duplicates an existing diff and repoints all refs to point into `newstate` instead of `oldstate`.
+extern allo_state_diff *allo_state_diff_duplicate(allo_state_diff *orig, struct allo_state *oldstate, struct allo_state *newstate); 
 extern void allo_state_diff_destroy(allo_state_diff *diff);
 extern void allo_state_diff_dump(allo_state_diff *diff);
 extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);

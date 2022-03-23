@@ -422,7 +422,7 @@ static void bridge_state_callback(alloclient *bridgeclient, allo_state *state, a
     alloclient *proxyclient = bridgeclient->_backref;
     proxy_message *msg = proxy_message_create(msg_state_delta);
     msg->value.delta.state = allo_state_duplicate(state);
-    msg->value.delta.diff = allo_state_diff_duplicate(diff);
+    msg->value.delta.diff = allo_state_diff_duplicate(diff, state, msg->value.delta.state);
     enqueue_bridge_to_proxy(_internal(proxyclient), msg);
 }
 static void proxy_state_callback(alloclient *proxyclient, proxy_message *msg)

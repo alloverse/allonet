@@ -74,6 +74,30 @@ allo_mutable_state::addEntity(const char *id)
     return entity;
 }
 
+shared_ptr<EntityT> 
+allo_mutable_state::addEntityFromSpec(const char *spec, const char *agentId, const char *parent)
+{
+    char generated_eid[11] = { 0 };
+    allo_generate_id(generated_eid, 11);
+    auto root = addEntity(generated_eid);
+    root->owner_agent_id = agentId ? agentId : "place";
+
+    // todo: create an RPC or table for AvatarSpec, parse the json
+    // as this model, and just plop the results into the new entity
+
+    return root;
+}
+
+void
+allo_mutable_state::changeComponents(std::shared_ptr<Alloverse::EntityT> entity, const char *addChange, std::vector<std::string> remove)
+{
+    // use same approach as addEntityFromSpec but call it ChangeComps
+}
+
+
+
+
+
 double
 allo_mutable_state::setServerTime(double time)
 {
@@ -86,6 +110,20 @@ allo_mutable_state::setServerTime(double time)
 bool 
 allo_mutable_state::removeEntity(allo_removal_mode mode, const char *id)
 {
-  
+    // todo
+    return false;
+}
+
+void
+allo_mutable_state::removeEntitiesForAgent(const char *agent_id)
+{
+    for(size_t i = next.entities.size(); i-- > 0; )
+    {
+        auto ent = next.entities[i];
+        if(ent->owner_agent_id == agent_id)
+        {
+            removeEntity(AlloRemovalCascade, ent->id.c_str());
+        }
+    }
 }
 

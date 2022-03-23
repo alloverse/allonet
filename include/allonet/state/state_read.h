@@ -50,19 +50,19 @@ extern void allo_state_create_parsed(allo_state *state, const void *buf, size_t 
 extern allo_state *allo_state_duplicate(allo_state *state);
 extern void allo_state_destroy(allo_state *state);
 
-extern allo_entity* state_get_entity(allo_state* state, const char* entity_id);
-extern allo_entity* entity_get_parent(allo_state* state, allo_entity* entity);
+extern const allo_entity* state_get_entity(allo_state* state, const char* entity_id);
+extern const allo_entity* entity_get_parent(allo_state* state, const allo_entity* entity);
 
 // set the time (in flat if client-side, in next if server-side) and returns the previous time
 extern double state_set_server_time(allo_state *state, double server_time);
 // TODO: make these update-in-place for allo_state, and update _next for allo_mutable_state
 // parse and get the transform-from-parent for the entity
-extern allo_m4x4 entity_get_transform(allo_entity* entity);
+extern allo_m4x4 entity_get_transform(const allo_entity* entity);
 // update the transform stored in the entity. this is a mutation, but remains in the "read"
 // api since it can be done in-place and is used to interpolate local state in the client.
 extern void entity_set_transform(allo_entity* entity, allo_m4x4 matrix);
 extern allo_m4x4 entity_get_transform_in_coordinate_space(allo_state* state, allo_entity* entity, allo_entity* space);
-extern allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* from_space, allo_entity* to_space);
+extern allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, const allo_entity* from_space, const allo_entity* to_space);
 
 #ifdef __cplusplus
 } // extern "C"

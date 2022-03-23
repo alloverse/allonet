@@ -503,7 +503,7 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
   }
   else
   {
-    allo_entity* entity = state_get_entity(&state, interaction->receiver_entity_id);
+    const allo_entity* entity = state_get_entity(&state, interaction->receiver_entity_id);
     if(entity)
     {
       alloserver_client* client2;

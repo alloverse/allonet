@@ -36,6 +36,32 @@ extern "C" void allo_state_destroy(allo_state *state)
     free(state->flat);
 }
 
+extern "C" const allo_entity* state_get_entity(allo_state* state, const char* entity_id)
+{
+    Alloverse_Entity_vec_t vec = Alloverse_State_entities_get(state->state);
+    size_t idx = Alloverse_Entity_vec_find_by_id(vec, entity_id);
+    if(idx == flatbuffers_not_found)
+    {
+        return NULL;
+    }
+    return Alloverse_Entity_vec_at(vec, idx);
+}
+
+extern "C" const allo_entity* entity_get_parent(allo_state* state, const allo_entity* entity)
+{
+    auto comps = Alloverse_Entity_components_get(entity);
+    auto rels = Alloverse_Components_relationships_get(comps);
+    if(!rels) return NULL;
+    auto parent = Alloverse_RelationshipsComponent_parent_get(rels);
+    if(!parent) return NULL;
+    return state_get_entity(state, parent);
+}
+
+extern allo_m4x4 entity_get_transform(const allo_entity* entity)
+{
+    return GetEntityTransform((Alloverse::Entity*)entity);
+}
+
 extern "C" double state_set_server_time(allo_state *state, double server_time)
 {
     return state->setServerTime(server_time);
@@ -47,12 +73,12 @@ extern "C" allo_m4x4 entity_get_transform_in_coordinate_space(allo_state *state,
     return state_convert_coordinate_space(state, m, entity_get_parent(state, entity), space);
 }
 
-static allo_m4x4 entity_get_transform_to_world(allo_state* state, allo_entity *ent)
+static allo_m4x4 entity_get_transform_to_world(allo_state* state, const allo_entity *ent)
 {
     if (!ent) {
         return allo_m4x4_identity();
     }
-    allo_entity* parent = entity_get_parent(state, ent);
+    const allo_entity* parent = entity_get_parent(state, ent);
     allo_m4x4 my_transform = entity_get_transform(ent);
     if (parent) {
         return allo_m4x4_concat(entity_get_transform_to_world(state, parent), my_transform);
@@ -60,7 +86,7 @@ static allo_m4x4 entity_get_transform_to_world(allo_state* state, allo_entity *e
     return my_transform;
 }
 
-extern "C" allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, allo_entity* old, allo_entity* neww)
+extern "C" allo_m4x4 state_convert_coordinate_space(allo_state* state, allo_m4x4 m, const allo_entity* old, const allo_entity* neww)
 {
     allo_m4x4 worldFromOld = entity_get_transform_to_world(state, old);
     allo_m4x4 worldFromNew = entity_get_transform_to_world(state, neww);

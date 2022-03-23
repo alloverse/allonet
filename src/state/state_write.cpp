@@ -33,16 +33,45 @@ allo_mutable_state::finishIterationAndFlatten()
     next.revision = next_revision;
 }
 
-EntityT *
+shared_ptr<EntityT> 
 allo_mutable_state::getNextEntity(const char *id)
 {
-  for(int i = 0, c = next.entities.size(); i < c; i++)
-  {
-    EntityT *ent = next.entities[i].get();
-    if(ent->id == id)
-      return ent;
-  }
-  return NULL;
+    
+    /*shared_ptr<EntityT> ret;
+        binary_search(next.entities.begin(), next.entities.end(), sid, 
+        [&ret](shared_ptr<EntityT> const & ent, string &value) {
+            if(ent->id == value) ret = ent;
+            return ent->id < value;
+        }
+    );*/
+    for(int i = 0, c = next.entities.size(); i < c; i++)
+    {
+        auto ent = next.entities[i];
+        if(ent->id == id)
+            return ent;
+    }
+    return NULL;
+}
+
+static bool eid_pred(const EntityT &l, const EntityT &r)
+{
+    return l.id < r.id;
+}
+
+shared_ptr<EntityT> 
+allo_mutable_state::addEntity(const char *id)
+{
+    shared_ptr<EntityT> entity = make_shared<EntityT>();
+    entity->id = id;
+    /*next.entities.insert( 
+        std::upper_bound(
+            next.entities.begin(), next.entities.end(), 
+            entity, eid_pred
+        ),
+        entity
+    );*/
+    next.entities.push_back(entity);
+    return entity;
 }
 
 double
@@ -52,5 +81,11 @@ allo_mutable_state::setServerTime(double time)
   auto prev = clock->time;
   clock->time = time;
   return prev;
+}
+
+bool 
+allo_mutable_state::removeEntity(allo_removal_mode mode, const char *id)
+{
+  
 }
 

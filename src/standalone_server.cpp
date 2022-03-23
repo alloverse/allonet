@@ -183,7 +183,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
     componentKeysToRemove.push_back(cJSON_GetStringValue(compname));
   }
 
-  Alloverse::EntityT* entity = state.getNextEntity(entity_id->valuestring);
+  shared_ptr<Alloverse::EntityT> entity = state.getNextEntity(entity_id->valuestring);
   if(entity == NULL)
   {
     cJSON_Delete(comps);
@@ -225,7 +225,7 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     auto metadata = std::make_shared<LiveMediaMetadataT>();
     flatbuffers::GetRoot<LiveMediaMetadata>(parser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
     
-    Alloverse::EntityT *entity = state.getNextEntity(interaction->sender_entity_id);
+    auto entity = state.getNextEntity(interaction->sender_entity_id);
     if(!entity || !media_type || !media_format || !cJSON_IsObject(media_metadata))
     {
       fprintf(stderr, "Disallowed creating allocating track for %s: invalid argument\n", interaction->sender_entity_id);

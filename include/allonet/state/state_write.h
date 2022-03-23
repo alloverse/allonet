@@ -30,8 +30,8 @@ public:
     bool removeEntity(allo_removal_mode mode, const char *id);
     void removeEntitiesForAgent(const char *agent_id);
 
-    Alloverse::EntityT *getNextEntity(const char *id);
-    void changeComponents(Alloverse::EntityT *entity, const char *addChange, std::vector<std::string> remove);
+    std::shared_ptr<Alloverse::EntityT> getNextEntity(const char *id);
+    void changeComponents(std::shared_ptr<Alloverse::EntityT> entity, const char *addChange, std::vector<std::string> remove);
 
     virtual double setServerTime(double time) override;
 };

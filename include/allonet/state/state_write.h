@@ -24,8 +24,8 @@ public:
     // transform next into cur/flat and bump revision so it can be transmitted.
     void finishIterationAndFlatten();
 
-    Alloverse::EntityT *addEntity(const char *id);
-    Alloverse::EntityT *addEntityFromSpec(const char *spec, const char *agentId, const char *parent);
+    std::shared_ptr<Alloverse::EntityT> addEntity(const char *id);
+    std::shared_ptr<Alloverse::EntityT> addEntityFromSpec(const char *spec, const char *agentId, const char *parent);
 
     bool removeEntity(allo_removal_mode mode, const char *id);
     void removeEntitiesForAgent(const char *agent_id);

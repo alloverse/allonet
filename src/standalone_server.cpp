@@ -20,7 +20,7 @@ using namespace Alloverse;
 
 static alloserver* serv;
 static allo_mutable_state state;
-static EntityT *place;
+static shared_ptr<EntityT> place;
 static void *simulation_cache;
 static double last_simulate_at = 0;
 static char *g_placename;
@@ -92,7 +92,7 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   cJSON* avatar = cJSON_GetArrayItem(body, 6);
   char *avatars = cJSON_Print(avatar);
 
-  Alloverse::EntityT *ava = state.addEntityFromSpec(avatars, client->agent_id, NULL);
+  shared_ptr<EntityT> ava = state.addEntityFromSpec(avatars, client->agent_id, NULL);
   free(avatars);
   client->avatar_entity_id = allo_strdup(ava->id.c_str());
   client->identity = cJSON_Duplicate(identity, true);
@@ -132,7 +132,7 @@ static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_c
   cJSON* edesc = cJSON_GetArrayItem(body, 1);
   char *edescs = cJSON_Print(edesc);
 
-  Alloverse::EntityT *entity = state.addEntityFromSpec(edescs, client->agent_id, NULL);
+  shared_ptr<EntityT> entity = state.addEntityFromSpec(edescs, client->agent_id, NULL);
   free(edescs);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id.c_str()), NULL);
@@ -216,13 +216,13 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     cJSON* respbody;
     allo_media_track *track;
     int track_id;
-    std::unique_ptr<LiveMediaComponentT> media;
+    std::shared_ptr<LiveMediaComponentT> media;
     flatbuffers::Parser parser;
 
     parser.Parse((const char*)alloverse_schema_bytes);
     parser.SetRootType("LiveMediaMetadata");
     parser.Parse(media_metadatas);
-    auto metadata = unique_ptr<LiveMediaMetadataT>(new LiveMediaMetadataT());
+    auto metadata = std::make_shared<LiveMediaMetadataT>();
     flatbuffers::GetRoot<LiveMediaMetadata>(parser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
     
     Alloverse::EntityT *entity = state.getNextEntity(interaction->sender_entity_id);
@@ -241,12 +241,12 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     }
 
     track_id = next_free_track_id++;
-    media = std::unique_ptr<LiveMediaComponentT>(new LiveMediaComponentT());
+    media = std::make_shared<LiveMediaComponentT>();
     media->track_id = track_id;
     media->type = media_type;
     media->format = media_format;
-    media->metadata.swap(metadata);
-    entity->components->live_media.swap(media);
+    media->metadata = metadata;
+    entity->components->live_media = media;
 
     track = _media_track_find_or_create(&mediatracks, track_id, _media_track_type_from_string(media_type));
     track->origin = client;
@@ -621,19 +621,16 @@ static void step(double goalDt)
 
 static void addDefaultEntities(allo_mutable_state *mstate)
 {
-  
-  place->id = "place";
+  place = mstate->addEntity("place");
 
-  auto origin = unique_ptr<Mat4>(new Mat4(flatbuffers::make_span(array<double, 16>{1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1})));
-  auto transform = unique_ptr<TransformComponentT>(new TransformComponentT);
-  transform->matrix = move(origin);
-  place->components->transform = move(transform);
+  auto origin = make_shared<Mat4>(flatbuffers::make_span(array<double, 16>{1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1}));
+  auto transform = make_shared<TransformComponentT>();
+  transform->matrix = origin;
+  place->components->transform = transform;
 
-  auto clock = unique_ptr<ClockComponentT>(new ClockComponentT);
+  auto clock = make_shared<ClockComponentT>();
   clock->time = 0.0;
   place->components->clock = move(clock);
-  
-  mstate->next.entities.push_back(unique_ptr<EntityT>(place));
 }
 
 bool alloserv_run_standalone(int host, int port, const char *placename)

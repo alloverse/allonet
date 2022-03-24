@@ -81,23 +81,36 @@ allo_mutable_state::addEntity(const char *id)
 }
 
 shared_ptr<EntityT> 
-allo_mutable_state::addEntityFromSpec(const char *spec, const char *agentId, const char *parent)
+allo_mutable_state::addEntityFromSpec(shared_ptr<EntitySpecT> spec, const char *agentId, const char *parent)
 {
     char generated_eid[11] = { 0 };
     allo_generate_id(generated_eid, 11);
     auto root = addEntity(generated_eid);
     root->owner_agent_id = agentId ? agentId : "place";
+    root->components = spec->components;
 
-    // todo: create an RPC or table for AvatarSpec, parse the json
-    // as this model, and just plop the results into the new entity
+    if(parent)
+    {
+        if(!root->components->relationships)
+        {
+            root->components->relationships = make_shared<RelationshipsComponentT>();
+        }
+        root->components->relationships->parent = parent;
+    }
+
+    for(auto subspec: spec->children)
+    {
+        addEntityFromSpec(subspec, agentId, generated_eid);
+    }
 
     return root;
 }
 
 void
-allo_mutable_state::changeComponents(std::shared_ptr<Alloverse::EntityT> entity, const char *addChange, std::vector<std::string> remove)
+allo_mutable_state::changeComponents(shared_ptr<EntityT> entity, shared_ptr<ComponentsT> addChange, std::vector<std::string> remove)
 {
-    // use same approach as addEntityFromSpec but call it ChangeComps
+    // todo: only set the fields in addChange that are non-null to overwrite the comps in entity
+    // todo un-set the fields named in remove
 }
 
 

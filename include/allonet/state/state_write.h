@@ -25,13 +25,13 @@ public:
     void finishIterationAndFlatten();
 
     std::shared_ptr<Alloverse::EntityT> addEntity(const char *id);
-    std::shared_ptr<Alloverse::EntityT> addEntityFromSpec(const char *spec, const char *agentId, const char *parent);
+    std::shared_ptr<Alloverse::EntityT> addEntityFromSpec(std::shared_ptr<Alloverse::EntitySpecT> spec, const char *agentId, const char *parent);
 
     bool removeEntity(allo_removal_mode mode, const char *id);
     void removeEntitiesForAgent(const char *agent_id);
 
     std::shared_ptr<Alloverse::EntityT> getNextEntity(const char *id);
-    void changeComponents(std::shared_ptr<Alloverse::EntityT> entity, const char *addChange, std::vector<std::string> remove);
+    void changeComponents(std::shared_ptr<Alloverse::EntityT> entity, std::shared_ptr<Alloverse::ComponentsT> addChange, std::vector<std::string> remove);
 
     virtual double setServerTime(double time) override;
 };

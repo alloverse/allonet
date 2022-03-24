@@ -24,6 +24,7 @@ static int Alloverse_RotationAnimationValue_verify_table(flatcc_table_verifier_d
 static int Alloverse_TransformAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_PropertyAnimation_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_PropertyAnimationsComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_EntitySpec_verify_table(flatcc_table_verifier_descriptor_t *td);
 
 static int Alloverse_AnimationValue_union_verifier(flatcc_union_verifier_descriptor_t *ud)
 {
@@ -504,6 +505,34 @@ static inline int Alloverse_PropertyAnimationsComponent_verify_as_root_with_iden
 static inline int Alloverse_PropertyAnimationsComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
 {
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_PropertyAnimationsComponent_verify_table);
+}
+
+static int Alloverse_EntitySpec_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_table_field(td, 0, 0, &Alloverse_Components_verify_table) /* components */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 1, 0, &Alloverse_EntitySpec_verify_table) /* children */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_EntitySpec_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_EntitySpec_identifier, &Alloverse_EntitySpec_verify_table);
+}
+
+static inline int Alloverse_EntitySpec_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_EntitySpec_type_identifier, &Alloverse_EntitySpec_verify_table);
+}
+
+static inline int Alloverse_EntitySpec_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_EntitySpec_verify_table);
+}
+
+static inline int Alloverse_EntitySpec_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_EntitySpec_verify_table);
 }
 
 #include "flatcc/flatcc_epilogue.h"

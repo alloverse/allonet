@@ -89,6 +89,10 @@ typedef const struct Alloverse_PropertyAnimationsComponent_table *Alloverse_Prop
 typedef struct Alloverse_PropertyAnimationsComponent_table *Alloverse_PropertyAnimationsComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_mutable_vec_t;
+typedef const struct Alloverse_EntitySpec_table *Alloverse_EntitySpec_table_t;
+typedef struct Alloverse_EntitySpec_table *Alloverse_EntitySpec_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_EntitySpec_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_EntitySpec_mutable_vec_t;
 #ifndef Alloverse_State_file_identifier
 #define Alloverse_State_file_identifier 0
 #endif
@@ -292,6 +296,18 @@ typedef flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_mutable_vec
 #define Alloverse_Vec3_type_identifier "\x53\xb4\x71\x7e"
 #ifndef Alloverse_Vec3_file_extension
 #define Alloverse_Vec3_file_extension "bin"
+#endif
+#ifndef Alloverse_EntitySpec_file_identifier
+#define Alloverse_EntitySpec_file_identifier 0
+#endif
+/* deprecated, use Alloverse_EntitySpec_file_identifier */
+#ifndef Alloverse_EntitySpec_identifier
+#define Alloverse_EntitySpec_identifier 0
+#endif
+#define Alloverse_EntitySpec_type_hash ((flatbuffers_thash_t)0x392eedec)
+#define Alloverse_EntitySpec_type_identifier "\xec\xed\x2e\x39"
+#ifndef Alloverse_EntitySpec_file_extension
+#define Alloverse_EntitySpec_file_extension "bin"
 #endif
 
 
@@ -553,6 +569,19 @@ __flatbuffers_offset_vec_at(Alloverse_PropertyAnimationsComponent_table_t, vec, 
 __flatbuffers_table_as_root(Alloverse_PropertyAnimationsComponent)
 
 __flatbuffers_define_vector_field(0, Alloverse_PropertyAnimationsComponent, animations, Alloverse_PropertyAnimation_vec_t, 0)
+
+/** ////////////////////////////////////////////////////////////
+ * ////////////////////////////////////////////////////////////  */
+struct Alloverse_EntitySpec_table { uint8_t unused__; };
+
+static inline size_t Alloverse_EntitySpec_vec_len(Alloverse_EntitySpec_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_EntitySpec_table_t Alloverse_EntitySpec_vec_at(Alloverse_EntitySpec_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_EntitySpec_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_EntitySpec)
+
+__flatbuffers_define_table_field(0, Alloverse_EntitySpec, components, Alloverse_Components_table_t, 0)
+__flatbuffers_define_vector_field(1, Alloverse_EntitySpec, children, Alloverse_EntitySpec_vec_t, 0)
 
 
 #include "flatcc/flatcc_epilogue.h"

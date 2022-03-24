@@ -142,6 +142,11 @@ typedef flatbuffers_ref_t Alloverse_PropertyAnimationsComponent_ref_t;
 static Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_clone(flatbuffers_builder_t *B, Alloverse_PropertyAnimationsComponent_table_t t);
 __flatbuffers_build_table(flatbuffers_, Alloverse_PropertyAnimationsComponent, 1)
 
+static const flatbuffers_voffset_t __Alloverse_EntitySpec_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_EntitySpec_ref_t;
+static Alloverse_EntitySpec_ref_t Alloverse_EntitySpec_clone(flatbuffers_builder_t *B, Alloverse_EntitySpec_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_EntitySpec, 2)
+
 #define __Alloverse_State_formal_args , uint64_t v0, Alloverse_Entity_vec_ref_t v1
 #define __Alloverse_State_call_args , v0, v1
 static inline Alloverse_State_ref_t Alloverse_State_create(flatbuffers_builder_t *B __Alloverse_State_formal_args);
@@ -224,6 +229,11 @@ __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_PropertyAnimation, Allo
 #define __Alloverse_PropertyAnimationsComponent_call_args , v0
 static inline Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_create(flatbuffers_builder_t *B __Alloverse_PropertyAnimationsComponent_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_PropertyAnimationsComponent, Alloverse_PropertyAnimationsComponent_file_identifier, Alloverse_PropertyAnimationsComponent_type_identifier)
+
+#define __Alloverse_EntitySpec_formal_args , Alloverse_Components_ref_t v0, Alloverse_EntitySpec_vec_ref_t v1
+#define __Alloverse_EntitySpec_call_args , v0, v1
+static inline Alloverse_EntitySpec_ref_t Alloverse_EntitySpec_create(flatbuffers_builder_t *B __Alloverse_EntitySpec_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_EntitySpec, Alloverse_EntitySpec_file_identifier, Alloverse_EntitySpec_type_identifier)
 
 static inline Alloverse_AnimationValue_union_ref_t Alloverse_AnimationValue_as_NONE(void)
 { Alloverse_AnimationValue_union_ref_t uref; uref.type = Alloverse_AnimationValue_NONE; uref.value = 0; return uref; }
@@ -648,6 +658,30 @@ static Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsC
         return 0;
     }
     __flatbuffers_memoize_end(B, t, Alloverse_PropertyAnimationsComponent_end(B));
+}
+
+__flatbuffers_build_table_field(0, flatbuffers_, Alloverse_EntitySpec_components, Alloverse_Components, Alloverse_EntitySpec)
+__flatbuffers_build_table_vector_field(1, flatbuffers_, Alloverse_EntitySpec_children, Alloverse_EntitySpec, Alloverse_EntitySpec)
+
+static inline Alloverse_EntitySpec_ref_t Alloverse_EntitySpec_create(flatbuffers_builder_t *B __Alloverse_EntitySpec_formal_args)
+{
+    if (Alloverse_EntitySpec_start(B)
+        || Alloverse_EntitySpec_components_add(B, v0)
+        || Alloverse_EntitySpec_children_add(B, v1)) {
+        return 0;
+    }
+    return Alloverse_EntitySpec_end(B);
+}
+
+static Alloverse_EntitySpec_ref_t Alloverse_EntitySpec_clone(flatbuffers_builder_t *B, Alloverse_EntitySpec_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_EntitySpec_start(B)
+        || Alloverse_EntitySpec_components_pick(B, t)
+        || Alloverse_EntitySpec_children_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_EntitySpec_end(B));
 }
 
 #include "flatcc/flatcc_epilogue.h"

@@ -25,6 +25,7 @@ static void *simulation_cache;
 static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
+flatbuffers::Parser flatparser;
 
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
@@ -89,11 +90,17 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
 {
   const int version = cJSON_GetArrayItem(body, 2)->valueint;
   cJSON* identity = cJSON_GetArrayItem(body, 4);
+  
   cJSON* avatar = cJSON_GetArrayItem(body, 6);
   char *avatars = cJSON_Print(avatar);
-
-  shared_ptr<EntityT> ava = state.addEntityFromSpec(avatars, client->agent_id, NULL);
+  flatparser.SetRootType("EntitySpec");
+  flatparser.Parse(avatars);
   free(avatars);
+  auto entspec = std::make_shared<EntitySpecT>();
+  flatbuffers::GetRoot<EntitySpec>(flatparser.builder_.GetBufferPointer())->UnPackTo(entspec.get());
+
+  shared_ptr<EntityT> ava = state.addEntityFromSpec(entspec, client->agent_id, NULL);
+  
   client->avatar_entity_id = allo_strdup(ava->id.c_str());
   client->identity = cJSON_Duplicate(identity, true);
 
@@ -131,9 +138,13 @@ static void handle_place_spawn_entity_interaction(alloserver* serv, alloserver_c
 {
   cJSON* edesc = cJSON_GetArrayItem(body, 1);
   char *edescs = cJSON_Print(edesc);
-
-  shared_ptr<EntityT> entity = state.addEntityFromSpec(edescs, client->agent_id, NULL);
+  flatparser.SetRootType("EntitySpec");
+  flatparser.Parse(edescs);
   free(edescs);
+  auto entspec = std::make_shared<EntitySpecT>();
+  flatbuffers::GetRoot<EntitySpec>(flatparser.builder_.GetBufferPointer())->UnPackTo(entspec.get());
+
+  shared_ptr<EntityT> entity = state.addEntityFromSpec(entspec, client->agent_id, NULL);
 
   cJSON* respbody = cjson_create_list(cJSON_CreateString("spawn_entity"), cJSON_CreateString(entity->id.c_str()), NULL);
   char* respbodys = cJSON_Print(respbody);
@@ -172,8 +183,14 @@ static void handle_place_remove_entity_interaction(alloserver* serv, alloserver_
 static void handle_place_change_components_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
   cJSON* entity_id = cJSON_GetArrayItem(body, 1);
+  
   cJSON* comps = cJSON_GetArrayItem(body, 3);
   char *compss = cJSON_Print(comps);
+  flatparser.SetRootType("Components");
+  flatparser.Parse(compss);
+  auto compspecs = std::make_shared<ComponentsT>();
+  flatbuffers::GetRoot<Components>(flatparser.builder_.GetBufferPointer())->UnPackTo(compspecs.get());
+
   cJSON* rmcomps = cJSON_GetArrayItem(body, 5);
   cJSON* respbody = NULL;
   vector<string> componentKeysToRemove;
@@ -192,7 +209,7 @@ static void handle_place_change_components_interaction(alloserver* serv, alloser
     goto end;
   }
   
-  state.changeComponents(entity, compss, componentKeysToRemove);
+  state.changeComponents(entity, compspecs, componentKeysToRemove);
 
   respbody = cjson_create_list(cJSON_CreateString("change_components"), cJSON_CreateString("ok"), NULL);
 end:;
@@ -217,13 +234,11 @@ static void handle_place_allocate_track_interaction(alloserver* serv, alloserver
     allo_media_track *track;
     int track_id;
     std::shared_ptr<LiveMediaComponentT> media;
-    flatbuffers::Parser parser;
-
-    parser.Parse((const char*)alloverse_schema_bytes);
-    parser.SetRootType("LiveMediaMetadata");
-    parser.Parse(media_metadatas);
+    
+    flatparser.SetRootType("LiveMediaMetadata");
+    flatparser.Parse(media_metadatas);
     auto metadata = std::make_shared<LiveMediaMetadataT>();
-    flatbuffers::GetRoot<LiveMediaMetadata>(parser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
+    flatbuffers::GetRoot<LiveMediaMetadata>(flatparser.builder_.GetBufferPointer())->UnPackTo(metadata.get());
     
     auto entity = state.getNextEntity(interaction->sender_entity_id);
     if(!entity || !media_type || !media_format || !cJSON_IsObject(media_metadata))
@@ -668,6 +683,7 @@ alloserver *alloserv_start_standalone(int listenhost, int port, const char *plac
   assert(serv == NULL);
 
   g_placename = strdup(placename);
+  flatparser.Parse((const char*)alloverse_schema_bytes);
 
   int retries = 3;
   while (!serv)

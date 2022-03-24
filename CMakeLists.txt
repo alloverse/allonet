@@ -9,6 +9,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES")
+set(CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "11.0")
+macro (set_xcode_property TARGET XCODE_PROPERTY XCODE_VALUE)
+  set_property (TARGET ${TARGET} PROPERTY XCODE_ATTRIBUTE_${XCODE_PROPERTY} ${XCODE_VALUE})
+endmacro (set_xcode_property)
+
+
+
+
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 set(ALLONET_THREADING_STRATEGY "force_link_tinycthread" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
@@ -302,3 +311,9 @@ add_test(NAME allonet_jobs_test COMMAND allonet_jobs_test)
 add_executable(allonet_delta_test test/delta_test.c)
 target_link_libraries(allonet_delta_test allonet unity cjson)
 add_test(NAME allonet_delta_test COMMAND allonet_delta_test)
+
+
+# stupid cmake sets this to NO for all targets even with CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS set to YES??? :((
+set_xcode_property(allonet GCC_GENERATE_DEBUGGING_SYMBOLS YES) 
+set_xcode_property(allonet_av GCC_GENERATE_DEBUGGING_SYMBOLS YES) 
+set_xcode_property(standalone_server GCC_GENERATE_DEBUGGING_SYMBOLS YES) 

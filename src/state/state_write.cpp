@@ -62,7 +62,13 @@ shared_ptr<EntityT>
 allo_mutable_state::addEntity(const char *id)
 {
     shared_ptr<EntityT> entity = make_shared<EntityT>();
+    
+    // required defaults for all entities
     entity->id = id;
+    entity->components = make_shared<ComponentsT>();
+    entity->components->transform = make_shared<TransformComponentT>();
+    entity->components->transform->matrix = make_shared<Mat4>(flatbuffers::make_span(array<double, 16>{1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1}));
+  
     /*next.entities.insert( 
         std::upper_bound(
             next.entities.begin(), next.entities.end(), 

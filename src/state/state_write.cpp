@@ -140,7 +140,15 @@ allo_mutable_state::setServerTime(double time)
 bool 
 allo_mutable_state::removeEntity(allo_removal_mode mode, const char *id)
 {
-    // todo
+    auto it = find_if(next.entities.begin(), next.entities.end(),
+        [&id](const shared_ptr<EntityT> &ent) {
+            return ent->id == id;
+        }
+    );
+    next.entities.erase(it);
+
+    // todo: remove children
+    
     return false;
 }
 

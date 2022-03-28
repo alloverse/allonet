@@ -106,11 +106,22 @@ allo_mutable_state::addEntityFromSpec(shared_ptr<EntitySpecT> spec, const char *
     return root;
 }
 
+static bool has_value(vector<string> vec, string val)
+{
+    return find(vec.begin(), vec.end(), val) != vec.end();
+}
+
 void
 allo_mutable_state::changeComponents(shared_ptr<EntityT> entity, shared_ptr<ComponentsT> addChange, std::vector<std::string> remove)
 {
-    // todo: only set the fields in addChange that are non-null to overwrite the comps in entity
-    // todo un-set the fields named in remove
+    // XXX: This is the saddest code in the flatbuffer rewrite :( Would love to make this more generic,
+    // but can't think of a good + generic way.
+    if(addChange->transform || has_value(remove, "transform")) entity->components->transform = addChange->transform;
+    if(addChange->relationships || has_value(remove, "relationships")) entity->components->relationships = addChange->relationships;
+    if(addChange->live_media || has_value(remove, "live_media")) entity->components->live_media = addChange->live_media;
+    if(addChange->clock || has_value(remove, "clock")) entity->components->clock = addChange->clock;
+    if(addChange->intent || has_value(remove, "intent")) entity->components->intent = addChange->intent;
+    if(addChange->property_animations || has_value(remove, "property_animations")) entity->components->property_animations = addChange->property_animations;
 }
 
 

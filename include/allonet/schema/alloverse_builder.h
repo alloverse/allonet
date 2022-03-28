@@ -80,7 +80,7 @@ __flatbuffers_build_table(flatbuffers_, Alloverse_Entity, 3)
 static const flatbuffers_voffset_t __Alloverse_Components_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_Components_ref_t;
 static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder_t *B, Alloverse_Components_table_t t);
-__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 7)
+__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 6)
 
 static const flatbuffers_voffset_t __Alloverse_TransformComponent_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_TransformComponent_ref_t;
@@ -158,11 +158,9 @@ static inline Alloverse_Entity_ref_t Alloverse_Entity_create(flatbuffers_builder
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Entity, Alloverse_Entity_file_identifier, Alloverse_Entity_type_identifier)
 
 #define __Alloverse_Components_formal_args ,\
-  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3,\
-  Alloverse_IntentComponent_ref_t v4, Alloverse_PropertyAnimationsComponent_ref_t v5, flatbuffers_uint8_vec_ref_t v6
+  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3, Alloverse_IntentComponent_ref_t v4, Alloverse_PropertyAnimationsComponent_ref_t v5
 #define __Alloverse_Components_call_args ,\
-  v0, v1, v2, v3,\
-  v4, v5, v6
+  v0, v1, v2, v3, v4, v5
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Components, Alloverse_Components_file_identifier, Alloverse_Components_type_identifier)
 
@@ -316,7 +314,6 @@ __flatbuffers_build_table_field(2, flatbuffers_, Alloverse_Components_live_media
 __flatbuffers_build_table_field(3, flatbuffers_, Alloverse_Components_clock, Alloverse_ClockComponent, Alloverse_Components)
 __flatbuffers_build_table_field(4, flatbuffers_, Alloverse_Components_intent, Alloverse_IntentComponent, Alloverse_Components)
 __flatbuffers_build_table_field(5, flatbuffers_, Alloverse_Components_property_animations, Alloverse_PropertyAnimationsComponent, Alloverse_Components)
-__flatbuffers_build_vector_field(6, flatbuffers_, Alloverse_Components_flex, flatbuffers_uint8, uint8_t, Alloverse_Components)
 
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args)
 {
@@ -326,8 +323,7 @@ static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers
         || Alloverse_Components_live_media_add(B, v2)
         || Alloverse_Components_clock_add(B, v3)
         || Alloverse_Components_intent_add(B, v4)
-        || Alloverse_Components_property_animations_add(B, v5)
-        || Alloverse_Components_flex_add(B, v6)) {
+        || Alloverse_Components_property_animations_add(B, v5)) {
         return 0;
     }
     return Alloverse_Components_end(B);
@@ -342,8 +338,7 @@ static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder
         || Alloverse_Components_live_media_pick(B, t)
         || Alloverse_Components_clock_pick(B, t)
         || Alloverse_Components_intent_pick(B, t)
-        || Alloverse_Components_property_animations_pick(B, t)
-        || Alloverse_Components_flex_pick(B, t)) {
+        || Alloverse_Components_property_animations_pick(B, t)) {
         return 0;
     }
     __flatbuffers_memoize_end(B, t, Alloverse_Components_end(B));

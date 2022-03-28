@@ -143,7 +143,6 @@ static int Alloverse_Components_verify_table(flatcc_table_verifier_descriptor_t 
     if ((ret = flatcc_verify_table_field(td, 3, 0, &Alloverse_ClockComponent_verify_table) /* clock */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 4, 0, &Alloverse_IntentComponent_verify_table) /* intent */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 5, 0, &Alloverse_PropertyAnimationsComponent_verify_table) /* property_animations */)) return ret;
-    if ((ret = flatcc_verify_vector_field(td, 6, 0, 1, 1, INT64_C(4294967295)) /* flex */)) return ret;
     return flatcc_verify_ok;
 }
 

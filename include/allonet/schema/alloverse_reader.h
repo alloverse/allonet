@@ -390,7 +390,6 @@ __flatbuffers_define_table_field(2, Alloverse_Components, live_media, Alloverse_
 __flatbuffers_define_table_field(3, Alloverse_Components, clock, Alloverse_ClockComponent_table_t, 0)
 __flatbuffers_define_table_field(4, Alloverse_Components, intent, Alloverse_IntentComponent_table_t, 0)
 __flatbuffers_define_table_field(5, Alloverse_Components, property_animations, Alloverse_PropertyAnimationsComponent_table_t, 0)
-__flatbuffers_define_vector_field(6, Alloverse_Components, flex, flatbuffers_uint8_vec_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////

@@ -7,9 +7,6 @@
 #include <cJSON/cJSON.h>
 #include <allonet/arr.h>
 
-#pragma pack(push)
-#pragma pack(1)
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,7 +42,7 @@ typedef struct allo_client_poses
 typedef struct allo_client_intent
 {
     char* entity_id; // which entity is this intent for
-    bool wants_stick_movement;
+    uint8_t wants_stick_movement;
     double zmovement; // 1 = maximum speed forwards
     double xmovement; // 1 = maximum speed strafe right
     double yaw;       // rotation around x in radians
@@ -185,5 +182,4 @@ extern void allo_simulate(allo_state* state, const allo_client_intent* intents[]
 }
 #endif
 
-#pragma pack(pop)
 #endif

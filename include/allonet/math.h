@@ -6,9 +6,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#pragma pack(push)
-#pragma pack(1)
-
 #ifndef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -53,7 +50,6 @@ typedef union allo_m4x4
 } allo_m4x4;
 
 extern allo_m4x4 allo_m4x4_identity();
-extern void allo_m4x4_set(allo_m4x4 *m, double c1r1, double c1r2, double c1r3, double c1r4, double c2r1, double c2r2, double c2r3, double c2r4, double c3r1, double c3r2, double c3r3, double c3r4, double c4r1, double c4r2, double c4r3, double c4r4);
 extern bool allo_m4x4_is_identity(allo_m4x4 m);
 extern allo_m4x4 allo_m4x4_translate(allo_vector translation);
 extern allo_m4x4 allo_m4x4_rotate(double angle, allo_vector axis);
@@ -67,6 +63,5 @@ extern allo_vector allo_m4x4_get_position(allo_m4x4 l);
 extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
 extern bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma);
 extern char *allo_m4x4_string(allo_m4x4 m);
-#pragma pack(pop)
 
 #endif

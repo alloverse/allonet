@@ -17,6 +17,8 @@
 int64_t get_ts_mono(void);
 double get_ts_monod(void);
 
+uint64_t allo_create_random_seed(void);
+
 allo_vector cjson2vec(const cJSON *veclist);
 cJSON *vec2cjson(allo_vector vec);
 allo_m4x4 cjson2m(const cJSON* matlist);
@@ -33,6 +35,7 @@ extern void cjson_clear(cJSON *object);
 char *allo_strdup(const char *src); // null-safe
 char *allo_strndup(const char *src, size_t n);
 void allo_free(void *mallocd);
+
 
 void _allo_media_initialize(void);
 

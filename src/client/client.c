@@ -593,11 +593,35 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
     client->alloclient_send_audio(client, track_id, pcm, frameCount);
 }
 
+void alloclient_send_audio_data(alloclient *client, int32_t track_id, const char *pcmdata, size_t pcmdatalen) {
+    alloclient_send_audio(client, track_id, (int16_t*)pcmdata, pcmdatalen/2);
+}
+
 void alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture)
 {
     client->alloclient_send_video(client, track_id, picture);
 }
 
+void alloclient_send_video_pixels(alloclient *client, int32_t track_id, void *pixels, int width, int height, allopicture_format format, int stride)
+{
+    allopicture *picture = calloc(1, sizeof(allopicture));
+    picture->format = format;
+    assert(picture->format != 255 && "invalid allopicture format");
+    int bytes_per_pixel = allopicture_bpp(picture->format);
+    if (stride == 0) {
+        stride = width * bytes_per_pixel;
+    }
+
+    picture->plane_strides[0] = stride;
+    picture->plane_byte_lengths[0] = stride * height;
+    picture->planes[0].monochrome = malloc(picture->plane_byte_lengths[0]);
+    memcpy(picture->planes[0].monochrome, pixels, picture->plane_byte_lengths[0]);
+    picture->height = height;
+    picture->width = width;
+    picture->plane_count = 1;
+
+    alloclient_send_video(client, track_id, picture);
+}
 
 
 void alloclient_simulate(alloclient *client)

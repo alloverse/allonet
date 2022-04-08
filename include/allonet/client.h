@@ -273,6 +273,8 @@ void alloclient_set_intent(alloclient *client, const allo_client_intent *intent)
   */
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
 
+void alloclient_send_audio_data(alloclient *client, int32_t track_id, const char *pcmdata, size_t sample_count);
+
 /** Transmit video from an entity, e g camera video or screen sharing.
  *  Like alloclient_send_audio, you must `allocate_track` first to receive
  *  a track_id.
@@ -284,6 +286,8 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
  *                  recycle the memory or use some custom method of freeing it.
  */
 void alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture);
+
+void alloclient_send_video_pixels(alloclient *client, int32_t track_id, void *pixels, int width, int height, allopicture_format format, int stride);
 
 /*!
  * Request an asset. This might be a texture, a model, a sound or something that

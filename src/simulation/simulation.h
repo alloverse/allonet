@@ -12,3 +12,6 @@ extern void allosim_pose_movements(allo_state* state, allo_entity* avatar, const
 extern void allosim_handle_grabs(allo_state *state, allo_entity *avatar, const allo_client_intent *intent, double dt, allo_state_diff *diff);
 extern allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar, const char* pose_name);
 extern void allosim_animate(allo_state *state, double server_time, allo_state_diff *diff);
+
+// Calculates and sets the intents root pose based on the intents parameters
+extern void allosim_simulate_root_pose(allo_state *state, const char *avatar_id, float dt, allo_client_intent *intent);

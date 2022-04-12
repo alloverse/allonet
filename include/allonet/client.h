@@ -273,6 +273,8 @@ void alloclient_set_intent(alloclient *client, const allo_client_intent *intent)
   */
 void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *pcm, size_t sample_count);
 
+void alloclient_send_audio_data(alloclient *client, int32_t track_id, const char *pcmdata, size_t sample_count);
+
 /** Transmit video from an entity, e g camera video or screen sharing.
  *  Like alloclient_send_audio, you must `allocate_track` first to receive
  *  a track_id.
@@ -284,6 +286,8 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
  *                  recycle the memory or use some custom method of freeing it.
  */
 void alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture);
+
+void alloclient_send_video_pixels(alloclient *client, int32_t track_id, void *pixels, int width, int height, allopicture_format format, int stride);
 
 /*!
  * Request an asset. This might be a texture, a model, a sound or something that
@@ -306,6 +310,8 @@ void alloclient_asset_send(alloclient *client, const char *asset_id, const uint8
   */
 void alloclient_simulate(alloclient* client);
 
+void alloclient_simulate_root_pose(alloclient *client, const char *avatar_id, float dt, allo_client_intent *intent, allo_m4x4 *outMat);
+
 /** Get current estimated alloplace time that is hopefully uniform across all
   * connected clients; or best-effort if it's out of sync.
   * @return seconds since some arbitrary point in the past
@@ -314,6 +320,9 @@ double alloclient_get_time(alloclient* client);
 
 void alloclient_get_stats(alloclient* client, char *buffer, size_t bufferlen);
 
+/** Returns a pointer to the state
+ */
+allo_state *alloclient_get_state(alloclient *client);
 
 #ifdef __cplusplus
 }

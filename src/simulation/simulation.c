@@ -61,3 +61,13 @@ allo_entity* allosim_get_child_with_pose(allo_state* state, allo_entity* avatar,
   }
   return NULL;
 }
+
+void allosim_simulate_root_pose(allo_state *state, const char *avatar_id, float dt, allo_client_intent *intent)
+{
+    assert(state && avatar_id && intent);
+    allo_entity *avatar = state_get_entity(state, avatar_id);
+    allo_entity* head = allosim_get_child_with_pose(state, avatar, "head");
+    intent->poses.root.matrix = allosim_stick_movement(avatar, head, intent, dt, false, NULL);
+    intent->xmovement = 0;
+    intent->zmovement = 0;
+}

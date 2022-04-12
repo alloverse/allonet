@@ -6,9 +6,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#pragma pack(push)
-#pragma pack(1)
-
 #ifndef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -66,6 +63,5 @@ extern allo_vector allo_m4x4_get_position(allo_m4x4 l);
 extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
 extern bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma);
 extern char *allo_m4x4_string(allo_m4x4 m);
-#pragma pack(pop)
 
 #endif

@@ -11,6 +11,7 @@
 #include <cJSON/cJSON.h>
 #include <allonet/state.h>
 #include <allonet/net.h>
+#include <enet/enet.h>
 
 #ifdef __cplusplus
  extern "C" { 
@@ -19,6 +20,8 @@
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
 double get_ts_monod(void);
+
+uint64_t allo_create_random_seed(void);
 
 allo_vector cjson2vec(const cJSON *veclist);
 cJSON *vec2cjson(allo_vector vec);
@@ -36,6 +39,7 @@ extern void cjson_clear(cJSON *object);
 char *allo_strdup(const char *src); // null-safe
 char *allo_strndup(const char *src, size_t n);
 void allo_free(void *mallocd);
+
 
 void _allo_media_initialize(void);
 
@@ -99,7 +103,19 @@ static inline struct bitrate_deltas_t bitrate_deltas(struct bitrate_t *br, doubl
     return delta;
 }
 
+static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet) {
+    int result = enet_peer_send(peer, channelID, packet);
+    if (result == 0) {
+        bitrate_increment_sent(&allo_statistics.channel_rates[channelID], packet->dataLength);
+        bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
+    } else {
+        enet_packet_destroy(packet);
+    }
+    return result;
+}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
 #endif /* util_h */

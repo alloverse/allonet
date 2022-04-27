@@ -13,6 +13,14 @@
 #ifdef _WIN32
 #include <Windows.h>
 #endif
+#ifdef _WIN32
+    #include <process.h>
+#else
+    #include <sys/types.h>
+    #include <unistd.h>
+#endif
+#include <allonet/threading.h>
+
 
 allo_statistics_t allo_statistics;
 
@@ -32,6 +40,16 @@ extern "C" double get_ts_monod(void)
 {
     return get_ts_mono()/1000.0;
 }
+
+extern "C" uint64_t allo_create_random_seed(void)
+{
+    uint64_t t = get_ts_mono();
+    t += getpid();
+    t += (uint64_t)thrd_current();
+    t = (t << 16) | (t >> 16);
+    return t;
+}
+
 
 extern "C" allo_vector cjson2vec(const cJSON *veclist)
 {

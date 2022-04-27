@@ -60,29 +60,31 @@ char *allo_delta_compute(statehistory_t *history, int64_t old_revision)
     int64_t from = old_revision;
     int64_t to = history->latest_revision;
 
-    if(!old || old_history_rev != old_revision)
-    {
-        cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
-        char *deltas = cJSON_PrintUnformatted(latest);
-        cJSON_DeleteItemFromObject(latest, "patch_style");
-        return deltas;
-    }
-    
     struct diffcache_t *entry = &diffcache[old_revision % allo_statehistory_length];
     if (entry->json && entry->to == to && entry->from == from) {
         return entry->json;
     }
     
-    cJSON *mergePatch = allo_delta_compute_cjson(latest, old, old_revision);
-    char *patchs = cJSON_PrintUnformatted(mergePatch);
-    cJSON_Delete(mergePatch);
+    char *deltas;
+    if(!old || old_history_rev != old_revision)
+    {
+        cJSON_AddItemToObject(latest, "patch_style", cJSON_CreateString("set"));
+        deltas = cJSON_PrintUnformatted(latest);
+        cJSON_DeleteItemFromObject(latest, "patch_style");
+    }
+    else
+    {
+        cJSON *mergePatch = allo_delta_compute_cjson(latest, old, old_revision);
+        deltas = cJSON_PrintUnformatted(mergePatch);
+        cJSON_Delete(mergePatch);
+    }
     
     if (entry->json) free(entry->json);
     entry->from = from;
     entry->to = to;
-    entry->json = patchs;
+    entry->json = deltas;
     
-    return patchs;
+    return deltas;
 }
 
 typedef enum { Set, Merge } PatchStyle;

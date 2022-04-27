@@ -37,4 +37,5 @@ void allo_generate_id(char *str, size_t len);
 #ifdef __cplusplus
 }
 #endif
+
 #endif

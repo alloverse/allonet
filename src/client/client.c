@@ -142,9 +142,7 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     }
     
     ENetPacket *packet = asset_build_enet_packet(mid, header, data, data_length);
-    enet_peer_send(peer, CHANNEL_ASSETS, packet);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_ASSETS], packet->dataLength);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
+    allo_enet_peer_send(peer, CHANNEL_ASSETS, packet);
 }
 
 static void _asset_request_bytes_func(const char *asset_id, size_t offset, size_t length, void *user) {
@@ -341,9 +339,7 @@ static void send_latest_intent(alloclient *client)
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
-    enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_STATEDIFFS], packet->dataLength);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
+    allo_enet_peer_send(_internal(client)->peer, CHANNEL_STATEDIFFS, packet);
     free((void*)json);
 }
 
@@ -359,10 +355,8 @@ static void send_clock_request(alloclient *client)
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, 0 /* unreliable */);
     memcpy(packet->data, json, jsonlength);
-    enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_CLOCK], packet->dataLength);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     free((void*)json);
+    allo_enet_peer_send(_internal(client)->peer, CHANNEL_CLOCK, packet);
 }
 
 void alloclient_send_interaction(alloclient *client, allo_interaction *interaction)
@@ -386,10 +380,8 @@ static void _alloclient_send_interaction(alloclient *client, allo_interaction *i
     int jsonlength = strlen(json);
     ENetPacket *packet = enet_packet_create(NULL, jsonlength, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, json, jsonlength);
-    enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COMMANDS], packet->dataLength);
-    bitrate_increment_sent(&allo_statistics.channel_rates[CHANNEL_COUNT], packet->dataLength);
     free((void*)json);
+    allo_enet_peer_send(_internal(client)->peer, CHANNEL_COMMANDS, packet);
 }
 
 void alloclient_disconnect(alloclient *client, int reason)
@@ -540,7 +532,7 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     free(justhost);
     free(justport);
 
-    enet_peer_timeout(peer, 3, 2000, 6000);
+    enet_peer_timeout(peer, 0, 10000, 20000);
 
     _internal(client)->host = host;
     _internal(client)->peer = peer;
@@ -569,17 +561,42 @@ void alloclient_send_audio(alloclient *client, int32_t track_id, const int16_t *
     client->alloclient_send_audio(client, track_id, pcm, frameCount);
 }
 
+void alloclient_send_audio_data(alloclient *client, int32_t track_id, const char *pcmdata, size_t pcmdatalen) {
+    alloclient_send_audio(client, track_id, (int16_t*)pcmdata, pcmdatalen/2);
+}
+
 void alloclient_send_video(alloclient *client, int32_t track_id, allopicture *picture)
 {
     client->alloclient_send_video(client, track_id, picture);
 }
 
+void alloclient_send_video_pixels(alloclient *client, int32_t track_id, void *pixels, int width, int height, allopicture_format format, int stride)
+{
+    allopicture *picture = calloc(1, sizeof(allopicture));
+    picture->format = format;
+    assert(picture->format != 255 && "invalid allopicture format");
+    int bytes_per_pixel = allopicture_bpp(picture->format);
+    if (stride == 0) {
+        stride = width * bytes_per_pixel;
+    }
+
+    picture->plane_strides[0] = stride;
+    picture->plane_byte_lengths[0] = stride * height;
+    picture->planes[0].monochrome = malloc(picture->plane_byte_lengths[0]);
+    memcpy(picture->planes[0].monochrome, pixels, picture->plane_byte_lengths[0]);
+    picture->height = height;
+    picture->width = width;
+    picture->plane_count = 1;
+
+    alloclient_send_video(client, track_id, picture);
+}
 
 
 void alloclient_simulate(alloclient *client)
 {
     client->alloclient_simulate(client);
 }
+
 static void _alloclient_simulate(alloclient *client)
 {
   const allo_client_intent *intents[] = {_internal(client)->latest_intent};
@@ -714,6 +731,10 @@ alloclient *alloclient_create(bool threaded) {
     _internal(client)->shared = shared;
     
     return client;
+}
+
+allo_state *alloclient_get_state(alloclient *client) {
+    return client->_state;
 }
 
 

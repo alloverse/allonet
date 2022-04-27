@@ -6,9 +6,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#pragma pack(push)
-#pragma pack(1)
-
 #ifndef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -92,6 +89,5 @@ extern char *allo_m4x4_string(allo_m4x4 m);
 #pragma GCC diagnostic pop
 #endif  // defined(__GNUC__)
 
-#pragma pack(pop)
 
 #endif

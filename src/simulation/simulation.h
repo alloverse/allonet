@@ -32,5 +32,15 @@ void allosim_handle_grabs(allo_state *state, Alloverse::Entity *avatar, const al
 void allosim_animate(allo_state *state, Alloverse::SimulationCache *cache, double server_time, allo_state_diff *diff);
 
 extern Alloverse::Entity* allosim_get_child_with_pose(allo_state* state, const char* avatar_id, const char* pose_name);
+
+extern "C" {
 #endif // __cplusplus
+
+// used by lua
+extern void allosim_simulate_root_pose(allo_state *state, const char *avatar_id, float dt, allo_client_intent *intent);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
+
 #endif // header guard

@@ -21,8 +21,10 @@ typedef struct allo_component_ref
     // so they're only valid for as long as you hold onto the state
     const char *eid;
     const char *name;
-    const cJSON *olddata;
-    const cJSON *newdata;
+    // pointer to flatbuffer for this component in oldstate
+    const void *olddata;
+    // pointer to flatbuffer for this component in newstate
+    const void *newdata;
 } allo_component_ref;
 
 typedef arr_t(allo_component_ref) allo_component_vec;
@@ -41,13 +43,19 @@ typedef struct allo_state_diff
     allo_component_vec deleted_components;
 } allo_state_diff;
 
+/// initializes the fields in the diff to zero-length lists
 extern void allo_state_diff_init(allo_state_diff *diff);
-// duplicates an existing diff and repoints all refs to point into `newstate` instead of `oldstate`.
+
+/// calculates the difference in entities and components between oldstate and newstate
+extern void allo_state_diff_compute(allo_state_diff *diff, struct allo_state *oldstate, struct allo_state *newstate);
+
+/// duplicates an existing diff and repoints all refs to point into `newstate` instead of `oldstate`.
 extern allo_state_diff *allo_state_diff_duplicate(allo_state_diff *orig, struct allo_state *oldstate, struct allo_state *newstate); 
+
 extern void allo_state_diff_destroy(allo_state_diff *diff);
 extern void allo_state_diff_dump(allo_state_diff *diff);
-extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
-extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const cJSON *comp);
+extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const void *comp);
+extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const void *comp);
 
 
 #ifdef __cplusplus

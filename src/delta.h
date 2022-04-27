@@ -7,7 +7,7 @@
 #define allo_statehistory_length 64
 typedef struct statehistory_t
 {
-    cJSON *history[allo_statehistory_length];
+    void *history[allo_statehistory_length];
     int64_t latest_revision;
 } statehistory_t;
 

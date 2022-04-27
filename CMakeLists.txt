@@ -154,7 +154,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/sha256.c
     ${SOURCE_FILES_PREFIX}/sha256.h
     ${SOURCE_FILES_PREFIX}/standalone_server.cpp
-    ${SOURCE_FILES_PREFIX}/state/diff.c
+    ${SOURCE_FILES_PREFIX}/state/diff.cpp
     ${SOURCE_FILES_PREFIX}/state/intent.c
     ${SOURCE_FILES_PREFIX}/state/interaction.c
     ${SOURCE_FILES_PREFIX}/state/state_read.cpp

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "alloverse_generated.h"
+#include <flatbuffers/reflection.h>
+#include "../alloverse_binary_schema.h"
 using namespace Alloverse;
 
 extern "C" void allo_state_diff_init(allo_state_diff *diff)
@@ -46,8 +48,8 @@ static void _relocate_comp_refs(allo_component_vec *from, allo_component_vec *to
   {
     to->data[i].eid = from->data[i].eid + pointer_delta;
     to->data[i].name = from->data[i].name + pointer_delta;
-    to->data[i].olddata = from->data[i].olddata + pointer_delta;
-    to->data[i].newdata = from->data[i].newdata + pointer_delta;
+    to->data[i].olddata = (char*)from->data[i].olddata + pointer_delta;
+    to->data[i].newdata = (char*)from->data[i].newdata + pointer_delta;
   }
 }
 

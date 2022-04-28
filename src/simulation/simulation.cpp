@@ -22,7 +22,7 @@ void allo_simulate(allo_state* state, void *cache, const allo_client_intent* int
   // figure out what time was in pre-sim state
   double old_time = state_set_server_time(state, server_time);
   // TODO: figure out what to send for Components
-  allo_state_diff_mark_component_updated(diff, "place", "clock", NULL);
+  allo_state_diff_mark_component_updated(diff, "place", "clock", NULL, NULL);
   
   // todo: run simulate at fixed-sized steps
   // https://gafferongames.com/post/fix_your_timestep/

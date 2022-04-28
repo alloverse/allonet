@@ -46,20 +46,23 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
         auto newComps = newEntity->components();
 
         // xxx: hack with hard-coded comps just to test
-        #define TestComp(compname) \
+        #define TestComp(compname, classname) \
+            classname##T compname##Old, compname##New; \
+            if(oldComps) oldComps->compname()->UnPackTo(&compname##Old);\
+            newComps->compname()->UnPackTo(&compname##New); \
             if(!oldComps || (!oldComps->compname() && newComps->compname())) \
                 allo_state_diff_mark_component_added(diff, eid, #compname, newComps->compname()); \
             else if(oldComps && oldComps->compname() && !newComps->compname())\
-                allo_state_diff_mark_component_deleted(diff, eid, #compname, oldComps->compname());
-            //else if(*oldComps->compname() != *newComps->compname()) \
-            //    allo_state_diff_mark_component_updated(diff, eid, #compname, oldComps->compname(), newComps->compname());
+                allo_state_diff_mark_component_deleted(diff, eid, #compname, oldComps->compname());\
+            else if(compname##Old != compname##New) \
+                allo_state_diff_mark_component_updated(diff, eid, #compname, oldComps->compname(), newComps->compname());
         
-        TestComp(transform);
-        TestComp(relationships);
-        TestComp(live_media);
-        TestComp(clock);
-        TestComp(intent);
-        TestComp(property_animations);
+        TestComp(transform, TransformComponent);
+        TestComp(relationships, RelationshipsComponent);
+        TestComp(live_media, LiveMediaComponent);
+        TestComp(clock, ClockComponent);
+        TestComp(intent, IntentComponent);
+        TestComp(property_animations, PropertyAnimationsComponent);
 
         // todo: using reflection to compare all comps, instead of doing it with macros like above
         /*for(auto ComponentField : *ComponentsTable->fields())

@@ -59,7 +59,7 @@ allo_m4x4 allosim_stick_movement(Entity* avatar, Entity* head, const allo_client
 
   if(write) {
     SetEntityTransform(avatar, new_transform2);
-    allo_state_diff_mark_component_updated(diff, avatar->id()->c_str(), "transform", NULL);
+    allo_state_diff_mark_component_updated(diff, avatar->id()->c_str(), "transform", NULL, NULL);
   }
   
   return new_transform2;

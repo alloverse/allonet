@@ -38,7 +38,7 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
         auto oldEntity = oldstate->_cur->entities()->LookupByKey(eid);
         if(oldEntity == NULL)
         {
-            arr_push(&diff->new_entities, newEntity->id()->c_str());
+            arr_push(&diff->new_entities, eid);
         }
 
         // check for added/removed/changed comps
@@ -48,13 +48,13 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
         // xxx: hack with hard-coded comps just to test
         #define TestComp(compname, classname) \
             classname##T compname##Old, compname##New; \
-            if(oldComps) oldComps->compname()->UnPackTo(&compname##Old);\
-            newComps->compname()->UnPackTo(&compname##New); \
+            if(oldComps && oldComps->compname()) oldComps->compname()->UnPackTo(&compname##Old);\
+            if(newComps->compname()) newComps->compname()->UnPackTo(&compname##New); \
             if(!oldComps || (!oldComps->compname() && newComps->compname())) \
                 allo_state_diff_mark_component_added(diff, eid, #compname, newComps->compname()); \
-            else if(oldComps && oldComps->compname() && !newComps->compname())\
+            else if(oldComps->compname() && !newComps->compname())\
                 allo_state_diff_mark_component_deleted(diff, eid, #compname, oldComps->compname());\
-            else if(compname##Old != compname##New) \
+            else if(oldComps->compname() && newComps->compname() && compname##Old != compname##New) \
                 allo_state_diff_mark_component_updated(diff, eid, #compname, oldComps->compname(), newComps->compname());
         
         TestComp(transform, TransformComponent);
@@ -63,6 +63,7 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
         TestComp(clock, ClockComponent);
         TestComp(intent, IntentComponent);
         TestComp(property_animations, PropertyAnimationsComponent);
+        #undef TestComp
 
         // todo: using reflection to compare all comps, instead of doing it with macros like above
         /*for(auto ComponentField : *ComponentsTable->fields())
@@ -74,7 +75,30 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
 
     }
 
-    // todo: iterate through oldstate and check for removed entities
+    // check for removed entities
+    for(auto oldEntity : *oldstate->_cur->entities())
+    {
+        auto eid = oldEntity->id()->c_str();
+        // check for added entities
+        auto newEntity = newstate->_cur->entities()->LookupByKey(eid);
+        if(!newEntity)
+        {
+            auto oldComps = oldEntity->components();
+            arr_push(&diff->deleted_entities, eid);
+            #define TestComp(compname, classname) \
+                if(oldComps->compname())\
+                    allo_state_diff_mark_component_deleted(diff, eid, #compname, oldComps->compname());
+                    
+            TestComp(transform, TransformComponent);
+            TestComp(relationships, RelationshipsComponent);
+            TestComp(live_media, LiveMediaComponent);
+            TestComp(clock, ClockComponent);
+            TestComp(intent, IntentComponent);
+            TestComp(property_animations, PropertyAnimationsComponent);
+            #undef TestComp
+        }
+    }
+
 }
 
 

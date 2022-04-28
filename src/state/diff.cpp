@@ -18,16 +18,60 @@ extern "C" void allo_state_diff_init(allo_state_diff *diff)
   arr_init(&diff->deleted_components); arr_reserve(&diff->deleted_components, 64);
 }
 
+static flatbuffers::voffset_t GetFieldOffsetInTable(const flatbuffers::Table *table, const reflection::Field *field)
+{
+    if(!table) return false;
+    return table->GetOptionalFieldOffset(field->offset());
+}
+
 extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state *oldstate, struct allo_state *newstate)
 {
-    for(auto it : *newstate->_cur->entities())
+    auto schema = reflection::GetSchema(alloverse_schema_bytes);
+    auto ComponentsTable = schema->objects()->LookupByKey("Components");
+
+    // possible performance enhancement: use IterationVisitor in lockstep between the two buffers?
+
+    for(auto newEntity : *newstate->_cur->entities())
     {
-        auto oldIt = oldstate->_cur->entities()->LookupByKey(it->id());
-        if(oldIt == NULL)
+        auto eid = newEntity->id()->c_str();
+        // check for added entities
+        auto oldEntity = oldstate->_cur->entities()->LookupByKey(eid);
+        if(oldEntity == NULL)
         {
-            arr_push(&diff->new_entities, it->id()->c_str());
+            arr_push(&diff->new_entities, newEntity->id()->c_str());
         }
+
+        // check for added/removed/changed comps
+        auto oldComps = oldEntity ? oldEntity->components() : NULL;
+        auto newComps = newEntity->components();
+
+        // xxx: hack with hard-coded comps just to test
+        #define TestComp(compname) \
+            if(!oldComps || (!oldComps->compname() && newComps->compname())) \
+                allo_state_diff_mark_component_added(diff, eid, #compname, newComps->compname()); \
+            else if(oldComps && oldComps->compname() && !newComps->compname())\
+                allo_state_diff_mark_component_deleted(diff, eid, #compname, oldComps->compname());
+            //else if(*oldComps->compname() != *newComps->compname()) \
+            //    allo_state_diff_mark_component_updated(diff, eid, #compname, oldComps->compname(), newComps->compname());
+        
+        TestComp(transform);
+        TestComp(relationships);
+        TestComp(live_media);
+        TestComp(clock);
+        TestComp(intent);
+        TestComp(property_animations);
+
+        // todo: using reflection to compare all comps, instead of doing it with macros like above
+        /*for(auto ComponentField : *ComponentsTable->fields())
+        {
+            auto oldOffset = GetFieldOffsetInTable(oldComps, ComponentField);
+            auto newOffset = GetFieldOffsetInTable(newComps, ComponentField);
+
+        }*/
+
     }
+
+    // todo: iterate through oldstate and check for removed entities
 }
 
 
@@ -105,9 +149,15 @@ void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid
   allo_component_ref ref = {eid, cname, NULL, comp};
   arr_push(&diff->new_components, ref);
 }
-void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const void *comp)
+extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const void *oldcomp, const void *newcomp)
 {
   if(!diff) return;
-  allo_component_ref ref = {eid, cname, NULL, comp};
+  allo_component_ref ref = {eid, cname, oldcomp, newcomp};
   arr_push(&diff->updated_components, ref);
+}
+void allo_state_diff_mark_component_deleted(allo_state_diff *diff, const char *eid, const char *cname, const void *comp)
+{
+    if(!diff) return;
+    allo_component_ref ref = {eid, cname, comp, NULL};
+    arr_push(&diff->deleted_components, ref);
 }

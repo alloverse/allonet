@@ -55,7 +55,8 @@ extern allo_state_diff *allo_state_diff_duplicate(allo_state_diff *orig, struct 
 extern void allo_state_diff_destroy(allo_state_diff *diff);
 extern void allo_state_diff_dump(allo_state_diff *diff);
 extern void allo_state_diff_mark_component_added(allo_state_diff *diff, const char *eid, const char *cname, const void *comp);
-extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const void *comp);
+extern void allo_state_diff_mark_component_updated(allo_state_diff *diff, const char *eid, const char *cname, const void *oldcomp, const void *newcomp);
+extern void allo_state_diff_mark_component_deleted(allo_state_diff *diff, const char *eid, const char *cname, const void *comp);
 
 
 #ifdef __cplusplus

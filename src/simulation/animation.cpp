@@ -111,7 +111,7 @@ static bool allosim_animate_process(SimulationCache *cache, Entity *entity, cons
     // okay, go interpolate and apply on these components
     animstate->interpolateProperty(entity->mutable_components(), eased_progress, swap);
     
-    allo_state_diff_mark_component_updated(diff, entity->id()->c_str(), animstate->component_name.c_str(), NULL);
+    allo_state_diff_mark_component_updated(diff, entity->id()->c_str(), animstate->component_name.c_str(), NULL, NULL);
 
     return done;
 }

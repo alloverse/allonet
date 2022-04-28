@@ -55,6 +55,6 @@ void allosim_pose_movements(allo_state* state, Entity* avatar, const allo_client
       continue;
 
     SetEntityTransform(entity, new_transform);
-    allo_state_diff_mark_component_updated(diff, entity->id()->c_str(), "transform", NULL);
+    allo_state_diff_mark_component_updated(diff, entity->id()->c_str(), "transform", NULL, NULL);
   }
 }

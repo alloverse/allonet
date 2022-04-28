@@ -27,6 +27,8 @@ static char *g_placename;
 static allo_media_track_list mediatracks;
 flatbuffers::Parser flatparser;
 
+#define fbassert(expr) if(!expr) { printf("%s\n", flatparser.error_.c_str()); assert(false); }
+
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
   cJSON* cmdrep = allo_interaction_to_cjson(interaction);
@@ -93,8 +95,8 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   
   cJSON* avatar = cJSON_GetArrayItem(body, 6);
   char *avatars = cJSON_Print(avatar);
-  flatparser.SetRootType("EntitySpec");
-  flatparser.Parse(avatars);
+  fbassert(flatparser.SetRootType("EntitySpec"));
+  fbassert(flatparser.Parse(avatars));
   free(avatars);
   auto entspec = std::make_shared<EntitySpecT>();
   flatbuffers::GetRoot<EntitySpec>(flatparser.builder_.GetBufferPointer())->UnPackTo(entspec.get());
@@ -683,7 +685,7 @@ alloserver *alloserv_start_standalone(int listenhost, int port, const char *plac
   assert(serv == NULL);
 
   g_placename = strdup(placename);
-  flatparser.Parse((const char*)alloverse_schema_bytes);
+  assert(flatparser.Parse((const char*)alloverse_schema_text));
 
   int retries = 3;
   while (!serv)

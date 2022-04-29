@@ -557,7 +557,7 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
             if(source == lost_peer)
             {
                 LOG_ASSET_D("... which was a potential source\n");
-                arr_splice(&wanted->remaining_potential_sources, source_index, i);
+                arr_splice(&wanted->remaining_potential_sources, source_index, 1);
                 break;
             }
         }

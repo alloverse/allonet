@@ -35,7 +35,7 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
     {
         auto eid = newEntity->id()->c_str();
         // check for added entities
-        auto oldEntity = oldstate->_cur->entities()->LookupByKey(eid);
+        auto oldEntity = oldstate ? oldstate->_cur->entities()->LookupByKey(eid) : NULL;
         if(oldEntity == NULL)
         {
             arr_push(&diff->new_entities, eid);
@@ -80,7 +80,7 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
     }
 
     // check for removed entities
-    for(auto oldEntity : *oldstate->_cur->entities())
+    if(oldstate) for(auto oldEntity : *oldstate->_cur->entities())
     {
         auto eid = oldEntity->id()->c_str();
         // check for added entities
@@ -102,7 +102,6 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
             #undef TestComp
         }
     }
-
 }
 
 

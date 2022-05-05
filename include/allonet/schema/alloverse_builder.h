@@ -80,7 +80,7 @@ __flatbuffers_build_table(flatbuffers_, Alloverse_Entity, 3)
 static const flatbuffers_voffset_t __Alloverse_Components_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_Components_ref_t;
 static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder_t *B, Alloverse_Components_table_t t);
-__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 6)
+__flatbuffers_build_table(flatbuffers_, Alloverse_Components, 10)
 
 static const flatbuffers_voffset_t __Alloverse_TransformComponent_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_TransformComponent_ref_t;
@@ -142,6 +142,26 @@ typedef flatbuffers_ref_t Alloverse_PropertyAnimationsComponent_ref_t;
 static Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_clone(flatbuffers_builder_t *B, Alloverse_PropertyAnimationsComponent_table_t t);
 __flatbuffers_build_table(flatbuffers_, Alloverse_PropertyAnimationsComponent, 1)
 
+static const flatbuffers_voffset_t __Alloverse_GeometryComponent_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_GeometryComponent_ref_t;
+static Alloverse_GeometryComponent_ref_t Alloverse_GeometryComponent_clone(flatbuffers_builder_t *B, Alloverse_GeometryComponent_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_GeometryComponent, 6)
+
+static const flatbuffers_voffset_t __Alloverse_UIComponent_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_UIComponent_ref_t;
+static Alloverse_UIComponent_ref_t Alloverse_UIComponent_clone(flatbuffers_builder_t *B, Alloverse_UIComponent_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_UIComponent, 1)
+
+static const flatbuffers_voffset_t __Alloverse_ColliderComponent_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_ColliderComponent_ref_t;
+static Alloverse_ColliderComponent_ref_t Alloverse_ColliderComponent_clone(flatbuffers_builder_t *B, Alloverse_ColliderComponent_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_ColliderComponent, 4)
+
+static const flatbuffers_voffset_t __Alloverse_GrabbableComponent_required[] = { 0 };
+typedef flatbuffers_ref_t Alloverse_GrabbableComponent_ref_t;
+static Alloverse_GrabbableComponent_ref_t Alloverse_GrabbableComponent_clone(flatbuffers_builder_t *B, Alloverse_GrabbableComponent_table_t t);
+__flatbuffers_build_table(flatbuffers_, Alloverse_GrabbableComponent, 5)
+
 static const flatbuffers_voffset_t __Alloverse_EntitySpec_required[] = { 0 };
 typedef flatbuffers_ref_t Alloverse_EntitySpec_ref_t;
 static Alloverse_EntitySpec_ref_t Alloverse_EntitySpec_clone(flatbuffers_builder_t *B, Alloverse_EntitySpec_table_t t);
@@ -158,9 +178,11 @@ static inline Alloverse_Entity_ref_t Alloverse_Entity_create(flatbuffers_builder
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Entity, Alloverse_Entity_file_identifier, Alloverse_Entity_type_identifier)
 
 #define __Alloverse_Components_formal_args ,\
-  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3, Alloverse_IntentComponent_ref_t v4, Alloverse_PropertyAnimationsComponent_ref_t v5
+  Alloverse_TransformComponent_ref_t v0, Alloverse_RelationshipsComponent_ref_t v1, Alloverse_LiveMediaComponent_ref_t v2, Alloverse_ClockComponent_ref_t v3,\
+  Alloverse_IntentComponent_ref_t v4, Alloverse_PropertyAnimationsComponent_ref_t v5, Alloverse_GeometryComponent_ref_t v6, Alloverse_UIComponent_ref_t v7, Alloverse_ColliderComponent_ref_t v8, Alloverse_GrabbableComponent_ref_t v9
 #define __Alloverse_Components_call_args ,\
-  v0, v1, v2, v3, v4, v5
+  v0, v1, v2, v3,\
+  v4, v5, v6, v7, v8, v9
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_Components, Alloverse_Components_file_identifier, Alloverse_Components_type_identifier)
 
@@ -227,6 +249,30 @@ __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_PropertyAnimation, Allo
 #define __Alloverse_PropertyAnimationsComponent_call_args , v0
 static inline Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsComponent_create(flatbuffers_builder_t *B __Alloverse_PropertyAnimationsComponent_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, Alloverse_PropertyAnimationsComponent, Alloverse_PropertyAnimationsComponent_file_identifier, Alloverse_PropertyAnimationsComponent_type_identifier)
+
+#define __Alloverse_GeometryComponent_formal_args ,\
+  flatbuffers_string_ref_t v0, flatbuffers_string_ref_t v1, flatbuffers_double_vec_ref_t v2, flatbuffers_double_vec_ref_t v3, flatbuffers_double_vec_ref_t v4, flatbuffers_int32_vec_ref_t v5
+#define __Alloverse_GeometryComponent_call_args ,\
+  v0, v1, v2, v3, v4, v5
+static inline Alloverse_GeometryComponent_ref_t Alloverse_GeometryComponent_create(flatbuffers_builder_t *B __Alloverse_GeometryComponent_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_GeometryComponent, Alloverse_GeometryComponent_file_identifier, Alloverse_GeometryComponent_type_identifier)
+
+#define __Alloverse_UIComponent_formal_args , flatbuffers_string_ref_t v0
+#define __Alloverse_UIComponent_call_args , v0
+static inline Alloverse_UIComponent_ref_t Alloverse_UIComponent_create(flatbuffers_builder_t *B __Alloverse_UIComponent_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_UIComponent, Alloverse_UIComponent_file_identifier, Alloverse_UIComponent_type_identifier)
+
+#define __Alloverse_ColliderComponent_formal_args , flatbuffers_string_ref_t v0, double v1, double v2, double v3
+#define __Alloverse_ColliderComponent_call_args , v0, v1, v2, v3
+static inline Alloverse_ColliderComponent_ref_t Alloverse_ColliderComponent_create(flatbuffers_builder_t *B __Alloverse_ColliderComponent_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_ColliderComponent, Alloverse_ColliderComponent_file_identifier, Alloverse_ColliderComponent_type_identifier)
+
+#define __Alloverse_GrabbableComponent_formal_args ,\
+  flatbuffers_bool_t v0, flatbuffers_string_ref_t v1, flatbuffers_double_vec_ref_t v2, flatbuffers_double_vec_ref_t v3, Alloverse_Mat4_t *v4
+#define __Alloverse_GrabbableComponent_call_args ,\
+  v0, v1, v2, v3, v4
+static inline Alloverse_GrabbableComponent_ref_t Alloverse_GrabbableComponent_create(flatbuffers_builder_t *B __Alloverse_GrabbableComponent_formal_args);
+__flatbuffers_build_table_prolog(flatbuffers_, Alloverse_GrabbableComponent, Alloverse_GrabbableComponent_file_identifier, Alloverse_GrabbableComponent_type_identifier)
 
 #define __Alloverse_EntitySpec_formal_args , Alloverse_Components_ref_t v0, Alloverse_EntitySpec_vec_ref_t v1
 #define __Alloverse_EntitySpec_call_args , v0, v1
@@ -314,6 +360,10 @@ __flatbuffers_build_table_field(2, flatbuffers_, Alloverse_Components_live_media
 __flatbuffers_build_table_field(3, flatbuffers_, Alloverse_Components_clock, Alloverse_ClockComponent, Alloverse_Components)
 __flatbuffers_build_table_field(4, flatbuffers_, Alloverse_Components_intent, Alloverse_IntentComponent, Alloverse_Components)
 __flatbuffers_build_table_field(5, flatbuffers_, Alloverse_Components_property_animations, Alloverse_PropertyAnimationsComponent, Alloverse_Components)
+__flatbuffers_build_table_field(6, flatbuffers_, Alloverse_Components_geometry, Alloverse_GeometryComponent, Alloverse_Components)
+__flatbuffers_build_table_field(7, flatbuffers_, Alloverse_Components_ui, Alloverse_UIComponent, Alloverse_Components)
+__flatbuffers_build_table_field(8, flatbuffers_, Alloverse_Components_collider, Alloverse_ColliderComponent, Alloverse_Components)
+__flatbuffers_build_table_field(9, flatbuffers_, Alloverse_Components_grabbable, Alloverse_GrabbableComponent, Alloverse_Components)
 
 static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers_builder_t *B __Alloverse_Components_formal_args)
 {
@@ -323,7 +373,11 @@ static inline Alloverse_Components_ref_t Alloverse_Components_create(flatbuffers
         || Alloverse_Components_live_media_add(B, v2)
         || Alloverse_Components_clock_add(B, v3)
         || Alloverse_Components_intent_add(B, v4)
-        || Alloverse_Components_property_animations_add(B, v5)) {
+        || Alloverse_Components_property_animations_add(B, v5)
+        || Alloverse_Components_geometry_add(B, v6)
+        || Alloverse_Components_ui_add(B, v7)
+        || Alloverse_Components_collider_add(B, v8)
+        || Alloverse_Components_grabbable_add(B, v9)) {
         return 0;
     }
     return Alloverse_Components_end(B);
@@ -338,7 +392,11 @@ static Alloverse_Components_ref_t Alloverse_Components_clone(flatbuffers_builder
         || Alloverse_Components_live_media_pick(B, t)
         || Alloverse_Components_clock_pick(B, t)
         || Alloverse_Components_intent_pick(B, t)
-        || Alloverse_Components_property_animations_pick(B, t)) {
+        || Alloverse_Components_property_animations_pick(B, t)
+        || Alloverse_Components_geometry_pick(B, t)
+        || Alloverse_Components_ui_pick(B, t)
+        || Alloverse_Components_collider_pick(B, t)
+        || Alloverse_Components_grabbable_pick(B, t)) {
         return 0;
     }
     __flatbuffers_memoize_end(B, t, Alloverse_Components_end(B));
@@ -653,6 +711,126 @@ static Alloverse_PropertyAnimationsComponent_ref_t Alloverse_PropertyAnimationsC
         return 0;
     }
     __flatbuffers_memoize_end(B, t, Alloverse_PropertyAnimationsComponent_end(B));
+}
+
+__flatbuffers_build_string_field(0, flatbuffers_, Alloverse_GeometryComponent_type, Alloverse_GeometryComponent)
+__flatbuffers_build_string_field(1, flatbuffers_, Alloverse_GeometryComponent_name, Alloverse_GeometryComponent)
+__flatbuffers_build_vector_field(2, flatbuffers_, Alloverse_GeometryComponent_vertices, flatbuffers_double, double, Alloverse_GeometryComponent)
+__flatbuffers_build_vector_field(3, flatbuffers_, Alloverse_GeometryComponent_normals, flatbuffers_double, double, Alloverse_GeometryComponent)
+__flatbuffers_build_vector_field(4, flatbuffers_, Alloverse_GeometryComponent_uvs, flatbuffers_double, double, Alloverse_GeometryComponent)
+__flatbuffers_build_vector_field(5, flatbuffers_, Alloverse_GeometryComponent_triangles, flatbuffers_int32, int32_t, Alloverse_GeometryComponent)
+
+static inline Alloverse_GeometryComponent_ref_t Alloverse_GeometryComponent_create(flatbuffers_builder_t *B __Alloverse_GeometryComponent_formal_args)
+{
+    if (Alloverse_GeometryComponent_start(B)
+        || Alloverse_GeometryComponent_type_add(B, v0)
+        || Alloverse_GeometryComponent_name_add(B, v1)
+        || Alloverse_GeometryComponent_vertices_add(B, v2)
+        || Alloverse_GeometryComponent_normals_add(B, v3)
+        || Alloverse_GeometryComponent_uvs_add(B, v4)
+        || Alloverse_GeometryComponent_triangles_add(B, v5)) {
+        return 0;
+    }
+    return Alloverse_GeometryComponent_end(B);
+}
+
+static Alloverse_GeometryComponent_ref_t Alloverse_GeometryComponent_clone(flatbuffers_builder_t *B, Alloverse_GeometryComponent_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_GeometryComponent_start(B)
+        || Alloverse_GeometryComponent_type_pick(B, t)
+        || Alloverse_GeometryComponent_name_pick(B, t)
+        || Alloverse_GeometryComponent_vertices_pick(B, t)
+        || Alloverse_GeometryComponent_normals_pick(B, t)
+        || Alloverse_GeometryComponent_uvs_pick(B, t)
+        || Alloverse_GeometryComponent_triangles_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_GeometryComponent_end(B));
+}
+
+__flatbuffers_build_string_field(0, flatbuffers_, Alloverse_UIComponent_view_id, Alloverse_UIComponent)
+
+static inline Alloverse_UIComponent_ref_t Alloverse_UIComponent_create(flatbuffers_builder_t *B __Alloverse_UIComponent_formal_args)
+{
+    if (Alloverse_UIComponent_start(B)
+        || Alloverse_UIComponent_view_id_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_UIComponent_end(B);
+}
+
+static Alloverse_UIComponent_ref_t Alloverse_UIComponent_clone(flatbuffers_builder_t *B, Alloverse_UIComponent_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_UIComponent_start(B)
+        || Alloverse_UIComponent_view_id_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_UIComponent_end(B));
+}
+
+__flatbuffers_build_string_field(0, flatbuffers_, Alloverse_ColliderComponent_type, Alloverse_ColliderComponent)
+__flatbuffers_build_scalar_field(1, flatbuffers_, Alloverse_ColliderComponent_width, flatbuffers_double, double, 8, 8, 0.0000000000000000, Alloverse_ColliderComponent)
+__flatbuffers_build_scalar_field(2, flatbuffers_, Alloverse_ColliderComponent_height, flatbuffers_double, double, 8, 8, 0.0000000000000000, Alloverse_ColliderComponent)
+__flatbuffers_build_scalar_field(3, flatbuffers_, Alloverse_ColliderComponent_depth, flatbuffers_double, double, 8, 8, 0.0000000000000000, Alloverse_ColliderComponent)
+
+static inline Alloverse_ColliderComponent_ref_t Alloverse_ColliderComponent_create(flatbuffers_builder_t *B __Alloverse_ColliderComponent_formal_args)
+{
+    if (Alloverse_ColliderComponent_start(B)
+        || Alloverse_ColliderComponent_width_add(B, v1)
+        || Alloverse_ColliderComponent_height_add(B, v2)
+        || Alloverse_ColliderComponent_depth_add(B, v3)
+        || Alloverse_ColliderComponent_type_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_ColliderComponent_end(B);
+}
+
+static Alloverse_ColliderComponent_ref_t Alloverse_ColliderComponent_clone(flatbuffers_builder_t *B, Alloverse_ColliderComponent_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_ColliderComponent_start(B)
+        || Alloverse_ColliderComponent_width_pick(B, t)
+        || Alloverse_ColliderComponent_height_pick(B, t)
+        || Alloverse_ColliderComponent_depth_pick(B, t)
+        || Alloverse_ColliderComponent_type_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_ColliderComponent_end(B));
+}
+
+__flatbuffers_build_scalar_field(0, flatbuffers_, Alloverse_GrabbableComponent_grabbable, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), Alloverse_GrabbableComponent)
+__flatbuffers_build_string_field(1, flatbuffers_, Alloverse_GrabbableComponent_actuate_on, Alloverse_GrabbableComponent)
+__flatbuffers_build_vector_field(2, flatbuffers_, Alloverse_GrabbableComponent_translation_constraint, flatbuffers_double, double, Alloverse_GrabbableComponent)
+__flatbuffers_build_vector_field(3, flatbuffers_, Alloverse_GrabbableComponent_rotation_constraint, flatbuffers_double, double, Alloverse_GrabbableComponent)
+__flatbuffers_build_struct_field(4, flatbuffers_, Alloverse_GrabbableComponent_target_hand_transform, Alloverse_Mat4, 128, 8, Alloverse_GrabbableComponent)
+
+static inline Alloverse_GrabbableComponent_ref_t Alloverse_GrabbableComponent_create(flatbuffers_builder_t *B __Alloverse_GrabbableComponent_formal_args)
+{
+    if (Alloverse_GrabbableComponent_start(B)
+        || Alloverse_GrabbableComponent_target_hand_transform_add(B, v4)
+        || Alloverse_GrabbableComponent_actuate_on_add(B, v1)
+        || Alloverse_GrabbableComponent_translation_constraint_add(B, v2)
+        || Alloverse_GrabbableComponent_rotation_constraint_add(B, v3)
+        || Alloverse_GrabbableComponent_grabbable_add(B, v0)) {
+        return 0;
+    }
+    return Alloverse_GrabbableComponent_end(B);
+}
+
+static Alloverse_GrabbableComponent_ref_t Alloverse_GrabbableComponent_clone(flatbuffers_builder_t *B, Alloverse_GrabbableComponent_table_t t)
+{
+    __flatbuffers_memoize_begin(B, t);
+    if (Alloverse_GrabbableComponent_start(B)
+        || Alloverse_GrabbableComponent_target_hand_transform_pick(B, t)
+        || Alloverse_GrabbableComponent_actuate_on_pick(B, t)
+        || Alloverse_GrabbableComponent_translation_constraint_pick(B, t)
+        || Alloverse_GrabbableComponent_rotation_constraint_pick(B, t)
+        || Alloverse_GrabbableComponent_grabbable_pick(B, t)) {
+        return 0;
+    }
+    __flatbuffers_memoize_end(B, t, Alloverse_GrabbableComponent_end(B));
 }
 
 __flatbuffers_build_table_field(0, flatbuffers_, Alloverse_EntitySpec_components, Alloverse_Components, Alloverse_EntitySpec)

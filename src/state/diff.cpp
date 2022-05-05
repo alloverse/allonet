@@ -63,6 +63,10 @@ extern "C" void allo_state_diff_compute(allo_state_diff *diff, struct allo_state
         TestComp(clock, ClockComponent);
         TestComp(intent, IntentComponent);
         TestComp(property_animations, PropertyAnimationsComponent);
+        TestComp(geometry, GeometryComponent);
+        TestComp(ui, UIComponent);
+        TestComp(collider, ColliderComponent);
+        TestComp(grabbable, GrabbableComponent);
         #undef TestComp
 
         // todo: using reflection to compare all comps, instead of doing it with macros like above

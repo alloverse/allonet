@@ -122,6 +122,10 @@ allo_mutable_state::changeComponents(shared_ptr<EntityT> entity, shared_ptr<Comp
     if(addChange->clock || has_value(remove, "clock")) entity->components->clock = addChange->clock;
     if(addChange->intent || has_value(remove, "intent")) entity->components->intent = addChange->intent;
     if(addChange->property_animations || has_value(remove, "property_animations")) entity->components->property_animations = addChange->property_animations;
+    if(addChange->geometry || has_value(remove, "geometry")) entity->components->geometry = addChange->geometry;
+    if(addChange->ui || has_value(remove, "ui")) entity->components->ui = addChange->ui;
+    if(addChange->collider || has_value(remove, "collider")) entity->components->collider = addChange->collider;
+    if(addChange->grabbable || has_value(remove, "grabbable")) entity->components->grabbable = addChange->grabbable;
 }
 
 

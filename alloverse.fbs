@@ -24,7 +24,11 @@ table Components {
     clock:ClockComponent;
     intent:IntentComponent;
     property_animations:PropertyAnimationsComponent;
-    // XXX: Make sure to update allo_mutable_state::changeComponents when adding more fields
+    geometry:GeometryComponent;
+    ui:UIComponent;
+    collider:ColliderComponent;
+    grabbable:GrabbableComponent;
+    // XXX: Make sure to update allo_mutable_state::changeComponents and allo_state_diff_compute when adding more fields
 
     // todo: non-conforming components as flex or json
 }
@@ -127,6 +131,37 @@ table PropertyAnimation {
 }
 table PropertyAnimationsComponent {
     animations:[PropertyAnimation];
+}
+
+table GeometryComponent {
+    type:string;
+    // only valid if type=="asset" or type=="hardcoded-model"
+    name:string; 
+
+    // only valid if type=="inline"
+    vertices:[double]; // [x1, y1, z1, x2, y2, z2, ...]
+    normals:[double]; // [x1, y1, z1, x2, y2, z2, ...]
+    uvs:[double]; // [u1, v1, u2, v2, u3, v3, ...]
+    triangles:[int]; // [i1, j1, k1, i2, j2, k2, ...]
+}
+
+table UIComponent {
+    view_id:string;
+}
+
+table ColliderComponent {
+    type:string;
+    width:double;
+    height:double;
+    depth:double;
+}
+
+table GrabbableComponent {
+    grabbable:bool;
+    actuate_on:string;
+    translation_constraint:[double]; // [x, y, z]
+    rotation_constraint:[double]; // [x, y, z]
+    target_hand_transform:Mat4;
 }
 
 ///////////////////////////////////////////////////////////////

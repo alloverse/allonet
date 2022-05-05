@@ -89,6 +89,22 @@ typedef const struct Alloverse_PropertyAnimationsComponent_table *Alloverse_Prop
 typedef struct Alloverse_PropertyAnimationsComponent_table *Alloverse_PropertyAnimationsComponent_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_vec_t;
 typedef flatbuffers_uoffset_t *Alloverse_PropertyAnimationsComponent_mutable_vec_t;
+typedef const struct Alloverse_GeometryComponent_table *Alloverse_GeometryComponent_table_t;
+typedef struct Alloverse_GeometryComponent_table *Alloverse_GeometryComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_GeometryComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_GeometryComponent_mutable_vec_t;
+typedef const struct Alloverse_UIComponent_table *Alloverse_UIComponent_table_t;
+typedef struct Alloverse_UIComponent_table *Alloverse_UIComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_UIComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_UIComponent_mutable_vec_t;
+typedef const struct Alloverse_ColliderComponent_table *Alloverse_ColliderComponent_table_t;
+typedef struct Alloverse_ColliderComponent_table *Alloverse_ColliderComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_ColliderComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_ColliderComponent_mutable_vec_t;
+typedef const struct Alloverse_GrabbableComponent_table *Alloverse_GrabbableComponent_table_t;
+typedef struct Alloverse_GrabbableComponent_table *Alloverse_GrabbableComponent_mutable_table_t;
+typedef const flatbuffers_uoffset_t *Alloverse_GrabbableComponent_vec_t;
+typedef flatbuffers_uoffset_t *Alloverse_GrabbableComponent_mutable_vec_t;
 typedef const struct Alloverse_EntitySpec_table *Alloverse_EntitySpec_table_t;
 typedef struct Alloverse_EntitySpec_table *Alloverse_EntitySpec_mutable_table_t;
 typedef const flatbuffers_uoffset_t *Alloverse_EntitySpec_vec_t;
@@ -273,6 +289,54 @@ typedef flatbuffers_uoffset_t *Alloverse_EntitySpec_mutable_vec_t;
 #ifndef Alloverse_PropertyAnimationsComponent_file_extension
 #define Alloverse_PropertyAnimationsComponent_file_extension "bin"
 #endif
+#ifndef Alloverse_GeometryComponent_file_identifier
+#define Alloverse_GeometryComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_GeometryComponent_file_identifier */
+#ifndef Alloverse_GeometryComponent_identifier
+#define Alloverse_GeometryComponent_identifier 0
+#endif
+#define Alloverse_GeometryComponent_type_hash ((flatbuffers_thash_t)0x2dcef17f)
+#define Alloverse_GeometryComponent_type_identifier "\x7f\xf1\xce\x2d"
+#ifndef Alloverse_GeometryComponent_file_extension
+#define Alloverse_GeometryComponent_file_extension "bin"
+#endif
+#ifndef Alloverse_UIComponent_file_identifier
+#define Alloverse_UIComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_UIComponent_file_identifier */
+#ifndef Alloverse_UIComponent_identifier
+#define Alloverse_UIComponent_identifier 0
+#endif
+#define Alloverse_UIComponent_type_hash ((flatbuffers_thash_t)0xbac6aef1)
+#define Alloverse_UIComponent_type_identifier "\xf1\xae\xc6\xba"
+#ifndef Alloverse_UIComponent_file_extension
+#define Alloverse_UIComponent_file_extension "bin"
+#endif
+#ifndef Alloverse_ColliderComponent_file_identifier
+#define Alloverse_ColliderComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_ColliderComponent_file_identifier */
+#ifndef Alloverse_ColliderComponent_identifier
+#define Alloverse_ColliderComponent_identifier 0
+#endif
+#define Alloverse_ColliderComponent_type_hash ((flatbuffers_thash_t)0x1db52a73)
+#define Alloverse_ColliderComponent_type_identifier "\x73\x2a\xb5\x1d"
+#ifndef Alloverse_ColliderComponent_file_extension
+#define Alloverse_ColliderComponent_file_extension "bin"
+#endif
+#ifndef Alloverse_GrabbableComponent_file_identifier
+#define Alloverse_GrabbableComponent_file_identifier 0
+#endif
+/* deprecated, use Alloverse_GrabbableComponent_file_identifier */
+#ifndef Alloverse_GrabbableComponent_identifier
+#define Alloverse_GrabbableComponent_identifier 0
+#endif
+#define Alloverse_GrabbableComponent_type_hash ((flatbuffers_thash_t)0x70b10ef)
+#define Alloverse_GrabbableComponent_type_identifier "\xef\x10\x0b\x07"
+#ifndef Alloverse_GrabbableComponent_file_extension
+#define Alloverse_GrabbableComponent_file_extension "bin"
+#endif
 #ifndef Alloverse_Mat4_file_identifier
 #define Alloverse_Mat4_file_identifier 0
 #endif
@@ -390,6 +454,10 @@ __flatbuffers_define_table_field(2, Alloverse_Components, live_media, Alloverse_
 __flatbuffers_define_table_field(3, Alloverse_Components, clock, Alloverse_ClockComponent_table_t, 0)
 __flatbuffers_define_table_field(4, Alloverse_Components, intent, Alloverse_IntentComponent_table_t, 0)
 __flatbuffers_define_table_field(5, Alloverse_Components, property_animations, Alloverse_PropertyAnimationsComponent_table_t, 0)
+__flatbuffers_define_table_field(6, Alloverse_Components, geometry, Alloverse_GeometryComponent_table_t, 0)
+__flatbuffers_define_table_field(7, Alloverse_Components, ui, Alloverse_UIComponent_table_t, 0)
+__flatbuffers_define_table_field(8, Alloverse_Components, collider, Alloverse_ColliderComponent_table_t, 0)
+__flatbuffers_define_table_field(9, Alloverse_Components, grabbable, Alloverse_GrabbableComponent_table_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////
@@ -568,6 +636,58 @@ __flatbuffers_offset_vec_at(Alloverse_PropertyAnimationsComponent_table_t, vec, 
 __flatbuffers_table_as_root(Alloverse_PropertyAnimationsComponent)
 
 __flatbuffers_define_vector_field(0, Alloverse_PropertyAnimationsComponent, animations, Alloverse_PropertyAnimation_vec_t, 0)
+
+struct Alloverse_GeometryComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_GeometryComponent_vec_len(Alloverse_GeometryComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_GeometryComponent_table_t Alloverse_GeometryComponent_vec_at(Alloverse_GeometryComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_GeometryComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_GeometryComponent)
+
+__flatbuffers_define_string_field(0, Alloverse_GeometryComponent, type, 0)
+__flatbuffers_define_string_field(1, Alloverse_GeometryComponent, name, 0)
+__flatbuffers_define_vector_field(2, Alloverse_GeometryComponent, vertices, flatbuffers_double_vec_t, 0)
+__flatbuffers_define_vector_field(3, Alloverse_GeometryComponent, normals, flatbuffers_double_vec_t, 0)
+__flatbuffers_define_vector_field(4, Alloverse_GeometryComponent, uvs, flatbuffers_double_vec_t, 0)
+__flatbuffers_define_vector_field(5, Alloverse_GeometryComponent, triangles, flatbuffers_int32_vec_t, 0)
+
+struct Alloverse_UIComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_UIComponent_vec_len(Alloverse_UIComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_UIComponent_table_t Alloverse_UIComponent_vec_at(Alloverse_UIComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_UIComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_UIComponent)
+
+__flatbuffers_define_string_field(0, Alloverse_UIComponent, view_id, 0)
+
+struct Alloverse_ColliderComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_ColliderComponent_vec_len(Alloverse_ColliderComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_ColliderComponent_table_t Alloverse_ColliderComponent_vec_at(Alloverse_ColliderComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_ColliderComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_ColliderComponent)
+
+__flatbuffers_define_string_field(0, Alloverse_ColliderComponent, type, 0)
+__flatbuffers_define_scalar_field(1, Alloverse_ColliderComponent, width, flatbuffers_double, double, 0.0000000000000000)
+__flatbuffers_define_scalar_field(2, Alloverse_ColliderComponent, height, flatbuffers_double, double, 0.0000000000000000)
+__flatbuffers_define_scalar_field(3, Alloverse_ColliderComponent, depth, flatbuffers_double, double, 0.0000000000000000)
+
+struct Alloverse_GrabbableComponent_table { uint8_t unused__; };
+
+static inline size_t Alloverse_GrabbableComponent_vec_len(Alloverse_GrabbableComponent_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline Alloverse_GrabbableComponent_table_t Alloverse_GrabbableComponent_vec_at(Alloverse_GrabbableComponent_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(Alloverse_GrabbableComponent_table_t, vec, i, 0)
+__flatbuffers_table_as_root(Alloverse_GrabbableComponent)
+
+__flatbuffers_define_scalar_field(0, Alloverse_GrabbableComponent, grabbable, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_string_field(1, Alloverse_GrabbableComponent, actuate_on, 0)
+__flatbuffers_define_vector_field(2, Alloverse_GrabbableComponent, translation_constraint, flatbuffers_double_vec_t, 0)
+__flatbuffers_define_vector_field(3, Alloverse_GrabbableComponent, rotation_constraint, flatbuffers_double_vec_t, 0)
+__flatbuffers_define_struct_field(4, Alloverse_GrabbableComponent, target_hand_transform, Alloverse_Mat4_struct_t, 0)
 
 /** ////////////////////////////////////////////////////////////
  * ////////////////////////////////////////////////////////////  */

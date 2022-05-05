@@ -24,6 +24,10 @@ static int Alloverse_RotationAnimationValue_verify_table(flatcc_table_verifier_d
 static int Alloverse_TransformAnimationValue_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_PropertyAnimation_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_PropertyAnimationsComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_GeometryComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_UIComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_ColliderComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int Alloverse_GrabbableComponent_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int Alloverse_EntitySpec_verify_table(flatcc_table_verifier_descriptor_t *td);
 
 static int Alloverse_AnimationValue_union_verifier(flatcc_union_verifier_descriptor_t *ud)
@@ -143,6 +147,10 @@ static int Alloverse_Components_verify_table(flatcc_table_verifier_descriptor_t 
     if ((ret = flatcc_verify_table_field(td, 3, 0, &Alloverse_ClockComponent_verify_table) /* clock */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 4, 0, &Alloverse_IntentComponent_verify_table) /* intent */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 5, 0, &Alloverse_PropertyAnimationsComponent_verify_table) /* property_animations */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 6, 0, &Alloverse_GeometryComponent_verify_table) /* geometry */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 7, 0, &Alloverse_UIComponent_verify_table) /* ui */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 8, 0, &Alloverse_ColliderComponent_verify_table) /* collider */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 9, 0, &Alloverse_GrabbableComponent_verify_table) /* grabbable */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -504,6 +512,126 @@ static inline int Alloverse_PropertyAnimationsComponent_verify_as_root_with_iden
 static inline int Alloverse_PropertyAnimationsComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
 {
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_PropertyAnimationsComponent_verify_table);
+}
+
+static int Alloverse_GeometryComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_string_field(td, 0, 0) /* type */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 1, 0) /* name */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 2, 0, 8, 8, INT64_C(536870911)) /* vertices */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 3, 0, 8, 8, INT64_C(536870911)) /* normals */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 4, 0, 8, 8, INT64_C(536870911)) /* uvs */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 5, 0, 4, 4, INT64_C(1073741823)) /* triangles */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_GeometryComponent_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_GeometryComponent_identifier, &Alloverse_GeometryComponent_verify_table);
+}
+
+static inline int Alloverse_GeometryComponent_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_GeometryComponent_type_identifier, &Alloverse_GeometryComponent_verify_table);
+}
+
+static inline int Alloverse_GeometryComponent_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_GeometryComponent_verify_table);
+}
+
+static inline int Alloverse_GeometryComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_GeometryComponent_verify_table);
+}
+
+static int Alloverse_UIComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_string_field(td, 0, 0) /* view_id */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_UIComponent_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_UIComponent_identifier, &Alloverse_UIComponent_verify_table);
+}
+
+static inline int Alloverse_UIComponent_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_UIComponent_type_identifier, &Alloverse_UIComponent_verify_table);
+}
+
+static inline int Alloverse_UIComponent_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_UIComponent_verify_table);
+}
+
+static inline int Alloverse_UIComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_UIComponent_verify_table);
+}
+
+static int Alloverse_ColliderComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_string_field(td, 0, 0) /* type */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 8, 8) /* width */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 8, 8) /* height */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 8, 8) /* depth */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_ColliderComponent_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_ColliderComponent_identifier, &Alloverse_ColliderComponent_verify_table);
+}
+
+static inline int Alloverse_ColliderComponent_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_ColliderComponent_type_identifier, &Alloverse_ColliderComponent_verify_table);
+}
+
+static inline int Alloverse_ColliderComponent_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_ColliderComponent_verify_table);
+}
+
+static inline int Alloverse_ColliderComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_ColliderComponent_verify_table);
+}
+
+static int Alloverse_GrabbableComponent_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 1, 1) /* grabbable */)) return ret;
+    if ((ret = flatcc_verify_string_field(td, 1, 0) /* actuate_on */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 2, 0, 8, 8, INT64_C(536870911)) /* translation_constraint */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 3, 0, 8, 8, INT64_C(536870911)) /* rotation_constraint */)) return ret;
+    if ((ret = flatcc_verify_field(td, 4, 128, 8) /* target_hand_transform */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int Alloverse_GrabbableComponent_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_GrabbableComponent_identifier, &Alloverse_GrabbableComponent_verify_table);
+}
+
+static inline int Alloverse_GrabbableComponent_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, Alloverse_GrabbableComponent_type_identifier, &Alloverse_GrabbableComponent_verify_table);
+}
+
+static inline int Alloverse_GrabbableComponent_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &Alloverse_GrabbableComponent_verify_table);
+}
+
+static inline int Alloverse_GrabbableComponent_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &Alloverse_GrabbableComponent_verify_table);
 }
 
 static int Alloverse_EntitySpec_verify_table(flatcc_table_verifier_descriptor_t *td)

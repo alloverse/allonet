@@ -8,8 +8,7 @@ using namespace Alloverse;
 
 extern "C" void allo_state_create_parsed(allo_state *state, const void *buf, size_t len)
 {
-    // realloc = we can reuse the same buffer as last time, especially if the size is ~the same
-    state->flat = realloc(state->flat, len);
+    state->flat = calloc(1, len);
     // copy over the data we need
     memcpy(state->flat, buf, len);
     state->flatlength = len;

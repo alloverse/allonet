@@ -95,7 +95,6 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   
   cJSON* avatar = cJSON_GetArrayItem(body, 6);
   char *avatars = cJSON_Print(avatar);
-  printf("THIS IS AN AVATAR %s\n", avatars);
   // TODO: make these disconnect the client instead of exiting on failure to parse
   fbassert(flatparser.SetRootType("EntitySpec"));
   fbassert(flatparser.Parse(avatars));

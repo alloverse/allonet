@@ -31,7 +31,6 @@ void alloclient_parse_statediff(alloclient *client, const char *flat, size_t fla
     allo_state_diff diff;
     allo_state_diff_init(&diff);
     //cJSON *staterep = allo_delta_apply(&_internal(client)->history, cmd, &diff, (allo_statediff_handler)_handle_parsed_statediff, client);    
-    // todo: CALCULATE THE DIFF
     if(!newstate /*unparseable due to missing the rev we got a patch from */)
     {
         int64_t patch_from = 7777; //cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
@@ -43,6 +42,7 @@ void alloclient_parse_statediff(alloclient *client, const char *flat, size_t fla
         _internal(client)->latest_intent->ack_state_rev = 0;
         return;
     }
+    allo_state_diff_compute(&diff, client->_state, newstate);
     alloclient_ack_rev(client, newstate->revision);
 
     alloclient_handle_parsed_statediff(client, newstate, &diff);

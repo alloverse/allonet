@@ -14,8 +14,8 @@ void allosim_pose_movements(allo_state* state, Entity* avatar, const allo_client
     auto rels = entity->components()->relationships();
     auto parent = rels ? rels->parent()->c_str() : NULL;
     auto intentc = entity->components()->intent();
-    auto actuate_pose = intent ? intentc->actuate_pose()->c_str() : NULL;
-    auto from_avatar = intent ? intentc->from_avatar() ? intentc->from_avatar()->c_str() : NULL : NULL;
+    auto actuate_pose = intentc ? intentc->actuate_pose()->c_str() : NULL;
+    auto from_avatar = intentc ? intentc->from_avatar() ? intentc->from_avatar()->c_str() : NULL : NULL;
 
     // don't care about entities that don't try to pose
     if (!actuate_pose)

@@ -18,4 +18,4 @@ echo "0x00}; static const int ${VAR_NAME}_size = sizeof(${VAR_NAME}_bytes); " >>
 # Text rep
 echo "static const unsigned char ${VAR_NAME}_text[] = {" >> "$OUT_FILE"
 hexdump -ve '1/1 "0x%02x, "' "$SCHEMA_FILE" >> "$OUT_FILE"
-echo "0x00}; static const int ${VAR_NAME}_text_size = sizeof(${VAR_NAME}_bytes); " >> "$OUT_FILE"
+echo "0x00}; static const int ${VAR_NAME}_text_size = sizeof(${VAR_NAME}_text); " >> "$OUT_FILE"

@@ -23,6 +23,8 @@ extern "C" {
 #endif
 #include <allonet/threading.h>
 
+//#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <curl/curl.h>
 
 allo_statistics_t allo_statistics = {0};
 
@@ -200,4 +202,44 @@ extern "C" char *allo_strndup(const char *src, size_t n)
 extern "C" void allo_free(void *mallocd)
 {
     free(mallocd);
+}
+
+
+
+extern "C" void allo_send_log(uint64_t timestamp, char *appname, char *appversion, char *session_id, char *event_name, char *event_data) {
+    
+    cJSON *object = cjson_create_object(
+        "timestamp", cJSON_CreateNumber(timestamp),
+        "appname", cJSON_CreateString(appname),
+        "appversion", cJSON_CreateString(appversion),
+        "session_id", cJSON_CreateString(session_id),
+        "event_name", cJSON_CreateString(event_name),
+        "event_data", cJSON_CreateRaw(event_data),
+        NULL
+    );
+    char *json = cJSON_PrintUnformatted(object);
+    
+    CURL *curl = curl_easy_init();
+    if(curl) {
+        CURLcode res;
+        curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8000");
+//        curl_easy_setopt(curl, CURLOPT_URL, "https://logs.alloverse.com");
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
+        
+        
+        /* Perform the request, res will get the return code */
+        res = curl_easy_perform(curl);
+        /* Check for errors */
+        if(res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        }
+        
+        /* always cleanup */
+        curl_easy_cleanup(curl);
+        printf("Log res code: %d\n", res);
+    }
+    
+    cJSON_Delete(object);
+    free(json);
 }

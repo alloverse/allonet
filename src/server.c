@@ -315,6 +315,7 @@ void alloserv_send_enet(alloserver *serv, alloserver_client *client, allochannel
 
 alloserver *allo_listen(int listenhost, int port)
 {
+    allo_send_log(0, "server", "0.0.1", "", "started", "{}");
     alloserver *serv = (alloserver*)calloc(1, sizeof(alloserver));
     serv->_internal = (alloserv_internal*)calloc(1, sizeof(alloserv_internal));
     arr_init(&_servinternal(serv)->wanted_assets);

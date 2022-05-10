@@ -197,7 +197,7 @@ include_directories(SYSTEM
 )
 
 target_link_libraries(allonet 
-  enet cjson-static cjson_utils-static opus 
+  enet cjson-static cjson_utils-static opus curl
   ${PLATFORM_LIBS}
 )
 

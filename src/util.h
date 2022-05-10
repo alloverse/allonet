@@ -110,4 +110,9 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
     return result;
 }
 
+// Log an event to the alloverse logging system
+void allo_send_log(uint64_t timestamp, char *appname, char *appversion, char *session_id, char *event_name, char *event_data);
+
 #endif /* util_h */
+
+

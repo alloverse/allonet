@@ -509,20 +509,19 @@ static void handle_interaction(alloserver* serv, alloserver_client* client, allo
   }
   else
   {
-    allo_entity* entity = NULL;
-    LIST_FOREACH(entity, &serv->state.entities, pointers) {
-      if (strcmp(entity->id, interaction->receiver_entity_id) == 0) {
-        alloserver_client* client2;
-        LIST_FOREACH(client2, &serv->clients, pointers) {
-          if (strcmp(entity->owner_agent_id, client2->agent_id) == 0) {
+        allo_entity* entity = state_get_entity(&serv->state, interaction->receiver_entity_id);
+        if(entity)
+        {
+            alloserver_client* client2 = find_agent_by_id(serv, entity->owner_agent_id);
+            if(client2)
+            {
             send_interaction_to_client(serv, client2, interaction);
             return;
           }
         }
-        break;
-      }
-    }
-    // TODO: send failure response, because recipient was not found.
+        cJSON *body = cJSON_Parse(interaction->body);
+        handle_invalid_place_interaction(serv, client, interaction, body);
+        cJSON_Delete(body);
   }
 }
 

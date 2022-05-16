@@ -15,6 +15,8 @@ static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
 
+// local helpers
+
 static void send_interaction_to_client(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
   cJSON* cmdrep = allo_interaction_to_cjson(interaction);
@@ -25,6 +27,38 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
   free((void*)json);
 }
 
+static allo_entity *find_service(allo_state *state, const char *by_servicename)
+{
+    allo_entity* entity = NULL;
+    LIST_FOREACH(entity, &serv->state.entities, pointers)
+    {
+        cJSON *comps = entity->components;
+        cJSON *servdisc = cJSON_GetObjectItemCaseSensitive(comps, "servicediscovery");
+        cJSON *servnamej = cJSON_GetObjectItemCaseSensitive(servdisc, "name");
+        const char *servname = cJSON_GetStringValue(servnamej);
+
+        if (servname && strcmp(servname, by_servicename) == 0)
+        {
+            return entity;
+        }
+    }
+
+    return NULL;
+}
+
+static alloserver_client *find_agent_by_id(alloserver *serv, const char *by_id)
+{
+    alloserver_client *agent;
+    LIST_FOREACH(agent, &serv->clients, pointers) {
+        if(strcmp(agent->agent_id, by_id) == 0)
+        {
+            return agent;
+        }
+    }
+    return NULL;
+}
+
+// callbacks
 static void clients_changed(alloserver* serv, alloserver_client* added, alloserver_client* removed)
 {
     (void)added;
@@ -64,6 +98,8 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
   free(client->intent->entity_id);
   client->intent->entity_id = allo_strdup(client->avatar_entity_id);
 }
+
+// interactions
 
 static void handle_invalid_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
@@ -411,26 +447,18 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
         return;
     }
     
-    bool found = false;
-    alloserver_client *agent;
-    LIST_FOREACH(agent, &serv->clients, pointers) {
-        if(strcmp(agent->agent_id, agent_id) == 0)
+    alloserver_client *agent = find_agent_by_id(serv, agent_id);
+    cJSON *respbody;
+    if(agent)
         {
             alloserv_disconnect(serv, agent, alloerror_kicked_by_admin);
-            found = true;
-            break;
-        }
-    }
-    
-    cJSON *respbody;
-    if(found)
-    {
         respbody = cjson_create_list(cJSON_CreateString("list_agents"), cJSON_CreateString("ok"), NULL);
     }
     else
     {
         respbody = cjson_create_list(cJSON_CreateString("list_agents"), cJSON_CreateString("error"), cJSON_CreateString("agent not found"), NULL);
     }
+        
     char* respbodys = cJSON_Print(respbody);
     cJSON_Delete(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);

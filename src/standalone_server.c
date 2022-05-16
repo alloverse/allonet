@@ -14,6 +14,7 @@ static allo_entity* place;
 static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
+static arr_t(allo_interaction*) outstanding_app_launch_requests;
 
 // local helpers
 
@@ -29,11 +30,13 @@ static void send_interaction_to_client(alloserver* serv, alloserver_client* clie
 
 static allo_entity *find_service(allo_state *state, const char *by_servicename)
 {
+    if(!by_servicename) return NULL;
+    
     allo_entity* entity = NULL;
-    LIST_FOREACH(entity, &serv->state.entities, pointers)
+    LIST_FOREACH(entity, &state->entities, pointers)
     {
         cJSON *comps = entity->components;
-        cJSON *servdisc = cJSON_GetObjectItemCaseSensitive(comps, "servicediscovery");
+        cJSON *servdisc = cJSON_GetObjectItemCaseSensitive(comps, "service_discovery");
         cJSON *servnamej = cJSON_GetObjectItemCaseSensitive(servdisc, "name");
         const char *servname = cJSON_GetStringValue(servnamej);
 
@@ -48,6 +51,8 @@ static allo_entity *find_service(allo_state *state, const char *by_servicename)
 
 static alloserver_client *find_agent_by_id(alloserver *serv, const char *by_id)
 {
+    if(!by_id) return NULL;
+
     alloserver_client *agent;
     LIST_FOREACH(agent, &serv->clients, pointers) {
         if(strcmp(agent->agent_id, by_id) == 0)
@@ -450,8 +455,8 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
     alloserver_client *agent = find_agent_by_id(serv, agent_id);
     cJSON *respbody;
     if(agent)
-        {
-            alloserv_disconnect(serv, agent, alloerror_kicked_by_admin);
+    {
+        alloserv_disconnect(serv, agent, alloerror_kicked_by_admin);
         respbody = cjson_create_list(cJSON_CreateString("list_agents"), cJSON_CreateString("ok"), NULL);
     }
     else
@@ -465,6 +470,77 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
     free(respbodys);
     send_interaction_to_client(serv, client, response);
     allo_interaction_free(response);
+}
+
+// {"launch_app", "alloapp://{'marketplace' or host}/{appid or path}", args}
+static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction);
+static void handle_place_launch_app_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
+{
+    if(strcmp(interaction->type, "response") == 0)
+    {
+        handle_app_launched_response(serv, interaction);
+        return;
+    }
+    const char *app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
+    cJSON *launch_args = cJSON_GetArrayItem(body, 2); // can be NULL/missing
+    (void)launch_args; // we're not using them inline now, let marketplace handle them
+    allo_entity *marketplacee = find_service(&serv->state, "marketplace");
+    alloserver_client *marketplacec = find_agent_by_id(serv, marketplacee->owner_agent_id);
+    if(!app_url || !marketplacee || !marketplacec)
+    {
+        handle_invalid_place_interaction(serv, client, interaction, body);
+        return;
+    }
+
+    // for now, just forward the request to marketplace. When we get a response from marketplace, forward that back to
+    // the original client.
+    send_interaction_to_client(serv, marketplacec, interaction);
+
+    // save the sender so we can forward it back.
+    // XXX<nevyn>: if we were nice we would time out responses so the list doesn't fill up, but this is a temporary solution
+    // until we have proper app launching anyway
+    arr_push(&outstanding_app_launch_requests, allo_interaction_clone(interaction));
+}
+static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction)
+{
+    // find the matching request
+    allo_interaction *original = NULL;
+    for(size_t i = 0; i < outstanding_app_launch_requests.length; i++)
+    {
+        allo_interaction *potential = outstanding_app_launch_requests.data[i];
+        if(strcmp(interaction->request_id, potential->request_id) == 0)
+        {
+            original = potential;
+            arr_splice(&outstanding_app_launch_requests, i, 1);
+            break;
+        }
+    }
+    if(!original)
+    {
+        fprintf(stderr, 
+            "Unexpectedly got a launch_app response from marketplace with no corresponding original request or receiver: rid(%s) respbody(%s)\n", 
+            interaction->request_id, interaction->body
+        );
+        return;
+    }
+
+    // and send the response to the original requester
+    allo_entity *original_sender = state_get_entity(&serv->state, original->sender_entity_id);
+    alloserver_client *original_client = original_sender ? find_agent_by_id(serv, original_sender->owner_agent_id) : NULL;
+    if(!!original_client)
+    {
+        fprintf(stderr, 
+            "App launch request got back, but original sender disappeared: rid(%s) respbody(%s)\n",
+            interaction->request_id, interaction->body
+        );
+        allo_interaction_free(original);
+        return;
+    }
+
+    allo_interaction *response_to_original = allo_interaction_create("response", "place", original->sender_entity_id, original->request_id, interaction->body);
+    send_interaction_to_client(serv, original_client, response_to_original);
+    allo_interaction_free(original);
+
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
@@ -491,6 +567,8 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
         handle_place_list_agents_interaction(serv, client, interaction, body);
     } else if (strcmp(name, "kick_agent") == 0) {
         handle_place_kick_agent_interaction(serv, client, interaction, body);
+    } else if (strcmp(name, "launch_app") == 0) {
+        handle_place_launch_app_interaction(serv, client, interaction, body);
     } else {
         handle_invalid_place_interaction(serv, client, interaction, body);
     }
@@ -503,26 +581,26 @@ static void handle_place_interaction(alloserver* serv, alloserver_client* client
 
 static void handle_interaction(alloserver* serv, alloserver_client* client, allo_interaction *interaction)
 {
-  if (strcmp(interaction->receiver_entity_id, "place") == 0)
-  {
-    handle_place_interaction(serv, client, interaction);
-  }
-  else
-  {
+    if (strcmp(interaction->receiver_entity_id, "place") == 0)
+    {
+        handle_place_interaction(serv, client, interaction);
+    }
+    else
+    {
         allo_entity* entity = state_get_entity(&serv->state, interaction->receiver_entity_id);
         if(entity)
         {
             alloserver_client* client2 = find_agent_by_id(serv, entity->owner_agent_id);
             if(client2)
             {
-            send_interaction_to_client(serv, client2, interaction);
-            return;
-          }
+                send_interaction_to_client(serv, client2, interaction);
+                return;
+            }
         }
         cJSON *body = cJSON_Parse(interaction->body);
         handle_invalid_place_interaction(serv, client, interaction, body);
         cJSON_Delete(body);
-  }
+    }
 }
 
 static void handle_clock(alloserver *serv, alloserver_client *client, cJSON *cmd)

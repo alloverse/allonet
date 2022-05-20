@@ -22,6 +22,7 @@ ENDIF()
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "lib/mathc"
+  "lib/cpp-httplib"
   "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
 include_directories(SYSTEM
@@ -38,6 +39,8 @@ SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
+
+add_subdirectory(lib/cpp-httplib)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 
@@ -197,7 +200,7 @@ include_directories(SYSTEM
 )
 
 target_link_libraries(allonet 
-  enet cjson-static cjson_utils-static opus 
+  enet cjson-static cjson_utils-static opus httplib::httplib
   ${PLATFORM_LIBS}
 )
 

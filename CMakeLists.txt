@@ -3,6 +3,7 @@ project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
+set(CMAKE_CXX_STANDARD 11)
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 set(ALLONET_THREADING_STRATEGY "force_link_tinycthread" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
@@ -94,7 +95,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/sha1.h
     ${SOURCE_FILES_PREFIX}/sha256.c
     ${SOURCE_FILES_PREFIX}/sha256.h
-    ${SOURCE_FILES_PREFIX}/standalone_server.c
+    ${SOURCE_FILES_PREFIX}/standalone_server.cpp
     ${SOURCE_FILES_PREFIX}/state.c
     ${SOURCE_FILES_PREFIX}/util.cpp
     ${SOURCE_FILES_PREFIX}/util.h

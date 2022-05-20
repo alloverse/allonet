@@ -303,6 +303,9 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     cJSON *jTrackId = cJSON_GetArrayItem(body, 1);
     cJSON *jsub = cJSON_GetArrayItem(body, 2);
     cJSON* respbody;
+    char* respbodys;
+    uint32_t track_id;
+    allo_media_track *track;
 
     if (!cJSON_IsNumber(jTrackId) || !cJSON_IsString(jsub)) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("missing id or verb"), NULL);
@@ -310,10 +313,10 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
       goto done;
     }
     
-    uint32_t track_id = jTrackId->valueint;
+    track_id = jTrackId->valueint;
     
     // find the track and add or remove client to list of recipients
-    allo_media_track *track = _media_track_find(&mediatracks, track_id);
+    track = _media_track_find(&mediatracks, track_id);
     if(!track) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("invalid track id"), NULL);
       fprintf(stderr, "media_track interaction: %s/%s requested unavailable track id %d\n", interaction->sender_entity_id, alloserv_describe_client(client), track_id);
@@ -338,7 +341,7 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
   
 done:;
-    char* respbodys = cJSON_Print(respbody);
+    respbodys = cJSON_Print(respbody);
     cJSON_Delete(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
     free(respbodys);
@@ -639,7 +642,7 @@ static void handle_media(alloserver *serv, alloserver_client *client, const uint
     // pass information on to all peers in track recipient list
     for (size_t i = 0; i < track->recipients.length; i++) {
         ENetPacket *packet = enet_packet_create(data, length, 0);
-        alloserv_send_enet(serv, track->recipients.data[i], channel, packet);
+        alloserv_send_enet(serv, (alloserver_client*)track->recipients.data[i], (allochannel)channel, packet);
     }
 }
 

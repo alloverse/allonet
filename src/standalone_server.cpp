@@ -3,6 +3,7 @@
 #include <enet/enet.h>
 #include <assert.h>
 #include <errno.h>
+#include "httplib.h"
 
 #include <allonet/allonet.h>
 #include "media/media.h"
@@ -475,75 +476,26 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
     allo_interaction_free(response);
 }
 
-// {"launch_app", "alloapp://{'marketplace' or host}/{appid or path}", args}
+// {"launch_app", "alloapp:http://host:port/{appid or path}", args}
 static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction);
 static void handle_place_launch_app_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-    if(strcmp(interaction->type, "response") == 0)
-    {
-        handle_app_launched_response(serv, interaction);
-        return;
-    }
-    const char *app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
+    std::string app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
     cJSON *launch_args = cJSON_GetArrayItem(body, 2); // can be NULL/missing
     (void)launch_args; // we're not using them inline now, let marketplace handle them
     allo_entity *marketplacee = find_service(&serv->state, "marketplace");
     alloserver_client *marketplacec = find_agent_by_id(serv, marketplacee->owner_agent_id);
-    if(!app_url || !marketplacee || !marketplacec)
+    std::string prefix = "alloapp:";
+    if(app_url.length() == 0 || !marketplacee || !marketplacec || app_url.find(prefix) != 0)
     {
         handle_invalid_place_interaction(serv, client, interaction, body);
         return;
     }
 
-    // for now, just forward the request to marketplace. When we get a response from marketplace, forward that back to
-    // the original client.
-    send_interaction_to_client(serv, marketplacec, interaction);
-
-    // save the sender so we can forward it back.
-    // XXX<nevyn>: if we were nice we would time out responses so the list doesn't fill up, but this is a temporary solution
-    // until we have proper app launching anyway
-    arr_push(&outstanding_app_launch_requests, allo_interaction_clone(interaction));
-}
-static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction)
-{
-    // find the matching request
-    allo_interaction *original = NULL;
-    for(size_t i = 0; i < outstanding_app_launch_requests.length; i++)
-    {
-        allo_interaction *potential = outstanding_app_launch_requests.data[i];
-        if(strcmp(interaction->request_id, potential->request_id) == 0)
-        {
-            original = potential;
-            arr_splice(&outstanding_app_launch_requests, i, 1);
-            break;
-        }
-    }
-    if(!original)
-    {
-        fprintf(stderr, 
-            "Unexpectedly got a launch_app response from marketplace with no corresponding original request or receiver: rid(%s) respbody(%s)\n", 
-            interaction->request_id, interaction->body
-        );
-        return;
-    }
-
-    // and send the response to the original requester
-    allo_entity *original_sender = state_get_entity(&serv->state, original->sender_entity_id);
-    alloserver_client *original_client = original_sender ? find_agent_by_id(serv, original_sender->owner_agent_id) : NULL;
-    if(!!original_client)
-    {
-        fprintf(stderr, 
-            "App launch request got back, but original sender disappeared: rid(%s) respbody(%s)\n",
-            interaction->request_id, interaction->body
-        );
-        allo_interaction_free(original);
-        return;
-    }
-
-    allo_interaction *response_to_original = allo_interaction_create("response", "place", original->sender_entity_id, original->request_id, interaction->body);
-    send_interaction_to_client(serv, original_client, response_to_original);
-    allo_interaction_free(original);
-
+    // ask the app to connect to us
+    std::string httpurl = app_url.substr(prefix.length());
+    httplib::Client webclient(httpurl);
+    //webclient.Post() ...
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)

@@ -706,6 +706,10 @@ static void _alloclient_asset_request(alloclient* client, const char* asset_id, 
 }
 
 void alloclient_asset_send(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {
+    if (offset + length > total_size) {
+        printf("%s: The offset + length (%zu + %zu) supplied was greater than the total_size (%zu). This chunk of data will be ignored!\n", asset_id, offset, length, total_size);
+        return;
+    }
     client->alloclient_asset_send(client, asset_id, data, offset, length, total_size);
 }
 static void _alloclient_asset_send(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {

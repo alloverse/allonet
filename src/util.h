@@ -119,12 +119,15 @@ static char *LogTypeNames[4] = {
     "DEBUG", "INFO", "ERROR", "CRITICAL"
 };
 static inline void allo_log( LogType type, const char *module, const char *identifiers, const char *format, ... ) {
+    // TODO: filter out DEBUG types if not building debug, but apparently cmake is not adding any flag?
     char *message;
     va_list args;
     va_start(args, format);
     int ret = vasprintf(&message, format, args);
     va_end(args);
-    printf("[%s] %s %s \"%s\"\n", LogTypeNames[type], module, identifiers, message);
+    FILE *whereto = stdout;
+    if (type == ERROR) whereto = stderr;
+    fprintf(whereto, "[%s] %s %s \"%s\"\n", LogTypeNames[type], module, identifiers, message);
     if (ret != -1)
         free(message);
 }

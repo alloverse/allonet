@@ -125,6 +125,11 @@ int asset_read_data_header(const cJSON *header, const char **out_id, size_t *out
         return asset_malformed_request_error;
     }
     
+    if (*out_start + *out_length >= *out_total_length) {
+        *out_error_response = asset_error(id->string, asset_malformed_request_error, "The offset + length can not be longer than the total_length!");
+        return asset_malformed_request_error;
+    }
+    
     return 0;
 }
 
@@ -240,6 +245,7 @@ void asset_handle(
         const char *asset_id = NULL;
         size_t offset = 0, length = 0, total_length = 0;
         if(asset_read_data_header(json, &asset_id, &offset, &length, &total_length, &error)) {
+            send(asset_mid_failure, error, NULL, 0, user);
             cJSON_Delete(json);
             cJSON_Delete(error);
             return;

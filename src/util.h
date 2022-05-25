@@ -12,6 +12,8 @@
 #include <allonet/state.h>
 #include <allonet/net.h>
 #include <enet/enet.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
@@ -109,5 +111,24 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
     }
     return result;
 }
+
+typedef enum LogType {
+    DEBUG, INFO, ERROR, CRITICAL
+} LogType;
+static char *LogTypeNames[4] = {
+    "DEBUG", "INFO", "ERROR", "CRITICAL"
+};
+static inline void allo_log( LogType type, const char *module, const char *identifiers, const char *format, ... ) {
+    char *message;
+    va_list args;
+    va_start(args, format);
+    int ret = vasprintf(&message, format, args);
+    va_end(args);
+    printf("[%s] %s %s \"%s\"\n", LogTypeNames[type], module, identifiers, message);
+    if (ret != -1)
+        free(message);
+}
+
+//allo_log_func(asset);
 
 #endif /* util_h */

@@ -158,6 +158,10 @@ int asset_read_error_header(const cJSON *header, const char **out_id, char **out
 
 void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size, asset_send_func send, void *user) {
     
+    if (offset + length > total_size) {
+        asset_log(ERROR, asset_id, "The offset + length (%zu + %zu) supplied was greater than the total_size (%zu). This chunk of data will be ignored!", offset, length, total_size);
+        asset_deliver_error(asset_id, asset_malformed_request_error, "offset+length > total_size", send, user);
+    }
     if (data == NULL) {
         // ok user didn't have this chunk
         cJSON *error = asset_error(asset_id, asset_not_available_error, "Chunk not available");

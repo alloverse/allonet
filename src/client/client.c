@@ -18,6 +18,18 @@
     #define nonnull(x) x
 #endif
 
+static inline char* formatClientId(alloclient *client) {
+    if (client == NULL) return NULL;
+    char *str;
+    if (asprintf(&str, "client:%s", _internal(client)->avatar_id) > 0) return str;
+    return NULL;
+}
+#define client_log(type, client, format, ...) { \
+    char *id = formatClientId(client); \
+    allo_log(type, "client", id, format, __VA_ARGS__); \
+    if(id)free(id); \
+} while(false)
+
 static void send_latest_intent(alloclient* client);
 static void send_clock_request(alloclient *client);
 void alloclient_ack_rev(alloclient *client, int64_t rev);
@@ -45,7 +57,7 @@ static void _handle_parsed_statediff(alloclient *client, cJSON *cmd, cJSON *stat
     if(staterep == NULL)
     {
         int64_t patch_from = cjson_get_int64_value(cJSON_GetObjectItemCaseSensitive(cmd, "patch_from"));
-        fprintf(stderr, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state\n",
+        client_log(DEBUG, client, "alloclient[W](%s): Received unmergeable state from %lld (I'm %lld), requesting full state",
             _internal(client)->avatar_id,
             (long long int)patch_from,
             (long long int)_internal(client)->history.latest_revision
@@ -113,7 +125,7 @@ static bool parse_interaction(alloclient *client, cJSON *inter_json)
         {
             int reason = cJSON_GetNumberValue(cJSON_GetArrayItem(body, 2));
             const char *message = cJSON_GetStringValue(cJSON_GetArrayItem(body, 3));
-            fprintf(stderr, "Place rejected our announce: %s (%d)\n", message, reason);
+            client_log(ERROR, client, "Place rejected our announce: %s (%d)", message, reason);
             // ask disconnection callback to deallocate us
             client->disconnected_callback(client, reason, message);
             return false;
@@ -138,7 +150,7 @@ static bool parse_command(alloclient *client, cJSON *cmdrep)
     if(strcmp(cmdname, "interaction") == 0) {
         return parse_interaction(client, cmdrep);
     } else {
-        printf("Unknown command: %s\n", cmdrep->string);
+        client_log(ERROR, client, "Unknown command: %s", cmdrep->string);
         return true;
     }
 }
@@ -162,7 +174,7 @@ static void _asset_send_func(asset_mid mid, const cJSON *header, const uint8_t *
     ENetPeer *peer = _internal(client)->peer;
     
     if (peer == NULL) {
-        printf("Asset: Not connected yet\n");
+        client_log(INFO, client, "Asset: Not connected yet", NULL);
         return;
     }
     
@@ -230,8 +242,7 @@ static bool parse_packet_from_channel(alloclient *client, ENetPacket *packet, al
     case CHANNEL_STATEDIFFS: {
         cJSON *cmdrep = cJSON_ParseWithLengthOpts((const char*)(packet->data), packet->dataLength, NULL, 0);
         if(!cmdrep) {
-            fprintf(stderr, "alloclient: unparseable statediff:\n");
-            fprintf(stderr, "%s\n", packet->data);
+            client_log(ERROR, client, "alloclient: unparseable statediff:\n%s", packet->data);
             assert(cmdrep);
             return true;
         }
@@ -321,7 +332,7 @@ bool _alloclient_poll(alloclient *client, int timeout_ms)
         case ENET_EVENT_TYPE_CONNECT:
                 break;
         case ENET_EVENT_TYPE_DISCONNECT:
-            fprintf(stderr, "alloclient: disconnected by remote peer or timeout\n");
+            client_log(INFO, client, "alloclient: disconnected by remote peer or timeout", NULL);
             if (client->disconnected_callback) {
                 client->disconnected_callback(client, alloerror_connection_lost, "Lost connection to Place");
             }
@@ -435,16 +446,16 @@ static void _alloclient_disconnect(alloclient *client, int reason)
             while(now < end_at) {
                 enet_host_service(_internal(client)->host, & event, end_at-now);
                 if(event.type == ENET_EVENT_TYPE_DISCONNECT) {
-                    fprintf(stderr, "alloclient: successfully disconnected\n");
+                    client_log(INFO, client, "successfully disconnected", NULL);
                     break;
                 }
                 now = get_ts_mono();
             }
             if(event.type != ENET_EVENT_TYPE_DISCONNECT) {
-                fprintf(stderr, "alloclient: disconnection timed out; just deallocating\n");
+                client_log(ERROR, client, "alloclient: disconnection timed out; just deallocating", NULL);
             }
         } else {
-            fprintf(stderr, "alloclient: Already disconnected; just deallocating\n");
+            client_log(INFO, client, "alloclient: Already disconnected; just deallocating", NULL);
         }
         enet_host_destroy(_internal(client)->host);
         opus_encoder_destroy(_internal(client)->opus_encoder);
@@ -471,7 +482,7 @@ static bool announce(alloclient *client, const char *identity, const char *avata
     );
     if(cJSON_GetArraySize(bodyobj) != 7)
     {
-        fprintf(stderr, "Invalid identity or avatar_desc (must be json), disconnecting.\n");
+        client_log(ERROR, client, "Invalid identity or avatar_desc (must be json), disconnecting.", NULL);
         return false;
     }
     const char *body = cJSON_Print(bodyobj);
@@ -504,14 +515,13 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     );
     if (host == NULL)
     {
-        fprintf (stderr, 
-                "An error occurred while trying to create an ENet client host.\n");
+        client_log(ERROR, client, "An error occurred while trying to create an ENet client host.", NULL);
         return false;
     }
 
     // parse the url in the form of alloplace://hostname{:port}{/}
     if (strstr(url, "alloplace://") == 0) {
-        fprintf(stderr, "Not an alloplace URL\n");
+        client_log(ERROR, client, "'%s' is not a full alloplace URL. Must start with alloplace://", url);
         return false;
     }
     const char *hostandport = strstr(url, "://")+3;
@@ -530,15 +540,13 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     enet_address_set_host (& address, justhost);
     address.port = justport ? atoi(justport) : 21337;
 
-    printf("Connecting to %s:%d (as %s)\n", justhost, address.port, identity);
-    
+    client_log(INFO, client, "Connecting to %s:%d (as %s)", justhost, address.port, identity);
 
     ENetPeer *peer;
     peer = enet_host_connect (host, &address, CHANNEL_COUNT, 0);    
     if (peer == NULL)
     {
-        fprintf (stderr, 
-                    "No available peers for initiating an ENet connection.\n");
+        client_log(ERROR, client, "No available peers for initiating an ENet connection.", NULL);
         free(justhost);
         free(justport);
         return false;
@@ -548,7 +556,7 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     if (enet_host_service(host, & event, 5000) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT)
     {
-        printf("Connection to %s:%d (as %s) succeeded.\n", justhost, address.port, identity);
+        client_log(INFO, client, "Connection to %s:%d (as %s) succeeded.", justhost, address.port, identity);
     }
     else
     {
@@ -556,7 +564,7 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
         /* received. Reset the peer in the event the 5 seconds   */
         /* had run out without any significant event.            */
         enet_peer_reset (peer);
-        printf("Connection to %s:%d (as %s) failed.\n", justhost, address.port, identity);
+        client_log(INFO, client, "Connection to %s:%d (as %s) failed.", justhost, address.port, identity);
         free(justhost);
         free(justport);
         return false;
@@ -574,7 +582,7 @@ static bool _alloclient_connect(alloclient *client, const char *url, const char 
     if(_internal(client)->opus_encoder == NULL)
     {
         alloclient_disconnect(client, alloerror_initialization_failure);
-        fprintf(stderr, "Encoder creation failed: %d.", error);
+        client_log(ERROR, client, "Encoder creation failed: %d.", error);
         return false;
     }
 
@@ -706,10 +714,6 @@ static void _alloclient_asset_request(alloclient* client, const char* asset_id, 
 }
 
 void alloclient_asset_send(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {
-    if (offset + length > total_size) {
-        printf("%s: The offset + length (%zu + %zu) supplied was greater than the total_size (%zu). This chunk of data will be ignored!\n", asset_id, offset, length, total_size);
-        return;
-    }
     client->alloclient_asset_send(client, asset_id, data, offset, length, total_size);
 }
 static void _alloclient_asset_send(alloclient *client, const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size) {

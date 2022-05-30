@@ -9,6 +9,7 @@
 #include "media/media.h"
 #include "util.h"
 #include "delta.h"
+#include "uri.h"
 
 static alloserver* serv;
 static allo_entity* place;
@@ -477,16 +478,13 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
 }
 
 // {"launch_app", "alloapp:http://host:port/{appid or path}", args}
-static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction);
 static void handle_place_launch_app_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
     std::string app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
     cJSON *launch_args = cJSON_GetArrayItem(body, 2); // can be NULL/missing
     (void)launch_args; // we're not using them inline now, let marketplace handle them
-    allo_entity *marketplacee = find_service(&serv->state, "marketplace");
-    alloserver_client *marketplacec = find_agent_by_id(serv, marketplacee->owner_agent_id);
     std::string prefix = "alloapp:";
-    if(app_url.length() == 0 || !marketplacee || !marketplacec || app_url.find(prefix) != 0)
+    if(app_url.length() == 0 || app_url.find(prefix) != 0)
     {
         handle_invalid_place_interaction(serv, client, interaction, body);
         return;
@@ -494,8 +492,11 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
 
     // ask the app to connect to us
     std::string httpurl = app_url.substr(prefix.length());
-    httplib::Client webclient(httpurl);
-    //webclient.Post() ...
+    Uri httpuri = Uri::Parse(httpurl);
+    httplib::Client webclient(httpuri.HostWithPort());
+    httplib::Result res = webclient.Post(httpuri.PathWithQuery().c_str());
+    // todo: handle launch results somehow
+    // todo: don't block thread :S
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)

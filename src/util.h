@@ -113,12 +113,12 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
 }
 
 typedef enum LogType {
-    DEBUG, INFO, ERROR, CRITICAL
+    DEBUG, INFO, ERROR
 } LogType;
 static char *LogTypeNames[4] = {
-    "DEBUG", "INFO", "ERROR", "CRITICAL"
+    "DEBUG", "INFO", "ERROR"
 };
-static inline void allo_log( LogType type, const char *module, const char *identifiers, const char *format, ... ) {
+static inline void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
     // TODO: filter out DEBUG types if not building debug, but apparently cmake is not adding any flag?
     char *message;
     va_list args;

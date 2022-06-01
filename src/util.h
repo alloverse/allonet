@@ -112,7 +112,7 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
     return result;
 }
 
-typedef enum LogType { DEBUG, INFO, ERROR } LogType;
+typedef enum LogType { ALLO_LOG_DEBUG, ALLO_LOG_INFO, ALLO_LOG_ERROR } LogType;
 void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...);
 
 //allo_log_func(asset);

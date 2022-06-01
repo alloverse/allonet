@@ -86,7 +86,7 @@ static void handle_incoming_connection(alloserver *serv, ENetPeer* new_peer)
     alloserver_client *new_client = _client_create();
     char host[255] = {0};
     enet_address_get_host_ip(&new_peer->address, host, 254);
-    server_log(INFO, new_client, "A new client connected from %s:%u as %s/%p.",
+    server_log(ALLO_LOG_INFO, new_client, "A new client connected from %s:%u as %s/%p.",
         host,
         new_peer->address.port,
         new_client->agent_id,
@@ -260,7 +260,7 @@ static void handle_lost_connection(alloserver *serv, alloserver_client *client)
     char host[255] = {0};
     ENetPeer *peer = _clientinternal(client)->peer;
     enet_address_get_host_ip(&peer->address, host, 254);
-    server_log(INFO, client, "%s/%p from %s:%d disconnected.", alloserv_describe_client(client), (void*)client, host, peer->address.port);
+    server_log(ALLO_LOG_INFO, client, "%s/%p from %s:%d disconnected.", alloserv_describe_client(client), (void*)client, host, peer->address.port);
 
     // scan through the list of asset->peers and remove the peer where peeresent
     _remove_client_from_wanted(serv, client);
@@ -343,7 +343,7 @@ alloserver *allo_listen(int listenhost, int port)
     address.port = port;
     char printable[255] = {0};
     enet_address_get_host_ip(&address, printable, 254);
-    server_log(INFO, NULL, "Alloserv attempting listen on %s:%d...", printable, port);
+    server_log(ALLO_LOG_INFO, NULL, "Alloserv attempting listen on %s:%d...", printable, port);
     _servinternal(serv)->enet = enet_host_create(
         &address,
         allo_client_count_max,
@@ -353,7 +353,7 @@ alloserver *allo_listen(int listenhost, int port)
     );
     if (_servinternal(serv)->enet == NULL)
     {
-        server_log(ERROR, NULL, "An error occurred while trying to create an ENet server host.");
+        server_log(ALLO_LOG_ERROR, NULL, "An error occurred while trying to create an ENet server host.");
         alloserv_stop(serv);
         return NULL;
     }

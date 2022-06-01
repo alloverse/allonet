@@ -41,7 +41,7 @@ allo_media_track *_media_track_create(allo_media_track_list *tracklist, uint32_t
     track->type = type;
     arr_init(&track->recipients);
     
-    media_log(DEBUG, track, "Track was created");
+    media_log(ALLO_LOG_DEBUG, track, "Track was created");
     return track;
 }
 
@@ -57,11 +57,11 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track) {
     if (!track) return;
     
-    media_log(DEBUG, track, "Destroying");
+    media_log(ALLO_LOG_DEBUG, track, "Destroying");
     if(track->subsystem) {
         track->subsystem->track_destroy(track);
     } else {
-        media_log(ERROR, track, "Destruction failed; subsystem was not set");
+        media_log(ALLO_LOG_ERROR, track, "Destruction failed; subsystem was not set");
     }
     
     // remove from the list
@@ -80,7 +80,7 @@ allo_media_track_type _media_track_type_from_string(const char *string) {
     } else if (strcmp("audio", string) == 0) {
         return allo_media_type_audio;
     } else {
-        media_log(ERROR, NULL, "skipping unknown media track type %s", string);
+        media_log(ALLO_LOG_ERROR, NULL, "skipping unknown media track type %s", string);
         return allo_media_type_invalid;
     }
 }
@@ -104,7 +104,7 @@ void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_i
         if(!track->subsystem) {
             const char *type = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(comp, "type"));
             const char *fmt = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(comp, "format"));
-            media_log(ERROR, track, "Unknown media format %s.%s, skipping.", type, fmt);
+            media_log(ALLO_LOG_ERROR, track, "Unknown media format %s.%s, skipping.", type, fmt);
             _media_track_destroy(&shared->media_tracks, track);
         }
     }
@@ -122,7 +122,7 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
     if (track) {
         _media_track_destroy(&shared->media_tracks, track);
     } else {
-        media_log(ERROR, NULL, "Was asked to destroy track %d but it was not found", track_id);
+        media_log(ALLO_LOG_ERROR, NULL, "Was asked to destroy track %d but it was not found", track_id);
     }
     
     _alloclient_internal_shared_end(client);
@@ -215,7 +215,7 @@ void allo_media_subsystem_register(allo_media_subsystem *subsystem)
             return;
         }
     }
-    media_log(ERROR, NULL, "A subsystem not registered because we're out of slots");
+    media_log(ALLO_LOG_ERROR, NULL, "A subsystem not registered because we're out of slots");
 }
 
 void _allo_media_initialize(void)

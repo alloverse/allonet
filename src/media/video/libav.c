@@ -24,7 +24,7 @@ static ENetPacket *allo_video_write_h264(allo_media_track *track, allopicture *p
     if (track->info.video.encoder.codec == NULL) {
         track->info.video.encoder.codec = avcodec_find_encoder(AV_CODEC_ID_H264);
         if (track->info.video.encoder.codec == NULL) {
-            libav_log(ERROR, track, "No encoder", NULL);
+            libav_log(ALLO_LOG_ERROR, track, "No encoder", NULL);
             return NULL;
         }
         track->info.video.encoder.context = avcodec_alloc_context3(track->info.video.encoder.codec);
@@ -62,7 +62,7 @@ static ENetPacket *allo_video_write_h264(allo_media_track *track, allopicture *p
                    
         int ret = avcodec_open2(track->info.video.encoder.context, track->info.video.encoder.codec, NULL);
         if (ret != 0) {
-            libav_log(ERROR, track, "avcodec_open2 return %d when opening encoder", ret);
+            libav_log(ALLO_LOG_ERROR, track, "avcodec_open2 return %d when opening encoder", ret);
             return NULL;
         }
     }
@@ -123,7 +123,7 @@ static ENetPacket *allo_video_write_h264(allo_media_track *track, allopicture *p
         packet = enet_packet_create(NULL, avpacket->size + 4, 0);
         memcpy(packet->data + 4, avpacket->data, avpacket->size);
     } else {
-        libav_log(ERROR, track, "Something went wrong in the h264 encoding: %d", ret);
+        libav_log(ALLO_LOG_ERROR, track, "Something went wrong in the h264 encoding: %d", ret);
     }
     av_packet_unref(avpacket);
     av_frame_unref(frame);
@@ -143,7 +143,7 @@ static allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *tr
     if (track->info.video.decoder.codec == NULL) {
         track->info.video.decoder.codec = avcodec_find_decoder(AV_CODEC_ID_H264);
         if (track->info.video.decoder.codec == NULL) {
-            libav_log(ERROR, track, "No decoder", NULL);
+            libav_log(ALLO_LOG_ERROR, track, "No decoder", NULL);
         }
         track->info.video.decoder.context = avcodec_alloc_context3(track->info.video.decoder.codec);
         track->info.video.decoder.frame = av_frame_alloc();
@@ -157,7 +157,7 @@ static allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *tr
         
         int ret = avcodec_open2(track->info.video.decoder.context, track->info.video.decoder.codec, NULL);
         if (ret != 0) {
-            libav_log(ERROR, track, "avcodec_open2 return %d when opening decoder", ret);
+            libav_log(ALLO_LOG_ERROR, track, "avcodec_open2 return %d when opening decoder", ret);
         }
     }
     
@@ -167,7 +167,7 @@ static allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *tr
     int ret = avcodec_send_packet(track->info.video.decoder.context, avpacket);
     
     if (ret != 0) {
-        libav_log(ERROR, track, "avcodec_send_packet return %d", ret);
+        libav_log(ALLO_LOG_ERROR, track, "avcodec_send_packet return %d", ret);
         
         return NULL;
     }
@@ -175,7 +175,7 @@ static allopixel *allo_video_parse_h264(alloclient *client, allo_media_track *tr
     AVFrame *frame = track->info.video.decoder.frame;
     ret = avcodec_receive_frame(track->info.video.decoder.context, frame);
     if (ret != 0) {
-        libav_log(ERROR, track, "avcodec_receive_frame return %d", ret);
+        libav_log(ALLO_LOG_ERROR, track, "avcodec_receive_frame return %d", ret);
         return NULL;
     }
     
@@ -296,5 +296,5 @@ void allo_libav_initialize(void)
     sys->track_destroy = video_track_destroy;
     sys->create_video_packet = allo_video_write_h264;
     allo_media_subsystem_register(sys);
-    libav_log(INFO, NULL, "initialized libav media subsystem", NULL);
+    libav_log(ALLO_LOG_INFO, NULL, "initialized libav media subsystem", NULL);
 }

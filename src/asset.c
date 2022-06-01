@@ -30,7 +30,7 @@ cJSON *asset_error(const char *asset_id, asset_error_code error_code, char *erro
     assert(asset_id);
     assert(error_reason);
     assert(error_code);
-    asset_log(ERROR, asset_id, "code %d: %s", error_code, error_reason);
+    asset_log(ALLO_LOG_ERROR, asset_id, "code %d: %s", error_code, error_reason);
     return cjson_create_object(
         "id", cJSON_CreateString(asset_id),
         "error_reason", cJSON_CreateString(error_reason),
@@ -159,7 +159,7 @@ int asset_read_error_header(const cJSON *header, const char **out_id, char **out
 void asset_deliver_bytes(const char *asset_id, const uint8_t *data, size_t offset, size_t length, size_t total_size, asset_send_func send, void *user) {
     
     if (offset + length > total_size) {
-        asset_log(ERROR, asset_id, "The offset + length (%zu + %zu) supplied was greater than the total_size (%zu). This chunk of data will be ignored!", offset, length, total_size);
+        asset_log(ALLO_LOG_ERROR, asset_id, "The offset + length (%zu + %zu) supplied was greater than the total_size (%zu). This chunk of data will be ignored!", offset, length, total_size);
         asset_deliver_error(asset_id, asset_malformed_request_error, "offset+length > total_size", send, user);
     }
     if (data == NULL) {
@@ -226,11 +226,11 @@ void asset_handle(
             return;
         }
         
-        asset_log(INFO, asset_id, "Received request for bytes %d to %d", offset, offset+length);
+        asset_log(ALLO_LOG_INFO, asset_id, "Received request for bytes %d to %d", offset, offset+length);
         
         // If we can't read we just fail early.
         if (request == NULL) {
-            asset_log(INFO, asset_id, "Asset reading is not implemented here.", NULL);
+            asset_log(ALLO_LOG_INFO, asset_id, "Asset reading is not implemented here.", NULL);
             callback(asset_id, asset_state_not_supported, user);
         } else {
             request(asset_id, offset, length, user);
@@ -249,10 +249,10 @@ void asset_handle(
             // request more?
             // TODO: check missing ranges instead
             if (offset + length < total_length) {
-                asset_log(DEBUG, asset_id, "We need more (got %d/%d).", offset+length, total_length);
+                asset_log(ALLO_LOG_DEBUG, asset_id, "We need more (got %d/%d).", offset+length, total_length);
                 _asset_request(asset_id, NULL, offset + length, MIN(ASSET_CHUNK_SIZE, total_length - offset - length), send, user);
             } else {
-                asset_log(DEBUG, asset_id, "Completed", NULL);
+                asset_log(ALLO_LOG_DEBUG, asset_id, "Completed", NULL);
                 callback(asset_id, asset_state_now_available, user);
             }
             assert(offset + length <= total_length);
@@ -264,11 +264,11 @@ void asset_handle(
         asset_error_code error_code;
         char *error_reason;
         asset_read_error_header(json, &asset_id, &error_reason, &error_code);
-        asset_log(ERROR, asset_id, "Received error code %d: %s", error_code, error_reason);
+        asset_log(ALLO_LOG_ERROR, asset_id, "Received error code %d: %s", error_code, error_reason);
         
         callback(asset_id, asset_state_now_unavailable, user);
     } else {
-        asset_log(ERROR, NULL, "Received weird mid: %d", mid);
+        asset_log(ALLO_LOG_ERROR, NULL, "Received weird mid: %d", mid);
     }
     
     if (json != NULL) {
@@ -298,7 +298,7 @@ void _asset_request(
     if (entity_id) {
         cJSON_AddStringToObject(header, "published_by", entity_id);
     }
-    asset_log(DEBUG, asset_id, "Requesting bytes %d to %d from %s", offset, offset+length, entity_id);
+    asset_log(ALLO_LOG_DEBUG, asset_id, "Requesting bytes %d to %d from %s", offset, offset+length, entity_id);
     send(asset_mid_request, header, NULL, 0, user);
     cJSON_Delete(header);
 }

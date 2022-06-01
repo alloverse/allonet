@@ -215,7 +215,7 @@ extern "C" void allo_log(LogType type, const char *module, const char *identifie
     int ret = vasprintf(&message, format, args);
     va_end(args);
     FILE *whereto = stdout;
-    if (type == ERROR) whereto = stderr;
+    if (type == ALLO_LOG_ERROR) whereto = stderr;
     fprintf(whereto, "[%s] %s %s \"%s\"\n", LogTypeNames[type], module, identifiers, message);
     if (ret != -1)
         free(message);

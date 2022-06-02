@@ -208,7 +208,7 @@ static char *LogTypeNames[3] = {
 };
 
 
-#if defined(__WINDOWS__)
+#if (defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32))
 extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
     FILE *whereto = stdout;
     if (type == ALLO_LOG_ERROR) whereto = stderr;

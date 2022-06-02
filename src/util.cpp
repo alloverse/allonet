@@ -207,6 +207,17 @@ static char *LogTypeNames[3] = {
     "DEBUG", "INFO", "ERROR"
 };
 
+
+#if defined(__WINDOWS__)
+extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
+    FILE *whereto = stdout;
+    if (type == ALLO_LOG_ERROR) whereto = stderr;
+    va_list args;
+    va_start(args, format);
+    vfprintf(whereto, format, args);
+    va_end(args);
+}
+#else
 extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
     // TODO: filter out DEBUG types if not building debug, but apparently cmake is not adding any flag?
     char *message;
@@ -220,3 +231,4 @@ extern "C" void allo_log(LogType type, const char *module, const char *identifie
     if (ret != -1)
         free(message);
 }
+#endif

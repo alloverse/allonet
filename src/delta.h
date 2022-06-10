@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <allonet/state.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define allo_statehistory_length 64
 typedef struct statehistory_t
 {
@@ -40,3 +44,7 @@ extern cJSON *allo_delta_apply(statehistory_t *history, cJSON *delta, allo_state
 
 extern cJSON *statehistory_get(statehistory_t *history, int64_t revision);
 extern cJSON *statehistory_get_latest(statehistory_t *history);
+
+#ifdef __cplusplus
+}
+#endif

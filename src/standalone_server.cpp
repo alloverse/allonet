@@ -773,7 +773,7 @@ static allo_entity* add_place(alloserver *serv)
   return e;
 }
 
-bool alloserv_run_standalone(int host, int port, const char *placename)
+extern "C" bool alloserv_run_standalone(int host, int port, const char *placename)
 {
     alloserver *serv = alloserv_start_standalone(host, port, placename);
     arr_init(&mediatracks);

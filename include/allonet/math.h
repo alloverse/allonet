@@ -11,6 +11,10 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef union allo_vector
 {
 	struct {
@@ -63,5 +67,9 @@ extern allo_vector allo_m4x4_get_position(allo_m4x4 l);
 extern allo_rotation allo_m4x4_get_rotation(allo_m4x4 l);
 extern bool allo_m4x4_equal(allo_m4x4 a, allo_m4x4 b, double sigma);
 extern char *allo_m4x4_string(allo_m4x4 m);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

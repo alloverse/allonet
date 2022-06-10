@@ -13,6 +13,10 @@
 #include <allonet/net.h>
 #include <enet/enet.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
 double get_ts_monod(void);
@@ -109,5 +113,9 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
     }
     return result;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* util_h */

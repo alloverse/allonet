@@ -10,6 +10,10 @@
 #include "../util.h"
 #include <allonet/client.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct allo_media_subsystem allo_media_subsystem;
 
 typedef enum {
@@ -100,5 +104,9 @@ void allo_media_get_stats(allo_media_track_list *media_tracks, char *buffer, siz
 
 // watch changes in state and add/remove tracks accordingly
 void _alloclient_media_handle_statediff(alloclient *client, allo_state_diff *diff);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

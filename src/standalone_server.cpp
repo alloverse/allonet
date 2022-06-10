@@ -490,11 +490,17 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
         return;
     }
 
+    char *launch_argss = cJSON_Print(launch_args);
+    httplib::Headers headers = {
+      {"x-alloverse-server", "alloplace://localhost"}, // todo: use real hostname
+    };
+
     // ask the app to connect to us
     std::string httpurl = app_url.substr(prefix.length());
     Uri httpuri = Uri::Parse(httpurl);
     httplib::Client webclient(httpuri.HostWithPort());
-    httplib::Result res = webclient.Post(httpuri.PathWithQuery().c_str());
+    httplib::Result res = webclient.Post(httpuri.PathWithQuery().c_str(), headers, launch_argss, strlen(launch_argss), "application/json");
+    free(launch_argss);
     // todo: handle launch results somehow
     // todo: don't block thread :S
 }

@@ -16,7 +16,13 @@ static allo_entity* place;
 static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
-static arr_t(allo_interaction*) outstanding_app_launch_requests;
+
+typedef struct {
+    std::string avatarToken;
+    allo_interaction *inter;
+} OutstandingAppLaunchRequest;
+static arr_t(OutstandingAppLaunchRequest) outstanding_app_launch_requests;
+static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_entity *ava);
 
 // local helpers
 
@@ -130,10 +136,18 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   cJSON* identity = cJSON_GetArrayItem(body, 4);
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
   
+  cJSON *avatarC = cJSON_DetachItemFromObjectCaseSensitive(avatar, "avatar");
+  cJSON *avatarTokenj = cJSON_GetObjectItemCaseSensitive(avatarC, "token");
+  std::string avatarToken = avatarTokenj ? std::string(cJSON_GetStringValue(avatarTokenj)) : "";
+  cJSON_Delete(avatarC);
 
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
   client->avatar_entity_id = allo_strdup(ava->id);
   client->identity = cJSON_Duplicate(identity, true);
+
+  if(avatarTokenj) {
+    handle_app_launched(serv, avatarToken, ava);
+  }
 
 
   if(version != GetAllonetProtocolVersion())
@@ -481,12 +495,18 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
 static void handle_place_launch_app_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
     std::string app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
-    cJSON *launch_args = cJSON_GetArrayItem(body, 2); // can be NULL/missing
-    (void)launch_args; // we're not using them inline now, let marketplace handle them
+    cJSON *launch_args = cJSON_DetachItemFromArray(body, 2); // can be NULL/missing
+    if(!launch_args)
+        launch_args = cJSON_CreateObject();
+    char avatar_token[20];
+    allo_generate_id(avatar_token, 20);
+    cJSON_AddItemToObjectCS(launch_args, "avatarToken", cJSON_CreateString(avatar_token));
+    
     std::string prefix = "alloapp:";
     if(app_url.length() == 0 || app_url.find(prefix) != 0)
     {
         handle_invalid_place_interaction(serv, client, interaction, body);
+        cJSON_Delete(launch_args);
         return;
     }
 
@@ -503,6 +523,50 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
     free(launch_argss);
     // todo: handle launch results somehow
     // todo: don't block thread :S
+
+    // save it so we can respond when we get a connection from the gateway.
+    OutstandingAppLaunchRequest req = {avatar_token, allo_interaction_clone(interaction)};
+    arr_push(&outstanding_app_launch_requests, req);
+    cJSON_Delete(launch_args);
+}
+
+static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_entity *ava)
+{
+    OutstandingAppLaunchRequest req;
+    for(size_t i = 0; i < outstanding_app_launch_requests.length; i++)
+    {
+        if(outstanding_app_launch_requests.data[i].avatarToken == avatarToken) {
+            req = outstanding_app_launch_requests.data[i];
+            arr_splice(&outstanding_app_launch_requests, i, 1);
+            break;
+        }
+    }
+    if(!req.inter) {
+        fprintf(stderr, "Warning: app launched with avatar token %s, but no such request found.\n", avatarToken.c_str());
+        return;
+    }
+
+    allo_entity *requestor = state_get_entity(&serv->state, req.inter->sender_entity_id);
+    if(!requestor) {
+        fprintf(stderr, "Warning: app launched with avatar token %s, but no such requestor found.\n", avatarToken.c_str());
+        return;
+    }
+    alloserver_client *client = find_agent_by_id(serv, requestor->owner_agent_id);
+    if(!client) {
+        fprintf(stderr, "Warning: app launched with avatar token %s, but no such requestor agent found.\n", avatarToken.c_str());
+        return;
+    }
+
+    cJSON *respbody = cjson_create_list(cJSON_CreateString("launch_app"), cJSON_CreateString("ok"), cJSON_CreateString(ava->id), NULL);
+    char* respbodys = cJSON_Print(respbody);
+    printf("YAY APP LAUNCHED! %s\n", respbodys);
+    cJSON_Delete(respbody);
+
+    allo_interaction* response = allo_interaction_create("response", "place", req.inter->sender_entity_id, req.inter->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+    allo_interaction_free(req.inter);
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)

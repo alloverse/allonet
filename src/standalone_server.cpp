@@ -5,6 +5,9 @@
 #include <errno.h>
 #include "httplib.h"
 
+#include <string>
+#include <vector>
+
 #include <allonet/allonet.h>
 #include "media/media.h"
 #include "util.h"
@@ -21,7 +24,7 @@ typedef struct {
     std::string avatarToken;
     allo_interaction *inter;
 } OutstandingAppLaunchRequest;
-static arr_t(OutstandingAppLaunchRequest) outstanding_app_launch_requests;
+static std::vector<OutstandingAppLaunchRequest> outstanding_app_launch_requests;
 static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_entity *ava);
 
 // local helpers
@@ -526,25 +529,23 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
 
     // save it so we can respond when we get a connection from the gateway.
     OutstandingAppLaunchRequest req = {avatar_token, allo_interaction_clone(interaction)};
-    arr_push(&outstanding_app_launch_requests, req);
+    outstanding_app_launch_requests.push_back(req);
     cJSON_Delete(launch_args);
 }
 
 static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_entity *ava)
 {
-    OutstandingAppLaunchRequest req;
-    for(size_t i = 0; i < outstanding_app_launch_requests.length; i++)
+    auto req_it = find_if(outstanding_app_launch_requests.begin(), outstanding_app_launch_requests.end(),
+        [&avatarToken] (const OutstandingAppLaunchRequest& r) { 
+            return r.avatarToken == avatarToken; 
+        });
+    if(req_it == outstanding_app_launch_requests.end())
     {
-        if(outstanding_app_launch_requests.data[i].avatarToken == avatarToken) {
-            req = outstanding_app_launch_requests.data[i];
-            arr_splice(&outstanding_app_launch_requests, i, 1);
-            break;
-        }
-    }
-    if(!req.inter) {
         fprintf(stderr, "Warning: app launched with avatar token %s, but no such request found.\n", avatarToken.c_str());
         return;
     }
+    auto req = *req_it;
+    outstanding_app_launch_requests.erase(req_it);
 
     allo_entity *requestor = state_get_entity(&serv->state, req.inter->sender_entity_id);
     if(!requestor) {
@@ -559,7 +560,6 @@ static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_
 
     cJSON *respbody = cjson_create_list(cJSON_CreateString("launch_app"), cJSON_CreateString("ok"), cJSON_CreateString(ava->id), NULL);
     char* respbodys = cJSON_Print(respbody);
-    printf("YAY APP LAUNCHED! %s\n", respbodys);
     cJSON_Delete(respbody);
 
     allo_interaction* response = allo_interaction_create("response", "place", req.inter->sender_entity_id, req.inter->request_id, respbodys);

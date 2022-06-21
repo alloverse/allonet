@@ -41,6 +41,7 @@ SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
 
+set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "disable brotli due to arm/x64 build issues on mac")
 add_subdirectory(lib/cpp-httplib)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)

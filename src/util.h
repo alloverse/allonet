@@ -12,6 +12,8 @@
 #include <allonet/state.h>
 #include <allonet/net.h>
 #include <enet/enet.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,8 +116,10 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
     return result;
 }
 
+typedef enum LogType { ALLO_LOG_DEBUG, ALLO_LOG_INFO, ALLO_LOG_ERROR } LogType;
+void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...);
+
 #ifdef __cplusplus
 }
-#endif
-
+#endif // cplusplus
 #endif /* util_h */

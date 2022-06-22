@@ -201,3 +201,34 @@ extern "C" void allo_free(void *mallocd)
 {
     free(mallocd);
 }
+
+
+static char *LogTypeNames[3] = {
+    "DEBUG", "INFO", "ERROR"
+};
+
+
+#if (defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32))
+extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
+    FILE *whereto = stdout;
+    if (type == ALLO_LOG_ERROR) whereto = stderr;
+    va_list args;
+    va_start(args, format);
+    vfprintf(whereto, format, args);
+    va_end(args);
+}
+#else
+extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
+    // TODO: filter out DEBUG types if not building debug, but apparently cmake is not adding any flag?
+    char *message;
+    va_list args;
+    va_start(args, format);
+    int ret = vasprintf(&message, format, args);
+    va_end(args);
+    FILE *whereto = stdout;
+    if (type == ALLO_LOG_ERROR) whereto = stderr;
+    fprintf(whereto, "[%s] %s %s \"%s\"\n", LogTypeNames[type], module, identifiers, message);
+    if (ret != -1)
+        free(message);
+}
+#endif

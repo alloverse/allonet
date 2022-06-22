@@ -10,6 +10,17 @@
 
 #define DEBUG_AUDIO 0
 
+static inline char* formatTrackId(allo_media_track *track) {
+    if (track == NULL) return NULL;
+    char *str;
+    if (asprintf(&str, "track:%d", track->track_id) > 0) return str;
+    return NULL;
+}
+#define media_log(type, track, ...) { \
+    char *trackId = formatTrackId(track); \
+    allo_log(type, "media", trackId, __VA_ARGS__); \
+    if(trackId)free(trackId); \
+} while(false)
 
 allo_media_track *_media_track_find(allo_media_track_list *tracklist, uint32_t track_id) {
     for(size_t i = 0; i < tracklist->length; i++) {
@@ -29,6 +40,8 @@ allo_media_track *_media_track_create(allo_media_track_list *tracklist, uint32_t
     track->track_id = track_id;
     track->type = type;
     arr_init(&track->recipients);
+    
+    media_log(ALLO_LOG_DEBUG, track, "Track was created");
     return track;
 }
 
@@ -44,8 +57,12 @@ allo_media_track *_media_track_find_or_create(allo_media_track_list *tracklist, 
 void _media_track_destroy(allo_media_track_list *tracklist, allo_media_track *track) {
     if (!track) return;
     
-    if(track->subsystem)
+    media_log(ALLO_LOG_DEBUG, track, "Destroying");
+    if(track->subsystem) {
         track->subsystem->track_destroy(track);
+    } else {
+        media_log(ALLO_LOG_ERROR, track, "Destruction failed; subsystem was not set");
+    }
     
     // remove from the list
     for (size_t i = 0; i < tracklist->length; i++) {
@@ -63,7 +80,7 @@ allo_media_track_type _media_track_type_from_string(const char *string) {
     } else if (strcmp("audio", string) == 0) {
         return allo_media_type_audio;
     } else {
-        fprintf(stderr, "skipping unknown media track type %s\n", string);
+        media_log(ALLO_LOG_ERROR, NULL, "skipping unknown media track type %s", string);
         return allo_media_type_invalid;
     }
 }
@@ -87,7 +104,7 @@ void _alloclient_media_track_find_or_create(alloclient *client, uint32_t track_i
         if(!track->subsystem) {
             const char *type = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(comp, "type"));
             const char *fmt = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(comp, "format"));
-            fprintf(stderr, "allonet/media: track %d has unknown media format %s.%s, skipping.\n", track->track_id, type, fmt);
+            media_log(ALLO_LOG_ERROR, track, "Unknown media format %s.%s, skipping.", type, fmt);
             _media_track_destroy(&shared->media_tracks, track);
         }
     }
@@ -100,18 +117,12 @@ void _alloclient_media_track_destroy(alloclient *client, uint32_t track_id)
 {
     alloclient_internal_shared *shared = _alloclient_internal_shared_begin(client);
     
-    allo_media_track_list *tracks = &shared->media_tracks;
     allo_media_track *track = _media_track_find(&shared->media_tracks, track_id);
     
     if (track) {
         _media_track_destroy(&shared->media_tracks, track);
     } else {
-        fprintf(stderr, "A decoder for track_id %d was not found\n", track_id);
-        fprintf(stderr, "Active decoder tracks:\n ");
-        for (size_t i = 0; i < tracks->length; i++) {
-            allo_media_track *track = &tracks->data[i];
-            fprintf(stderr, "%d, ", track->track_id);
-        }
+        media_log(ALLO_LOG_ERROR, NULL, "Was asked to destroy track %d but it was not found", track_id);
     }
     
     _alloclient_internal_shared_end(client);
@@ -137,7 +148,6 @@ static void _alloclient_media_remove_track_from_comp(alloclient *client, const c
     // if we find a decoder linked to the entity we remove it
     cJSON *track_id = cJSON_GetObjectItemCaseSensitive(cdata, "track_id");
     if(track_id) {
-        fprintf(stderr, "Destroying decoder for track %d\n", track_id->valueint);
         _alloclient_media_track_destroy(client, track_id->valueint);
     }
 }
@@ -205,7 +215,7 @@ void allo_media_subsystem_register(allo_media_subsystem *subsystem)
             return;
         }
     }
-    fprintf(stderr, "allonet/media: subsystem not registered because we're out of slots\n");
+    media_log(ALLO_LOG_ERROR, NULL, "A subsystem not registered because we're out of slots");
 }
 
 void _allo_media_initialize(void)

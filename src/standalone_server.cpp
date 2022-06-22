@@ -3,18 +3,29 @@
 #include <enet/enet.h>
 #include <assert.h>
 #include <errno.h>
+#include "httplib.h"
+
+#include <string>
+#include <vector>
 
 #include <allonet/allonet.h>
 #include "media/media.h"
 #include "util.h"
 #include "delta.h"
+#include "uri.h"
 
 static alloserver* serv;
 static allo_entity* place;
 static double last_simulate_at = 0;
 static char *g_placename;
 static allo_media_track_list mediatracks;
-static arr_t(allo_interaction*) outstanding_app_launch_requests;
+
+typedef struct {
+    std::string avatarToken;
+    allo_interaction *inter;
+} OutstandingAppLaunchRequest;
+static std::vector<OutstandingAppLaunchRequest> outstanding_app_launch_requests;
+static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_entity *ava);
 
 // local helpers
 
@@ -128,10 +139,18 @@ static void handle_place_announce_interaction(alloserver* serv, alloserver_clien
   cJSON* identity = cJSON_GetArrayItem(body, 4);
   cJSON* avatar = cJSON_DetachItemFromArray(body, 6);
   
+  cJSON *avatarC = cJSON_DetachItemFromObjectCaseSensitive(avatar, "avatar");
+  cJSON *avatarTokenj = cJSON_GetObjectItemCaseSensitive(avatarC, "token");
+  std::string avatarToken = avatarTokenj ? std::string(cJSON_GetStringValue(avatarTokenj)) : "";
+  cJSON_Delete(avatarC);
 
   allo_entity *ava = allo_state_add_entity_from_spec(&serv->state, client->agent_id, avatar, NULL);// takes avatar
   client->avatar_entity_id = allo_strdup(ava->id);
   client->identity = cJSON_Duplicate(identity, true);
+
+  if(avatarTokenj) {
+    handle_app_launched(serv, avatarToken, ava);
+  }
 
 
   if(version != GetAllonetProtocolVersion())
@@ -303,6 +322,9 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     cJSON *jTrackId = cJSON_GetArrayItem(body, 1);
     cJSON *jsub = cJSON_GetArrayItem(body, 2);
     cJSON* respbody;
+    char* respbodys;
+    uint32_t track_id;
+    allo_media_track *track;
 
     if (!cJSON_IsNumber(jTrackId) || !cJSON_IsString(jsub)) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("missing id or verb"), NULL);
@@ -310,10 +332,10 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
       goto done;
     }
     
-    uint32_t track_id = jTrackId->valueint;
+    track_id = jTrackId->valueint;
     
     // find the track and add or remove client to list of recipients
-    allo_media_track *track = _media_track_find(&mediatracks, track_id);
+    track = _media_track_find(&mediatracks, track_id);
     if(!track) {
       respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("failed"), cJSON_CreateString("invalid track id"), NULL);
       fprintf(stderr, "media_track interaction: %s/%s requested unavailable track id %d\n", interaction->sender_entity_id, alloserv_describe_client(client), track_id);
@@ -338,7 +360,7 @@ static void handle_place_media_track_interaction(alloserver* serv, alloserver_cl
     respbody = cjson_create_list(cJSON_CreateString("media_track"), cJSON_CreateString("ok"), cJSON_CreateNumber(track_id), NULL);
   
 done:;
-    char* respbodys = cJSON_Print(respbody);
+    respbodys = cJSON_Print(respbody);
     cJSON_Delete(respbody);
     allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
     free(respbodys);
@@ -472,75 +494,79 @@ static void handle_place_kick_agent_interaction(alloserver* serv, alloserver_cli
     allo_interaction_free(response);
 }
 
-// {"launch_app", "alloapp://{'marketplace' or host}/{appid or path}", args}
-static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction);
+// {"launch_app", "alloapp:http://host:port/{appid or path}", args}
 static void handle_place_launch_app_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
-    if(strcmp(interaction->type, "response") == 0)
-    {
-        handle_app_launched_response(serv, interaction);
-        return;
-    }
-    const char *app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
-    cJSON *launch_args = cJSON_GetArrayItem(body, 2); // can be NULL/missing
-    (void)launch_args; // we're not using them inline now, let marketplace handle them
-    allo_entity *marketplacee = find_service(&serv->state, "marketplace");
-    alloserver_client *marketplacec = find_agent_by_id(serv, marketplacee->owner_agent_id);
-    if(!app_url || !marketplacee || !marketplacec)
+    std::string app_url = cJSON_GetStringValue(cJSON_GetArrayItem(body, 1));
+    cJSON *launch_args = cJSON_DetachItemFromArray(body, 2); // can be NULL/missing
+    if(!launch_args)
+        launch_args = cJSON_CreateObject();
+    char avatar_token[20];
+    allo_generate_id(avatar_token, 20);
+    cJSON_AddItemToObjectCS(launch_args, "avatarToken", cJSON_CreateString(avatar_token));
+    
+    std::string prefix = "alloapp:";
+    if(app_url.length() == 0 || app_url.find(prefix) != 0)
     {
         handle_invalid_place_interaction(serv, client, interaction, body);
+        cJSON_Delete(launch_args);
         return;
     }
 
-    // for now, just forward the request to marketplace. When we get a response from marketplace, forward that back to
-    // the original client.
-    send_interaction_to_client(serv, marketplacec, interaction);
+    char *launch_argss = cJSON_Print(launch_args);
+    httplib::Headers headers = {
+      {"x-alloverse-server", "alloplace://localhost"}, // todo: use real hostname
+    };
 
-    // save the sender so we can forward it back.
-    // XXX<nevyn>: if we were nice we would time out responses so the list doesn't fill up, but this is a temporary solution
-    // until we have proper app launching anyway
-    arr_push(&outstanding_app_launch_requests, allo_interaction_clone(interaction));
+    // ask the app to connect to us
+    std::string httpurl = app_url.substr(prefix.length());
+    Uri httpuri = Uri::Parse(httpurl);
+    httplib::Client webclient(httpuri.HostWithPort());
+    httplib::Result res = webclient.Post(httpuri.PathWithQuery().c_str(), headers, launch_argss, strlen(launch_argss), "application/json");
+    free(launch_argss);
+    // todo: handle launch results somehow
+    // todo: don't block thread :S
+
+    // save it so we can respond when we get a connection from the gateway.
+    OutstandingAppLaunchRequest req = {avatar_token, allo_interaction_clone(interaction)};
+    outstanding_app_launch_requests.push_back(req);
+    cJSON_Delete(launch_args);
 }
-static void handle_app_launched_response(alloserver* serv, allo_interaction* interaction)
+
+static void handle_app_launched(alloserver* serv, std::string avatarToken, allo_entity *ava)
 {
-    // find the matching request
-    allo_interaction *original = NULL;
-    for(size_t i = 0; i < outstanding_app_launch_requests.length; i++)
+    auto req_it = find_if(outstanding_app_launch_requests.begin(), outstanding_app_launch_requests.end(),
+        [&avatarToken] (const OutstandingAppLaunchRequest& r) { 
+            return r.avatarToken == avatarToken; 
+        });
+    if(req_it == outstanding_app_launch_requests.end())
     {
-        allo_interaction *potential = outstanding_app_launch_requests.data[i];
-        if(strcmp(interaction->request_id, potential->request_id) == 0)
-        {
-            original = potential;
-            arr_splice(&outstanding_app_launch_requests, i, 1);
-            break;
-        }
+        fprintf(stderr, "Warning: app launched with avatar token %s, but no such request found.\n", avatarToken.c_str());
+        return;
     }
-    if(!original)
-    {
-        fprintf(stderr, 
-            "Unexpectedly got a launch_app response from marketplace with no corresponding original request or receiver: rid(%s) respbody(%s)\n", 
-            interaction->request_id, interaction->body
-        );
+    auto req = *req_it;
+    outstanding_app_launch_requests.erase(req_it);
+
+    allo_entity *requestor = state_get_entity(&serv->state, req.inter->sender_entity_id);
+    if(!requestor) {
+        fprintf(stderr, "Warning: app launched with avatar token %s, but no such requestor found.\n", avatarToken.c_str());
+        return;
+    }
+    alloserver_client *client = find_agent_by_id(serv, requestor->owner_agent_id);
+    if(!client) {
+        fprintf(stderr, "Warning: app launched with avatar token %s, but no such requestor agent found.\n", avatarToken.c_str());
         return;
     }
 
-    // and send the response to the original requester
-    allo_entity *original_sender = state_get_entity(&serv->state, original->sender_entity_id);
-    alloserver_client *original_client = original_sender ? find_agent_by_id(serv, original_sender->owner_agent_id) : NULL;
-    if(!!original_client)
-    {
-        fprintf(stderr, 
-            "App launch request got back, but original sender disappeared: rid(%s) respbody(%s)\n",
-            interaction->request_id, interaction->body
-        );
-        allo_interaction_free(original);
-        return;
-    }
+    cJSON *respbody = cjson_create_list(cJSON_CreateString("launch_app"), cJSON_CreateString("ok"), cJSON_CreateString(ava->id), NULL);
+    char* respbodys = cJSON_Print(respbody);
+    cJSON_Delete(respbody);
 
-    allo_interaction *response_to_original = allo_interaction_create("response", "place", original->sender_entity_id, original->request_id, interaction->body);
-    send_interaction_to_client(serv, original_client, response_to_original);
-    allo_interaction_free(original);
-
+    allo_interaction* response = allo_interaction_create("response", "place", req.inter->sender_entity_id, req.inter->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+    allo_interaction_free(req.inter);
 }
 
 static void handle_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction)
@@ -639,7 +665,7 @@ static void handle_media(alloserver *serv, alloserver_client *client, const uint
     // pass information on to all peers in track recipient list
     for (size_t i = 0; i < track->recipients.length; i++) {
         ENetPacket *packet = enet_packet_create(data, length, 0);
-        alloserv_send_enet(serv, track->recipients.data[i], channel, packet);
+        alloserv_send_enet(serv, (alloserver_client*)track->recipients.data[i], (allochannel)channel, packet);
     }
 }
 
@@ -709,100 +735,12 @@ static void step(double goalDt)
   broadcast_server_state(serv);
 }
 
-cJSON* cjson3d(double a, double b, double c)
-{
-  return cjson_create_list( cJSON_CreateNumber(a), cJSON_CreateNumber(b), cJSON_CreateNumber(c), NULL);
-}
-
-cJSON* cjson2d(double a, double b)
-{
-  return cjson_create_list(cJSON_CreateNumber(a), cJSON_CreateNumber(b), NULL);
-}
-
-static cJSON* spec_located_at(float x, float y, float z, float sz)
-{
-  return cjson_create_object(
-    "transform", cjson_create_object(
-      "matrix", m2cjson(allo_m4x4_translate((allo_vector) {{ x, y, z }})),
-      NULL
-    ),
-    "geometry", cjson_create_object(
-      "type", cJSON_CreateString("inline"),
-      "vertices", cjson_create_list(cjson3d(sz, 0.0, -sz), cjson3d(sz, 0.0, sz), cjson3d(-sz, sz, -sz), cjson3d(-sz, sz, sz), NULL),
-      "uvs", cjson_create_list(cjson2d(0.0, 0.0), cjson2d(1.0, 0.0), cjson2d(0.0, 1.0), cjson2d(1.0, 1.0), NULL),
-      "triangles", cjson_create_list(cjson3d(0, 3, 1), cjson3d(0, 2, 3), cjson3d(1, 3, 0), cjson3d(3, 2, 0), NULL),
-      "texture", cJSON_CreateString("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAD8SURBVGhD7c/LCcJgFERhq7Qgy3CfRXoQXItNGYmEeMyQbEbuhYFv9T9gzun6fPR1HofGAdP6xgHz+q4By/qWAev1/QKwftIpANNnbQKwe9EjAKPXGgRgMVQPwNxfpQOwddPRgMv99mcYqiTABkOVBNhgqJIAGwxVEmCDoUoCbDBUSYANhioJsMFQJQE2GKokwAZDlQTYYKiSABsMVRJgg6FKAmwwVEmADYYqCbDBUCUBNhiqJMAGQ5UE2GCokgAbDFUSYIOhytEAfKvjUAD+lLIfgA/V7ATgdUEyAO/K2g7Ao8o2AvCiOAbgur6vANy18AnAaSPvABx1Mg4vbr0dVP2tGoQAAAAASUVORK5CYII="),
-      NULL
-    ),
-    NULL
-  );
-}
-static cJSON* spec_add_child(cJSON* spec, cJSON* childspec)
-{
-  cJSON* children = cJSON_GetObjectItemCaseSensitive(spec, "children");
-  if (children == NULL) {
-    children = cJSON_CreateArray();
-    cJSON_AddItemToObject(spec, "children", children);
-  }
-  cJSON_AddItemToArray(children, childspec);
-  return spec;
-}
-
-
-void add_dummy(alloserver *serv)
-{
-  cJSON* root = spec_located_at(0, 0, 0, 0.3);
-  cJSON *plate = spec_located_at(0, 0.9, 0, 0.2);
-  spec_add_child(root, plate);
-  cJSON* button = spec_located_at(0.2, 0.3, 0, 0.1);
-  spec_add_child(plate, button);
-
-  cJSON_AddItemToObject(button, "collider", cjson_create_object(
-    "type", cJSON_CreateString("box"),
-    "width", cJSON_CreateNumber(0.2),
-    "height", cJSON_CreateNumber(0.2),
-    "depth", cJSON_CreateNumber(0.2),
-    NULL
-  ));
-  cJSON_AddItemToObject(button, "grabbable", cjson_create_object(
-    "actuate_on", cJSON_CreateString("$parent"),
-    "translation_constraint", cjson_create_list(cJSON_CreateNumber(1), cJSON_CreateNumber(0), cJSON_CreateNumber(1)),
-    "rotation_constraint", cjson_create_list(cJSON_CreateNumber(0), cJSON_CreateNumber(1), cJSON_CreateNumber(0)),
-    NULL
-  ));
-
-  cJSON_AddItemToObject(plate, "grabbable", cjson_create_object(
-    "foo", cJSON_CreateString("bar"),
-    NULL
-  ));
-  cJSON_AddItemToObject(plate, "collider", cjson_create_object(
-    "type", cJSON_CreateString("box"),
-    "width", cJSON_CreateNumber(0.2),
-    "height", cJSON_CreateNumber(0.2),
-    "depth", cJSON_CreateNumber(0.2),
-    NULL
-  ));
-
-  cJSON_AddItemToObject(root, "grabbable", cjson_create_object(
-    "foo", cJSON_CreateString("bar"),
-    NULL
-  ));
-  cJSON_AddItemToObject(root, "collider", cjson_create_object(
-    "type", cJSON_CreateString("box"),
-    "width", cJSON_CreateNumber(0.2),
-    "height", cJSON_CreateNumber(0.2),
-    "depth", cJSON_CreateNumber(0.2),
-    NULL
-  ));
-
-  allo_state_add_entity_from_spec(&serv->state, NULL, root, NULL);
-}
-
 static allo_entity* add_place(alloserver *serv)
 {
+  allo_vector origin{{0, 0, 0}};
   cJSON* place = cjson_create_object(
     "transform", cjson_create_object(
-      "matrix", m2cjson(allo_m4x4_translate((allo_vector) {{ 0, 0, 0 }})),
+      "matrix", m2cjson(allo_m4x4_translate(origin)),
       NULL
     ),
     "clock", cjson_create_object(
@@ -817,7 +755,7 @@ static allo_entity* add_place(alloserver *serv)
   return e;
 }
 
-bool alloserv_run_standalone(int host, int port, const char *placename)
+extern "C" bool alloserv_run_standalone(int host, int port, const char *placename)
 {
     alloserver *serv = alloserv_start_standalone(host, port, placename);
     arr_init(&mediatracks);

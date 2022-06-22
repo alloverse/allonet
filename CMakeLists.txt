@@ -3,6 +3,7 @@ project(allonet VERSION 0.1.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # for FindLibav
+set(CMAKE_CXX_STANDARD 11)
 
 option(ALLONET_BUILD_STATIC "Whether to build allonet as a static library instead of dynamic" OFF)
 set(ALLONET_THREADING_STRATEGY "force_link_tinycthread" CACHE STRING "Whether to use native_if_available (native means threads.h from C11, with fallback to tinycthread), force_link_tinycthread or force_use_tinycthread (includes but does not link)")
@@ -22,6 +23,7 @@ ENDIF()
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "lib/mathc"
+  "lib/cpp-httplib"
   "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
 include_directories(SYSTEM
@@ -38,6 +40,9 @@ SET(BUILD_SHARED_AND_STATIC_LIBS On CACHE BOOL "cjson static")
 SET(ENABLE_CJSON_TEST Off CACHE BOOL "don't build cjson tests")
 SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
+
+set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "disable brotli due to arm/x64 build issues on mac")
+add_subdirectory(lib/cpp-httplib)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 
@@ -91,7 +96,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/sha1.h
     ${SOURCE_FILES_PREFIX}/sha256.c
     ${SOURCE_FILES_PREFIX}/sha256.h
-    ${SOURCE_FILES_PREFIX}/standalone_server.c
+    ${SOURCE_FILES_PREFIX}/standalone_server.cpp
     ${SOURCE_FILES_PREFIX}/state.c
     ${SOURCE_FILES_PREFIX}/util.cpp
     ${SOURCE_FILES_PREFIX}/util.h
@@ -197,7 +202,7 @@ include_directories(SYSTEM
 )
 
 target_link_libraries(allonet 
-  enet cjson-static cjson_utils-static opus 
+  enet cjson-static cjson_utils-static opus httplib::httplib
   ${PLATFORM_LIBS}
 )
 

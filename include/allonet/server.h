@@ -4,6 +4,10 @@
 #include "state.h"
 #include "net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static const int allo_udp_port = 21337;
 static const int allo_client_count_max = 128;
 
@@ -77,5 +81,9 @@ const char *alloserv_describe_client(alloserver_client *client);
 
 // internal
 int allo_socket_for_select(alloserver *server);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -15,6 +15,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // return milliseconds since... some time ago
 int64_t get_ts_mono(void);
 double get_ts_monod(void);
@@ -115,6 +119,7 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
 typedef enum LogType { ALLO_LOG_DEBUG, ALLO_LOG_INFO, ALLO_LOG_ERROR } LogType;
 void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...);
 
-//allo_log_func(asset);
-
+#ifdef __cplusplus
+}
+#endif // cplusplus
 #endif /* util_h */

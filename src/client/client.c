@@ -21,7 +21,7 @@
 static inline char* formatClientId(alloclient *client) {
     if (client == NULL) return NULL;
     char *str;
-    if (asprintf(&str, "client:%s", _internal(client)->avatar_id) > 0) return str;
+    if (allo_asprintf(&str, "client:%s", _internal(client)->avatar_id) > 0) return str;
     return NULL;
 }
 #define client_log(type, client, format, ...) { \

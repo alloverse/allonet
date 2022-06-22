@@ -119,6 +119,10 @@ static inline int allo_enet_peer_send(ENetPeer * peer, enet_uint8 channelID, ENe
 typedef enum LogType { ALLO_LOG_DEBUG, ALLO_LOG_INFO, ALLO_LOG_ERROR } LogType;
 void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...);
 
+int allo_vasprintf(char **strp, const char *fmt, va_list ap);
+int allo_asprintf(char **strp, const char *fmt, ...);
+
+
 #ifdef __cplusplus
 }
 #endif // cplusplus

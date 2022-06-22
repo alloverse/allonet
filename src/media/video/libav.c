@@ -9,7 +9,7 @@
 static inline char* formatTrackId(allo_media_track *track) {
     if (track == NULL) return NULL;
     char *str;
-    if (asprintf(&str, "track:%d", track->track_id) > 0) return str;
+    if (allo_asprintf(&str, "track:%d", track->track_id) > 0) return str;
     return NULL;
 }
 #define libav_log(type, track, format, ...) { \

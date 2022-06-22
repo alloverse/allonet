@@ -208,22 +208,13 @@ static char *LogTypeNames[3] = {
 };
 
 
-#if (defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32))
-extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
-    FILE *whereto = stdout;
-    if (type == ALLO_LOG_ERROR) whereto = stderr;
-    va_list args;
-    va_start(args, format);
-    vfprintf(whereto, format, args);
-    va_end(args);
-}
-#else
+
 extern "C" void allo_log(LogType type, const char *module, const char *identifiers, const char *format, ...) {
     // TODO: filter out DEBUG types if not building debug, but apparently cmake is not adding any flag?
     char *message;
     va_list args;
     va_start(args, format);
-    int ret = vasprintf(&message, format, args);
+    int ret = allo_vasprintf(&message, format, args);
     va_end(args);
     FILE *whereto = stdout;
     if (type == ALLO_LOG_ERROR) whereto = stderr;
@@ -231,4 +222,32 @@ extern "C" void allo_log(LogType type, const char *module, const char *identifie
     if (ret != -1)
         free(message);
 }
-#endif
+
+extern "C" int allo_vasprintf(char **strp, const char *fmt, va_list ap)
+{
+    va_list apc;
+    va_copy(apc, ap);
+    int len = vsnprintf(NULL, 0, fmt, apc);
+    va_end(apc);
+    if(len < 0)
+        return -1;
+    char *str = (char*)malloc(len + 1);
+
+
+    len = vsnprintf(str, len + 1, fmt, ap);
+    if(len == -1)
+        free(str);
+    else
+        *strp = str;
+
+    return len;
+}
+
+extern "C" int allo_asprintf(char **strp, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    int r = allo_vasprintf(strp, fmt, ap);
+    va_end(ap);
+    return r;
+}

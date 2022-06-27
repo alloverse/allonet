@@ -22,6 +22,7 @@ extern "C" {
     #include <unistd.h>
 #endif
 #include <allonet/threading.h>
+#include <random>
 
 
 allo_statistics_t allo_statistics = {0};
@@ -45,11 +46,12 @@ extern "C" double get_ts_monod(void)
 
 extern "C" uint64_t allo_create_random_seed(void)
 {
-    uint64_t t = get_ts_mono();
-    t += getpid();
-    t += (uint64_t)thrd_current();
-    t = (t << 16) | (t >> 16);
-    return t;
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<uint64_t> dist(0, UINT64_MAX);
+
+    uint64_t seed = dist(mt);
+    return seed;
 }
 
 

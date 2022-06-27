@@ -97,7 +97,7 @@ jobs:
 
 - job: Windows
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2022'
   steps:
   - script: |
       git config --global --add filter.lfs.required true

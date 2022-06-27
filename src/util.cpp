@@ -5,6 +5,8 @@
 //  Created by Nevyn Bengtsson on 1/2/19.
 //
 
+#include <random>
+
 extern "C" {
 #include "util.h"
 }
@@ -22,7 +24,7 @@ extern "C" {
     #include <unistd.h>
 #endif
 #include <allonet/threading.h>
-#include <random>
+
 
 
 allo_statistics_t allo_statistics = {0};

@@ -335,8 +335,6 @@ alloserver *allo_listen(int listenhost, int port)
     assetstore *assetstore = &(_servinternal(serv)->assetstore);
     asset_memstore_init(assetstore);
     asset_memstore_register_asset_nocopy(assetstore, "hello", (uint8_t*)"Hello World!", 13);
-    
-    srand((unsigned int)time(NULL));
 
     ENetAddress address;
     address.host = listenhost;

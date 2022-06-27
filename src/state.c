@@ -513,6 +513,8 @@ extern bool allo_initialize(bool redirect_stdout)
 {
     if (_has_initialized) return true;
     _has_initialized = true;
+    srand(allo_create_random_seed());
+    
 
     setvbuf(stdout, NULL, _IONBF, 0);
     if(redirect_stdout) {

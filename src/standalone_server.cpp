@@ -513,9 +513,16 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
         return;
     }
 
+    allo_entity *reqent = state_get_entity(&serv->state, interaction->sender_entity_id);
+    alloserver_client *requestor = find_agent_by_id(serv, reqent->owner_agent_id);
+    char *identitys = cJSON_Print(requestor->identity); 
+    std::string identity = identitys; 
+    free(identitys);
+
     char *launch_argss = cJSON_Print(launch_args);
     httplib::Headers headers = {
       {"x-alloverse-server", "alloplace://localhost"}, // todo: use real hostname
+      {"x-alloverse-identity", identity}, // todo: use real hostname
     };
 
     // ask the app to connect to us

@@ -67,10 +67,10 @@ size_t alloserv_get_client_stats(alloserver* serv, alloserver_client *client, ch
 void alloserv_get_stats(alloserver* serv, char *buffer, size_t bufferlen);
 
 // run a minimal standalone C server. returns when it shuts down. false means it broke.
-bool alloserv_run_standalone(int listenhost, int port, const char *placename);
+bool alloserv_run_standalone(const char *public_hostname, int listenhost, int port, const char *placename);
 
 // start it but don't run it. returns allosocket.
-alloserver *alloserv_start_standalone(int listenhost, int port, const char *placename);
+alloserver *alloserv_start_standalone(const char *public_hostname, int listenhost, int port, const char *placename);
 // call this frequently to run it. returns false if server has broken and shut down; then you should call stop on it to clean up.
 bool alloserv_poll_standalone(int allosocket);
 // and then call this to stop and clean up state.

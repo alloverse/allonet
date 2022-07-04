@@ -18,6 +18,7 @@ static alloserver* serv;
 static allo_entity* place;
 static double last_simulate_at = 0;
 static char *g_placename;
+static char *g_public_hostname;
 static allo_media_track_list mediatracks;
 
 typedef struct {
@@ -766,9 +767,9 @@ static allo_entity* add_place(alloserver *serv)
   return e;
 }
 
-extern "C" bool alloserv_run_standalone(int host, int port, const char *placename)
+extern "C" bool alloserv_run_standalone(const char *public_hostname, int host, int port, const char *placename)
 {
-    alloserver *serv = alloserv_start_standalone(host, port, placename);
+    alloserver *serv = alloserv_start_standalone(public_hostname, host, port, placename);
     arr_init(&mediatracks);
   
     if (serv == NULL)
@@ -790,7 +791,7 @@ extern "C" bool alloserv_run_standalone(int host, int port, const char *placenam
     return true;
 }
 
-alloserver *alloserv_start_standalone(int listenhost, int port, const char *placename)
+alloserver *alloserv_start_standalone(const char *public_hostname, int listenhost, int port, const char *placename)
 {
   if (!allo_initialize(false))
   {
@@ -800,6 +801,7 @@ alloserver *alloserv_start_standalone(int listenhost, int port, const char *plac
 
   assert(serv == NULL);
 
+  g_public_hostname = strdup(public_hostname);
   g_placename = strdup(placename);
 
   int retries = 3;

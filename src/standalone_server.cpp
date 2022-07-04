@@ -530,6 +530,9 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
     std::string httpurl = app_url.substr(prefix.length());
     Uri httpuri = Uri::Parse(httpurl);
     httplib::Client webclient(httpuri.HostWithPort());
+    webclient.set_read_timeout(1, 0);
+    webclient.set_write_timeout(1, 0);
+    webclient.set_connection_timeout(1, 0);
     httplib::Result res = webclient.Post(httpuri.PathWithQuery().c_str(), headers, launch_argss, strlen(launch_argss), "application/json");
     free(launch_argss);
     // todo: handle launch results somehow

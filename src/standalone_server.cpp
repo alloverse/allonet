@@ -521,9 +521,11 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
     identity = std::regex_replace(identity, std::regex("\n"), "\\n");
     free(identitys);
 
+    std::string placeurl = std::string("alloplace://") + g_public_hostname + ":" + std::to_string(serv->_port);
+
     char *launch_argss = cJSON_Print(launch_args);
     httplib::Headers headers = {
-      {"x-alloverse-server", "alloplace://localhost"}, // todo: use real hostname
+      {"x-alloverse-server", placeurl},
       {"x-alloverse-launched-by", identity},
     };
 

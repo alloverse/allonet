@@ -117,6 +117,14 @@ static void handle_intent(alloserver* serv, alloserver_client* client, allo_clie
 }
 
 // interactions
+static void send_place_interaction_response(alloserver *serv,  alloserver_client* client, allo_interaction* request, cJSON *respbody)
+{
+    char* respbodys = cJSON_Print(respbody);
+    allo_interaction* response = allo_interaction_create("response", "place", "", request->request_id, respbodys);
+    free(respbodys);
+    send_interaction_to_client(serv, client, response);
+    allo_interaction_free(response);
+}
 
 static void handle_invalid_place_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
 {
@@ -126,12 +134,8 @@ static void handle_invalid_place_interaction(alloserver* serv, alloserver_client
 
     cJSON *cmd = cJSON_GetArrayItem(body, 0);
     cJSON *respbody = cjson_create_list(cJSON_CreateString(cJSON_GetStringValue(cmd)), cJSON_CreateString("error"), cJSON_CreateString("invalid request"), NULL);
-    char* respbodys = cJSON_Print(respbody);
+    send_place_interaction_response(serv, client, interaction, respbody);
     cJSON_Delete(respbody);
-    allo_interaction* response = allo_interaction_create("response", "place", "", interaction->request_id, respbodys);
-    free(respbodys);
-    send_interaction_to_client(serv, client, response);
-    allo_interaction_free(response);
 }
 
 static void handle_place_announce_interaction(alloserver* serv, alloserver_client* client, allo_interaction* interaction, cJSON *body)
@@ -539,7 +543,16 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
     webclient.set_connection_timeout(1, 0);
     httplib::Result res = webclient.Post(httpuri.PathWithQuery().c_str(), headers, launch_argss, strlen(launch_argss), "application/json");
     free(launch_argss);
-    // todo: handle launch results somehow
+
+    if(res.error() != httplib::Error::Success || res.value().status != 200)
+    {
+        
+        std::string err = res.error() == httplib::Error::Success ? res.value().body : "Failed connection to app gateway";
+        cJSON *respbody = cjson_create_list(cJSON_CreateString("launch_app"), cJSON_CreateString("error"), cJSON_CreateString(err.c_str()), NULL);
+        send_place_interaction_response(serv, client, interaction, respbody);
+        return;
+    }
+
     // todo: don't block thread :S
 
     // save it so we can respond when we get a connection from the gateway.

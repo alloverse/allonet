@@ -532,6 +532,7 @@ static void handle_place_launch_app_interaction(alloserver* serv, alloserver_cli
     // ask the app to connect to us
     std::string httpurl = app_url.substr(prefix.length());
     Uri httpuri = Uri::Parse(httpurl);
+    fprintf(stderr, "Asking app gateway %s to launch app with args %s into %s by %s\n", httpurl.c_str(), launch_argss, placeurl.c_str(), identity.c_str());
     httplib::Client webclient(httpuri.HostWithPort());
     webclient.set_read_timeout(1, 0);
     webclient.set_write_timeout(1, 0);

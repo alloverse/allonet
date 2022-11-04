@@ -455,6 +455,7 @@ static void handle_place_list_agents_interaction(alloserver* serv, alloserver_cl
         cJSON_AddItemToArray(agentlist, cjson_create_object(
             "display_name", cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(agent->identity, "display_name"), false),
             "agent_id", cJSON_CreateString(agent->agent_id),
+            "avatar_id", cJSON_CreateString(agent->avatar_entity_id),
             "is_visor", cJSON_CreateBool(isVisor),
             "stats", cJSON_CreateString(stats),
             NULL, NULL

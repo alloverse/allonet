@@ -20,6 +20,8 @@ ELSE()
   FATAL_ERROR("Unsupported platform")
 ENDIF()
 
+# dependencies
+
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "lib/mathc"
@@ -29,6 +31,7 @@ include_directories(
 include_directories(SYSTEM
     "${PROJECT_SOURCE_DIR}/lib/enet/include"
     "${PROJECT_SOURCE_DIR}/lib/tinycthread/source"
+    "${PROJECT_SOURCE_DIR}/lib/tinygltf"
     "${PROJECT_SOURCE_DIR}/lib"
 )
 add_subdirectory (lib/enet)
@@ -43,6 +46,10 @@ add_subdirectory (lib/cJSON)
 
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "disable brotli due to arm/x64 build issues on mac")
 add_subdirectory(lib/cpp-httplib)
+
+set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(lib/tinygltf)
 
 add_definitions(-DMATHC_USE_DOUBLE_FLOATING_POINT)
 
@@ -78,6 +85,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_PREFIX}/media/video/video.c
     ${SOURCE_FILES_PREFIX}/media/video/mjpeg.cpp
     ${SOURCE_FILES_PREFIX}/_asset.h
+    ${SOURCE_FILES_PREFIX}/allo_gltf.cpp
     ${SOURCE_FILES_PREFIX}/arr.c
     ${SOURCE_FILES_PREFIX}/asset.c
     ${SOURCE_FILES_PREFIX}/asset.h

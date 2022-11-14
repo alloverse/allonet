@@ -31,7 +31,8 @@ extern "C" allo_m4x4 allo_gltf_get_node_transform(const unsigned char *bytes, ui
                 m = allo_m4x4_identity();
                 if(it->translation.size() == 3)
                 {
-                    m = allo_m4x4_translate((allo_vector){it->translation[0], it->translation[1], it->translation[2]});
+                    allo_vector translation({it->translation[0], it->translation[1], it->translation[2]});
+                    m = allo_m4x4_translate(translation);
                 }
                 if(it->rotation.size() == 4)
                 {

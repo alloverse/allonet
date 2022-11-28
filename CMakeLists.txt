@@ -47,6 +47,7 @@ add_subdirectory (lib/cJSON)
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "disable brotli due to arm/x64 build issues on mac")
 add_subdirectory(lib/cpp-httplib)
 
+add_definitions(-DTINYGLTF_NO_STB_IMAGE -DTINYGLTF_NO_STB_IMAGE_WRITE)
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(lib/tinygltf)

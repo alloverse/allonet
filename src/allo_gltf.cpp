@@ -64,7 +64,10 @@ public:
         for (auto node = model->nodes.begin(); node < model->nodes.end(); node++) {
             auto mesh = &model->meshes[node->mesh];
             auto scale = node->scale;
-            
+            if (scale.size() < 3) {
+                scale = std::vector<double>(3);
+                scale[0] = scale[1] = scale[2] = 1;
+            }
             for (auto prim = mesh->primitives.begin(); prim < mesh->primitives.end(); prim++) {
                 auto accessor = model->accessors[prim->attributes["POSITION"]];
                 auto bufferview = model->bufferViews[accessor.bufferView];

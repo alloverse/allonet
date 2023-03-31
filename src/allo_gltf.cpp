@@ -81,6 +81,8 @@ public:
         for (auto &node : model.nodes) {
             auto &mesh = model.meshes[node.mesh];
             
+            //TODO: Build matrix of node.translation+node.scale+node.rotation+node.matrix and add them up through node tree
+            // to use to transform each position.
             auto scale = node.scale;
             if (scale.size() < 3) {
                 scale = std::vector<double>(3);

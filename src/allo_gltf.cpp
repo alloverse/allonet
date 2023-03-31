@@ -13,9 +13,97 @@ extern "C" {
 
 using namespace tinygltf;
 
-TinyGLTF loader;
+typedef struct {
+    float x, y, z;
+} allo_gltf_point;
 
-extern "C" allo_m4x4 allo_gltf_get_node_transform(const unsigned char *bytes, uint64_t size, const char *node_name)
+typedef struct {
+    allo_gltf_point min;
+    allo_gltf_point max;
+} allo_gltf_bb;
+
+TinyGLTF loader;
+class AlloModelManager {
+    std::unordered_map<std::string, Model*> models;
+
+public:
+    bool load(std::string name, const unsigned char *bytes, uint32_t size) {
+        if (models.find(name) != models.end()) {
+            return true;
+        }
+        
+        auto model = new Model();
+        std::string err, warn;
+        bool ok = loader.LoadBinaryFromMemory(model, &err, &warn, bytes, size);
+        if (ok) {
+            models[std::string(name)] = model;
+        } else {
+            delete model;
+        }
+        return true;
+    }
+  
+    bool unload(std::string name) {
+        auto itr = models.find(name);
+        if (itr != models.end()) {
+            Model *model = itr->second;
+            delete model;
+            models.erase(itr);
+            return true;
+        }
+        return false;
+    }
+    
+    bool get_aabb(std::string name, allo_gltf_bb *bb) {
+        auto it = models.find(name);
+        if (it == models.end()) {
+            return false;
+        }
+        Model *model = it->second;
+        allo_gltf_point min = {FLT_MAX, FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN, FLT_MIN};
+        for (auto mesh = model->meshes.begin(); mesh < model->meshes.end(); mesh++) {
+            for (auto prim = mesh->primitives.begin(); prim < mesh->primitives.end(); prim++) {
+                auto accessor = model->accessors[prim->attributes["POSITION"]];
+                auto bufferview = model->bufferViews[accessor.bufferView];
+                auto buffer = model->buffers[bufferview.buffer];
+                auto positions = reinterpret_cast<const float*>(&buffer.data[bufferview.byteOffset + accessor.byteOffset]);
+                for (size_t i = 0; i < accessor.count; i++) {
+                    auto p = positions + i*3;
+                    min.x = MIN(min.x, *p);
+                    max.x = MAX(max.x, *p);
+                    ++p;
+                    min.y = MIN(min.y, *p);
+                    max.y = MAX(max.y, *p);
+                    ++p;
+                    min.z = MIN(min.z, *p);
+                    max.z = MAX(max.z, *p);
+                }
+            }
+        }
+        bb->min = min;
+        bb->max = max;
+        return true;
+    }
+};
+
+AlloModelManager modelManager;
+
+extern "C" bool allo_gltf_load(const char *name_, const unsigned char *bytes, uint32_t size) {
+    auto name = std::string(name_);
+    return modelManager.load(name, bytes, size);
+}
+
+extern "C" bool allo_gltf_unload(const char *name_) {
+    auto name = std::string(name_);
+    return modelManager.unload(name);
+}
+
+extern "C" bool allo_gltf_get_aabb(const char *name_, allo_gltf_bb *bb) {
+    auto name = std::string(name_);
+    return modelManager.get_aabb(name, bb);
+}
+
+extern "C" allo_m4x4 allo_gltf_get_node_transform(const unsigned char *bytes, uint32_t size, const char *node_name)
 {
     Model model;
     std::string err, warn;

@@ -23,6 +23,12 @@ typedef struct {
 } allo_gltf_bb;
 
 TinyGLTF loader;
+
+bool _fake_image_loader(Image * i, const int, std::string *, std::string *, int, int, const unsigned char *, int, void *) {
+    i->as_is = true;
+    return true;
+}
+
 class AlloModelManager {
     std::unordered_map<std::string, Model*> models;
 
@@ -40,7 +46,10 @@ public:
         
         auto model = new Model();
         std::string err, warn;
+        
+        loader.SetImageLoader(_fake_image_loader, NULL);
         bool ok = loader.LoadBinaryFromMemory(model, &err, &warn, bytes, size);
+        
         if (ok) {
             models[std::string(name)] = model;
         } else {

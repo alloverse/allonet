@@ -54,7 +54,7 @@ public:
             models[std::string(name)] = model;
         } else {
             delete model;
-            fprintf(stderr, "AlloModelManager: Failed to load model. err: %s. warn: %s", err.c_str(), warn.c_str());
+            fprintf(stderr, "AlloModelManager: Failed to load model. err: %s. warn: %s\n", err.c_str(), warn.c_str());
             return false;
         }
         return true;

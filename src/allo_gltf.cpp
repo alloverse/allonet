@@ -27,6 +27,12 @@ class AlloModelManager {
     std::unordered_map<std::string, Model*> models;
 
 public:
+    ~AlloModelManager() {
+        for (auto &it : models) {
+            delete it.second;
+        }
+    }
+    
     bool load(std::string name, const unsigned char *bytes, uint32_t size) {
         if (models.find(name) != models.end()) {
             return true;
@@ -61,19 +67,20 @@ public:
         if (it == models.end()) {
             return false;
         }
-        Model *model = it->second;
+        Model &model = *it->second;
         allo_gltf_point min = {FLT_MAX, FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN, FLT_MIN};
-        for (auto node = model->nodes.begin(); node < model->nodes.end(); node++) {
-            auto mesh = &model->meshes[node->mesh];
-            auto scale = node->scale;
+        for (auto &node : model.nodes) {
+            auto &mesh = model.meshes[node.mesh];
+            
+            auto scale = node.scale;
             if (scale.size() < 3) {
                 scale = std::vector<double>(3);
                 scale[0] = scale[1] = scale[2] = 1;
             }
-            for (auto prim = mesh->primitives.begin(); prim < mesh->primitives.end(); prim++) {
-                auto accessor = model->accessors[prim->attributes["POSITION"]];
-                auto bufferview = model->bufferViews[accessor.bufferView];
-                auto buffer = model->buffers[bufferview.buffer];
+            for (auto &prim : mesh.primitives) {
+                auto accessor = model.accessors[prim.attributes["POSITION"]];
+                auto bufferview = model.bufferViews[accessor.bufferView];
+                auto buffer = model.buffers[bufferview.buffer];
                 auto positions = reinterpret_cast<const float*>(&buffer.data[bufferview.byteOffset + accessor.byteOffset]);
                 
                 for (size_t i = 0; i < accessor.count; i++) {

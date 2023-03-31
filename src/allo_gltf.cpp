@@ -61,22 +61,27 @@ public:
         }
         Model *model = it->second;
         allo_gltf_point min = {FLT_MAX, FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN, FLT_MIN};
-        for (auto mesh = model->meshes.begin(); mesh < model->meshes.end(); mesh++) {
+        for (auto node = model->nodes.begin(); node < model->nodes.end(); node++) {
+            auto mesh = &model->meshes[node->mesh];
+            auto scale = node->scale;
+            
             for (auto prim = mesh->primitives.begin(); prim < mesh->primitives.end(); prim++) {
                 auto accessor = model->accessors[prim->attributes["POSITION"]];
                 auto bufferview = model->bufferViews[accessor.bufferView];
                 auto buffer = model->buffers[bufferview.buffer];
                 auto positions = reinterpret_cast<const float*>(&buffer.data[bufferview.byteOffset + accessor.byteOffset]);
+                
                 for (size_t i = 0; i < accessor.count; i++) {
                     auto p = positions + i*3;
-                    min.x = MIN(min.x, *p);
-                    max.x = MAX(max.x, *p);
-                    ++p;
-                    min.y = MIN(min.y, *p);
-                    max.y = MAX(max.y, *p);
-                    ++p;
-                    min.z = MIN(min.z, *p);
-                    max.z = MAX(max.z, *p);
+                    auto s = scale.begin();
+                    min.x = MIN(min.x, *p * *s);
+                    max.x = MAX(max.x, *p * *s);
+                    ++p; ++s;
+                    min.y = MIN(min.y, *p * *s);
+                    max.y = MAX(max.y, *p * *s);
+                    ++p; ++s;
+                    min.z = MIN(min.z, *p * *s);
+                    max.z = MAX(max.z, *p * *s);
                 }
             }
         }

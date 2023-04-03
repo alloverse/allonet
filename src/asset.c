@@ -125,8 +125,14 @@ int asset_read_data_header(const cJSON *header, const char **out_id, size_t *out
         return asset_malformed_request_error;
     }
     
-    if (*out_start + *out_length >= *out_total_length) {
-        *out_error_response = asset_error(id->string, asset_malformed_request_error, "The offset + length can not be longer than the total_length!");
+    if (*out_start + *out_length > *out_total_length) {
+        char *reason;
+        if (asprintf(&reason, "The offset + length (%zu + %zu) can not be longer than the total_length (%zu)!", *out_start, *out_length, *out_total_length) >= 0) {
+            *out_error_response = asset_error(*out_id, asset_malformed_request_error, reason);
+            free(reason);
+        } else {
+            *out_error_response = asset_error(*out_id, asset_malformed_request_error, "The offset + length can not be longer than the total_length!");
+        }
         return asset_malformed_request_error;
     }
     

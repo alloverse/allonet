@@ -11,10 +11,23 @@
 #include "media/media.h"
 #include <allonet/assetstore.h>
 
-#if 0
-#define LOG_ASSET_D(client, ...) server_log(DEBUG, client, "ASSET "__VA_ARGS__)
+
+
+static inline char* formatClientIdAssetId(alloserver_client *client, const char *assetId) {
+    if (client == NULL) return NULL;
+    char *str;
+    if (asprintf(&str, "client:%s %s", client->agent_id, assetId) > 0) return str;
+    return NULL;
+}
+
+#if 1
+#define server_log_asset(client, asset, ...) { \
+    char *id = formatClientIdAssetId(client, asset); \
+    allo_log(DEBUG, "server", id, __VA_ARGS__); \
+    if(id)free(id); \
+} while(false)
 #else
-#define LOG_ASSET_D(...)
+#define server_log_asset(...)
 #endif
 
 static inline char* formatClientId(alloserver_client *client) {
@@ -23,6 +36,7 @@ static inline char* formatClientId(alloserver_client *client) {
     if (asprintf(&str, "client:%s", client->agent_id) > 0) return str;
     return NULL;
 }
+
 #define server_log(type, client, ...) { \
     char *id = formatClientId(client); \
     allo_log(type, "server", id, __VA_ARGS__); \
@@ -181,7 +195,7 @@ static int _asset_write_func(const char *asset_id, const uint8_t *buffer, size_t
     
     if (wanted && (wanted->source == NULL || wanted->source == sender_peer)) {
         wanted->source = sender_peer;
-        LOG_ASSET_D(sender, "%s Received %d+%d=%d of %d bytes from %p\n", asset_id, offset, length, offset+length, total_size, sender_peer);
+        server_log_asset(sender, asset_id, "Received %d+%d=%d of %d bytes from %p", offset, length, offset+length, total_size, sender_peer);
         return assetstore_write(&(_servinternal(server)->assetstore), asset_id, offset, buffer, length, total_size);
     } else {
         return 0;
@@ -195,18 +209,18 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
     wanted_asset *wanted = _asset_is_wanted(asset_id, server);
 
     if (wanted == NULL) {
-        LOG_ASSET_D(client, "Unwanted asset %s got %d state callback\n", asset_id, state);
+        server_log_asset(client, asset_id, "Unwanted asset got %d state callback", state);
         return;
     }
 
     if (state == asset_state_now_available) {
-        LOG_ASSET_D(client, "Forwarding asset %s\n", asset_id);
+        server_log_asset(client, asset_id, "Forwarding asset", asset_id);
         // asset was completed
         // Ping registered peers by sending a first chunk.
         _forward_wanted_asset(asset_id, server, client, wanted);
     } else if (state == asset_state_now_unavailable) {
         ENetPeer *failed_source = _clientinternal(client)->peer;
-        LOG_ASSET_D(client, "%s Failed from source %p, %d remaining\n", asset_id, failed_source, wanted->remaining_potential_sources.length-1);
+        server_log_asset(client, asset_id, "Failed from source %p, %d remaining\n", failed_source, wanted->remaining_potential_sources.length-1);
         for (size_t source_index = 0; source_index < wanted->remaining_potential_sources.length; source_index++) {
             ENetPeer *source = wanted->remaining_potential_sources.data[source_index];
             if (failed_source == source) {
@@ -220,7 +234,7 @@ static void _asset_state_callback_func(const char *asset_id, asset_state state, 
             _forward_wanted_asset_failure(asset_id, server, client, wanted);
         }
     } else {
-        LOG_ASSET_D(client, "Unhandled asset state %d\n", state);
+        server_log_asset(client, asset_id, "Unhandled asset state %d\n", state);
     }
 }
 
@@ -469,7 +483,7 @@ void _request_missing_asset(alloserver *server, alloserver_client *client, const
         arr_init(&wanted->remaining_potential_sources);
         arr_push(&_servinternal(server)->wanted_assets, wanted);
     }
-    LOG_ASSET_D(client, "%s %dth wanted to %p\n", asset_id, wanted->recipients.length+1, _clientinternal(client)->peer);
+    server_log_asset(client, asset_id, "%dth wanted to %p\n", wanted->recipients.length+1, _clientinternal(client)->peer);
     arr_push(&wanted->recipients, _clientinternal(client)->peer);
     
     // Broadcast request the asset unless it is already wanted
@@ -480,7 +494,7 @@ void _request_missing_asset(alloserver *server, alloserver_client *client, const
             ENetPeer *peer = _clientinternal(other)->peer;
             arr_push(&wanted->remaining_potential_sources, peer);
         }
-        LOG_ASSET_D(client, "... and we queued %d potential sources to get it\n", wanted->remaining_potential_sources.length);
+        server_log_asset(client, asset_id, "queued %d potential sources to get it\n", wanted->remaining_potential_sources.length);
         
         asset_user usr = { .server = server, .client = client };
         asset_request(asset_id, NULL, _asset_send_func_broadcast, &usr);
@@ -497,7 +511,7 @@ static void free_wanted(wanted_asset *wanted)
 
 void _forward_wanted_asset_failure(const char *asset_id, alloserver *server, alloserver_client *client, wanted_asset *wanted) {
     alloserv_internal *sv = _servinternal(server);
-    LOG_ASSET_D(client, "%s telling %d recipients that asset doesn't exist. potentials %d should be 0\n", asset_id, wanted->recipients.length, wanted->remaining_potential_sources.length);
+    server_log_asset(client, asset_id, "telling %d recipients that asset doesn't exist. potentials %d should be 0", wanted->recipients.length, wanted->remaining_potential_sources.length);
 
     for(size_t recipient_index = 0; recipient_index < wanted->recipients.length; recipient_index++)
     {
@@ -518,7 +532,7 @@ void _forward_wanted_asset_failure(const char *asset_id, alloserver *server, all
 
 void _forward_wanted_asset(const char *asset_id, alloserver *server, alloserver_client *client, wanted_asset *wanted) {
     alloserv_internal *sv = _servinternal(server);
-    LOG_ASSET_D(client, "%s telling %d recipients that asset DOES exist!\n", asset_id, wanted->recipients.length);
+    server_log_asset(client, asset_id, "telling %d recipients that asset DOES exist!\n", wanted->recipients.length);
 
     //TODO: Setup job to send to only send to a few peers at once.
     // deliver the first bytes. After this it's up to the client to request more.
@@ -545,7 +559,7 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
     alloserv_internal *sv = _servinternal(server);
     ENetPeer *lost_peer = _clientinternal(client)->peer;
     
-    LOG_ASSET_D(client, "Lost peer %p\n", lost_peer);
+    server_log_asset(client, NULL, "Lost peer %p\n", lost_peer);
 
     for (size_t i = 0; i < sv->wanted_assets.length; i++) {
         wanted_asset *wanted = sv->wanted_assets.data[i];
@@ -554,7 +568,7 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
             ENetPeer *peer = wanted->recipients.data[recipient_index];
             if(peer == lost_peer)
             {
-                LOG_ASSET_D(client, "... which was a recipient\n");
+                server_log_asset(client, wanted->id, "Lost a recipient peer");
 
                 arr_splice(&wanted->recipients, recipient_index, 1);
                 break;
@@ -565,13 +579,13 @@ void _remove_client_from_wanted(alloserver *server, alloserver_client *client) {
             ENetPeer *source = wanted->remaining_potential_sources.data[source_index];
             if(source == lost_peer)
             {
-                LOG_ASSET_D(client, "... which was a potential source\n");
+                server_log_asset(client, wanted->id, "lost a potential source");
                 arr_splice(&wanted->remaining_potential_sources, source_index, 1);
                 break;
             }
         }
         if (wanted->remaining_potential_sources.length == 0) {
-            LOG_ASSET_D(client, "... so since nobody can deliver, let's fail this wanted asset.\n");
+            server_log_asset(client, wanted->id, "nobody can deliver, let's fail this wanted asset.");
             _forward_wanted_asset_failure(wanted->id, server, client, wanted);
             // ^ will arr_splice wanted_assets, so need to decrease i
             --i;

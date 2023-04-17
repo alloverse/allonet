@@ -45,6 +45,7 @@ SET(ENABLE_CJSON_UTILS On CACHE BOOL "Use cJsonUtils")
 add_subdirectory (lib/cJSON)
 
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "disable brotli due to arm/x64 build issues on mac")
+set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "disable libssl to fix windows build maybe")
 add_subdirectory(lib/cpp-httplib)
 
 add_definitions(-DTINYGLTF_NO_STB_IMAGE -DTINYGLTF_NO_STB_IMAGE_WRITE)

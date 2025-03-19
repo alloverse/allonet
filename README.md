@@ -12,6 +12,14 @@ Alloverse's network API. It can be used as:
 * **a game engine server API**, when used by placeserv to manage clients and
   the place's environment and inhabitants.
 
+This first implementation of allonet is if prototype quality: it uses JSON as its main
+payload format, and is thus quite resource intensive. It is however rather feature complete,
+implementing both world syncing, client-side interpolation, RPC, audio and video streaming,
+asset distribution, clock syncing, and more.
+
+This project will soon be superceded by its successor, [allonet2](https://github.com/alloverse/allonet2),
+which aims to implement all of these features in a more efficient, secure and future-proof way.
+
 ## Using from different languages
 
 Since allonet is written in C, its native API is C headers located in `include/allonet`.
